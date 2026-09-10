@@ -28,6 +28,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		}
 
 		$decision = self::editor_preview_decision( (int) $source['sizeBytes'], is_array( $analysis ) ? $analysis : [] );
+		self::maybe_queue_web_high( $asset_id, $source, is_array( $analysis ) ? $analysis : [] );
 		if ( ! $decision['shouldPreview'] ) {
 			self::store_editor_preview_record(
 				$asset_id,
@@ -69,6 +70,60 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'reasons'         => $decision['reasons'],
 			]
 		);
+	}
+
+	public static function retry_editor_preview( int $asset_id ): array {
+		$source = self::get_source_glb( $asset_id );
+		if ( is_wp_error( $source ) ) {
+			return self::empty_editor_preview_state( 'none', $source->get_error_message() );
+		}
+		$analysis = self::get_analysis_meta( $asset_id );
+		if ( self::analysis_needs_refresh( $analysis, $source ) ) {
+			$analysis = self::refresh_asset_analysis( $asset_id );
+		}
+		$analysis = is_array( $analysis ) ? $analysis : [];
+		$decision = self::editor_preview_decision( (int) $source['sizeBytes'], $analysis );
+		if ( empty( $decision['shouldPreview'] ) ) {
+			return self::get_editor_preview_asset_state( $asset_id );
+		}
+
+		$record = self::get_editor_preview_record( $asset_id );
+		if ( self::editor_preview_record_is_ready( $record, $source ) ) {
+			return self::get_editor_preview_asset_state( $asset_id );
+		}
+		self::maybe_queue_web_high( $asset_id, $source, $analysis );
+		if ( self::editor_preview_waits_for_web_high( $asset_id, $source ) ) {
+			self::store_editor_preview_record(
+				$asset_id,
+				[
+					'status'            => 'waiting-high',
+					'message'           => 'Editor preview is waiting for Web High to finish.',
+					'sourceFingerprint' => self::source_fingerprint( $source ),
+					'sourceSizeBytes'   => (int) $source['sizeBytes'],
+					'profile'           => self::editor_preview_profile_record(),
+					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
+					'reasons'           => $decision['reasons'],
+					'retryCount'        => absint( $record['retryCount'] ?? 0 ) + 1,
+				]
+			);
+			return self::get_editor_preview_asset_state( $asset_id );
+		}
+		self::store_editor_preview_record(
+			$asset_id,
+			[
+				'status'            => 'queued',
+				'message'           => 'Editor preview retry is queued.',
+				'sourceFingerprint' => self::source_fingerprint( $source ),
+				'sourceSizeBytes'   => (int) $source['sizeBytes'],
+				'profile'           => self::editor_preview_profile_record(),
+				'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
+				'reasons'           => $decision['reasons'],
+				'retryCount'        => absint( $record['retryCount'] ?? 0 ) + 1,
+				'queuedAt'          => current_time( 'mysql', true ),
+			]
+		);
+		self::schedule_editor_preview_job( $asset_id );
+		return self::get_editor_preview_asset_state( $asset_id );
 	}
 
 	public function process_editor_preview_job( int $asset_id ): void {
@@ -121,6 +176,21 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
 				]
 			);
+			self::continue_web_family_after_editor_preview( $asset_id, $source );
+			return;
+		}
+		if ( self::editor_preview_waits_for_web_high( $asset_id, $source ) ) {
+			self::store_editor_preview_record(
+				$asset_id,
+				[
+					'status'            => 'waiting-high',
+					'message'           => 'Editor preview is waiting for Web High to finish.',
+					'sourceFingerprint' => self::source_fingerprint( $source ),
+					'sourceSizeBytes'   => (int) $source['sizeBytes'],
+					'profile'           => self::editor_preview_profile_record(),
+					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
+				]
+			);
 			return;
 		}
 
@@ -143,7 +213,10 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			$asset_id,
 			$source,
 			self::EDITOR_PREVIEW_PROFILE,
-			[ 'protectGeometry' => self::editor_preview_protects_geometry( $asset_id ) ]
+			[
+				'protectGeometry' => self::editor_preview_protects_geometry( $asset_id ),
+				'sourceSha256'    => (string) ( $source['sha256'] ?? '' ),
+			]
 		);
 		if ( is_wp_error( $result ) ) {
 			self::store_editor_preview_record(
@@ -160,10 +233,12 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'failedAt'          => current_time( 'mysql', true ),
 				]
 			);
+			self::continue_web_family_after_editor_preview( $asset_id, $source );
 			return;
 		}
 
 		$this->store_editor_preview_derivative_record( $asset_id, $result, $source, $analysis );
+		self::continue_web_family_after_editor_preview( $asset_id, $source );
 	}
 
 	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision ): void {
@@ -173,6 +248,22 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		$source_fingerprint = self::source_fingerprint( $source );
 
 		if ( 'ready' === $current_status && $current_fingerprint === $source_fingerprint && self::editor_preview_record_is_ready( $record, $source ) ) {
+			return;
+		}
+		if ( self::editor_preview_waits_for_web_high( $asset_id, $source ) ) {
+			self::store_editor_preview_record(
+				$asset_id,
+				[
+					'status'            => 'waiting-high',
+					'message'           => 'Editor preview is waiting for Web High to finish.',
+					'sourceFingerprint' => $source_fingerprint,
+					'sourceSizeBytes'   => (int) $source['sizeBytes'],
+					'profile'           => self::editor_preview_profile_record(),
+					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
+					'reasons'           => $decision['reasons'],
+				]
+			);
+			wp_clear_scheduled_hook( self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] );
 			return;
 		}
 
@@ -199,6 +290,9 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			self::schedule_editor_preview_job( $asset_id );
 			return;
 		}
+		if ( 'failed' === $current_status && $current_fingerprint === $source_fingerprint ) {
+			return;
+		}
 
 		self::store_editor_preview_record(
 			$asset_id,
@@ -217,6 +311,17 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		);
 
 		self::schedule_editor_preview_job( $asset_id );
+	}
+
+	private static function editor_preview_waits_for_web_high( int $asset_id, array $source ): bool {
+		$record = self::desktop_profile_record( $asset_id, 'web-high' );
+		$options = is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [];
+		$source_hash = (string) ( $source['sha256'] ?? '' );
+		return ! empty( $options['familySequence'] )
+			&& in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true )
+			&& '' !== $source_hash
+			&& hash_equals( (string) ( $record['sourceSha256'] ?? '' ), $source_hash )
+			&& absint( $record['sourceGeneration'] ?? 0 ) === absint( $source['generation'] ?? 0 );
 	}
 
 	private static function schedule_editor_preview_job( int $asset_id, int $delay = 0 ): void {
@@ -335,6 +440,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'reductionPercent'    => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
 				'message'             => 'Editor preview derivative is ready.',
 				'profile'             => self::editor_preview_profile_record(),
+				'profileOptions'      => is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [],
 				'stats'               => [
 					'original'   => self::editor_preview_stats_from_analysis( $analysis ),
 					'derivative' => is_array( $record['derivative'] ?? null ) ? self::editor_preview_stats_from_analysis( $record['derivative'] ) : [],
@@ -373,7 +479,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	private static function editor_preview_protects_geometry( int $asset_id ): bool {
 		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat', [ 'fields' => 'slugs' ] );
 		if ( is_wp_error( $terms ) ) {
-			return false;
+			return true;
 		}
 
 		return ! empty( array_intersect( [ 'walkable-surface', 'collision-proxy' ], array_map( 'sanitize_title', $terms ) ) );

@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class VRodos_Storage_Manager {
 	public const STORAGE_SCHEMA_OPTION = 'vrodos_storage_schema_version';
 	public const MIGRATION_STATE_OPTION = 'vrodos_storage_migration_v1';
+	public const PUBLISHED_CACHE_POLICY_ERROR_OPTION = 'vrodos_published_cache_policy_error';
 	private const PRIVATE_MARKER_META = '_vrodos_private_storage';
 	private const OWNER_TYPE_META     = '_vrodos_storage_owner_type';
 	private const OWNER_ID_META       = '_vrodos_storage_owner_id';
@@ -301,6 +302,70 @@ final class VRodos_Storage_Manager {
 		return self::path_is_within( $directory, $uploads_root )
 			? trailingslashit( $directory )
 			: new WP_Error( 'vrodos_publication_unavailable', 'The publication directory resolves outside WordPress uploads.' );
+	}
+
+	/**
+	 * Install cache headers for immutable published media and mutable client HTML.
+	 *
+	 * The marked block is safe to refresh on every build and preserves unrelated
+	 * directives in the publication root's .htaccess file.
+	 */
+	public static function ensure_published_cache_policy() {
+		$uploads = wp_upload_dir( null, false );
+		if ( ! empty( $uploads['error'] ) ) {
+			return self::published_cache_policy_error( (string) $uploads['error'] );
+		}
+
+		$uploads_root = self::resolved_path( (string) ( $uploads['basedir'] ?? '' ) );
+		$published_root = self::join( $uploads_root, 'vrodos', 'published' );
+		if (
+			'' === $uploads_root
+			|| ! wp_mkdir_p( $published_root )
+			|| self::path_contains_link( $published_root, $uploads_root )
+			|| ! self::path_is_within( $published_root, $uploads_root )
+		) {
+			return self::published_cache_policy_error( 'VRodos could not prepare a safe publication root for its HTTP cache policy.' );
+		}
+
+		if ( ! function_exists( 'insert_with_markers' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/misc.php';
+		}
+		$rules = self::published_cache_policy_rules();
+		$htaccess = trailingslashit( self::resolved_path( $published_root ) ) . '.htaccess';
+		if ( ! function_exists( 'insert_with_markers' ) || ! insert_with_markers( $htaccess, 'VRodos Published Cache', $rules ) ) {
+			return self::published_cache_policy_error( 'VRodos could not update the published-assets .htaccess cache policy. Configure the equivalent server rules manually.' );
+		}
+
+		delete_option( self::PUBLISHED_CACHE_POLICY_ERROR_OPTION );
+		return true;
+	}
+
+	private static function published_cache_policy_rules(): array {
+		return [
+			'<IfModule mod_setenvif.c>',
+			'SetEnvIf Request_URI "/vrodos/published/projects/[0-9]+/media/[a-f0-9]{64}\\.[A-Za-z0-9]+$" VRODOS_IMMUTABLE_MEDIA',
+			'SetEnvIf Request_URI "/vrodos/published/projects/[0-9]+/clients/[^/]+\\.html$" VRODOS_UNCACHED_CLIENT',
+			'</IfModule>',
+			'<IfModule mod_headers.c>',
+			'Header always set Cache-Control "public, max-age=31536000, immutable" env=VRODOS_IMMUTABLE_MEDIA',
+			'Header always set Cache-Control "no-store, no-cache, must-revalidate" env=VRODOS_UNCACHED_CLIENT',
+			'Header always set Pragma "no-cache" env=VRODOS_UNCACHED_CLIENT',
+			'Header always set Expires "0" env=VRODOS_UNCACHED_CLIENT',
+			'</IfModule>',
+		];
+	}
+
+	private static function published_cache_policy_error( string $message ): WP_Error {
+		$error = new WP_Error( 'vrodos_published_cache_policy_unavailable', $message );
+		update_option(
+			self::PUBLISHED_CACHE_POLICY_ERROR_OPTION,
+			[
+				'message'   => $message,
+				'updatedAt' => current_time( 'mysql', true ),
+			],
+			false
+		);
+		return $error;
 	}
 
 	public static function published_project_url( int $project_id, string $role = '', string $relative = '' ) {
@@ -851,6 +916,13 @@ final class VRodos_Storage_Manager {
 		}
 		if ( ! self::storage_schema_ready() ) {
 			echo '<div class="notice notice-warning"><p><strong>VRodos storage migration required:</strong> run <code>wp vrodos storage audit --format=json</code>, then the migrate and verify rollout before resuming authoring.</p></div>';
+		}
+		$cache_policy_error = get_option( self::PUBLISHED_CACHE_POLICY_ERROR_OPTION, [] );
+		if ( is_array( $cache_policy_error ) && ! empty( $cache_policy_error['message'] ) ) {
+			printf(
+				'<div class="notice notice-warning"><p><strong>VRodos published-asset caching needs server configuration:</strong> %s See <code>documentation/storage-architecture.md</code>.</p></div>',
+				esc_html( (string) $cache_policy_error['message'] )
+			);
 		}
 	}
 

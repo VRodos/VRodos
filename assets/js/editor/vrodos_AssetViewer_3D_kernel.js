@@ -97,19 +97,27 @@ class VRodos_AssetViewer_3D_kernel {
         isBackGroundNull = false,
         lockTranslation = false,
         enableZoom = true,
-        assettrs = '0,0,0,0,0,0,0,0,-100',
-        boundingSphereButton = null
-    ) {
+		assettrs = '0,0,0,0,0,0,0,0,-100',
+		boundingSphereButton = null,
+		loadInfo = {}
+	) {
         this.statsSwitch = statsSwitch;
         this.canvasToBindTo = canvasToBindTo;
         this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.animationButton = animationButton;
         this.animationButtonWrapper = animationButton ? animationButton.parentElement : null;
-        this.previewProgressLabel = previewProgressLabel;
-        this.previewProgressLine = previewProgressLine;
+		this.previewProgressOverlay = previewProgressLabel;
+		this.previewProgressLabel = document.getElementById('previewProgressLabel');
+		this.previewProgressLine = previewProgressLine;
+		this.previewProgressDetail = document.getElementById('previewProgressDetail');
         this.back_3d_color = back_3d_color;
         this.audioElement = audioElement;
-        this.boundingSphereButton = boundingSphereButton;
+		this.boundingSphereButton = boundingSphereButton;
+		this.screenshotButton = document.getElementById('createModelScreenshotBtn');
+		this.currentLoadInfo = loadInfo || {};
+		this.previewReady = false;
+		this.previewAwaitingFirstFrame = false;
+		this.loadGeneration = 0;
         this.isBackGroundNull = isBackGroundNull;
         this.assettrsDOM = document.getElementById('assettrs');
         this.assettrs = (assettrs || '0,0,0,0,0,0,0,0,-100').split(',');
@@ -189,7 +197,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.boundRender = this.render.bind(this);
         this.initGL();
         this.attachAnimationClickHandler();
-        this.loader_asset_exists(glbFilename);
+		this.loader_asset_exists(glbFilename, this.currentLoadInfo);
 
         this.canvasResizeBounded = this.onCanvasResize.bind(this);
         window.addEventListener('resize', this.canvasResizeBounded, true);
@@ -225,7 +233,9 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     onCanvasResize() {
-        this.resizeDisplayGL();
+		if (this.resizeDisplayGL() && this.previewAwaitingFirstFrame) {
+			this.finishPreviewLoad();
+		}
     }
 
     addControlEventListeners() {
@@ -350,19 +360,19 @@ class VRodos_AssetViewer_3D_kernel {
         return true;
     }
 
-    kickRendererOnDemand() {
-        this.addControlEventListeners();
-        if (this.resizeDisplayGL()) {
-            this.setPreviewLoading(false);
-            return;
-        }
+	kickRendererOnDemand() {
+		this.addControlEventListeners();
+		if (this.resizeDisplayGL()) {
+			this.finishPreviewLoad();
+			return;
+		}
 
-        requestAnimationFrame(() => {
-            if (this.resizeDisplayGL()) {
-                this.setPreviewLoading(false);
-            }
-        });
-    }
+		requestAnimationFrame(() => {
+			if (this.resizeDisplayGL()) {
+				this.finishPreviewLoad();
+			}
+		});
+	}
 
     startAutoLoopRendering() {
         const looprender = () => {
@@ -423,8 +433,11 @@ class VRodos_AssetViewer_3D_kernel {
         this.scene.add(ambientLight);
     }
 
-    clearAllAssets(_whocalls) {
-        this.setZeroVars();
+	clearAllAssets(_whocalls) {
+		this.setZeroVars();
+		this.loadGeneration++;
+		this.previewAwaitingFirstFrame = false;
+		this.setPreviewReady(false);
         this.stopAutoLoopRendering();
         this.mixers = [];
         this.action = null;
@@ -452,9 +465,18 @@ class VRodos_AssetViewer_3D_kernel {
             return;
         }
 
-        rootObj.traverse((node) => {
-            if (node.geometry) {
-                node.geometry.dispose();
+		this.disposeObjectResources(rootObj);
+
+		if (rootObj.clear) {
+			rootObj.clear();
+		}
+	}
+
+	disposeObjectResources(root) {
+		if (!root || typeof root.traverse !== 'function') return;
+		root.traverse((node) => {
+			if (node.geometry) {
+				node.geometry.dispose();
             }
 
             if (!node.material) {
@@ -469,13 +491,9 @@ class VRodos_AssetViewer_3D_kernel {
                     }
                 }
                 material.dispose();
-            });
-        });
-
-        if (rootObj.clear) {
-            rootObj.clear();
-        }
-    }
+			});
+		});
+	}
 
     createGlbLoader() {
         if (!VRODOS.loader || typeof VRODOS.loader.createGltfLoader !== 'function') {
@@ -486,17 +504,66 @@ class VRodos_AssetViewer_3D_kernel {
         return loader;
     }
 
-    setPreviewLoading(isVisible) {
-        if (this.previewProgressLabel) {
-            this.previewProgressLabel.style.visibility = isVisible ? 'visible' : 'hidden';
-        }
+	setPreviewLoading(isVisible, title = '') {
+		if (this.previewProgressOverlay) {
+			this.previewProgressOverlay.style.visibility = isVisible ? 'visible' : 'hidden';
+		}
+		if (this.previewProgressLabel && title) {
+			this.previewProgressLabel.textContent = title;
+		}
 
-        if (this.previewProgressLine) {
-            this.previewProgressLine.style.width = isVisible ? '0%' : '100%';
-        }
-    }
+		if (this.previewProgressLine) {
+			this.previewProgressLine.style.width = isVisible ? '0%' : '100%';
+		}
 
-    handleLoadedGltf(gltf) {
+		if (!isVisible && this.previewProgressDetail) {
+			this.previewProgressDetail.textContent = '';
+		}
+	}
+
+	setPreviewStatus(title, detail = '') {
+		if (this.previewProgressLabel && title) {
+			this.previewProgressLabel.textContent = title;
+		}
+		if (this.previewProgressDetail) {
+			this.previewProgressDetail.textContent = detail;
+		}
+	}
+
+	setPreviewReady(isReady) {
+		this.previewReady = Boolean(isReady);
+		if (this.screenshotButton) {
+			this.screenshotButton.disabled = !this.previewReady;
+			this.screenshotButton.setAttribute('aria-disabled', this.previewReady ? 'false' : 'true');
+		}
+	}
+
+	finishPreviewLoad() {
+		this.previewAwaitingFirstFrame = false;
+		this.setPreviewLoading(false);
+		this.setPreviewReady(true);
+		if (typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+			window.dispatchEvent(new CustomEvent('vrodos:asset-preview-ready', {
+				detail: { loadInfo: this.currentLoadInfo || {} }
+			}));
+		}
+	}
+
+	formatBytes(bytes) {
+		const value = Number(bytes || 0);
+		if (!Number.isFinite(value) || value <= 0) return '0 MB';
+		return `${Math.round((value / 1048576) * 10) / 10} MB`;
+	}
+
+	loadingTitle() {
+		return this.currentLoadInfo && this.currentLoadInfo.loadVariant === 'source'
+			? 'Loading full source quality'
+			: 'Loading optimized preview';
+	}
+
+	handleLoadedGltf(gltf) {
+		this.setPreviewStatus('Preparing first frame');
+		this.previewAwaitingFirstFrame = true;
         if (this.hasPlayableAnimations(gltf.animations)) {
             const glbMixer = new THREE.AnimationMixer(gltf.scene);
             this.mixers.push(glbMixer);
@@ -523,21 +590,29 @@ class VRodos_AssetViewer_3D_kernel {
         }
     }
 
-    loadGlbStream(glbBuffer) {
-        this.clearAllAssets('loadGlbStream');
-        this.setPreviewLoading(true);
+	loadGlbStream(glbBuffer) {
+		this.clearAllAssets('loadGlbStream');
+		const loadGeneration = this.loadGeneration;
+		this.currentLoadInfo = { loadVariant: 'source', status: 'ready' };
+		this.setPreviewLoading(true, 'Decoding model');
 
         const loader = this.createGlbLoader();
         loader.parse(
             glbBuffer,
-            '',
-            (gltf) => {
-                this.handleLoadedGltf(gltf);
-            },
-            (error) => {
-                console.log('An error happened', error);
-                this.setPreviewLoading(false);
-            }
+			'',
+			(gltf) => {
+				if (loadGeneration !== this.loadGeneration) {
+					this.disposeObjectResources(gltf && gltf.scene);
+					return;
+				}
+				this.handleLoadedGltf(gltf);
+			},
+			(error) => {
+				if (loadGeneration !== this.loadGeneration) return;
+				console.log('An error happened', error);
+				this.setPreviewLoading(false);
+				this.setPreviewReady(false);
+			}
         );
     }
 
@@ -566,37 +641,62 @@ class VRodos_AssetViewer_3D_kernel {
         this.render();
     }
 
-    loader_asset_exists(glbFilename = null) {
+	loader_asset_exists(glbFilename = null, loadInfo = {}) {
         if (this.renderer) {
             this.clearAllAssets('loader_asset_exists');
         }
+		const loadGeneration = this.loadGeneration;
 
-        if (!glbFilename) {
-            return;
-        }
+		if (!glbFilename) {
+			return;
+		}
 
-        this.setPreviewLoading(true);
+		this.currentLoadInfo = loadInfo || {};
+		this.setPreviewLoading(true, this.loadingTitle());
+		this.setPreviewReady(false);
 
         const loader = this.createGlbLoader();
-        loader.load(
-            glbFilename,
-            (gltf) => {
-                this.handleLoadedGltf(gltf);
-            },
-            (xhr) => {
-                if (!this.previewProgressLine || !xhr.total) {
-                    return;
-                }
+		loader.load(
+			glbFilename,
+			(gltf) => {
+				if (loadGeneration !== this.loadGeneration) {
+					this.disposeObjectResources(gltf && gltf.scene);
+					return;
+				}
+				this.setPreviewStatus('Preparing first frame');
+				this.handleLoadedGltf(gltf);
+			},
+			(xhr) => {
+				if (loadGeneration !== this.loadGeneration) return;
+				const loaded = Number(xhr.loaded || 0);
+				const total = Number(xhr.total || this.currentLoadInfo.loadBytes || 0);
+				if (!total) {
+					this.setPreviewStatus(this.loadingTitle(), loaded > 0 ? `${this.formatBytes(loaded)} downloaded` : 'Starting download');
+					return;
+				}
 
-                const progress = Math.max(0, Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)));
-                this.previewProgressLine.style.width = `${progress  }%`;
-            },
-            (error) => {
-                console.log('An error happened', error);
-                this.setPreviewLoading(false);
-            }
-        );
-    }
+				const progress = Math.max(0, Math.min(100, Math.round((loaded / total) * 100)));
+				if (this.previewProgressLine) {
+					this.previewProgressLine.style.width = `${progress}%`;
+				}
+				if (loaded >= total) {
+					this.setPreviewStatus('Decoding model', `${this.formatBytes(total)} downloaded`);
+				} else {
+					this.setPreviewStatus(this.loadingTitle(), `${progress}% · ${this.formatBytes(loaded)} / ${this.formatBytes(total)}`);
+				}
+			},
+			(error) => {
+				if (loadGeneration !== this.loadGeneration) return;
+				console.log('An error happened', error);
+				this.setPreviewLoading(false);
+				this.setPreviewReady(false);
+			}
+		);
+	}
+
+	loadAssetUrl(glbFilename, loadInfo = {}) {
+		this.loader_asset_exists(glbFilename, loadInfo);
+	}
 
     zoomer(towhatObj) {
         const existingSphere = this.scene.getObjectByName('myBoundingSphere');

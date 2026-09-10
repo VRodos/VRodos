@@ -36,9 +36,9 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 
 		$analysis = self::refresh_asset_analysis( $asset_id );
 		if ( ! is_wp_error( $analysis ) ) {
-			self::maybe_queue_web_high( $asset_id, $source, is_array( $analysis ) ? $analysis : [] );
+			$web_high = self::maybe_queue_web_high( $asset_id, $source, is_array( $analysis ) ? $analysis : [] );
 			$decision = self::editor_preview_decision( (int) $source['sizeBytes'], is_array( $analysis ) ? $analysis : [] );
-			if ( ! empty( $decision['shouldPreview'] ) ) {
+			if ( true !== $web_high && ! empty( $decision['shouldPreview'] ) ) {
 				self::maybe_queue_editor_preview( $asset_id, $source, is_array( $analysis ) ? $analysis : [], $decision );
 			}
 		}

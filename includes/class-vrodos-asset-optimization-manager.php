@@ -12,6 +12,7 @@ require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-anal
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
+require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-load.php';
 require_once __DIR__ . '/asset-optimization/class-vrodos-asset-optimization-admin-controller.php';
 
 class VRodos_Asset_Optimization_Manager {
@@ -51,6 +52,14 @@ class VRodos_Asset_Optimization_Manager {
 
 	public static function get_web_optimization_state( int $asset_id ): array {
 		return VRodos_Asset_Optimization_Admin_Controller::get_web_optimization_state( $asset_id );
+	}
+
+	public static function resolve_editor_glb_load( int $asset_id, bool $force_source = false ): array {
+		return VRodos_Asset_Optimization_Admin_Controller::resolve_editor_glb_load( $asset_id, $force_source );
+	}
+
+	public static function retry_editor_preview( int $asset_id ): array {
+		return VRodos_Asset_Optimization_Admin_Controller::retry_editor_preview( $asset_id );
 	}
 
 	public static function prepare_runtime_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {

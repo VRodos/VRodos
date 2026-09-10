@@ -126,6 +126,7 @@ final class VRodos_Desktop_Profile_Test_Harness {
 
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
 	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
+	public const EDITOR_PREVIEW_PROFILE = 'editor-preview';
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const SOURCE_META_KEY = '_vrodos_asset3d_glb_source_snapshot';
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
@@ -156,6 +157,35 @@ final class VRodos_Desktop_Profile_Test_Harness {
 
 	private static function is_derivative_usable( array $record, string $source_url ): bool {
 		return false;
+	}
+
+	private static function get_analysis_meta( int $asset_id ): array {
+		return [ 'payload' => [ 'estimatedImageBytes' => 64 * 1024 * 1024 ] ];
+	}
+
+	private static function analysis_needs_refresh( $analysis, array $source ): bool {
+		return false;
+	}
+
+	private static function refresh_asset_analysis( int $asset_id ): array {
+		return self::get_analysis_meta( $asset_id );
+	}
+
+	private static function editor_preview_decision( int $source_size_bytes, array $analysis ): array {
+		return [ 'shouldPreview' => $source_size_bytes >= 10 * 1024 * 1024, 'reasons' => [ 'source-size' ] ];
+	}
+
+	private static function get_editor_preview_record( int $asset_id ): array {
+		$meta = self::get_derivative_meta( $asset_id );
+		return is_array( $meta['derivatives']['editor-preview'] ?? null ) ? $meta['derivatives']['editor-preview'] : [];
+	}
+
+	private static function editor_preview_record_is_ready( array $record, array $source ): bool {
+		return 'ready' === ( $record['status'] ?? '' );
+	}
+
+	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision ): void {
+		wp_schedule_single_event( time() + 10, self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] );
 	}
 }
 
@@ -354,9 +384,25 @@ $GLOBALS['vrodos_desktop_test_events'] = [];
 $family_high_options = array_merge( $options, [ 'familySequence' => true ] );
 seed_desktop_profile_record( $asset_id, 'web-high', 'ready', $source, $family_high_options, gmdate( 'Y-m-d H:i:s' ) );
 VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, 'web-high', $source, $family_high_options );
-vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a ready High derivative must queue only Medium next' );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a ready High derivative must queue only the editor preview next' );
 $family_event_key = (string) array_key_first( $GLOBALS['vrodos_desktop_test_events'] );
-vrodos_desktop_assert( str_contains( $family_event_key, 'web-medium' ) && ! str_contains( $family_event_key, 'web-low' ), 'family ordering must remain High, then Medium, then Low' );
+vrodos_desktop_assert( str_contains( $family_event_key, 'vrodos_asset_editor_preview_process_job' ) && ! str_contains( $family_event_key, 'web-medium' ), 'family ordering must remain High, then editor preview' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['derivatives']['editor-preview'] = [ 'status' => 'ready' ];
+invoke_desktop_profile_method( 'continue_web_family_after_editor_preview', [ $asset_id, $source ] );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a terminal editor preview must queue only Medium next' );
+$family_event_key = (string) array_key_first( $GLOBALS['vrodos_desktop_test_events'] );
+vrodos_desktop_assert( str_contains( $family_event_key, 'web-medium' ) && ! str_contains( $family_event_key, 'web-low' ), 'family ordering must continue Preview, then Medium, then Low' );
+
+$GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['derivatives']['editor-preview'] = [
+	'status'  => 'queued',
+	'message' => 'Editor preview is queued for generation.',
+];
+$family_state = VRodos_Desktop_Profile_Test_Harness::get_web_optimization_state( $asset_id );
+vrodos_desktop_assert( 'queued' === $family_state['familyStatus'], 'family status must remain active while the editor preview stage is queued' );
+vrodos_desktop_assert( 'editor-preview' === $family_state['activeProfile'], 'family progress must identify editor preview as the active stage after High' );
+vrodos_desktop_assert( 'queued' === $family_state['editorPreview']['status'], 'the import-status payload must expose editor preview state' );
+vrodos_desktop_assert( 25 === $family_state['familyPercent'], 'family progress must include the editor preview stage between High and Medium' );
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $regenerate_key = seed_desktop_profile_record( 66, 'web-high', 'ready', $source, $options, gmdate( 'Y-m-d H:i:s' ) );
@@ -365,6 +411,23 @@ VRodos_Desktop_Profile_Test_Harness::ensure_derivative( 66, 'web-high', $source,
 $regenerated = $GLOBALS['vrodos_desktop_test_meta'][ 66 ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $regenerate_key ];
 vrodos_desktop_assert( 'queued' === $regenerated['status'] && 2 === $regenerated['attempts'], 'only explicit regeneration of a ready job must create its next attempt' );
 
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$ordered_plan = new VRodos_Project_Compile_Plan();
+$ordered_plan->request = (object) [ 'vr_runtime_profile' => 'headset' ];
+$ordered_plan->scenes = [
+	(object) [
+		'scene_id' => 46,
+		'scene_json' => (object) [ 'asset_id' => 89 ],
+		'desktop_profiles' => [],
+	],
+];
+$ordered_compile_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $ordered_plan );
+vrodos_desktop_assert( 'pending' === $ordered_compile_state['status'], 'a Low build must wait for the ordered derivative family' );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'Build must schedule only one family job for an unoptimized qualifying asset' );
+$ordered_event_key = (string) array_key_first( $GLOBALS['vrodos_desktop_test_events'] );
+vrodos_desktop_assert( str_contains( $ordered_event_key, 'web-high' ) && ! str_contains( $ordered_event_key, 'web-low' ), 'Build must not bypass High and queue Low directly' );
+
+$GLOBALS['vrodos_desktop_test_events'] = [];
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 
 $plan = new VRodos_Project_Compile_Plan();

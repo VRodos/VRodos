@@ -26,7 +26,35 @@ wp-content/uploads/vrodos/published/projects/{project_id}/
   media/
 ```
 
-Compilation resolves current attachment IDs, selects an explicitly enabled derivative when valid, hashes each required media file with SHA-256, and publishes that immutable copy before atomically replacing the client set. The project post stores `_vrodos_published_inventory`; stale media is removed only after successful client publication. The network runtime serves the publication root at `/vrodos-published/` and accepts `VRODOS_PUBLISHED_ROOT` as an override.
+Compilation resolves current attachment IDs, automatically selects the validated derivative required by the runtime profile, hashes each required media file with SHA-256, and publishes that immutable copy before atomically replacing the client set. The project post stores `_vrodos_published_inventory`; stale media is removed only after successful client publication. The network runtime serves the publication root at `/vrodos-published/` and accepts `VRODOS_PUBLISHED_ROOT` as an override.
+
+## Published HTTP cache policy
+
+Every build refreshes a marked `VRodos Published Cache` block in `uploads/vrodos/published/.htaccess`. It gives SHA-256-named files under `projects/{id}/media/` the header `Cache-Control: public, max-age=31536000, immutable`, while generated HTML under `projects/{id}/clients/` receives `Cache-Control: no-store, no-cache, must-revalidate`. A cache-policy write failure does not invalidate an otherwise atomic build: it is returned as a compile warning and remains visible to administrators until the policy can be installed.
+
+Hosts that disable Apache per-directory overrides must configure the same rules at virtual-host level. An equivalent Apache 2.4 configuration is:
+
+```apache
+<LocationMatch "/vrodos/published/projects/[0-9]+/media/[a-f0-9]{64}\.[A-Za-z0-9]+$">
+    Header always set Cache-Control "public, max-age=31536000, immutable"
+</LocationMatch>
+<LocationMatch "/vrodos/published/projects/[0-9]+/clients/[^/]+\.html$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate"
+</LocationMatch>
+```
+
+Equivalent Nginx locations are:
+
+```nginx
+location ~ ^/wp-content/uploads/vrodos/published/projects/[0-9]+/media/[a-f0-9]{64}\.[A-Za-z0-9]+$ {
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+}
+location ~ ^/wp-content/uploads/vrodos/published/projects/[0-9]+/clients/[^/]+\.html$ {
+    add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+}
+```
+
+The Node network runtime applies the same headers to both of its publication mounts. Private authoring attachments deliberately remain `private, max-age=0, must-revalidate`: browsers may reuse the body after authenticated validation, but a reopened editor must reconstruct parsed Three.js objects and GPU resources. Clearing site data, private browsing, eviction, or another device causes an expected redownload.
 
 ## Authoring access
 

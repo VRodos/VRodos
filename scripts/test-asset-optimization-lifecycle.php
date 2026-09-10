@@ -123,7 +123,7 @@ $controller->handle_asset_glb_meta_change( 1, $asset_id, 'vrodos_asset3d_glb', 1
 vrodos_lifecycle_assert( 1 === VRodos_Asset_Optimization_Lifecycle_Harness::$cancelled, 'source replacement must cancel queued work' );
 vrodos_lifecycle_assert( 1 === VRodos_Asset_Optimization_Lifecycle_Harness::$deleted, 'source content replacement must delete obsolete derivatives and staging data' );
 vrodos_lifecycle_assert( 1 === VRodos_Asset_Optimization_Lifecycle_Harness::$highQueued, 'GLB activation must queue High exactly once' );
-vrodos_lifecycle_assert( 1 === VRodos_Asset_Optimization_Lifecycle_Harness::$previewQueued, 'GLB activation must queue preview work exactly once' );
+vrodos_lifecycle_assert( 0 === VRodos_Asset_Optimization_Lifecycle_Harness::$previewQueued, 'GLB activation must not queue preview work until High reaches a terminal state' );
 
 $GLOBALS['vrodos_lifecycle_snapshot'] = [
 	'attachmentId' => 11,

@@ -143,7 +143,7 @@ class VRodos_Compiler_Manager {
 			$clients_published = true;
 			$this->resource_publisher->finalize( $artifacts );
 
-			$warnings = array_merge( $render_warnings, (array) ( $profile_assets['warnings'] ?? [] ) );
+			$warnings = array_merge( $render_warnings, (array) ( $profile_assets['warnings'] ?? [] ), $this->resource_publisher->warnings() );
 			foreach ( $plan->scenes as $scene_plan ) {
 				$warnings = array_merge( $warnings, $scene_plan->diagnostics );
 			}

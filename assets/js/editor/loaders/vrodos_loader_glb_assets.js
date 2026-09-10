@@ -12,16 +12,10 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
         resource.glb_path = resourcesGLB.glbURL || '';
         resource.path = resourcesGLB.glbURL || '';
     }
-    [
-        'sourceSizeBytes',
-        'editorPreviewGlbURL',
-        'editorPreviewStatus',
-        'editorPreviewMessage',
-        'editorPreviewShouldUse',
-        'editorPreviewReasons',
-        'glbAnalysis',
-        'vrodosAssetOriginMode'
-    ].forEach((key) => {
+	[
+		'editorLoad',
+		'vrodosAssetOriginMode'
+	].forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(resourcesGLB, key)) {
             resource[key] = resourcesGLB[key];
         }
@@ -45,37 +39,36 @@ function vrodosLoaderResolveGlbUrl(resource, resourcesGLB) {
 }
 
 function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB) {
-    const canonicalUrl = vrodosLoaderResolveGlbUrl(resource, resourcesGLB);
-    const previewUrl = resourcesGLB && resourcesGLB.editorPreviewGlbURL
-        ? resourcesGLB.editorPreviewGlbURL
-        : (resource && resource.editorPreviewGlbURL ? resource.editorPreviewGlbURL : '');
-    const previewStatus = String(
-        (resourcesGLB && resourcesGLB.editorPreviewStatus) ||
-        (resource && resource.editorPreviewStatus) ||
-        'none'
-    );
-    const shouldUsePreview = Boolean(
-        (resourcesGLB && resourcesGLB.editorPreviewShouldUse) ||
-        (resource && resource.editorPreviewShouldUse)
-    );
+	const canonicalUrl = vrodosLoaderResolveGlbUrl(resource, resourcesGLB);
+	const editorLoad = (resourcesGLB && resourcesGLB.editorLoad) || (resource && resource.editorLoad) || null;
+	if (!editorLoad) {
+		const managedAsset = Boolean(resource && resource.asset_id);
+		return {
+			loadUrl: managedAsset ? '' : canonicalUrl,
+			canonicalUrl,
+			loadVariant: managedAsset ? 'none' : 'source',
+			loadBytes: 0,
+			usesPreview: false,
+			usesDerivative: false,
+			status: managedAsset ? 'missing' : (canonicalUrl ? 'ready' : 'missing'),
+			message: managedAsset ? 'Authorized editor-load metadata is unavailable.' : ''
+		};
+	}
 
-    if (shouldUsePreview && previewStatus === 'ready' && previewUrl) {
-        return {
-            loadUrl: previewUrl,
-            canonicalUrl,
-            usesPreview: true,
-            status: previewStatus,
-            message: (resourcesGLB && resourcesGLB.editorPreviewMessage) || (resource && resource.editorPreviewMessage) || 'Editor preview optimized.'
-        };
-    }
-
-    return {
-        loadUrl: canonicalUrl,
-        canonicalUrl,
-        usesPreview: false,
-        status: previewStatus,
-        message: (resourcesGLB && resourcesGLB.editorPreviewMessage) || (resource && resource.editorPreviewMessage) || ''
-    };
+	const loadVariant = String(editorLoad.loadVariant || 'none');
+	return {
+		loadUrl: editorLoad.loadUrl || '',
+		canonicalUrl: editorLoad.canonicalUrl || canonicalUrl,
+		loadVariant,
+		loadBytes: Number(editorLoad.loadBytes || 0),
+		usesPreview: loadVariant === 'editor-preview',
+		usesDerivative: loadVariant !== 'none' && loadVariant !== 'source',
+		status: String(editorLoad.status || 'missing'),
+		previewStatus: String(editorLoad.previewStatus || 'none'),
+		message: String(editorLoad.message || ''),
+		canRetry: Boolean(editorLoad.canRetry),
+		canLoadSource: Boolean(editorLoad.canLoadSource)
+	};
 }
 
 function vrodosLoaderStartGlbAnimations(object, animationRoot) {
@@ -131,7 +124,8 @@ function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
     finalObject.glb_path = loadInfo.canonicalUrl || finalObject.glb_path || '';
     finalObject.path = loadInfo.canonicalUrl || finalObject.path || '';
     finalObject.editor_loaded_glb_path = loadInfo.loadUrl || '';
-    finalObject.editor_preview_loaded = Boolean(loadInfo.usesPreview);
+	finalObject.editor_preview_loaded = Boolean(loadInfo.usesPreview);
+	finalObject.editor_load_variant = loadInfo.loadVariant || 'source';
     finalObject.editor_preview_status = loadInfo.status || 'none';
     finalObject.editor_preview_message = loadInfo.message || '';
     VRODOS.editor.objectFactory.addSceneObject(finalObject, {
@@ -224,6 +218,247 @@ VRODOS.loader.resolveGlbAssetRequest = async function(name, resource) {
     };
 };
 
+VRODOS.loader.pendingEditorGlbLoads = VRODOS.loader.pendingEditorGlbLoads || new Map();
+
+function vrodosLoaderPreviewActionId(group) {
+	const assetId = Number(group[0] && group[0].resource && group[0].resource.asset_id || 0);
+	return assetId > 0 ? `vrodos-preview-actions-${assetId}` : '';
+}
+
+function vrodosLoaderRemovePreviewActions(group) {
+	const container = document.getElementById('editorPreviewLoadActions');
+	const actionId = vrodosLoaderPreviewActionId(group);
+	const row = actionId ? document.getElementById(actionId) : null;
+	if (row) row.remove();
+	if (container && container.children.length === 0) {
+		container.classList.add('tw-hidden');
+	}
+}
+
+async function vrodosLoaderLoadActionGroup(group, resources3D) {
+	const currentGroup = group.filter((request) => vrodosLoaderPendingRequestIsCurrent(request, resources3D));
+	if (currentGroup.length === 0) {
+		vrodosLoaderRemovePreviewActions(group);
+		if (typeof VRODOS.api.hideSceneLoadingProgress === 'function') {
+			VRODOS.api.hideSceneLoadingProgress();
+		}
+		return;
+	}
+	vrodosLoaderRemovePreviewActions(group);
+	const loader = VRODOS.loader.createGltfLoader(null, {
+		renderer: VRODOS.editor.envir && VRODOS.editor.envir.renderer
+	});
+	await VRODOS.loader.loadResolvedGlbAssetGroup(null, loader, currentGroup, resources3D);
+	if (typeof window.requestAnimationFrame === 'function') {
+		await new Promise((resolve) => window.requestAnimationFrame(resolve));
+	}
+	if (typeof VRODOS.api.hideSceneLoadingProgress === 'function') {
+		VRODOS.api.hideSceneLoadingProgress();
+	}
+}
+
+function vrodosLoaderShowPreviewActions(group, resources3D) {
+	const representative = group[0];
+	const loadInfo = representative && representative.loadInfo;
+	const assetId = Number(representative && representative.resource && representative.resource.asset_id || 0);
+	const container = document.getElementById('editorPreviewLoadActions');
+	const actionId = vrodosLoaderPreviewActionId(group);
+	if (!representative || !loadInfo || !container || !actionId || assetId <= 0) return;
+
+	let row = document.getElementById(actionId);
+	if (!row) {
+		row = document.createElement('div');
+		row.id = actionId;
+		row.className = 'tw-rounded-xl tw-border tw-border-amber-400/40 tw-bg-slate-950/90 tw-p-3 tw-text-left tw-shadow-xl';
+		container.appendChild(row);
+	}
+	row.replaceChildren();
+
+	const message = document.createElement('p');
+	message.className = 'tw-mb-2 tw-text-xs tw-font-semibold tw-text-slate-100';
+	message.textContent = `${VRODOS.utils.loaderDisplayText(representative.resource.asset_name || representative.name)}: ${loadInfo.message || 'The optimized editor preview could not be prepared.'}`;
+	row.appendChild(message);
+
+	const controls = document.createElement('div');
+	controls.className = 'tw-flex tw-flex-wrap tw-gap-2';
+	row.appendChild(controls);
+
+	if (loadInfo.canRetry) {
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'tw-btn tw-btn-xs tw-border-0 tw-bg-amber-500 tw-text-white hover:tw-bg-amber-600';
+		retry.textContent = 'Retry Preview';
+		retry.addEventListener('click', async () => {
+			retry.disabled = true;
+			try {
+				const response = await fetch(VRODOS.utils.getAjaxUrl(), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: new URLSearchParams({
+						action: 'vrodos_retry_editor_preview_action',
+						nonce: window.vrodos_data.scene_mutation_nonce,
+						asset_id: String(assetId)
+					})
+				});
+				const payload = await response.json();
+				if (!response.ok || !payload || !payload.success) {
+					throw new Error(payload && payload.data || 'Preview retry failed.');
+				}
+				if (document.getElementById(actionId) !== row) return;
+				const refreshed = group
+					.filter((request) => vrodosLoaderPendingRequestIsCurrent(request, resources3D))
+					.map((request) => Object.assign({}, request, {
+						loadInfo: vrodosLoaderResolveEditorGlbLoadTarget(request.resource, { editorLoad: payload.data })
+					}));
+				if (refreshed.length === 0) {
+					vrodosLoaderRemovePreviewActions(group);
+					return;
+				}
+				if (refreshed[0].loadInfo.loadUrl) {
+					await vrodosLoaderLoadActionGroup(refreshed, resources3D);
+					return;
+				}
+				vrodosLoaderRemovePreviewActions(group);
+				if (typeof VRODOS.api.showSceneLoadingProgress === 'function') {
+					VRODOS.api.showSceneLoadingProgress('Optimized preview retry queued');
+				}
+				vrodosLoaderSchedulePendingGroupRetry(refreshed, resources3D);
+			} catch (error) {
+				message.textContent = `Preview retry failed: ${error && error.message ? error.message : 'Unknown error.'}`;
+				retry.disabled = false;
+			}
+		});
+		controls.appendChild(retry);
+	}
+
+	if (loadInfo.canLoadSource && loadInfo.canonicalUrl) {
+		const fullSource = document.createElement('button');
+		fullSource.type = 'button';
+		fullSource.className = 'tw-btn tw-btn-xs tw-border-0 tw-bg-white tw-text-slate-800 hover:tw-bg-slate-100';
+		fullSource.textContent = 'Load Full Source Quality';
+		fullSource.addEventListener('click', async () => {
+			fullSource.disabled = true;
+			const sourceGroup = group.map((request) => Object.assign({}, request, {
+				loadInfo: Object.assign({}, request.loadInfo, {
+					status: 'ready',
+					loadUrl: request.loadInfo.canonicalUrl,
+					loadVariant: 'source',
+					usesPreview: false,
+					usesDerivative: false,
+					message: 'Loading the original source GLB.'
+				})
+			}));
+			await vrodosLoaderLoadActionGroup(sourceGroup, resources3D);
+		});
+		controls.appendChild(fullSource);
+	}
+
+	container.classList.remove('tw-hidden');
+	if (typeof VRODOS.api.showSceneLoadingProgress === 'function') {
+		VRODOS.api.showSceneLoadingProgress('Optimized preview needs attention', { immediate: true });
+	}
+}
+
+function vrodosLoaderPendingGroupKey(group) {
+	const assetId = Number(group[0] && group[0].resource && group[0].resource.asset_id || 0);
+	return assetId > 0
+		? `asset:${assetId}`
+		: group.map((request) => request.name).sort().join('|');
+}
+
+function vrodosLoaderPendingRequestIsCurrent(request, resources3D) {
+	const currentResources = typeof VRODOS.utils.getSceneDataObjectMap === 'function'
+		? VRODOS.utils.getSceneDataObjectMap({ create: false })
+		: resources3D;
+	if (!currentResources || !Object.prototype.hasOwnProperty.call(currentResources, request.name)) {
+		return false;
+	}
+
+	const currentResource = currentResources[request.name] || {};
+	const expectedAssetId = Number(request.resource && request.resource.asset_id || 0);
+	const currentAssetId = Number(currentResource.asset_id || 0);
+	return expectedAssetId === 0 || currentAssetId === expectedAssetId;
+}
+
+function vrodosLoaderSchedulePendingGroupRetry(group, resources3D) {
+	const representative = group[0];
+	if (!representative || representative.loadInfo.status !== 'pending' || !representative.resource.asset_id) return;
+
+	const key = vrodosLoaderPendingGroupKey(group);
+	const existing = VRODOS.loader.pendingEditorGlbLoads.get(key);
+	if (existing) {
+		group.forEach((request) => existing.requests.set(request.name, request));
+		return;
+	}
+	const state = {
+		attempts: 0,
+		timer: null,
+		stopped: false,
+		requests: new Map(group.map((request) => [request.name, request]))
+	};
+	VRODOS.loader.pendingEditorGlbLoads.set(key, state);
+
+	const poll = async () => {
+		if (state.stopped) {
+			VRODOS.loader.pendingEditorGlbLoads.delete(key);
+			return;
+		}
+		const currentGroup = Array.from(state.requests.values()).filter((request) => (
+			vrodosLoaderPendingRequestIsCurrent(request, resources3D)
+		));
+		if (currentGroup.length === 0) {
+			VRODOS.loader.pendingEditorGlbLoads.delete(key);
+			return;
+		}
+		state.attempts++;
+		try {
+			const metadata = await VRODOS.loader.fetchGlbMetadata(representative.name, representative.resource);
+			const refreshed = currentGroup
+				.filter((request) => vrodosLoaderPendingRequestIsCurrent(request, resources3D))
+				.map((request) => {
+				vrodosLoaderMergeGlbMetadata(request.resource, metadata);
+				return Object.assign({}, request, {
+					loadInfo: vrodosLoaderResolveEditorGlbLoadTarget(request.resource, metadata)
+				});
+			});
+			if (refreshed.length === 0) {
+				VRODOS.loader.pendingEditorGlbLoads.delete(key);
+				return;
+			}
+			const loadInfo = refreshed[0].loadInfo;
+			if (loadInfo.loadUrl) {
+				VRODOS.loader.pendingEditorGlbLoads.delete(key);
+				await vrodosLoaderLoadActionGroup(refreshed, resources3D);
+				return;
+			}
+			if (loadInfo.status === 'failed' || loadInfo.status === 'missing' || loadInfo.status === 'forbidden') {
+				console.warn(`Optimized editor preview for '${representative.name}' is unavailable.`, loadInfo);
+				VRODOS.loader.pendingEditorGlbLoads.delete(key);
+				if (loadInfo.status === 'failed') {
+					vrodosLoaderShowPreviewActions(refreshed, resources3D);
+				}
+				return;
+			}
+		} catch (error) {
+			console.warn(`Could not refresh optimized preview for '${representative.name}'.`, error);
+		}
+		const delay = Math.min(15000, 3000 + (state.attempts * 1000));
+		state.timer = window.setTimeout(poll, delay);
+	};
+
+	state.timer = window.setTimeout(poll, 3000);
+}
+
+if (typeof window.addEventListener === 'function') {
+	window.addEventListener('pagehide', () => {
+		VRODOS.loader.pendingEditorGlbLoads.forEach((state) => {
+			state.stopped = true;
+			if (state.timer) window.clearTimeout(state.timer);
+		});
+		VRODOS.loader.pendingEditorGlbLoads.clear();
+	});
+}
+
 function vrodosLoaderTrackManagerStart(manager, requests) {
     if (!manager) return;
     requests.forEach((request) => manager.itemStart(request.name));
@@ -241,16 +476,26 @@ function vrodosLoaderCreateTemplatePromise(gltfLoader, requests) {
     const placementCount = requests.length;
 
     return new Promise((resolve, reject) => {
-        gltfLoader.load(
+		gltfLoader.load(
             loadInfo.loadUrl,
             resolve,
-            (xhr) => {
-                const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                const displayName = VRODOS.utils.loaderDisplayText(representative.resource.asset_name || representative.name);
-                const placementLabel = placementCount > 1 ? ` (${placementCount} placements)` : '';
-                if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
-                    VRODOS.api.setSceneLoadingProgressText(`'${displayName}'${placementLabel} downloaded ${mbLoaded} Mb`);
-                }
+			(xhr) => {
+				const loadedBytes = Number(xhr.loaded || 0);
+				const totalBytes = Number(xhr.total || loadInfo.loadBytes || 0);
+				const mbLoaded = Math.floor(loadedBytes / 104857.6) / 10;
+				const displayName = VRODOS.utils.loaderDisplayText(representative.resource.asset_name || representative.name);
+				const placementLabel = placementCount > 1 ? ` (${placementCount} placements)` : '';
+				if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+					if (totalBytes > 0 && loadedBytes >= totalBytes) {
+						VRODOS.api.setSceneLoadingProgressText(`Decoding '${displayName}'${placementLabel}`);
+					} else if (totalBytes > 0) {
+						const percent = Math.max(0, Math.min(100, Math.round((loadedBytes / totalBytes) * 100)));
+						const totalMb = Math.round((totalBytes / 1048576) * 10) / 10;
+						VRODOS.api.setSceneLoadingProgressText(`Loading optimized preview — ${percent}% · ${mbLoaded} / ${totalMb} MB`);
+					} else {
+						VRODOS.api.setSceneLoadingProgressText(`Loading optimized preview — ${mbLoaded} MB`);
+					}
+				}
             },
             reject
         );
@@ -258,7 +503,10 @@ function vrodosLoaderCreateTemplatePromise(gltfLoader, requests) {
 }
 
 function vrodosLoaderWarnMissingPath(request) {
-    console.warn(`Asset '${request.name}' has no GLB path and will be skipped.`, {
+	const message = request.loadInfo && request.loadInfo.message
+		? request.loadInfo.message
+		: 'No GLB path is available.';
+	console.warn(`Asset '${request.name}' was not loaded: ${message}`, {
         asset_id: request.resource.asset_id || '',
         asset_missing: Boolean(request.resource.asset_missing)
     });
@@ -272,23 +520,34 @@ VRODOS.loader.loadResolvedGlbAssetGroup = async function(manager, gltfLoader, re
 
     vrodosLoaderTrackManagerStart(manager, group);
     const loadUrl = group[0].loadInfo && group[0].loadInfo.loadUrl;
-    if (!loadUrl) {
-        group.forEach((request) => {
-            vrodosLoaderWarnMissingPath(request);
-            vrodosLoaderTrackManagerEnd(manager, request, true);
-        });
-        return group.map(() => null);
+	if (!loadUrl) {
+		group.forEach((request) => {
+			vrodosLoaderWarnMissingPath(request);
+			vrodosLoaderTrackManagerEnd(manager, request, request.loadInfo.status !== 'pending');
+		});
+		vrodosLoaderSchedulePendingGroupRetry(group, resources3D);
+		if (group[0].loadInfo.status === 'failed') {
+			vrodosLoaderShowPreviewActions(group, resources3D);
+		}
+		return group.map(() => null);
     }
 
-    if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
-        VRODOS.api.setSceneLoadingProgressText('Loading ...');
+	if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+		const label = group[0].loadInfo && group[0].loadInfo.loadVariant === 'source'
+			? 'Loading full source quality'
+			: 'Loading optimized preview';
+		VRODOS.api.setSceneLoadingProgressText(label);
     }
 
-    try {
-        await VRODOS.loader.glbAssetCache.load(
+	try {
+		vrodosLoaderRemovePreviewActions(group);
+		await VRODOS.loader.glbAssetCache.load(
             loadUrl,
             () => vrodosLoaderCreateTemplatePromise(gltfLoader, group)
-        );
+		);
+		if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+			VRODOS.api.setSceneLoadingProgressText('Preparing first frame');
+		}
 
         return group.map((request) => {
             const object = VRODOS.loader.glbAssetCache.instantiate(request.loadInfo.loadUrl);
@@ -300,8 +559,8 @@ VRODOS.loader.loadResolvedGlbAssetGroup = async function(manager, gltfLoader, re
             );
             vrodosLoaderStartGlbAnimations(object, finalObject);
 
-            if (request.loadInfo.usesPreview) {
-                console.info(`Loaded editor preview derivative for '${request.name}'.`, {
+			if (request.loadInfo.usesDerivative) {
+				console.info(`Loaded ${request.loadInfo.loadVariant} derivative for '${request.name}'.`, {
                     asset_id: request.resource.asset_id || '',
                     source: request.loadInfo.canonicalUrl,
                     preview: request.loadInfo.loadUrl

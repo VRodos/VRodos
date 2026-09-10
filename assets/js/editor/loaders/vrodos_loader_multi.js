@@ -84,9 +84,11 @@ VRODOS.loader.LoaderMulti = class {
 
             resolvedRequests.forEach((request) => {
                 const loadUrl = request.loadInfo && request.loadInfo.loadUrl;
-                const key = loadUrl
-                    ? VRODOS.loader.glbAssetCache.getKey(loadUrl)
-                    : `missing:${request.name}`;
+				const key = loadUrl
+					? VRODOS.loader.glbAssetCache.getKey(loadUrl)
+					: (request.loadInfo && request.loadInfo.status === 'pending' && request.resource.asset_id
+						? `pending:${request.resource.asset_id}`
+						: `missing:${request.name}`);
                 if (loadUrl) validPlacementCount++;
                 if (!groupedRequests.has(key)) {
                     groupedRequests.set(key, []);
@@ -95,7 +97,7 @@ VRODOS.loader.LoaderMulti = class {
             });
 
             uniqueGlbCount = Array.from(groupedRequests.entries())
-                .filter(([key]) => !key.startsWith('missing:'))
+				.filter(([key]) => !key.startsWith('missing:') && !key.startsWith('pending:'))
                 .length;
             reusedGlbPlacementCount = Math.max(0, validPlacementCount - uniqueGlbCount);
 
@@ -103,8 +105,8 @@ VRODOS.loader.LoaderMulti = class {
                 .map((group, originalIndex) => ({
                     group,
                     originalIndex,
-                    sourceSizeBytes: group.reduce((largest, request) => (
-                        Math.max(largest, Number(request.resource && request.resource.sourceSizeBytes) || 0)
+					sourceSizeBytes: group.reduce((largest, request) => (
+						Math.max(largest, Number(request.resource && request.resource.editorLoad && request.resource.editorLoad.sourceBytes) || 0)
                     ), 0)
                 }))
                 .sort((left, right) => (

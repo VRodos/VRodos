@@ -21,6 +21,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	private array $desktop_profile_slots = [];
 	private array $desktop_profile_recipes = [];
 	private array $desktop_profile_definitions = [];
+	private array $warnings = [];
 	private VRodos_Runtime_URL_Resolver $url_resolver;
 	/** @var resource|null */
 	private $lock_handle = null;
@@ -36,6 +37,12 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->runtime_mode = $plan->request->runtime_mode;
 		$this->runtime_profile = $plan->request->vr_runtime_profile;
 		$this->desktop_profiles_enabled = 'desktop' === $plan->request->vr_runtime_profile;
+		$this->warnings = [];
+		$cache_policy = VRodos_Storage_Manager::ensure_published_cache_policy();
+		if ( is_wp_error( $cache_policy ) ) {
+			$this->warnings[] = $cache_policy->get_error_message();
+			error_log( '[VRodos] Published cache policy warning: ' . $cache_policy->get_error_message() );
+		}
 		$this->acquire_lock();
 		try {
 			foreach ( $plan->scenes as $scene ) {
@@ -64,6 +71,10 @@ final class VRodos_Compiler_Resource_Publisher {
 		}
 		ksort( $this->media, SORT_STRING );
 		return array_values( $this->media );
+	}
+
+	public function warnings(): array {
+		return $this->warnings;
 	}
 
 	public function finalize( array $artifacts ): void {

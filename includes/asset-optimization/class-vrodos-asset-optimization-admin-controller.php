@@ -13,6 +13,7 @@ class VRodos_Asset_Optimization_Admin_Controller {
 	use VRodos_Asset_Optimization_Derivative_Service;
 	use VRodos_Asset_Optimization_Editor_Preview;
 	use VRodos_Asset_Optimization_Desktop_Profiles;
+	use VRodos_Asset_Optimization_Editor_Load;
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';

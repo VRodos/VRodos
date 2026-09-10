@@ -1202,7 +1202,7 @@ function updateNativeColorPicker(input, asset_viewer_3d_kernel_local) {
 }
 
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
-    if (!asset_viewer_3d_kernel_local || !asset_viewer_3d_kernel_local.renderer) {
+	if (!asset_viewer_3d_kernel_local || !asset_viewer_3d_kernel_local.renderer || !asset_viewer_3d_kernel_local.previewReady) {
         vrodos_set_asset_editor_notice('The 3D preview is not ready yet. Wait for the model preview to load and try again.');
         return;
     }
@@ -1249,6 +1249,173 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
     offscreenRenderer.dispose();
 }
 
+function vrodos_format_editor_preview_bytes(bytes) {
+	const value = Number(bytes || 0);
+	if (!Number.isFinite(value) || value <= 0) return '';
+	return `${Math.round((value / 1048576) * 10) / 10} MB`;
+}
+
+function vrodos_asset_editor_preview_label(state) {
+	const variant = String((state && state.loadVariant) || 'none');
+	if (variant === 'editor-preview') return 'Editor Preview';
+	if (variant === 'source') return 'Full Source Quality';
+	if (variant.startsWith('web-')) return `${variant.replace('web-', 'Web ')} Preview`;
+	if (state && state.status === 'failed') return 'Preview Failed';
+	if (state && state.status === 'pending') return 'Preparing Preview';
+	return 'Preview';
+}
+
+function vrodos_update_asset_editor_preview_controls(state) {
+	const current = state || {};
+	const badge = document.getElementById('assetPreviewQualityBadge');
+	const retryButton = document.getElementById('assetPreviewRetryBtn');
+	const fullSourceButton = document.getElementById('assetPreviewFullSourceBtn');
+	const placeholderTitle = document.getElementById('preview3dPlaceholderTitle');
+	const placeholderDetail = document.getElementById('preview3dPlaceholderDetail');
+	if (badge) {
+		const source = vrodos_format_editor_preview_bytes(current.sourceBytes);
+		const loaded = vrodos_format_editor_preview_bytes(current.loadBytes);
+		badge.textContent = vrodos_asset_editor_preview_label(current);
+		badge.title = [current.message || '', source && loaded && source !== loaded ? `${source} source · ${loaded} loaded` : '']
+			.filter(Boolean)
+			.join(' — ');
+	}
+	if (retryButton) {
+		retryButton.classList.toggle('tw-hidden', !current.canRetry);
+		retryButton.disabled = false;
+	}
+	if (fullSourceButton) {
+		const show = Boolean(current.canLoadSource && current.loadVariant !== 'source');
+		fullSourceButton.classList.toggle('tw-hidden', !show);
+		fullSourceButton.disabled = false;
+	}
+	if (placeholderTitle && placeholderDetail && !current.loadUrl) {
+		if (current.status === 'pending') {
+			placeholderTitle.textContent = 'Optimized preview is being prepared';
+			placeholderDetail.textContent = current.message || 'This model will appear automatically when it is ready.';
+		} else if (current.status === 'failed') {
+			placeholderTitle.textContent = 'Preview generation needs attention';
+			placeholderDetail.textContent = current.message || 'Retry the preview or load the full source.';
+		} else if (current.status === 'forbidden') {
+			placeholderTitle.textContent = 'Preview unavailable';
+			placeholderDetail.textContent = current.message || 'You cannot access this asset.';
+		}
+	}
+}
+
+async function vrodos_fetch_asset_editor_load_state() {
+	const config = window.vrodos_api_config || {};
+	const assetId = Number(window.vrodosAssetEditorAssetId || 0);
+	if (!assetId || !config.ajax_url || !config.editor_load_nonce) return null;
+	const response = await fetch(config.ajax_url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			action: 'vrodos_fetch_glb_asset_action',
+			nonce: config.editor_load_nonce,
+			asset_id: String(assetId)
+		})
+	});
+	if (!response.ok) throw new Error(`Preview status request failed with HTTP ${response.status}.`);
+	const payload = await response.json();
+	return payload && payload.editorLoad ? payload.editorLoad : null;
+}
+
+function vrodos_init_asset_editor_preview_controls(viewer) {
+	let state = window.vrodosAssetEditorLoad || {};
+	let stopped = false;
+	let timer = null;
+	let explicitSource = false;
+	const retryButton = document.getElementById('assetPreviewRetryBtn');
+	const fullSourceButton = document.getElementById('assetPreviewFullSourceBtn');
+
+	const schedulePoll = () => {
+		if (stopped || timer || !['pending', 'queued', 'running', 'stale', 'waiting-high'].includes(String(state.previewStatus || state.status || ''))) return;
+		timer = window.setTimeout(async () => {
+			timer = null;
+			try {
+				const nextState = await vrodos_fetch_asset_editor_load_state();
+				if (!nextState) return;
+				state = nextState;
+				window.vrodosAssetEditorLoad = state;
+				vrodos_update_asset_editor_preview_controls(state);
+				if (
+					!explicitSource &&
+					viewer &&
+					state.loadUrl &&
+					(
+						String((viewer.currentLoadInfo && viewer.currentLoadInfo.loadVariant) || 'none') !== String(state.loadVariant || 'none') ||
+						String((viewer.currentLoadInfo && viewer.currentLoadInfo.loadUrl) || '') !== String(state.loadUrl || '')
+					)
+				) {
+					viewer.loadAssetUrl(state.loadUrl, Object.assign({}, state, { loadUrl: state.loadUrl }));
+				}
+			} catch (error) {
+				console.warn('VRodos: could not refresh editor preview status.', error);
+			}
+			schedulePoll();
+		}, 3000);
+	};
+
+	if (fullSourceButton) {
+		fullSourceButton.addEventListener('click', () => {
+			const sourceUrl = state.canonicalUrl || window.canonical_glb_file_name || '';
+			if (!sourceUrl || !viewer) return;
+			explicitSource = true;
+			stopped = true;
+			if (timer) {
+				window.clearTimeout(timer);
+				timer = null;
+			}
+			state = Object.assign({}, state, {
+				status: 'ready',
+				loadUrl: sourceUrl,
+				loadVariant: 'source',
+				loadBytes: Number(state.sourceBytes || 0),
+				message: 'Loading the original source GLB.'
+			});
+			vrodos_update_asset_editor_preview_controls(state);
+			viewer.loadAssetUrl(sourceUrl, Object.assign({}, state, { loadUrl: sourceUrl }));
+		});
+	}
+
+	if (retryButton) {
+		retryButton.addEventListener('click', async () => {
+			const config = window.vrodos_api_config || {};
+			const assetId = Number(window.vrodosAssetEditorAssetId || 0);
+			if (!assetId || !config.ajax_url || !config.editor_load_nonce) return;
+			retryButton.disabled = true;
+			try {
+				const response = await fetch(config.ajax_url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: new URLSearchParams({
+						action: 'vrodos_retry_editor_preview_action',
+						nonce: config.editor_load_nonce,
+						asset_id: String(assetId)
+					})
+				});
+				const payload = await response.json();
+				if (!response.ok || !payload.success) throw new Error(payload.data || 'Preview retry failed.');
+				state = payload.data;
+				window.vrodosAssetEditorLoad = state;
+				vrodos_update_asset_editor_preview_controls(state);
+				schedulePoll();
+			} catch (error) {
+				console.warn('VRodos: editor preview retry failed.', error);
+				retryButton.disabled = false;
+			}
+		});
+	}
+
+	window.addEventListener('pagehide', () => {
+		stopped = true;
+		if (timer) window.clearTimeout(timer);
+	}, { once: true });
+	vrodos_update_asset_editor_preview_controls(state);
+	schedulePoll();
+}
+
 function loadFileInputLabel() {
     const inputLabel = document.getElementById('fileUploadInputLabel');
     const input = document.getElementById('fileUploadInput');
@@ -1286,6 +1453,7 @@ function setScreenshotHandler() {
 window.addHandlerFor3Dfiles = addHandlerFor3Dfiles;
 window.updateNativeColorPicker = updateNativeColorPicker;
 window.setScreenshotHandler = setScreenshotHandler;
+window.vrodos_init_asset_editor_preview_controls = vrodos_init_asset_editor_preview_controls;
 
 function vrodos_init_asset_import_status_polling() {
     const initialStatus = window.vrodosAssetImportStatus || {};
@@ -1338,11 +1506,12 @@ function vrodos_init_asset_import_status_polling() {
         try {
             const status = await fetchStatus();
             const optimization = status.optimization || {};
-            const optimizationActive = optimization.status === 'queued' || optimization.status === 'running';
-            const optimizationFailed = optimization.status === 'failed';
+            const optimizationStatus = optimization.familyStatus || optimization.status;
+            const optimizationActive = optimizationStatus === 'queued' || optimizationStatus === 'running';
+            const optimizationFailed = optimizationStatus === 'failed';
             if (status.status === 'ready' && optimizationActive) {
-                const percent = Number(optimization.percent || 0);
-                setImportNotice('running', `${optimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
+                const percent = Number(optimization.familyPercent ?? optimization.percent ?? 0);
+                setImportNotice('running', `${optimization.activeMessage || optimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
             } else if (status.status === 'ready' && optimizationFailed) {
                 setImportNotice('failed', `${optimization.message || 'Web optimization failed. The original GLB is unchanged.'} Use GLB Optimization to retry.`, false);
             } else {
@@ -1396,10 +1565,11 @@ function vrodos_init_asset_import_status_polling() {
     }
 
     const initialOptimization = initialStatus.optimization || {};
-    if (initialStatus.status === 'pending' || initialStatus.status === 'running' || initialOptimization.status === 'queued' || initialOptimization.status === 'running') {
+    const initialOptimizationStatus = initialOptimization.familyStatus || initialOptimization.status;
+    if (initialStatus.status === 'pending' || initialStatus.status === 'running' || initialOptimizationStatus === 'queued' || initialOptimizationStatus === 'running') {
         if (initialStatus.status === 'ready') {
-            const percent = Number(initialOptimization.percent || 0);
-            setImportNotice('running', `${initialOptimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
+            const percent = Number(initialOptimization.familyPercent ?? initialOptimization.percent ?? 0);
+            setImportNotice('running', `${initialOptimization.activeMessage || initialOptimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
         } else {
             setImportNotice(initialStatus.status, initialStatus.message, false);
         }

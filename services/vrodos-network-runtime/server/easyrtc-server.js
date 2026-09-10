@@ -94,9 +94,31 @@ app.get("/healthz", (_req, res) => {
   });
 });
 
+function setPublishedCacheHeaders(res, filePath) {
+  const fileName = path.basename(filePath);
+  const parentDirectory = path.basename(path.dirname(filePath));
+
+  if (parentDirectory === "media" && /^[a-f0-9]{64}\.[a-z0-9]+$/i.test(fileName)) {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    return;
+  }
+
+  if (parentDirectory === "clients" && /\.html$/i.test(fileName)) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
+}
+
+const publishedStaticOptions = {
+  fallthrough: false,
+  index: false,
+  setHeaders: setPublishedCacheHeaders
+};
+
 // Generated clients and their content-addressed media are the only mutable files served here.
-app.use("/vrodos-published", express.static(publishedRoot, { fallthrough: false, index: false }));
-app.use("/wp-content/uploads/vrodos/published", express.static(publishedRoot, { fallthrough: false, index: false }));
+app.use("/vrodos-published", express.static(publishedRoot, publishedStaticOptions));
+app.use("/wp-content/uploads/vrodos/published", express.static(publishedRoot, publishedStaticOptions));
 
 // Preserve generated HTML paths while serving the canonical VRodos asset layout.
 app.use("/dist", express.static(path.join(pluginRoot, "assets", "vendor", "networked-aframe", "dist")));

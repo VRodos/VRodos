@@ -210,10 +210,15 @@ class MockGltfLoader {
 }
 
 const expectedErrors = [];
+const scheduledTimers = [];
 let skeletonCloneCalls = 0;
 const context = {
     URLSearchParams,
     alert() {},
+	addEventListener() {},
+	clearTimeout(timer) {
+		if (timer) timer.cancelled = true;
+	},
     console: {
         log: console.log,
         info: console.info,
@@ -226,6 +231,11 @@ const context = {
         }
     },
     performance,
+	setTimeout(callback) {
+		const timer = { callback, cancelled: false };
+		scheduledTimers.push(timer);
+		return timer;
+	},
     THREE: {
         AnimationMixer: MockAnimationMixer,
         Box3: MockBox3,
@@ -363,7 +373,8 @@ context.fetch = async () => {
     return {
         text: async () => JSON.stringify({
             category_slug: "decoration",
-            glbURL: "/dynamic.glb"
+			glbURL: "/dynamic.glb",
+			editorLoad: { status: "ready", loadUrl: "/dynamic.glb", loadVariant: "source", canonicalUrl: "/dynamic.glb" }
         })
     };
 };
@@ -374,7 +385,8 @@ const hydratedResource = {
     editorMetadataHydrated: true,
     glb_id: 200,
     glb_path: "/hydrated.glb",
-    path: "/hydrated.glb"
+	path: "/hydrated.glb",
+	editorLoad: { status: "ready", loadUrl: "/hydrated.glb", loadVariant: "source", canonicalUrl: "/hydrated.glb" }
 };
 const hydratedObject = await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "hydrated", hydratedResource, {
     hydrated: hydratedResource
@@ -390,9 +402,13 @@ const previewResource = {
     glb_id: 202,
     glb_path: "/source.glb",
     path: "/source.glb",
-    editorPreviewGlbURL: "/preview.glb",
-    editorPreviewStatus: "ready",
-    editorPreviewShouldUse: true,
+	editorLoad: {
+		status: "ready",
+		loadUrl: "/preview.glb",
+		loadVariant: "editor-preview",
+		canonicalUrl: "/source.glb",
+		loadBytes: 1024
+	},
     compiledCollisionEnabled: false
 };
 const previewObject = await context.VRODOS.loader.loadGlbAsset(null, previewLoader, "preview", previewResource, {
@@ -414,6 +430,107 @@ await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "dynamic", 
     dynamic: dynamicResource
 });
 assert(metadataRequests === 1, "dynamically added GLBs must refresh metadata");
+
+const removedPendingResource = {
+	asset_id: 24,
+	category_slug: "decoration",
+	editorMetadataHydrated: true,
+	glb_id: 204,
+	glb_path: "/large-source.glb",
+	path: "/large-source.glb",
+	editorLoad: {
+		status: "pending",
+		loadUrl: "",
+		loadVariant: "none",
+		canonicalUrl: "/large-source.glb",
+		sourceBytes: 300 * 1024 * 1024
+	}
+};
+const removedPendingResources = { removedPending: removedPendingResource };
+let pendingMetadataRequests = 0;
+context.fetch = async () => {
+	pendingMetadataRequests++;
+	return { text: async () => "{}" };
+};
+const removedPendingResult = await context.VRODOS.loader.loadGlbAsset(
+	null,
+	new MockGltfLoader(),
+	"removedPending",
+	removedPendingResource,
+	removedPendingResources
+);
+assert(removedPendingResult === null, "a qualifying pending preview must not fall back to its source GLB");
+assert(scheduledTimers.length === 1, "a pending preview must schedule one status poll");
+delete removedPendingResources.removedPending;
+await scheduledTimers.shift().callback();
+assert(pendingMetadataRequests === 0, "deleting a pending placement must cancel its late metadata refresh");
+assert(context.VRODOS.loader.pendingEditorGlbLoads.size === 0, "deleted pending placements must be removed from the retry registry");
+
+const coalescedPendingResources = {
+	coalescedA: {
+		asset_id: 26,
+		category_slug: "decoration",
+		editorMetadataHydrated: true,
+		glb_path: "/coalesced-source.glb",
+		editorLoad: { status: "pending", loadUrl: "", loadVariant: "none", canonicalUrl: "/coalesced-source.glb" }
+	},
+	coalescedB: {
+		asset_id: 26,
+		category_slug: "decoration",
+		editorMetadataHydrated: true,
+		glb_path: "/coalesced-source.glb",
+		editorLoad: { status: "pending", loadUrl: "", loadVariant: "none", canonicalUrl: "/coalesced-source.glb" }
+	}
+};
+await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "coalescedA", coalescedPendingResources.coalescedA, coalescedPendingResources);
+await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "coalescedB", coalescedPendingResources.coalescedB, coalescedPendingResources);
+assert(scheduledTimers.length === 1, "separate pending placements of one asset must share one status poll");
+delete coalescedPendingResources.coalescedA;
+delete coalescedPendingResources.coalescedB;
+await scheduledTimers.shift().callback();
+assert(context.VRODOS.loader.pendingEditorGlbLoads.size === 0, "the shared pending poll must stop after all matching placements are removed");
+
+const readyPendingResource = {
+	asset_id: 25,
+	category_slug: "decoration",
+	editorMetadataHydrated: true,
+	glb_id: 205,
+	glb_path: "/second-large-source.glb",
+	path: "/second-large-source.glb",
+	editorLoad: {
+		status: "pending",
+		loadUrl: "",
+		loadVariant: "none",
+		canonicalUrl: "/second-large-source.glb",
+		sourceBytes: 200 * 1024 * 1024
+	}
+};
+const readyPendingResources = { readyPending: readyPendingResource };
+context.fetch = async () => ({
+	text: async () => JSON.stringify({
+		glbURL: "/second-large-source.glb",
+		editorLoad: {
+			status: "ready",
+			loadUrl: "/second-preview.glb",
+			loadVariant: "editor-preview",
+			canonicalUrl: "/second-large-source.glb",
+			loadBytes: 5 * 1024 * 1024
+		}
+	})
+});
+const pendingAddedStart = context.VRODOS.editor.objectFactory.added.length;
+await context.VRODOS.loader.loadGlbAsset(
+	null,
+	new MockGltfLoader(),
+	"readyPending",
+	readyPendingResource,
+	readyPendingResources
+);
+assert(scheduledTimers.length === 1, "each pending asset family must use one coalesced status poll");
+await scheduledTimers.shift().callback();
+assert(context.VRODOS.editor.objectFactory.added.length === pendingAddedStart + 1, "a preview that becomes ready must be inserted without reopening the editor");
+assert(context.VRODOS.editor.objectFactory.added.at(-1).object.editor_loaded_glb_path === "/second-preview.glb", "the completed pending job must load its optimized preview URL");
+assert(context.VRODOS.loader.pendingEditorGlbLoads.size === 0, "ready pending previews must leave no retry timer behind");
 
 class ControlledGltfLoader {
     constructor() {
@@ -477,6 +594,7 @@ const centeredResource = {
     glb_id: 203,
     glb_path: "/centered.glb",
     path: "/centered.glb",
+	editorLoad: { status: "ready", loadUrl: "/centered.glb", loadVariant: "source", canonicalUrl: "/centered.glb" },
     vrodosAssetOriginMode: "bounds-center",
     trs: { translation: [3, 4, 5] }
 };
@@ -514,6 +632,7 @@ const duplicateLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
         editorMetadataHydrated: true,
         glb_id: 8521,
         glb_path: "/tree.glb",
+		editorLoad: { status: "ready", loadUrl: "/tree.glb", loadVariant: "source", canonicalUrl: "/tree.glb" },
         trs: { translation: [1, 0, 0] }
     },
     treeTwo: {
@@ -522,6 +641,7 @@ const duplicateLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
         editorMetadataHydrated: true,
         glb_id: 8521,
         glb_path: "/tree.glb",
+		editorLoad: { status: "ready", loadUrl: "/tree.glb", loadVariant: "source", canonicalUrl: "/tree.glb" },
         trs: { translation: [2, 0, 0] }
     },
     treeThree: {
@@ -530,6 +650,7 @@ const duplicateLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
         editorMetadataHydrated: true,
         glb_id: 8521,
         glb_path: "/tree.glb",
+		editorLoad: { status: "ready", loadUrl: "/tree.glb", loadVariant: "source", canonicalUrl: "/tree.glb" },
         trs: { translation: [3, 0, 0] }
     },
     building: {
@@ -538,6 +659,7 @@ const duplicateLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
         editorMetadataHydrated: true,
         glb_id: 8522,
         glb_path: "/building.glb",
+		editorLoad: { status: "ready", loadUrl: "/building.glb", loadVariant: "source", canonicalUrl: "/building.glb" },
         trs: { translation: [4, 0, 0] }
     }
 }, "/plugin");
@@ -583,7 +705,8 @@ context.fetch = async () => {
     return {
         text: async () => JSON.stringify({
             category_slug: "decoration",
-            glbURL: "/tree.glb"
+			glbURL: "/tree.glb",
+			editorLoad: { status: "ready", loadUrl: "/tree.glb", loadVariant: "source", canonicalUrl: "/tree.glb" }
         })
     };
 };
@@ -614,6 +737,7 @@ const animatedResourceOne = {
     editorMetadataHydrated: true,
     glb_id: 9001,
     glb_path: "/character.glb",
+	editorLoad: { status: "ready", loadUrl: "/character.glb", loadVariant: "source", canonicalUrl: "/character.glb" },
     trs: {}
 };
 const animatedResourceTwo = {
@@ -657,6 +781,7 @@ const retryResource = {
     editorMetadataHydrated: true,
     glb_id: 9100,
     glb_path: "/retry.glb",
+	editorLoad: { status: "ready", loadUrl: "/retry.glb", loadVariant: "source", canonicalUrl: "/retry.glb" },
     trs: {}
 };
 const failedAttempt = context.VRODOS.loader.loadGlbAsset(
@@ -709,9 +834,9 @@ assert(serialLoadSettled === true, "scene completion must wait until successful 
 const sizeOrderedLoader = new ControlledGltfLoader();
 context.VRODOS.loader.createGltfLoader = () => sizeOrderedLoader;
 const sizeOrderedLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
-    small: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9301, glb_path: "/small.glb", sourceSizeBytes: 10 },
-    largest: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9302, glb_path: "/largest.glb", sourceSizeBytes: 80 },
-    medium: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9303, glb_path: "/medium.glb", sourceSizeBytes: 40 }
+	small: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9301, glb_path: "/small.glb", editorLoad: { status: "ready", loadUrl: "/small.glb", loadVariant: "source", canonicalUrl: "/small.glb", sourceBytes: 10 } },
+	largest: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9302, glb_path: "/largest.glb", editorLoad: { status: "ready", loadUrl: "/largest.glb", loadVariant: "source", canonicalUrl: "/largest.glb", sourceBytes: 80 } },
+	medium: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9303, glb_path: "/medium.glb", editorLoad: { status: "ready", loadUrl: "/medium.glb", loadVariant: "source", canonicalUrl: "/medium.glb", sourceBytes: 40 } }
 }, "/plugin");
 await flushTasks();
 assert(sizeOrderedLoader.calls.join(",") === "/largest.glb", "the largest unique GLB must start first");
@@ -771,6 +896,7 @@ const assetBrowserSource = readFileSync(resolve(root, "assets/js/editor/ui/vrodo
 const editorInitializerSource = readFileSync(resolve(root, "assets/js/editor/core/vrodos_editor_initializer.js"), "utf8");
 const editorNamespaceSource = readFileSync(resolve(root, "assets/js/editor/vrodos_namespace.js"), "utf8");
 const sceneLifecycleSource = readFileSync(resolve(root, "assets/js/editor/loaders/vrodos_loader_scene_lifecycle.js"), "utf8");
+const glbLoaderSource = readFileSync(resolve(root, "assets/js/editor/loaders/vrodos_loader_glb_assets.js"), "utf8");
 assert(sceneManagerSource.includes("'editorMetadataHydrated' => true"), "PHP scene bootstrap data must mark hydrated asset metadata");
 assert(scenePersistenceSource.includes("'editorMetadataHydrated'"), "the hydration marker must be excluded from persisted scene JSON");
 assert(assetManagerSource.includes("vrodos_loader_glb_asset_cache"), "the editor must register and load the parsed GLB cache");
@@ -783,6 +909,9 @@ assert(editorInitializerSource.indexOf("vrodosScheduleAvailableAssetsFetch();") 
 assert(editorNamespaceSource.includes("window.performance.mark('vrodos-editor-script-start')"), "the first editor dependency must mark script execution start");
 assert(editorInitializerSource.includes("window.performance.mark('vrodos-editor-shell-ready')"), "editor shell readiness must be marked");
 assert(sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-load-start')") && sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-ready')"), "scene loading must expose start and ready marks");
+assert(glbLoaderSource.includes("Retry Preview") && glbLoaderSource.includes("Load Full Source Quality"), "failed scene-editor previews must expose retry and explicit source actions");
+assert(glbLoaderSource.includes("managedAsset ? '' : canonicalUrl"), "managed assets must never bypass the shared resolver and silently load their source URL");
+assert(sceneLifecycleSource.includes("hasPreviewActions"), "scene finalization must not hide actionable preview failures");
 assert(threeVendorSource.includes("SkeletonUtils"), "the Three.js vendor bundle must export SkeletonUtils for skinned clones");
 
 console.log("Editor scene loader tests passed.");

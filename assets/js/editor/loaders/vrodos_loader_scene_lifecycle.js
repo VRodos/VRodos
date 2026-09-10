@@ -46,10 +46,12 @@ VRODOS.api.hideSceneLoadingProgress = function(options) {
         VRODOS.api.clearSceneLoadingProgressTimers();
     }
 
-    const progressWrapper = document.getElementById("progressWrapper");
-    if (progressWrapper) {
-        progressWrapper.style.visibility = "hidden";
-    }
+	const progressWrapper = document.getElementById("progressWrapper");
+	const previewActions = document.getElementById('editorPreviewLoadActions');
+	const hasPreviewActions = previewActions && previewActions.children.length > 0;
+	if (progressWrapper && (!hasPreviewActions || opts.force)) {
+		progressWrapper.style.visibility = "hidden";
+	}
 };
 
 VRODOS.api.configureSceneLoadingManager = function(manager, options) {

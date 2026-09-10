@@ -430,6 +430,7 @@ extract( $data );
 					</div>
 
 					<div id="result_download" class="result"></div>
+					<div id="editorPreviewLoadActions" class="tw-hidden tw-mt-3 tw-space-y-2" aria-live="polite"></div>
 				</div>
 
 

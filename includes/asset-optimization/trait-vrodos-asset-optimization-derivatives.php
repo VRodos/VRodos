@@ -190,7 +190,9 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 	}
 
 	private function generate_derivative( int $asset_id, array $source, string $profile, array $options = [] ) {
-		if ( str_starts_with( $profile, 'web-' ) ) {
+		$is_web_profile = str_starts_with( $profile, 'web-' );
+		$is_editor_family_profile = $is_web_profile || 'editor-preview' === $profile;
+		if ( $is_web_profile ) {
 			$options = array_merge(
 				[
 					'protectGeometry' => true,
@@ -235,21 +237,23 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			$profile,
 			'--json',
 		];
-		if ( str_starts_with( $profile, 'web-' ) ) {
+		if ( $is_web_profile ) {
 			$args[] = '--progress-file';
 			$args[] = $paths['progress'];
-			$args[] = '--source-sha256';
-			$args[] = (string) ( $source['sha256'] ?? '' );
 			$args[] = '--job-key';
 			$args[] = (string) ( $options['jobKey'] ?? '' );
 			$args[] = '--queued-at';
 			$args[] = (string) ( $options['queuedAt'] ?? '' );
+		}
+		if ( $is_editor_family_profile ) {
+			$args[] = '--source-sha256';
+			$args[] = (string) ( $source['sha256'] ?? '' );
 			if ( ! empty( $paths['preparedBaseline'] ) && ! empty( $paths['preparedAnalysis'] ) ) {
 				$args[] = '--prepared-baseline';
 				$args[] = $paths['preparedBaseline'];
 				$args[] = '--prepared-analysis';
 				$args[] = $paths['preparedAnalysis'];
-				if ( ! empty( $options['writePreparedBaseline'] ) ) {
+				if ( $is_web_profile && ! empty( $options['writePreparedBaseline'] ) ) {
 					$args[] = '--write-prepared-baseline';
 				}
 			}
@@ -332,8 +336,8 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'manifest' => $dir . '/' . $base . '.manifest.json',
 			'markdown' => $dir . '/' . $base . '.manifest.md',
 			'progress' => $dir . '/' . $base . '.progress.json',
-			'preparedBaseline' => str_starts_with( $profile, 'web-' ) && '' !== $source_hash ? $prepared_base . '.glb' : '',
-			'preparedAnalysis' => str_starts_with( $profile, 'web-' ) && '' !== $source_hash ? $prepared_base . '.json' : '',
+			'preparedBaseline' => ( str_starts_with( $profile, 'web-' ) || 'editor-preview' === $profile ) && '' !== $source_hash ? $prepared_base . '.glb' : '',
+			'preparedAnalysis' => ( str_starts_with( $profile, 'web-' ) || 'editor-preview' === $profile ) && '' !== $source_hash ? $prepared_base . '.json' : '',
 		];
 	}
 

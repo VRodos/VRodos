@@ -13,6 +13,7 @@ class VRodos_Asset_AJAX {
 		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', [ $this, 'fetch_asset3d_meta_backend_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', [ $this, 'vrodos_fetch_game_assets_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
+		add_action( 'wp_ajax_vrodos_retry_editor_preview_action', [ $this, 'vrodos_retry_editor_preview_callback' ] );
 	}
 
 	/**
@@ -130,25 +131,14 @@ class VRodos_Asset_AJAX {
 		$output->glbIDs = $glbID;
 		$output->glbURL = $url_normalizer->normalize( $glbURL );
 		$output->vrodosAssetOriginMode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
-		$output->sourceSizeBytes = 0;
-		$output->editorPreviewGlbURL = '';
-		$output->editorPreviewStatus = 'none';
-		$output->editorPreviewMessage = '';
-		$output->editorPreviewUsed = false;
-		$output->editorPreviewShouldUse = false;
-		$output->editorPreviewReasons = [];
-		$output->glbAnalysis = [];
+		$output->editorLoad = [];
 
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glbURL ) {
-			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
-			$output->sourceSizeBytes = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
-			$output->editorPreviewGlbURL = $url_normalizer->normalize( (string) ( $preview_state['url'] ?? '' ) );
-			$output->editorPreviewStatus = (string) ( $preview_state['status'] ?? 'none' );
-			$output->editorPreviewMessage = (string) ( $preview_state['message'] ?? '' );
-			$output->editorPreviewUsed = ! empty( $preview_state['used'] );
-			$output->editorPreviewShouldUse = ! empty( $preview_state['shouldPreview'] );
-			$output->editorPreviewReasons = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
-			$output->glbAnalysis = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
+			$editor_load = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id );
+			foreach ( [ 'loadUrl', 'canonicalUrl' ] as $url_key ) {
+				$editor_load[ $url_key ] = $url_normalizer->normalize( (string) ( $editor_load[ $url_key ] ?? '' ) );
+			}
+			$output->editorLoad = $editor_load;
 		}
 
 		// Fetch category slug
@@ -178,6 +168,22 @@ class VRodos_Asset_AJAX {
 
 		echo json_encode( $output, JSON_UNESCAPED_SLASHES );
 		wp_die();
+	}
+
+	public function vrodos_retry_editor_preview_callback(): void {
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$asset_id = absint( $_POST['asset_id'] ?? 0 );
+		if ( ! $this->can_read_asset( $asset_id ) || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+		if ( ! class_exists( 'VRodos_Asset_Optimization_Manager' ) ) {
+			wp_send_json_error( 'Asset optimization is unavailable.', 503 );
+		}
+
+		VRodos_Asset_Optimization_Manager::retry_editor_preview( $asset_id );
+		wp_send_json_success( VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id ) );
 	}
 
 	private function can_read_asset( int $asset_id ): bool {

@@ -16,7 +16,8 @@ extract($data);
     <?php wp_head(); ?>
     <script>
         let isAdmin="<?php echo $isAdmin; ?>";
-        let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
+		let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
+		window.canonical_glb_file_name = <?php echo json_encode($canonical_glb_file_name); ?>;
         let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
         var vrodos_isEditable = <?php echo $isEditable ? 'true' : 'false'; ?>;
@@ -27,7 +28,8 @@ extract($data);
         var vrodosRequestLimitLabel = <?php echo json_encode($request_limit_label); ?>;
         var vrodosAssetEditorProjectId = <?php echo (int) $project_id; ?>;
         var vrodosAssetEditorAssetId = <?php echo (int) ($asset_id ?? 0); ?>;
-        var vrodosAssetImportStatus = <?php echo wp_json_encode( $asset_import_status ?? [] ); ?>;
+		var vrodosAssetImportStatus = <?php echo wp_json_encode( $asset_import_status ?? [] ); ?>;
+		var vrodosAssetEditorLoad = <?php echo wp_json_encode( $editor_glb_load ?? [] ); ?>;
     </script>
     <?php
     // Pre-apply the correct section visibility to prevent layout flicker on load.
@@ -214,11 +216,17 @@ else { ?>
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-visible lg:tw-overflow-y-auto lg:tw-h-full">
                 <div class="tw-p-5 lg:tw-p-6 tw-space-y-4">
                     <!-- 3D Preview Card -->
-                    <div id="vrodos_3d_preview_card" class="vrodos-model-drop-zone tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]" data-vrodos-model-drop-zone="true">
+					<div id="vrodos_3d_preview_card" class="vrodos-model-drop-zone tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]" data-vrodos-model-drop-zone="true">
+						<div id="assetPreviewQualityControls" class="tw-absolute tw-top-3 tw-left-3 tw-right-3 tw-z-30 tw-flex tw-flex-wrap tw-items-center tw-justify-end tw-gap-2">
+							<span id="assetPreviewQualityBadge" class="tw-rounded-full tw-bg-slate-900/80 tw-px-3 tw-py-1.5 tw-text-[9px] tw-font-black tw-uppercase tw-tracking-wider tw-text-white tw-backdrop-blur-sm">Preview</span>
+							<button id="assetPreviewRetryBtn" type="button" class="tw-hidden tw-btn tw-btn-xs tw-border-0 tw-bg-amber-500 tw-text-white hover:tw-bg-amber-600">Retry Preview</button>
+							<button id="assetPreviewFullSourceBtn" type="button" class="tw-hidden tw-btn tw-btn-xs tw-border-0 tw-bg-white/95 tw-text-slate-700 tw-shadow-md hover:tw-bg-white">Load Full Source Quality</button>
+						</div>
                         <!-- Preview Overlay -->
                         <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity" style="visibility:hidden">
                             <div class="tw-bg-white tw-p-6 tw-rounded-2xl tw-shadow-2xl tw-text-center tw-min-w-[200px]">
-                                <h6 id="previewProgressLabel" class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">Loading</h6>
+								<h6 id="previewProgressLabel" class="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-2">Loading optimized preview</h6>
+								<p id="previewProgressDetail" class="tw-mb-3 tw-text-[10px] tw-font-semibold tw-text-slate-400"></p>
                                 <div class="tw-w-full tw-h-1.5 tw-bg-slate-100 tw-rounded-full tw-overflow-hidden">
                                     <div id="previewProgressSliderLine" class="tw-h-full tw-bg-primary tw-transition-all tw-duration-300" style="width: 0%;"></div>
                                 </div>
@@ -228,8 +236,8 @@ else { ?>
                         <!-- Empty state placeholder -->
                         <div id="preview3dPlaceholder" class="tw-absolute tw-inset-0 tw-z-5 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-50 tw-pointer-events-none">
                             <i data-lucide="box" class="tw-w-16 tw-h-16 tw-text-slate-300 tw-mb-3"></i>
-                            <span class="tw-text-sm tw-font-medium tw-text-slate-400">No 3D model loaded</span>
-                            <span class="tw-text-xs tw-text-slate-300 tw-mt-1">Upload a GLB file to preview</span>
+							<span id="preview3dPlaceholderTitle" class="tw-text-sm tw-font-medium tw-text-slate-400">No 3D model loaded</span>
+							<span id="preview3dPlaceholderDetail" class="tw-text-xs tw-text-slate-300 tw-mt-1">Upload a GLB file to preview</span>
                         </div>
 
                         <!-- 3D Canvas -->
@@ -1183,9 +1191,13 @@ else { ?>
 				false,
 				true,
 				assettrs,
-				null); // boundSphButton removed
+				null,
+				vrodosAssetEditorLoad); // boundSphButton removed
 
 			window.addHandlerFor3Dfiles(window.asset_viewer_3d_kernel, multipleFilesInputElem);
+			if (typeof window.vrodos_init_asset_editor_preview_controls === 'function') {
+				window.vrodos_init_asset_editor_preview_controls(window.asset_viewer_3d_kernel);
+			}
 		});
 
 		const assetForm = document.getElementById('3dAssetForm');

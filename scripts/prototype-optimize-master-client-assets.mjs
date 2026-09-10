@@ -784,7 +784,7 @@ async function optimizeAsset(asset, index, options) {
     let sourceSha256 = options.sourceSha256;
     let reusedPreparedBaseline = false;
 
-    if (isWebProfile(options.profile) && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
+    if ((isWebProfile(options.profile) || options.profile === 'editor-preview') && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
         try {
             const prepared = JSON.parse(await readFile(options.preparedAnalysis, 'utf8'));
             if (prepared.schemaVersion === 2 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {

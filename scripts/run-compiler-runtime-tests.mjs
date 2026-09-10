@@ -79,6 +79,7 @@ if (!php) {
 	"scripts/test-frontend-access.php",
 	"scripts/test-private-media-cache-logic.php",
 	"scripts/test-editor-preview-pipeline.php",
+	"scripts/test-editor-load-resolver.php",
 	"scripts/test-desktop-profile-pipeline.php",
 	"scripts/test-asset-optimization-lifecycle.php",
 	"scripts/test-asset-origin-contract.php",

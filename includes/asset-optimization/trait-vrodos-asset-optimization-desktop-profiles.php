@@ -63,6 +63,15 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				}
 				continue;
 			}
+			$analysis = self::get_analysis_meta( (int) $asset_id );
+			if ( self::analysis_needs_refresh( $analysis, $source ) ) {
+				$analysis = self::refresh_asset_analysis( (int) $asset_id );
+			}
+			$family_result = self::maybe_queue_web_high(
+				(int) $asset_id,
+				$source,
+				is_array( $analysis ) ? $analysis : []
+			);
 
 			foreach ( (array) $asset['slots'] as $slot ) {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
@@ -70,12 +79,18 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				}
 				$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [] );
 				$definition = self::runtime_derivative_definition_for_slot( (string) $slot, $plan->scenes[0]->desktop_profiles ?? [] );
+				$texture_max_size = absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) );
+				$is_standard_profile = $texture_max_size === self::runtime_derivative_texture_cap( $profile );
 				$options = [
-					'protectGeometry' => ! empty( $asset['protectGeometry'] ),
-					'textureMaxSize'  => absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) ),
+					'protectGeometry' => 'web-high' === $profile || ! empty( $asset['protectGeometry'] ),
+					'textureMaxSize'  => $texture_max_size,
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => $profile,
 				];
+				if ( 'web-high' === $profile && $is_standard_profile ) {
+					$options['familySequence'] = true;
+					$options['writePreparedBaseline'] = (int) $source['sizeBytes'] >= self::LARGE_SOURCE_PUBLISH_GATE_BYTES;
+				}
 				$record = self::desktop_profile_record( (int) $asset_id, $profile, $source, $options );
 				if ( self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
 					self::activate_desktop_profile_variant( (int) $asset_id, $profile, (string) $record['jobKey'] );
@@ -99,6 +114,31 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 						$warnings[] = $warning;
 						$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'ready', $warning );
 					}
+					continue;
+				}
+
+				$waits_for_standard_family = $is_standard_profile && in_array( $profile, [ 'web-medium', 'web-low' ], true );
+				if ( $waits_for_standard_family && is_wp_error( $family_result ) ) {
+					$message = 'The ordered Web derivative family could not start: ' . $family_result->get_error_message();
+					if ( (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ) {
+						$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+						$status = 'failed';
+					} else {
+						++$ready;
+						$warnings[] = sprintf( 'Asset #%d %s derivative could not be prepared; source GLB will be published: %s', $asset_id, ucfirst( $slot ), $message );
+						$status = 'ready';
+					}
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $status, $message );
+					continue;
+				}
+				if ( $waits_for_standard_family && true === $family_result ) {
+					$status = in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) ? (string) $record['status'] : 'queued';
+					$message = (string) ( $record['message'] ?? '' );
+					if ( '' === $message ) {
+						$message = 'Waiting for the ordered Web derivative family (High, Editor Preview, Medium, Low).';
+					}
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $status, $message );
+					$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
 					continue;
 				}
 
@@ -229,8 +269,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 		$profiles = [];
 		$ready_profiles = 0;
-		$family_percent = 0;
-		$active_profile = '';
+		$profile_percent_total = 0;
 		foreach ( self::WEB_FAMILY_PROFILES as $profile ) {
 			$record = self::desktop_profile_record( $asset_id, $profile );
 			$status = sanitize_key( (string) ( $record['status'] ?? 'none' ) );
@@ -245,10 +284,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			if ( 'ready' === $status ) {
 				++$ready_profiles;
 			}
-			if ( '' === $active_profile && in_array( $status, [ 'running', 'queued' ], true ) ) {
-				$active_profile = $profile;
-			}
-			$family_percent += $percent;
+			$profile_percent_total += $percent;
 			$profiles[ str_replace( 'web-', '', $profile ) ] = [
 				'profile'           => $profile,
 				'status'            => in_array( $status, [ 'queued', 'running', 'ready', 'failed', 'cancelled' ], true ) ? $status : 'none',
@@ -262,10 +298,37 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			];
 		}
 		$high = $profiles['high'];
-		$statuses = array_column( $profiles, 'status' );
+		$preview_record = self::get_editor_preview_record( $asset_id );
+		$preview_status = sanitize_key( (string) ( $preview_record['status'] ?? 'none' ) );
+		$preview_status = in_array( $preview_status, [ 'waiting-high', 'queued', 'running', 'ready', 'failed', 'cancelled' ], true ) ? $preview_status : 'none';
+		$preview_decision = is_array( $source ) ? self::editor_preview_decision( $source_bytes, self::get_analysis_meta( $asset_id ) ) : [ 'shouldPreview' => false ];
+		$preview_in_sequence = ! empty( $high_options['familySequence'] ) && ! empty( $preview_decision['shouldPreview'] );
+		$preview_percent = in_array( $preview_status, [ 'ready', 'failed', 'cancelled' ], true ) ? 100 : 0;
+		$ordered_stages = [
+			'web-high' => $profiles['high']['status'],
+		];
+		if ( $preview_in_sequence ) {
+			$ordered_stages[ self::EDITOR_PREVIEW_PROFILE ] = 'waiting-high' === $preview_status ? 'queued' : $preview_status;
+		}
+		$ordered_stages['web-medium'] = $profiles['medium']['status'];
+		$ordered_stages['web-low'] = $profiles['low']['status'];
+		$active_profile = '';
+		$active_message = '';
+		foreach ( $ordered_stages as $stage => $status ) {
+			if ( in_array( $status, [ 'running', 'queued' ], true ) ) {
+				$active_profile = $stage;
+				$active_message = self::EDITOR_PREVIEW_PROFILE === $stage
+					? (string) ( $preview_record['message'] ?? '' )
+					: (string) ( $profiles[ str_replace( 'web-', '', $stage ) ]['message'] ?? '' );
+				break;
+			}
+		}
+		$statuses = array_values( $ordered_stages );
 		$family_status = 3 === $ready_profiles
 			? 'ready'
 			: ( in_array( 'running', $statuses, true ) ? 'running' : ( in_array( 'queued', $statuses, true ) ? 'queued' : ( in_array( 'failed', $statuses, true ) ? 'failed' : 'none' ) ) );
+		$family_stage_count = count( self::WEB_FAMILY_PROFILES ) + ( $preview_in_sequence ? 1 : 0 );
+		$family_percent = $profile_percent_total + ( $preview_in_sequence ? $preview_percent : 0 );
 		return [
 			'status'          => $high['status'],
 			'profile'         => 'web-high',
@@ -276,11 +339,20 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'reductionPercent' => $high['reductionPercent'],
 			'canRetry'        => $high['canRetry'],
 			'familyStatus'    => $family_status,
-			'familyPercent'   => (int) round( $family_percent / count( self::WEB_FAMILY_PROFILES ) ),
+			'familyPercent'   => (int) round( $family_percent / $family_stage_count ),
 			'activeProfile'   => $active_profile,
+			'activeMessage'   => $active_message,
 			'readyProfiles'   => $ready_profiles,
 			'totalProfiles'   => count( self::WEB_FAMILY_PROFILES ),
 			'profiles'        => $profiles,
+			'editorPreview'   => [
+				'status'           => $preview_status,
+				'percent'          => $preview_percent,
+				'message'          => (string) ( $preview_record['message'] ?? '' ),
+				'derivativeBytes'  => absint( $preview_record['derivativeSizeBytes'] ?? 0 ),
+				'reductionPercent' => is_numeric( $preview_record['reductionPercent'] ?? null ) ? (float) $preview_record['reductionPercent'] : 0.0,
+				'canRetry'         => 'failed' === $preview_status,
+			],
 		];
 	}
 
@@ -332,6 +404,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$result = $this->generate_derivative( $asset_id, $source, $profile, $options );
 			if ( is_wp_error( $result ) ) {
 				self::store_desktop_profile_failure( $asset_id, $profile, $source, $result->get_error_message(), $options );
+				if ( 'web-high' === $profile ) {
+					self::continue_web_family( $asset_id, $profile, $source, $options );
+				}
 				self::delete_prepared_baseline( $asset_id, $source );
 				return;
 			}
@@ -795,8 +870,26 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( empty( $options['familySequence'] ) || ! self::source_identity_matches( $asset_id, (string) ( $source['sha256'] ?? '' ), absint( $source['generation'] ?? 0 ) ) ) {
 			return;
 		}
+		if ( 'web-high' === $profile ) {
+			$analysis = self::get_analysis_meta( $asset_id );
+			if ( self::analysis_needs_refresh( $analysis, $source ) ) {
+				$analysis = self::refresh_asset_analysis( $asset_id );
+			}
+			$analysis = is_array( $analysis ) ? $analysis : [];
+			$decision = self::editor_preview_decision( (int) ( $source['sizeBytes'] ?? 0 ), $analysis );
+			if ( ! empty( $decision['shouldPreview'] ) ) {
+				$preview_record = self::get_editor_preview_record( $asset_id );
+				$preview_status = (string) ( $preview_record['status'] ?? '' );
+				$preview_ready = 'ready' === $preview_status && self::editor_preview_record_is_ready( $preview_record, $source );
+				if ( ! $preview_ready && 'failed' !== $preview_status ) {
+					self::maybe_queue_editor_preview( $asset_id, $source, $analysis, $decision );
+					return;
+				}
+			}
+			self::continue_web_family_after_editor_preview( $asset_id, $source );
+			return;
+		}
 		$next_profile = match ( $profile ) {
-			'web-high'   => 'web-medium',
 			'web-medium' => 'web-low',
 			default      => '',
 		};
@@ -813,6 +906,29 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$result = self::ensure_derivative( $asset_id, $next_profile, $source, $next_options );
 		if ( is_wp_error( $result ) ) {
 			error_log( sprintf( '[VRodos] Failed to continue web derivative family for asset #%d (%s): %s', $asset_id, $next_profile, $result->get_error_message() ) );
+		}
+	}
+
+	private static function continue_web_family_after_editor_preview( int $asset_id, array $source ): void {
+		$high_record = self::desktop_profile_record( $asset_id, 'web-high' );
+		$high_options = is_array( $high_record['profileOptions'] ?? null ) ? $high_record['profileOptions'] : [];
+		if (
+			empty( $high_options['familySequence'] )
+			|| ! self::desktop_profile_record_is_ready( $high_record, $source, 'web-high', $high_options )
+			|| ! self::source_identity_matches( $asset_id, (string) ( $source['sha256'] ?? '' ), absint( $source['generation'] ?? 0 ) )
+		) {
+			return;
+		}
+		$next_options = [
+			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
+			'textureMaxSize'  => self::runtime_derivative_texture_cap( 'web-medium' ),
+			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+			'recipe'          => 'web-medium',
+			'familySequence'  => true,
+		];
+		$result = self::ensure_derivative( $asset_id, 'web-medium', $source, $next_options );
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( '[VRodos] Failed to continue web derivative family for asset #%d (web-medium): %s', $asset_id, $result->get_error_message() ) );
 		}
 	}
 

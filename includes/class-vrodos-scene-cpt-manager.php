@@ -311,14 +311,11 @@ class VRodos_Scene_CPT_Manager {
 		}
 
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glb_url ) {
-			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
-			$metadata['sourceSizeBytes'] = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
-			$metadata['editorPreviewGlbURL'] = self::normalize_editor_scene_asset_url( (string) ( $preview_state['url'] ?? '' ) );
-			$metadata['editorPreviewStatus'] = (string) ( $preview_state['status'] ?? 'none' );
-			$metadata['editorPreviewMessage'] = (string) ( $preview_state['message'] ?? '' );
-			$metadata['editorPreviewShouldUse'] = ! empty( $preview_state['shouldPreview'] );
-			$metadata['editorPreviewReasons'] = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
-			$metadata['glbAnalysis'] = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
+			$editor_load = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id );
+			foreach ( [ 'loadUrl', 'canonicalUrl' ] as $url_key ) {
+				$editor_load[ $url_key ] = self::normalize_editor_scene_asset_url( (string) ( $editor_load[ $url_key ] ?? '' ) );
+			}
+			$metadata['editorLoad'] = $editor_load;
 		}
 
 		$metadata_by_asset_id[ $asset_id ] = array_filter(

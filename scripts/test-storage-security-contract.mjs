@@ -58,6 +58,9 @@ assert(privateStream.includes("Cache-Control: private, no-store"), "staging resp
 const privateStaging = storage.slice(storage.indexOf("private static function serve_private_staging_file"), storage.indexOf("public static function delete_private_attachment_file"));
 assert(/stream_private_path\([^;]+false\s*\)/s.test(privateStaging), "staging delivery explicitly disables revalidation");
 assert(storage.includes("replace_attachment_references"), "attachment replacement uses a centralized metadata transaction");
+assert(storage.includes("insert_with_markers( $htaccess, 'VRodos Published Cache'"), "the Apache cache policy uses an idempotent marked block");
+assert(storage.includes('public, max-age=31536000, immutable'), "published content-addressed media receives an explicit immutable cache lifetime");
+assert(storage.includes('no-store, no-cache, must-revalidate'), "published client HTML remains uncached");
 const privatePromotion = storage.slice(
 	storage.indexOf("public static function promote_private_temporary_glb"),
 	storage.indexOf("public static function register_existing_private_attachment")
@@ -96,6 +99,12 @@ const publisher = read("includes/class-vrodos-compiler-resource-publisher.php");
 assert(publisher.includes("hash_file( 'sha256'"), "published media is content-addressed");
 assert(publisher.includes("published_project_directory( $this->project_id, 'media' )"), "published media is project-owned");
 assert(publisher.includes("$this->desktop_profiles_enabled && absint( $meta ) > 0"), "desktop GLB derivatives are required only for assets with a GLB attachment");
+assert(publisher.includes("ensure_published_cache_policy"), "publication refreshes the server cache policy without changing resource URLs");
+
+const networkRuntime = read("services/vrodos-network-runtime/server/easyrtc-server.js");
+assert(networkRuntime.includes("setPublishedCacheHeaders"), "the Node publication mounts share one cache-header policy");
+assert(networkRuntime.includes('parentDirectory === "media"') && networkRuntime.includes('max-age=31536000, immutable'), "the Node runtime caches only hash-named published media immutably");
+assert(networkRuntime.includes('parentDirectory === "clients"') && networkRuntime.includes('no-store, no-cache, must-revalidate'), "the Node runtime keeps generated client HTML uncached");
 
 const cli = read("includes/class-vrodos-storage-cli-command.php");
 for (const command of ["audit", "migrate", "verify", "cleanup", "purge"]) {

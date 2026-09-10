@@ -307,6 +307,7 @@ class VRodos_Asset_Manager {
 			[
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
 				'isAdmin'  => $isAdmin,
+				'editor_load_nonce' => wp_create_nonce( 'vrodos_scene_mutation' ),
 			]
 		);
 		wp_enqueue_script( 'vrodos_scripts' );

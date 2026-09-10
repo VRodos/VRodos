@@ -429,6 +429,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// Set default values for new assets
 		$data['glb_file_name']             = null;
+		$data['canonical_glb_file_name']   = null;
+		$data['editor_glb_load']           = [];
 		$data['back_3d_color']             = '#ffffff';
 		$data['asset_title_value']         = '';
 		$data['asset_description_value']   = '';
@@ -451,7 +453,21 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			$assetpostMeta                     = get_post_meta( $data['asset_id'] );
 			$data['back_3d_color']             = isset( $assetpostMeta['vrodos_asset3d_back3dcolor'] ) ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
 			$asset_3d_files                    = VRodos_Core_Manager::get_3D_model_files( $assetpostMeta, $data['asset_id'] );
-			$data['glb_file_name']             = $asset_3d_files['glb'];
+			$data['canonical_glb_file_name']   = $asset_3d_files['glb'];
+			if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && ! empty( $asset_3d_files['glb'] ) ) {
+				$data['editor_glb_load'] = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( (int) $data['asset_id'] );
+				$data['glb_file_name'] = (string) ( $data['editor_glb_load']['loadUrl'] ?? '' );
+				$data['canonical_glb_file_name'] = (string) ( $data['editor_glb_load']['canonicalUrl'] ?? $asset_3d_files['glb'] );
+			} else {
+				$data['glb_file_name'] = $asset_3d_files['glb'];
+				$data['editor_glb_load'] = [
+					'status'        => ! empty( $asset_3d_files['glb'] ) ? 'ready' : 'missing',
+					'loadUrl'       => (string) ( $asset_3d_files['glb'] ?? '' ),
+					'loadVariant'   => 'source',
+					'canonicalUrl'  => (string) ( $asset_3d_files['glb'] ?? '' ),
+					'canLoadSource' => ! empty( $asset_3d_files['glb'] ),
+				];
+			}
 			$data['dropdownHeading']           = 'Category';
 			$data['asset_title_value']         = get_the_title( $data['asset_id'] );
 			$data['asset_description_value']   = get_post_field( 'post_content', $data['asset_id'] );

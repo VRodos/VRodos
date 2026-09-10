@@ -10,6 +10,7 @@ $GLOBALS['vrodos_test_terms'] = [];
 $GLOBALS['vrodos_test_attached_files'] = [];
 $GLOBALS['vrodos_test_source_current'] = true;
 $GLOBALS['vrodos_test_removed_results'] = [];
+$GLOBALS['vrodos_test_high_record'] = [];
 
 class WP_Error {
 	public function __construct( private string $code, private string $message ) {}
@@ -55,6 +56,13 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $args = [
 	$key = $hook . ':' . implode( ',', $args );
 	$GLOBALS['vrodos_test_events'][ $key ] = $timestamp;
 	return true;
+}
+
+function wp_clear_scheduled_hook( string $hook, array $args = [] ): int {
+	$key = $hook . ':' . implode( ',', $args );
+	$removed = isset( $GLOBALS['vrodos_test_events'][ $key ] ) ? 1 : 0;
+	unset( $GLOBALS['vrodos_test_events'][ $key ] );
+	return $removed;
 }
 
 function is_wp_error( $value ): bool {
@@ -140,6 +148,16 @@ class VRodos_Editor_Preview_Test_Harness {
 	private static function delete_generated_derivative_files( array $paths ): void {
 		$GLOBALS['vrodos_test_removed_results'][] = $paths;
 	}
+
+	private static function maybe_queue_web_high( int $asset_id, array $source, array $analysis ) {
+		unset( $asset_id, $source, $analysis );
+		return false;
+	}
+
+	private static function desktop_profile_record( int $asset_id, string $profile, array $source = [], array $options = [] ): array {
+		unset( $asset_id, $profile, $source, $options );
+		return $GLOBALS['vrodos_test_high_record'];
+	}
 }
 
 function invoke_preview_method( string $name, array $arguments = [] ) {
@@ -214,6 +232,24 @@ invoke_preview_method( 'maybe_queue_editor_preview', [ $asset_id, $source, $anal
 $recovered = $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::META_KEY ]['derivatives']['editor-preview'];
 vrodos_preview_assert( 'queued' === $recovered['status'] && 1 === $recovered['retryCount'], 'stale running jobs must return to the queue with a retry count' );
 vrodos_preview_assert( 1 === count( $GLOBALS['vrodos_test_events'] ), 'stale running jobs must schedule their retry' );
+
+$GLOBALS['vrodos_test_high_record'] = [
+	'status' => 'running',
+	'sourceSha256' => $source['sha256'],
+	'sourceGeneration' => $source['generation'],
+	'profileOptions' => [ 'familySequence' => true ],
+];
+$GLOBALS['vrodos_test_events'] = [];
+wp_schedule_single_event( time() + 10, 'vrodos_asset_editor_preview_process_job', [ $asset_id ] );
+invoke_preview_method( 'maybe_queue_editor_preview', [ $asset_id, $source, $analysis, [ 'shouldPreview' => true, 'reasons' => [ 'source-size' ] ] ] );
+$waiting = $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::META_KEY ]['derivatives']['editor-preview'];
+vrodos_preview_assert( 'waiting-high' === $waiting['status'], 'preview work must wait while the matching High family job is active' );
+vrodos_preview_assert( 0 === count( $GLOBALS['vrodos_test_events'] ), 'waiting for High must remove an early duplicate preview event' );
+$GLOBALS['vrodos_test_high_record']['status'] = 'ready';
+invoke_preview_method( 'maybe_queue_editor_preview', [ $asset_id, $source, $analysis, [ 'shouldPreview' => true, 'reasons' => [ 'source-size' ] ] ] );
+$after_high = $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::META_KEY ]['derivatives']['editor-preview'];
+vrodos_preview_assert( 'queued' === $after_high['status'] && 1 === count( $GLOBALS['vrodos_test_events'] ), 'High completion must release exactly one preview job' );
+$GLOBALS['vrodos_test_high_record'] = [];
 
 $GLOBALS['vrodos_test_terms'][ $asset_id ] = [ 'walkable-surface' ];
 vrodos_preview_assert( true === invoke_preview_method( 'editor_preview_protects_geometry', [ $asset_id ] ), 'walkable assets must protect their geometry' );
