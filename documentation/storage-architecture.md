@@ -56,6 +56,12 @@ location ~ ^/wp-content/uploads/vrodos/published/projects/[0-9]+/clients/[^/]+\.
 
 The Node network runtime applies the same headers to both of its publication mounts. Private authoring attachments deliberately remain `private, max-age=0, must-revalidate`: browsers may reuse the body after authenticated validation, but a reopened editor must reconstruct parsed Three.js objects and GPU resources. Clearing site data, private browsing, eviction, or another device causes an expected redownload.
 
+## Public showcase integration
+
+WordPress themes and other same-installation consumers must use the URL returned by the compiler (`MasterClient` or `CurrentSceneMasterClient`). When a URL must be resolved later, first resolve the scene's project through its `vrodos_scene_pgame` taxonomy term, then call `VRodos_Storage_Manager::published_project_url( $project_id, 'clients', $filename )`. Filesystem existence checks use the matching `published_project_directory()` method. Do not build links beneath `wp-content/plugins/VRodos/runtime/build/`; that tree is legacy migration input and is not the publication destination for new builds.
+
+A compiled client copied into another theme or application is a vendored snapshot, not a live view of the installed plugin. Deploying a newer VRodos plugin does not rewrite that copy. Snapshot owners must deliberately regenerate or replace the client, its selected media, and every required runtime/vendor artifact, preserve the generated cache-version query strings, and repeat browser smoke tests. If a host marks theme assets as immutable, any mutable direct script, stylesheet, font, model, or decoder URL in the snapshot must also be content-addressed or receive a changed versioned URL.
+
 ## Authoring access
 
 Private attachments retain normal WordPress attachment records, but their paths are absolute private paths and their authoring URLs use:
