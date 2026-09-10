@@ -582,7 +582,7 @@
   var warnOnce = moduleValue["warnOnce"];
 
   // node_modules/postprocessing/build/index.js
-  var version = "6.39.4";
+  var version = "6.39.5";
   var Disposable = class {
     /**
      * Frees internal resources.
@@ -1339,6 +1339,29 @@ gl_FragDepth=readDepth(vUv);
       buffers.stencil.setLocked(true);
     }
   };
+  function getSafeSamples(renderer, samples) {
+    const gl = renderer.getContext();
+    if (samples <= 0 || typeof gl.renderbufferStorageMultisample !== "function") {
+      return 0;
+    }
+    const maxSamples = gl.getParameter(gl.MAX_SAMPLES);
+    const safeSamples = Math.min(samples, maxSamples);
+    if (safeSamples <= 0) {
+      return 0;
+    }
+    const previousRenderbuffer = gl.getParameter(gl.RENDERBUFFER_BINDING);
+    const renderbuffer = gl.createRenderbuffer();
+    try {
+      gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
+      gl.renderbufferStorageMultisample(gl.RENDERBUFFER, safeSamples, gl.RGBA8, 1, 1);
+      return safeSamples;
+    } catch (e) {
+      return 0;
+    } finally {
+      gl.bindRenderbuffer(gl.RENDERBUFFER, previousRenderbuffer);
+      gl.deleteRenderbuffer(renderbuffer);
+    }
+  }
   var MILLISECONDS_TO_SECONDS = 1 / 1e3;
   var SECONDS_TO_MILLISECONDS = 1e3;
   var Timer2 = class {
@@ -1438,13 +1461,13 @@ gl_FragDepth=readDepth(vUv);
      * @param {Boolean} [options.depthBuffer=true] - Whether the main render targets should have a depth buffer.
      * @param {Boolean} [options.stencilBuffer=false] - Whether the main render targets should have a stencil buffer.
      * @param {Number} [options.multisampling=0] - The number of samples used for multisample antialiasing. Requires WebGL 2.
-     * @param {Number} [options.frameBufferType] - The type of the internal frame buffers. It's recommended to use HalfFloatType if possible.
+     * @param {TextureDataType} [options.frameBufferType=UnsignedByteType] - The type of the internal frame buffers. It's recommended to use HalfFloatType if possible.
      */
     constructor(renderer = null, {
       depthBuffer = true,
       stencilBuffer = false,
       multisampling = 0,
-      frameBufferType
+      frameBufferType = UnsignedByteType
     } = {}) {
       this.renderer = null;
       this.inputBuffer = this.createBuffer(depthBuffer, stencilBuffer, frameBufferType, multisampling);
@@ -1481,11 +1504,12 @@ gl_FragDepth=readDepth(vUv);
      * @type {Number}
      */
     set multisampling(value) {
-      if (this.multisampling === value) {
+      const samples = this.renderer === null ? value : getSafeSamples(this.renderer, value);
+      if (this.multisampling === samples) {
         return;
       }
-      this.inputBuffer.samples = value;
-      this.outputBuffer.samples = value;
+      this.inputBuffer.samples = samples;
+      this.outputBuffer.samples = samples;
       this.inputBuffer.dispose();
       this.outputBuffer.dispose();
     }
@@ -1522,6 +1546,8 @@ gl_FragDepth=readDepth(vUv);
           this.inputBuffer.dispose();
           this.outputBuffer.dispose();
         }
+        const samples = this.multisampling;
+        this.multisampling = samples;
         renderer.autoClear = false;
         this.setSize(size.width, size.height);
         for (const pass of this.passes) {
@@ -1572,9 +1598,13 @@ gl_FragDepth=readDepth(vUv);
       } else {
         inputDepthTexture.type = FloatType;
       }
-      const outputDepthTexture = inputDepthTexture.clone();
+      const outputDepthTexture = new DepthTexture();
+      outputDepthTexture.format = inputDepthTexture.format;
+      outputDepthTexture.type = inputDepthTexture.type;
       outputDepthTexture.name = "EffectComposer.OutputDepth";
-      const stableDepthTexture = inputDepthTexture.clone();
+      const stableDepthTexture = new DepthTexture();
+      stableDepthTexture.format = inputDepthTexture.format;
+      stableDepthTexture.type = inputDepthTexture.type;
       stableDepthTexture.name = "EffectComposer.StableDepth";
       this.inputBuffer.depthTexture = inputDepthTexture;
       this.outputBuffer.depthTexture = outputDepthTexture;
