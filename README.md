@@ -15,6 +15,7 @@ Each current concern has one canonical owner:
 
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): compiled rendering, PMNDRS/Takram, lighting, clouds, shadows, collision, reflections, diagnostics, and profiling.
 - [`documentation/compiler-architecture.md`](documentation/compiler-architecture.md): compiler requests, settings, plan resolution, target assembly, artifact publication, and security boundaries.
+- [`documentation/deployment.md`](documentation/deployment.md): portable WordPress/server requirements, dedicated scheduler recipes, health checks, persistence, and rollout verification.
 - [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): A-Frame/Three ownership, lazy runtime chunks, WebXR lifecycle, and immersive PMNDRS UIKit/Horizon UI.
 - [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md): active desktop acceptance, performance, asset, collision, and rendering research backlog.
 - [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md): standalone headset policy and device validation plus the parked PC-rendered VR profile.

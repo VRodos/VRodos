@@ -30,6 +30,7 @@ $project_scope = 2;
 
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-path-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-storage-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-deployment-health.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shared-repository-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-immerse-access-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
@@ -96,6 +97,9 @@ require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-ass
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-zip-package.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-manager.php');
 new VRodos_Asset_Import_Manager();
+
+// Portable deployment and background-processing diagnostics.
+new VRodos_Deployment_Health();
 
 // Default Data Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-data-manager.php');

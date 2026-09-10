@@ -24,6 +24,7 @@ class VRodos_Install_Manager {
 	 */
 	public function __construct() {
 		register_activation_hook( VRODOS_PLUGIN_FILE, [$this, 'activate'] );
+		register_deactivation_hook( VRODOS_PLUGIN_FILE, [$this, 'deactivate'] );
 		register_uninstall_hook( VRODOS_PLUGIN_FILE, [self::class, 'uninstall'] );
 		add_action( 'init', [$this, 'run_legacy_cleanup_migrations'], 20 );
 		add_action( 'admin_notices', [ new VRodos_Legacy_Metadata_Migration(), 'render_admin_notice' ] );
@@ -39,6 +40,11 @@ class VRodos_Install_Manager {
 		$this->create_required_directories();
 		$this->initialize_storage_schema_for_fresh_install();
 		VRodos_Pages_Manager::vrodos_create_pages();
+		VRodos_Deployment_Health::activate();
+	}
+
+	public function deactivate(): void {
+		VRodos_Deployment_Health::deactivate();
 	}
 
 	private function initialize_storage_schema_for_fresh_install(): void {
@@ -176,6 +182,7 @@ class VRodos_Install_Manager {
 	 * available through the explicit ownership-checked WP-CLI purge command.
 	 */
 	public static function uninstall(): void {
+		VRodos_Deployment_Health::uninstall();
 		wp_clear_scheduled_hook( 'vrodos_asset_import_process_job' );
 		wp_clear_scheduled_hook( 'vrodos_asset_import_cleanup_staged_uploads' );
 		wp_clear_scheduled_hook( 'vrodos_asset_editor_preview_process_job' );

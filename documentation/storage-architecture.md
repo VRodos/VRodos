@@ -6,6 +6,8 @@ VRodos separates private authoring files from public compiled experiences. Mutab
 
 The default private base is `vrodos-private` beside the WordPress public directory. `VRODOS_PRIVATE_STORAGE_DIR` may override that absolute base. Every site is isolated below `site-{blog_id}`:
 
+Server prerequisites, scheduler ownership, backup requirements, and deployment checks are documented in [deployment.md](deployment.md).
+
 ```text
 site-{blog_id}/
   assets/{asset_id}/source/

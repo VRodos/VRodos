@@ -76,6 +76,7 @@ if (!php) {
     "scripts/test-compiler-plan-foundations.php",
 	"scripts/test-legacy-metadata-migration.php",
 	"scripts/test-storage-business-rules.php",
+	"scripts/test-deployment-health.php",
 	"scripts/test-frontend-access.php",
 	"scripts/test-private-media-cache-logic.php",
 	"scripts/test-editor-preview-pipeline.php",

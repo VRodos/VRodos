@@ -59,6 +59,7 @@ Important managers:
 - `VRodos_Asset_Optimization_Manager`: thin hook coordinator for read-only GLB benefit analysis, the deduplicated Web derivative queue, dashboard actions, derivative metadata, cache cleanup, and automatic compile selection; implementation lives in `includes/asset-optimization/`
 - `VRodos_Admin_Dashboard_Page`: top-level dashboard rendering, including notices, stats, Active Projects, and Actionable Assets tabs
 - `VRodos_Path_Manager`: path/url indirection
+- `VRodos_Deployment_Health`: portable runtime, storage, optimizer, and WordPress cron diagnostics; the host remains responsible for scheduler ownership
 
 ## Runtime And Rendering
 
@@ -129,6 +130,7 @@ Rendering docs:
 - `documentation/compiled-headset-roadmap.md`: standalone headset policy and device validation plus the parked PC-rendered VR profile
 - `documentation/vrodos-compiled-scene-framework-integration.md`: compiled-scene framework boundaries, runtime ownership, lazy chunks, and immersive PMNDRS/Horizon VR dialog ownership
 - `documentation/compiler-architecture.md`: compiler request, plan, target, artifact-publication, and security boundaries
+- `documentation/deployment.md`: portable server requirements, dedicated scheduler recipes, health checks, and rollout verification
 - `documentation/runtime-library-audit.md`: test-enforced locked dependency and runtime provenance inventory
 - `documentation/archive/rendering-history/README.md`: consolidated historical rendering, performance, Takram, collision, and VR-platform findings
 
