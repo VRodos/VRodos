@@ -174,7 +174,33 @@ else { ?>
                     </div>
                 </div>
 
-                <p id="assetSaveProgressDetail" class="tw-mt-3 tw-min-h-5 tw-text-xs tw-font-semibold tw-text-slate-500"></p>
+                <ol id="assetSaveProgressSteps" class="vrodos-save-progress-steps" aria-label="Asset save stages">
+                    <li class="vrodos-save-progress-step is-active" data-save-stage="upload" aria-current="step">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">1</span>
+                        <span>Transfer files</span>
+                    </li>
+                    <li class="vrodos-save-progress-step" data-save-stage="validate">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">2</span>
+                        <span>Validate details</span>
+                    </li>
+                    <li class="vrodos-save-progress-step" data-save-stage="record">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">3</span>
+                        <span>Save asset record</span>
+                    </li>
+                    <li class="vrodos-save-progress-step" data-save-stage="media">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">4</span>
+                        <span>Attach media and preview</span>
+                    </li>
+                    <li class="vrodos-save-progress-step" data-save-stage="finalize">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">5</span>
+                        <span>Finish and open asset</span>
+                    </li>
+                </ol>
+
+                <div class="tw-mt-3 tw-flex tw-items-start tw-justify-between tw-gap-4">
+                    <p id="assetSaveProgressDetail" class="tw-min-h-5 tw-text-xs tw-font-semibold tw-text-slate-500"></p>
+                    <span id="assetSaveProgressElapsed" class="tw-flex-none tw-text-[10px] tw-font-black tw-tabular-nums tw-text-slate-400">Elapsed 0s</span>
+                </div>
                 <div class="tw-mt-5 tw-flex tw-items-center tw-gap-2 tw-rounded-xl tw-bg-slate-50 tw-px-3 tw-py-2.5 tw-text-slate-500">
                     <i data-lucide="info" class="tw-h-4 tw-w-4 tw-flex-none"></i>
                     <span class="tw-text-[11px] tw-font-bold">Do not close this page while the asset is being saved.</span>
@@ -1193,12 +1219,24 @@ else { ?>
 						if (typeof window.vrodos_set_asset_save_progress === 'function') {
 							window.vrodos_set_asset_save_progress({
 								title: 'Saving Asset',
-								message: 'Finalizing asset…',
-								detail: 'Registering the model and saving the asset details.',
-								indeterminate: true
+								stage: 'upload',
+								message: 'Starting secure save…',
+								detail: 'Preparing asset details and remaining media for the server.',
+								percent: 0
 							});
 						}
-						window.setTimeout(() => assetForm.submit(), 50);
+						try {
+							await window.vrodos_submit_asset_form_with_progress(assetForm);
+						} catch (saveError) {
+							vrodosSubmittingChunkedGlb = false;
+							if (typeof window.vrodos_hide_asset_save_progress === 'function') {
+								window.vrodos_hide_asset_save_progress();
+							}
+							if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+								window.vrodos_set_asset_editor_submit_locked(false);
+							}
+							setAssetEditorNotice(saveError && saveError.message ? saveError.message : 'The asset could not be saved. Please try again.');
+						}
 					} else if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
 						if (typeof window.vrodos_hide_asset_save_progress === 'function') {
 							window.vrodos_hide_asset_save_progress();

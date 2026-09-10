@@ -102,6 +102,40 @@ function vrodos_set_asset_editor_submit_locked(isLocked, label) {
 window.vrodos_set_asset_editor_submit_locked = vrodos_set_asset_editor_submit_locked;
 
 let vrodosAssetSaveProgressPreviousFocus = null;
+let vrodosAssetSaveProgressStartedAt = 0;
+let vrodosAssetSaveProgressElapsedTimer = 0;
+const VRODOS_ASSET_SAVE_STAGES = ['upload', 'validate', 'record', 'media', 'finalize'];
+
+function vrodos_update_asset_save_elapsed() {
+    const elapsed = document.getElementById('assetSaveProgressElapsed');
+    if (!elapsed || !vrodosAssetSaveProgressStartedAt) {
+        return;
+    }
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - vrodosAssetSaveProgressStartedAt) / 1000));
+    elapsed.textContent = `Elapsed ${elapsedSeconds}s`;
+}
+
+function vrodos_update_asset_save_steps(stage) {
+    const normalizedStage = String(stage || '').toLowerCase();
+    if (!normalizedStage) {
+        return;
+    }
+
+    const activeIndex = VRODOS_ASSET_SAVE_STAGES.indexOf(normalizedStage);
+    const completeAll = normalizedStage === 'complete';
+    document.querySelectorAll('[data-save-stage]').forEach((step) => {
+        const stepIndex = VRODOS_ASSET_SAVE_STAGES.indexOf(step.dataset.saveStage || '');
+        const isComplete = completeAll || (activeIndex >= 0 && stepIndex < activeIndex);
+        const isActive = !completeAll && activeIndex >= 0 && stepIndex === activeIndex;
+        step.classList.toggle('is-complete', isComplete);
+        step.classList.toggle('is-active', isActive);
+        if (isActive) {
+            step.setAttribute('aria-current', 'step');
+        } else {
+            step.removeAttribute('aria-current');
+        }
+    });
+}
 
 function vrodos_set_asset_save_progress(options = {}) {
     const overlay = document.getElementById('assetSaveProgressOverlay');
@@ -117,6 +151,7 @@ function vrodos_set_asset_save_progress(options = {}) {
     }
 
     const isIndeterminate = options.indeterminate === true;
+    const isFailed = options.status === 'failed';
     const percent = Math.max(0, Math.min(100, Math.round(Number(options.percent) || 0)));
     const wasHidden = overlay.classList.contains('tw-hidden');
 
@@ -145,7 +180,12 @@ function vrodos_set_asset_save_progress(options = {}) {
     if (detail) {
         detail.textContent = options.detail || '';
     }
+    vrodos_update_asset_save_steps(options.stage);
     if (wasHidden) {
+        vrodosAssetSaveProgressStartedAt = Date.now();
+        window.clearInterval(vrodosAssetSaveProgressElapsedTimer);
+        vrodosAssetSaveProgressElapsedTimer = window.setInterval(vrodos_update_asset_save_elapsed, 1000);
+        vrodos_update_asset_save_elapsed();
         window.requestAnimationFrame(() => {
             if (!overlay.inert && overlay.getAttribute('aria-hidden') === 'false') {
                 overlay.focus();
@@ -154,6 +194,7 @@ function vrodos_set_asset_save_progress(options = {}) {
     }
 
     bar.classList.toggle('vrodos-indeterminate', isIndeterminate);
+    bar.classList.toggle('vrodos-progress-error', isFailed);
     if (isIndeterminate) {
         bar.style.removeProperty('width');
         track.removeAttribute('aria-valuemin');
@@ -197,6 +238,9 @@ function vrodos_hide_asset_save_progress() {
         overlay.setAttribute('aria-hidden', 'true');
     }
     vrodosAssetSaveProgressPreviousFocus = null;
+    vrodosAssetSaveProgressStartedAt = 0;
+    window.clearInterval(vrodosAssetSaveProgressElapsedTimer);
+    vrodosAssetSaveProgressElapsedTimer = 0;
 
     const restoreFocus = () => {
         if (focusTarget && focusTarget.isConnected && !focusTarget.disabled) {
@@ -253,6 +297,169 @@ function vrodos_upload_model_chunk_request(ajaxUrl, formData, onProgress, onUplo
         request.send(formData);
     });
 }
+
+function vrodos_create_asset_save_operation_id() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID().toLowerCase();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function vrodos_fetch_asset_save_progress(ajaxUrl, operationId, nonce) {
+    const body = new URLSearchParams();
+    body.set('action', 'vrodos_asset_save_progress');
+    body.set('assetSaveOperationId', operationId);
+    body.set('nonce', nonce);
+    const response = await window.fetch(ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: body.toString()
+    });
+    if (!response.ok) {
+        throw new Error(`Progress request failed with HTTP ${response.status}.`);
+    }
+    const payload = await response.json();
+    return payload && payload.success && payload.data ? payload.data : null;
+}
+
+function vrodos_start_asset_save_progress_polling(ajaxUrl, operationId, nonce, onProgress) {
+    let stopped = false;
+    let timer = 0;
+    let requestRunning = false;
+
+    const poll = async () => {
+        if (stopped || requestRunning) {
+            return;
+        }
+        requestRunning = true;
+        try {
+            const progress = await vrodos_fetch_asset_save_progress(ajaxUrl, operationId, nonce);
+            if (progress && progress.status !== 'waiting' && typeof onProgress === 'function') {
+                onProgress(progress);
+            }
+        } catch (_error) {
+            // The save request remains authoritative. A transient polling failure
+            // must not cancel a valid asset save.
+        } finally {
+            requestRunning = false;
+            if (!stopped) {
+                timer = window.setTimeout(poll, 500);
+            }
+        }
+    };
+
+    poll();
+    return () => {
+        stopped = true;
+        window.clearTimeout(timer);
+    };
+}
+
+window.vrodos_submit_asset_form_with_progress = function (form) {
+    return new Promise((resolve, reject) => {
+        const nonceInput = form ? form.querySelector('[name="post_nonce_field"]') : null;
+        if (!form || !nonceInput || !nonceInput.value) {
+            reject(new Error('The save security token is missing. Reload the page and try again.'));
+            return;
+        }
+
+        const ajaxUrl = vrodos_get_asset_editor_ajax_url();
+        const operationId = vrodos_create_asset_save_operation_id();
+        const formData = new FormData(form);
+        formData.set('assetSaveOperationId', operationId);
+        let latestProgress = null;
+        const applyServerProgress = (progress) => {
+            latestProgress = progress;
+            vrodos_set_asset_save_progress({
+                title: progress.status === 'failed' ? 'Save Needs Attention' : 'Saving Asset',
+                stage: progress.stage,
+                status: progress.status,
+                message: progress.message,
+                detail: progress.detail,
+                percent: progress.percent
+            });
+        };
+        const stopPolling = vrodos_start_asset_save_progress_polling(
+            ajaxUrl,
+            operationId,
+            nonceInput.value,
+            applyServerProgress
+        );
+
+        const request = new window.XMLHttpRequest();
+        request.open('POST', form.action || window.location.href, true);
+        request.withCredentials = true;
+        request.upload.addEventListener('progress', (event) => {
+            if (!event.lengthComputable) {
+                return;
+            }
+            const percent = Math.min(12, Math.max(1, Math.round((event.loaded / event.total) * 12)));
+            const loadedMb = (event.loaded / (1024 * 1024)).toFixed(1);
+            const totalMb = (event.total / (1024 * 1024)).toFixed(1);
+            vrodos_set_asset_save_progress({
+                title: 'Saving Asset',
+                stage: 'upload',
+                message: 'Transferring asset files…',
+                detail: `${loadedMb} of ${totalMb} MB sent to the server.`,
+                percent
+            });
+        });
+        request.upload.addEventListener('load', () => {
+            vrodos_set_asset_save_progress({
+                title: 'Saving Asset',
+                stage: 'validate',
+                message: 'Upload received. Validating details…',
+                detail: 'The server is checking the asset before saving it.',
+                percent: 14
+            });
+        });
+        request.addEventListener('load', async () => {
+            stopPolling();
+            try {
+                const finalProgress = await vrodos_fetch_asset_save_progress(ajaxUrl, operationId, nonceInput.value);
+                if (finalProgress && finalProgress.status !== 'waiting') {
+                    applyServerProgress(finalProgress);
+                }
+            } catch (_error) {
+                // Fall through to the HTTP result and redirect below.
+            }
+
+            if (request.status < 200 || request.status >= 400) {
+                reject(new Error(`The server could not save the asset (HTTP ${request.status}).`));
+                return;
+            }
+
+            if (!latestProgress || !['complete', 'failed'].includes(latestProgress.status)) {
+                reject(new Error('The server finished responding but did not confirm that the asset was saved. Your uploaded source remains safe; please try saving again.'));
+                return;
+            }
+
+            const redirectUrl = latestProgress.redirectUrl || request.responseURL || form.action || window.location.href;
+            window.setTimeout(() => {
+                window.location.assign(redirectUrl);
+                resolve(true);
+            }, latestProgress && latestProgress.status === 'failed' ? 900 : 350);
+        });
+        request.addEventListener('error', () => {
+            stopPolling();
+            reject(new Error('The save request lost its network connection. Your uploaded source remains safe; please try saving again.'));
+        });
+        request.addEventListener('abort', () => {
+            stopPolling();
+            reject(new Error('The asset save was cancelled.'));
+        });
+
+        vrodos_set_asset_save_progress({
+            title: 'Saving Asset',
+            stage: 'upload',
+            message: 'Starting secure save…',
+            detail: 'Preparing asset details and any remaining media for transfer.',
+            percent: 0
+        });
+        request.send(formData);
+    });
+};
 
 function vrodos_payload_error_message(payload, fallback) {
     let message = fallback;

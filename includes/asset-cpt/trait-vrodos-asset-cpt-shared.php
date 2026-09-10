@@ -130,7 +130,92 @@ trait VRodos_Asset_CPT_Shared {
 		return remove_query_arg( 'vrodos_notice', $redirect_url );
 	}
 
+	private static function asset_save_operation_id_from_request(): string {
+		$operation_id = isset( $_REQUEST['assetSaveOperationId'] )
+			? sanitize_key( wp_unslash( (string) $_REQUEST['assetSaveOperationId'] ) )
+			: '';
+
+		return strlen( $operation_id ) >= 12 && strlen( $operation_id ) <= 64 ? $operation_id : '';
+	}
+
+	private static function asset_save_progress_key( string $operation_id ): string {
+		return 'vrodos_asset_save_' . get_current_user_id() . '_' . hash( 'sha256', $operation_id );
+	}
+
+	private static function update_frontend_asset_save_progress(
+		string $stage,
+		string $message,
+		string $detail,
+		int $percent,
+		string $status = 'running',
+		string $redirect_url = ''
+	): void {
+		$operation_id = self::asset_save_operation_id_from_request();
+		if ( '' === $operation_id || ! is_user_logged_in() ) {
+			return;
+		}
+
+		$allowed_stages = [ 'upload', 'validate', 'record', 'media', 'finalize', 'complete', 'error' ];
+		$stage          = sanitize_key( $stage );
+		$status         = sanitize_key( $status );
+		if ( ! in_array( $stage, $allowed_stages, true ) ) {
+			$stage = 'finalize';
+		}
+		if ( ! in_array( $status, [ 'running', 'complete', 'failed' ], true ) ) {
+			$status = 'running';
+		}
+
+		set_transient(
+			self::asset_save_progress_key( $operation_id ),
+			[
+				'stage'       => $stage,
+				'status'      => $status,
+				'message'     => sanitize_text_field( $message ),
+				'detail'      => sanitize_text_field( $detail ),
+				'percent'     => max( 0, min( 100, $percent ) ),
+				'redirectUrl' => '' !== $redirect_url ? esc_url_raw( $redirect_url ) : '',
+				'updatedAt'   => current_time( 'mysql', true ),
+			],
+			10 * MINUTE_IN_SECONDS
+		);
+	}
+
+	public function asset_save_progress_ajax(): void {
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( 'Authentication required.', 401 );
+		}
+
+		$operation_id = self::asset_save_operation_id_from_request();
+		if ( '' === $operation_id ) {
+			wp_send_json_error( 'Invalid save operation.', 400 );
+		}
+
+		$progress = get_transient( self::asset_save_progress_key( $operation_id ) );
+		wp_send_json_success(
+			is_array( $progress )
+				? $progress
+				: [
+					'stage'   => 'upload',
+					'status'  => 'waiting',
+					'message' => 'Waiting for the server…',
+					'detail'  => 'The save request is being transferred.',
+					'percent' => 0,
+				]
+		);
+	}
+
 	private static function redirect_with_frontend_notice( string $redirect_url, string $notice_code, int $submission_buffer_level = -1 ): void {
+		self::update_frontend_asset_save_progress(
+			'error',
+			'Asset could not be saved',
+			'The editor will reopen with details and recovery options.',
+			100,
+			'failed',
+			add_query_arg( 'vrodos_notice', sanitize_key( $notice_code ), $redirect_url )
+		);
 		self::perform_frontend_redirect( add_query_arg( 'vrodos_notice', sanitize_key( $notice_code ), $redirect_url ), $submission_buffer_level );
 	}
 

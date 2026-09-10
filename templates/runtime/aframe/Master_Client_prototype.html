@@ -116,9 +116,9 @@
                     if (retry) retry.style.display = 'block';
                 } else if (snapshot.totalBytes > 0 && snapshot.loadedBytes < snapshot.totalBytes) {
                     var percent = Math.min(99, Math.round(snapshot.loadedBytes * 100 / snapshot.totalBytes));
-                    label.textContent = 'Downloading 3D assets — ' + percent + '% · ' + formatMb(snapshot.loadedBytes) + ' / ' + formatMb(snapshot.totalBytes) + ' MB';
+                    label.textContent = 'Downloading 3D assets \u2014 ' + percent + '% \u00b7 ' + formatMb(snapshot.loadedBytes) + ' / ' + formatMb(snapshot.totalBytes) + ' MB';
                 } else if (snapshot.totalCount > 0) {
-                    label.textContent = 'Decoding 3D assets — 0 / ' + snapshot.totalCount;
+                    label.textContent = 'Decoding 3D assets \u2014 0 / ' + snapshot.totalCount;
                 }
                 state.listeners.slice().forEach(function (listener) { listener(snapshot); });
             };

@@ -27,11 +27,19 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		$submission_buffer_level = self::begin_frontend_submission_buffer();
+		self::update_frontend_asset_save_progress(
+			'validate',
+			'Validating asset details…',
+			'Checking permissions, project ownership, name, and category.',
+			15
+		);
 
 		$asset_id       = isset( $_GET['vrodos_asset'] ) ? absint( $_GET['vrodos_asset'] ) : null;
 		$project_id     = isset( $_GET['vrodos_game'] ) ? absint( $_GET['vrodos_game'] ) : null;
 		$game_post      = get_post( $project_id );
 		if ( ! $game_post instanceof WP_Post || 'vrodos_game' !== $game_post->post_type || ! current_user_can( 'edit_post', $project_id ) ) {
+			self::update_frontend_asset_save_progress( 'error', 'Asset could not be saved', 'The selected project is unavailable or cannot be edited.', 100, 'failed' );
+			self::cleanup_frontend_submission_buffer( $submission_buffer_level );
 			return;
 		}
 		if ( $editing_asset_id > 0 && VRodos_Immerse_Access_Manager::is_restricted_user() && ! VRodos_Immerse_Access_Manager::object_belongs_to_project( $editing_asset_id, (int) $project_id ) ) {
@@ -93,6 +101,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// If the frontend bridge inputs fail to sync, abort safely instead of hard-failing the request.
 		if ( ! $project_id || ! $assetPGameID || ! $assetCatID || ! $assetCatIPRID || ! $assetTitle ) {
+			self::update_frontend_asset_save_progress( 'error', 'Asset details are incomplete', 'Check the asset name, category, and project, then try again.', 100, 'failed' );
 			self::cleanup_frontend_submission_buffer( $submission_buffer_level );
 			return;
 		}
@@ -101,6 +110,12 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$has_new_model_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
 			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) )
 			|| ( isset( $_POST['assetImportUploadToken'] ) && ! empty( $_POST['assetImportUploadToken'] ) );
+		self::update_frontend_asset_save_progress(
+			'record',
+			$asset_id ? 'Updating asset record…' : 'Creating asset record…',
+			'Saving the asset name, category, ownership, and transform settings.',
+			32
+		);
 		// NEW Asset: submit info to backend
 
 		if ( $asset_id == null ) {
@@ -113,10 +128,22 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// Upload 3D files
 		if ( $asset_id != 0 || $asset_updatedConf == 1 ) {
+			self::update_frontend_asset_save_progress(
+				'record',
+				'Asset record saved',
+				'Core asset details are stored. Media and preview data are next.',
+				45
+			);
 
 			// NoCloning: Upload files from POST but check first
 			// if any 3D files have been selected for upload or glb blob is present
 			if ( $has_new_model_upload ) {
+				self::update_frontend_asset_save_progress(
+					'media',
+					'Registering the 3D model…',
+					'Attaching the prepared GLB and scheduling any required preview and web-optimization work.',
+					55
+				);
 				$model_upload_result = VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( $asset_id, $project_id, $assetCatID );
 				if ( empty( $model_upload_result['success'] ) ) {
 					self::redirect_with_frontend_notice( $redirect_url, 'model-upload-failed', $submission_buffer_level );
@@ -126,6 +153,12 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				if ( ! in_array( $model_import_status, [ 'pending', 'running' ], true ) && ! get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
 					self::redirect_with_frontend_notice( $redirect_url, 'model-upload-failed', $submission_buffer_level );
 				}
+				self::update_frontend_asset_save_progress(
+					'media',
+					'3D model registered',
+					'The source model is safe. Any required preview and web derivatives continue in the background.',
+					68
+				);
 			}
 
 			update_post_meta( $asset_id, '_vrodos_asset_is_shared', $is_shared ? '1' : '0' );
@@ -140,6 +173,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		if ( isset( $_POST['sshotFileInput'] ) && ! empty( $_POST['sshotFileInput'] ) ) {
+			self::update_frontend_asset_save_progress( 'media', 'Saving the preview image…', 'Updating the asset thumbnail shown in the library.', 76 );
 			// Check if a screenshot already exists to perform an in-place update.
 			$existing_screenshot_id = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 			VRodos_Upload_Manager::upload_asset_screenshot( $_POST['sshotFileInput'], $asset_id, $project_id, $existing_screenshot_id );
@@ -147,6 +181,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// Save custom parameters according to asset type.
 		if ( $assetCatTerm ) {
+			self::update_frontend_asset_save_progress( 'media', 'Saving category settings…', 'Applying the settings specific to this asset type.', 84 );
 			switch ( $assetCatTerm->slug ) {
 			case 'audio':
 				VRodos_Upload_Manager::create_asset_add_audio_frontend( $asset_id );
@@ -252,9 +287,23 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		// Audio: To add
+		self::update_frontend_asset_save_progress(
+			'finalize',
+			'Finalizing asset…',
+			'Refreshing the asset library and preparing the editor redirect.',
+			94
+		);
 		if ( ! isset( $_GET['vrodos_asset'] ) ) {
 			$redirect_url = add_query_arg( 'vrodos_asset', $asset_id, $redirect_url );
 		}
+		self::update_frontend_asset_save_progress(
+			'complete',
+			'Asset saved',
+			'Opening the saved asset. Any required background optimization can continue safely afterward.',
+			100,
+			'complete',
+			$redirect_url
+		);
 		self::perform_frontend_redirect( $redirect_url, $submission_buffer_level );
 	}
 

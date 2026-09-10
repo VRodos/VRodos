@@ -71,6 +71,7 @@ class VRodos_Asset_CPT_Manager {
 		add_filter( 'manage_vrodos_asset3d_posts_columns', $this->vrodos_set_custom_vrodos_asset3d_columns(...) );
 		add_action( 'manage_vrodos_asset3d_posts_custom_column', $this->vrodos_set_custom_vrodos_asset3d_columns_fill(...), 10, 2 );
 		add_action( 'init', $this->handle_asset_frontend_submission(...) );
+		add_action( 'wp_ajax_vrodos_asset_save_progress', $this->asset_save_progress_ajax(...) );
 	}
 
 	public function vrodos_asset3d_metas_description(): void { $this->controller->vrodos_asset3d_metas_description(); }
@@ -90,6 +91,7 @@ class VRodos_Asset_CPT_Manager {
 	public function vrodos_set_custom_vrodos_asset3d_columns( $columns ): array { return $this->controller->vrodos_set_custom_vrodos_asset3d_columns( $columns ); }
 	public function vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ): void { $this->controller->vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ); }
 	public function handle_asset_frontend_submission(): void { $this->controller->handle_asset_frontend_submission(); }
+	public function asset_save_progress_ajax(): void { $this->controller->asset_save_progress_ajax(); }
 
 	public static function create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
 		return VRodos_Asset_CPT_Admin_Controller::create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description );
