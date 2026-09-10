@@ -187,6 +187,7 @@ function simulateJump(frameMs) {
 
 function createJumpRequestHarness(overrides = {}) {
     const nav = Object.create(movementDefinition);
+    const position = new THREE.Vector3(0, 1.6, 0);
     const settings = {
         navigationMode: "walkable",
         collisionMode: "auto",
@@ -200,13 +201,25 @@ function createJumpRequestHarness(overrides = {}) {
         gravity: 12,
         jumpLaunchVelocity: 0,
         heightOffset: 1.6,
+        verticalCollisionSkin: 0.05,
+        groundProbeStepTolerance: 0.05,
         hasLastGroundHit: true,
+        lastGroundHit: createGroundHit(),
+        airborneSupportGround: createGroundHit(),
+        lastGroundedPosition: new THREE.Vector3(),
+        lastGroundedGroundHit: createGroundHit(),
+        hasLastGroundedPosition: false,
         lastVerticalTransitionReason: "init",
         lastVerticalTransitionAt: 0,
         getRuntimeNow: () => 10,
         getSceneSettings: () => settings,
         getNavigationMode: () => settings.navigationMode,
-        areCollisionsEnabled: () => overrides.collisionsEnabled !== false
+        areCollisionsEnabled: () => overrides.collisionsEnabled !== false,
+        getNavigationWorldPosition: () => position,
+        findWalkableGroundBelowAt(current, maxY, output) {
+            if (overrides.exactSupport === false) return null;
+            return this.copyGroundHit(createGroundHit(current.x, 0, current.z), output);
+        }
     });
     return nav;
 }
@@ -223,6 +236,7 @@ function createJumpRequestHarness(overrides = {}) {
     assert(!createJumpRequestHarness({ settings: { movement_disabled: "1" } }).requestJump("keyboard"), "disabled movement should reject jump input");
     assert(!createJumpRequestHarness({ settings: { navigationMode: "fly" } }).requestJump("keyboard"), "fly mode should reject jump input");
     assert(!createJumpRequestHarness({ collisionsEnabled: false }).requestJump("keyboard"), "missing walkable collision should reject jump input");
+    assert(!createJumpRequestHarness({ exactSupport: false }).requestJump("keyboard"), "rough offset support without exact ground should not start an unlandable jump");
     assert(movementDefinition.isJumpKeyEvent({ code: "Space" }), "Space should map to jump");
     assert(movementDefinition.shouldIgnoreKeyboardEvent({ target: { tagName: "BUTTON" } }), "Space activation on a DOM button should not also jump");
     assert(navigationSource.includes("this.jumpButtonEvents = ['abuttondown', 'xbuttondown']"), "controller A/X events should map to jump");
@@ -267,9 +281,12 @@ function createGroundResolutionHarness(sampleY, supportedY = null) {
     assert(stairStep && !stairStep.airborne, "normal descending stairs should stay grounded");
     assertNear(stairStep.ground.point.y, -0.2, "normal descending stairs should snap to the next tread");
 
-    const tallDrop = createGroundResolutionHarness(-0.6);
+    const tallDrop = createGroundResolutionHarness(-0.6, -0.6);
     const fallingStep = tallDrop.resolveMovementAgainstGround(currentPosition, 0.2, 0, currentGround, tallDrop.resolvedMovementStep);
     assert(fallingStep && fallingStep.airborne, "a supported tall drop should transition to falling");
+
+    const offsetOnlyDrop = createGroundResolutionHarness(-0.6, null);
+    assert(!offsetOnlyDrop.resolveMovementAgainstGround(currentPosition, 0.2, 0, currentGround, offsetOnlyDrop.resolvedMovementStep), "a rough offset sample without exact landing support should not start falling");
 
     const unsupported = createGroundResolutionHarness(null, null);
     assert(!unsupported.resolveMovementAgainstGround(currentPosition, 0.2, 0, currentGround, unsupported.resolvedMovementStep), "movement into an unsupported void should be rejected");
@@ -301,6 +318,7 @@ function createVerticalRayHarness() {
         data: { maxSlope: 45 },
         heightOffset: 1.6,
         verticalCollisionSkin: 0.05,
+        groundProbeStepTolerance: 0.05,
         verticalSupportRaycaster: new THREE.Raycaster(),
         verticalRayOrigin: new THREE.Vector3(),
         verticalRenderedRayOrigin: new THREE.Vector3(),
@@ -331,6 +349,49 @@ function createVerticalRayHarness() {
     assert(nav.lastVerticalSupportStatus === "blocked-solid", "solid collider rejection should be diagnosed");
     assert(!nav.findWalkableGroundBelowAt(new THREE.Vector3(4, 1.6, 0), 1, createGroundHit()), "a walkable surface above the slope limit should not become landing ground");
     assert(!nav.findWalkableGroundBelowAt(new THREE.Vector3(20, 1.6, 0), 1, createGroundHit()), "a position outside the navmesh should have no landing support");
+}
+
+{
+    const nav = createVerticalRayHarness();
+    const edgeSupport = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.2, 0.2),
+        new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
+    );
+    edgeSupport.rotation.x = -Math.PI / 2;
+    edgeSupport.position.x = 0.32;
+    edgeSupport.userData.vrodosCollisionRole = "navmesh";
+    edgeSupport.userData.vrodosWalkBehavior = "auto";
+    edgeSupport.updateMatrixWorld(true);
+    nav.blockerCollisionTargets = [edgeSupport];
+    nav.navMeshCollisionTargets = [edgeSupport];
+    nav.collisionWorldBounds.setFromObject(edgeSupport);
+    nav.navMeshBounds.copy(nav.collisionWorldBounds);
+    nav.verticalCapsuleOffsets = [
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(0.32, 0),
+        new THREE.Vector2(-0.32, 0),
+        new THREE.Vector2(0, 0.32),
+        new THREE.Vector2(0, -0.32)
+    ];
+    const footprintGround = nav.findWalkableGroundBelowAt(new THREE.Vector3(0, 1.6, 0), 0.05, createGroundHit());
+    assert(footprintGround, "landing support should survive a center-ray hole when the capsule footprint still overlaps walkable geometry");
+    assertNear(footprintGround.rawPoint.x, 0.32, "footprint landing should retain the actual supporting hit point");
+}
+
+{
+    const { nav, position } = createVerticalControllerHarness();
+    assert(nav.requestJump("keyboard"), "support-loss fixture should start from a valid grounded jump");
+    position.y = 2;
+    nav.lastResolvedPosition.copy(position);
+    nav.verticalVelocity = -2;
+    nav.findWalkableGroundBelowAt = function () {
+        this.lastVerticalSupportStatus = "none";
+        return null;
+    };
+    nav.updateVerticalMotion(1000 / 60, nav.getSceneSettings(), true);
+    assert(nav.verticalState === "grounded", "lost airborne support should fail closed to the last grounded state");
+    assertNear(position.y, 1.6, "lost airborne support should restore the last grounded position instead of falling forever");
+    assert(nav.lastVerticalTransitionReason === "airborne-support-lost", "support-loss recovery should be diagnosed");
 }
 
 {
@@ -377,12 +438,14 @@ function createVerticalControllerHarness() {
         airControl: 0.65,
         groundSnapDistance: 0.35,
         verticalCollisionSkin: 0.05,
+        groundProbeStepTolerance: 0.05,
         maxVerticalFrameDeltaSeconds: 0.05,
         jumpLaunchVelocity: Math.sqrt(2 * 12 * 0.8),
         heightOffset: 1.6,
         lastResolvedPosition: position.clone(),
         targetWorldPosition: new THREE.Vector3(),
         airborneTargetPosition: new THREE.Vector3(),
+        airborneSupportGround: createGroundHit(),
         airborneLandingGround: createGroundHit(),
         lastGroundHit: createGroundHit(),
         hasLastGroundHit: true,

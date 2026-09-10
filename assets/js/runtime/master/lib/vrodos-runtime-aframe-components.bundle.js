@@ -4441,6 +4441,20 @@
       if (!settings || movementDisabled || this.getNavigationMode(settings) !== "walkable" || !this.areCollisionsEnabled(settings) || this.isAirborne() || !this.hasLastGroundHit || this.heightOffset === null) {
         return false;
       }
+      const navigationPosition = this.getNavigationWorldPosition();
+      const footY = navigationPosition.y - this.heightOffset;
+      const supportGround = this.findWalkableGroundBelowAt(
+        navigationPosition,
+        footY + this.verticalCollisionSkin,
+        this.airborneSupportGround
+      );
+      if (!supportGround || Math.abs(supportGround.point.y - footY) > this.verticalCollisionSkin + this.groundProbeStepTolerance) {
+        this.lastVerticalTransitionReason = "jump-support-missing";
+        this.lastVerticalTransitionAt = this.getRuntimeNow();
+        return false;
+      }
+      this.setResolvedGroundHit(supportGround, navigationPosition, this.lastGroundHit);
+      this.rememberGroundedPosition(navigationPosition, this.lastGroundHit);
       this.jumpLaunchVelocity = Math.sqrt(2 * this.gravity * this.jumpHeight);
       this.verticalVelocity = this.jumpLaunchVelocity;
       this.lastJumpSource = source || "unknown";
@@ -7237,47 +7251,78 @@
       }
       const maxY = Number.isFinite(maxGroundY) ? maxGroundY : position.y - (this.heightOffset !== null ? this.heightOffset : 1.6);
       const bounds = !this.collisionWorldBounds.isEmpty() ? this.collisionWorldBounds : this.navMeshBounds;
-      const minY = bounds && !bounds.isEmpty() ? bounds.min.y - 1 : maxY - 50;
       const originY = maxY + this.verticalCollisionSkin;
-      this.verticalRayOrigin.set(position.x, originY, position.z);
       const immersivePresenting = this.isImmersiveXrPresenting();
-      const rayOrigin = immersivePresenting ? this.authoredToRenderedPosition(this.verticalRayOrigin, this.verticalRenderedRayOrigin) : this.verticalRayOrigin;
       const rayDirection = immersivePresenting ? this.authoredToRenderedDirection(this.raycastDirection, this.verticalRenderedRayDirection) : this.raycastDirection;
-      this.verticalSupportRaycaster.set(rayOrigin, rayDirection);
-      this.verticalSupportRaycaster.near = 0;
-      this.verticalSupportRaycaster.far = Math.max(1, rayOrigin.y - minY);
-      const intersections = this.verticalSupportRaycaster.intersectObjects(targets, false);
-      for (let i = 0; i < intersections.length; i++) {
-        const hit = intersections[i];
-        if (!hit.face || !hit.object) {
-          continue;
+      const verticalSpan = bounds && !bounds.isEmpty() ? Math.max(0, bounds.max.y - bounds.min.y) : 0;
+      const rayDistance = Math.max(
+        10,
+        verticalSpan + (typeof this.heightOffset === "number" ? this.heightOffset : 1.6) + (Number(this.jumpHeight) || VRODOSVerticalMovementDefaults.jumpHeight) + 2
+      );
+      const offsets = this.verticalCapsuleOffsets;
+      const offsetCount = offsets && offsets.length > 0 ? offsets.length : 1;
+      let bestWalkableY = -Infinity;
+      let highestBlockedY = -Infinity;
+      let foundWalkable = false;
+      for (let offsetIndex = 0; offsetIndex < offsetCount; offsetIndex++) {
+        const offset = offsets && offsets[offsetIndex] ? offsets[offsetIndex] : null;
+        this.verticalRayOrigin.set(
+          position.x + (offset ? offset.x : 0),
+          originY,
+          position.z + (offset ? offset.y : 0)
+        );
+        const rayOrigin = immersivePresenting ? this.authoredToRenderedPosition(this.verticalRayOrigin, this.verticalRenderedRayOrigin) : this.verticalRayOrigin;
+        this.verticalSupportRaycaster.set(rayOrigin, rayDirection);
+        this.verticalSupportRaycaster.near = 0;
+        this.verticalSupportRaycaster.far = rayDistance;
+        const intersections = this.verticalSupportRaycaster.intersectObjects(targets, false);
+        for (let hitIndex = 0; hitIndex < intersections.length; hitIndex++) {
+          const hit = intersections[hitIndex];
+          if (!hit.face || !hit.object) {
+            continue;
+          }
+          this.verticalHitNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
+          if (immersivePresenting) {
+            this.renderedToAuthoredDirection(this.verticalHitNormal, this.verticalHitNormal);
+          }
+          const upDot = this.verticalHitNormal.dot(this.upVector);
+          if (upDot <= 0.01) {
+            continue;
+          }
+          const authoredHitPoint = immersivePresenting ? this.renderedToAuthoredPosition(hit.point, this.verticalAuthoredHitPoint) : hit.point;
+          if (authoredHitPoint.y > maxY + this.verticalCollisionSkin) {
+            continue;
+          }
+          const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(upDot, -1, 1)));
+          if (this.getCollisionRoleFromObject(hit.object) !== "navmesh" || slope > this.data.maxSlope + 0.5) {
+            highestBlockedY = Math.max(highestBlockedY, authoredHitPoint.y);
+            break;
+          }
+          if (authoredHitPoint.y > bestWalkableY) {
+            outputGround = outputGround || this.createGroundHit();
+            outputGround.point.set(position.x, authoredHitPoint.y, position.z);
+            outputGround.rawPoint.copy(authoredHitPoint);
+            outputGround.normal.copy(this.verticalHitNormal);
+            outputGround.slope = slope;
+            outputGround.behavior = this.getWalkBehaviorFromIntersection(hit);
+            bestWalkableY = authoredHitPoint.y;
+            foundWalkable = true;
+          }
+          break;
         }
-        this.verticalHitNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
-        if (immersivePresenting) {
-          this.renderedToAuthoredDirection(this.verticalHitNormal, this.verticalHitNormal);
-        }
-        const upDot = this.verticalHitNormal.dot(this.upVector);
-        if (upDot <= 0.01) {
-          continue;
-        }
-        const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(upDot, -1, 1)));
-        const authoredHitPoint = immersivePresenting ? this.renderedToAuthoredPosition(hit.point, this.verticalAuthoredHitPoint) : hit.point;
-        if (authoredHitPoint.y > maxY + this.verticalCollisionSkin) {
-          continue;
-        }
-        if (this.getCollisionRoleFromObject(hit.object) !== "navmesh" || slope > this.data.maxSlope + 0.5) {
-          this.lastVerticalSupportStatus = "blocked-solid";
-          this.lastVerticalSupportBlockedGroundY = authoredHitPoint.y;
-          return null;
-        }
-        outputGround = outputGround || this.createGroundHit();
-        outputGround.point.set(position.x, authoredHitPoint.y, position.z);
-        outputGround.rawPoint.copy(authoredHitPoint);
-        outputGround.normal.copy(this.verticalHitNormal);
-        outputGround.slope = slope;
-        outputGround.behavior = this.getWalkBehaviorFromIntersection(hit);
+      }
+      if (highestBlockedY >= bestWalkableY - this.verticalCollisionSkin) {
+        this.lastVerticalSupportStatus = "blocked-solid";
+        this.lastVerticalSupportBlockedGroundY = highestBlockedY;
+        return null;
+      }
+      if (foundWalkable) {
         this.lastVerticalSupportStatus = "walkable";
         return outputGround;
+      }
+      if (Number.isFinite(highestBlockedY)) {
+        this.lastVerticalSupportStatus = "blocked-solid";
+        this.lastVerticalSupportBlockedGroundY = highestBlockedY;
       }
       return null;
     },
@@ -7357,8 +7402,16 @@
           deltaY = 0;
         }
         if (deltaY < -(this.groundSnapDistance + this.groundProbeStepTolerance)) {
+          const landingGround = this.findWalkableGroundBelowAt(
+            this.stepPosition,
+            bestGround.point.y - this.groundSnapDistance,
+            this.airborneSupportGround
+          );
+          if (!landingGround) {
+            break;
+          }
           bestPosition.copy(this.stepPosition);
-          this.copyGroundHit(stepGround, bestGround);
+          this.copyGroundHit(landingGround, bestGround);
           outputStep.airborne = true;
           break;
         }
@@ -7636,6 +7689,9 @@
         }
         if (!landingGround && this.lastVerticalSupportStatus === "blocked-solid" && Number.isFinite(this.lastVerticalSupportBlockedGroundY) && nextFootY <= this.lastVerticalSupportBlockedGroundY + this.verticalCollisionSkin) {
           return this.restoreLastGroundedPosition("non-walkable-contact");
+        }
+        if (!landingGround) {
+          return this.restoreLastGroundedPosition("airborne-support-lost");
         }
       }
       this.targetWorldPosition.copy(currentPosition);

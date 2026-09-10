@@ -385,7 +385,7 @@ Movement remains CPU-side geometry work:
 - axis sliding is attempted when movement hits a blocker;
 - Space and controller A/X start a fixed grounded-only kinematic jump;
 - larger supported drops use continuous gravity and swept walkable-surface landing tests;
-- airborne head and horizontal capsule sweeps preserve blocker collision, while unsupported exits from the navigable world remain blocked.
+- airborne head and horizontal capsule sweeps preserve blocker collision, while jump/drop entry requires physical support under the capsule footprint, tolerates small rough-mesh holes, and fails closed to the last grounded position if that support disappears.
 
 Desktop and immersive XR share the same navmesh/collider targets, grounded/airborne state, and collision resolver. Desktop moves the camera rig; immersive XR keeps WebXR/A-Frame as the HMD/controller owner, stores a virtual authored navigation position including jump height, and transforms `#vrodos-authored-world`. Collision query rays and hit points convert between authored and rendered spaces in immersive XR, so yaw-only authored-world rotation must not clear authored-space ground caches. XR entry/exit cancels airborne motion at the last grounded position before changing transform ownership.
 
