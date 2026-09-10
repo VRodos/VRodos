@@ -1017,11 +1017,14 @@ async function captureNavigationProfile(cdp, durationMs, input, pitchDeg = null)
                 blockerTargets: component.blockerCollisionTargets ? component.blockerCollisionTargets.length : 0,
                 navMeshRoots: component.navMeshRoots ? component.navMeshRoots.length : 0,
                 colliderRoots: component.colliderRoots ? component.colliderRoots.length : 0,
-                autoRecovery: {
-                    status: component.lastAutoRecoveryStatus || '',
-                    recentStableCount: component.autoStableGroundHistory
-                        ? component.autoStableGroundHistory.filter((entry) => entry && entry.valid).length
-                        : 0
+                verticalMotion: {
+                    state: component.verticalState || 'grounded',
+                    velocity: Number(component.verticalVelocity || 0),
+                    jumpHeight: Number(component.jumpHeight || 0),
+                    lastTransitionReason: component.lastVerticalTransitionReason || '',
+                    lastLandingGroundY: Number.isFinite(component.lastLandingGroundY)
+                        ? Number(component.lastLandingGroundY)
+                        : null
                 },
                 position: position ? {
                     x: position.x,

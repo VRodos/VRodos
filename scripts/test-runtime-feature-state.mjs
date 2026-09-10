@@ -238,6 +238,15 @@ function createFeatureStateFixture(options) {
         leftThumbRawInput: { x: 0, y: 0 },
         rightThumbInput: { x: 0, y: 0 },
         rightThumbRawInput: { x: 0, y: 0 },
+        verticalState: options.verticalState || "grounded",
+        verticalVelocity: options.verticalVelocity || 0,
+        jumpHeight: 0.8,
+        airControl: 0.65,
+        groundSnapDistance: 0.35,
+        lastVerticalTransitionReason: options.lastVerticalTransitionReason || "init",
+        lastLandingGroundY: Object.prototype.hasOwnProperty.call(options, "lastLandingGroundY")
+            ? options.lastLandingGroundY
+            : null,
         getNavigationMode: (data) => data.navigationMode || "walkable",
         isImmersiveXrPresenting: () => Boolean(options.immersive),
         getImmersiveWorldRootDiagnostics: () => ({
@@ -351,6 +360,21 @@ assertPath(desktopPmndrs.renderer.gpu.requestedPowerPreference, "high-performanc
 assertPath(desktopPmndrs.renderer.gpu.adapterClass, "unknown", "renderer GPU missing-context fallback");
 assertPath(desktopPmndrs.renderer.gpu.canForceAdapter, false, "renderer GPU adapter forcing contract");
 assertPath(desktopPmndrs.renderer.performance.status, "unavailable", "renderer performance missing-context fallback");
+
+const walkableAirborne = createFeatureStateFixture({
+    navMeshTargets: [{}],
+    verticalState: "airborne",
+    verticalVelocity: -2.5,
+    lastVerticalTransitionReason: "supported-drop",
+    lastLandingGroundY: 1.25
+});
+assertPath(walkableAirborne.navigation.gravityActive, true, "walkable gravity diagnostic");
+assertPath(walkableAirborne.navigation.verticalState, "airborne", "walkable vertical-state diagnostic");
+assertPath(walkableAirborne.navigation.grounded, false, "walkable grounded diagnostic");
+assertPath(walkableAirborne.navigation.verticalVelocity, -2.5, "walkable vertical velocity diagnostic");
+assertPath(walkableAirborne.navigation.jumpHeight, 0.8, "walkable jump height diagnostic");
+assertPath(walkableAirborne.navigation.lastVerticalTransitionReason, "supported-drop", "walkable transition diagnostic");
+assertPath(walkableAirborne.navigation.lastLandingGroundY, 1.25, "walkable landing-height diagnostic");
 
 const desktopClouds = createFeatureStateFixture({
     pmndrsActive: true,

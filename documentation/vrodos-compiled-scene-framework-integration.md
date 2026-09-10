@@ -380,11 +380,14 @@ At runtime, `three-mesh-bvh` patches Three mesh raycasts when available. BVH con
 
 Movement remains CPU-side geometry work:
 - downward sampling finds walkable ground;
-- slope, max-step, and max-drop rules keep walking stable;
+- slope, max-step, and short ground-snap rules keep walking and ordinary stairs stable;
 - multi-height capsule sweep raycasts block horizontal movement;
-- axis sliding is attempted when movement hits a blocker.
+- axis sliding is attempted when movement hits a blocker;
+- Space and controller A/X start a fixed grounded-only kinematic jump;
+- larger supported drops use continuous gravity and swept walkable-surface landing tests;
+- airborne head and horizontal capsule sweeps preserve blocker collision, while unsupported exits from the navigable world remain blocked.
 
-Desktop and immersive XR share the same navmesh/collider targets and collision resolver. Desktop moves the camera rig; immersive XR keeps WebXR/A-Frame as the HMD/controller owner, stores a virtual authored navigation position, and transforms `#vrodos-authored-world`. Collision query rays and hit points convert between authored and rendered spaces in immersive XR, so yaw-only authored-world rotation must not clear authored-space ground caches.
+Desktop and immersive XR share the same navmesh/collider targets, grounded/airborne state, and collision resolver. Desktop moves the camera rig; immersive XR keeps WebXR/A-Frame as the HMD/controller owner, stores a virtual authored navigation position including jump height, and transforms `#vrodos-authored-world`. Collision query rays and hit points convert between authored and rendered spaces in immersive XR, so yaw-only authored-world rotation must not clear authored-space ground caches. XR entry/exit cancels airborne motion at the last grounded position before changing transform ownership.
 
 ## 10. XR Compatibility Strategy
 

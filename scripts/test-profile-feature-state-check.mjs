@@ -52,7 +52,11 @@ function fixtureCapture(overrides = {}) {
         navigation: {
             navigationMode: "walkable",
             collisionActive: true,
-            navMeshTargets: 2
+            navMeshTargets: 2,
+            gravityActive: true,
+            verticalState: "grounded",
+            grounded: true,
+            verticalVelocity: 0
         },
         spatialUi: {
             bundleLoaded: false,

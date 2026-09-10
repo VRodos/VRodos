@@ -282,13 +282,17 @@ Runtime behavior:
 - `three-mesh-bvh` is bundled into `vrodos-collision-bvh.bundle.js` and exposed as `window.VRODOS_COLLISION_BVH`.
 - The runtime patches Three mesh raycasts with BVH acceleration when available. Standalone headset collision requires BVH and fails closed with diagnostics if BVH support is unavailable; desktop can continue with standard Three.js raycasts.
 - Desktop and immersive XR use the same navmesh/collider target sets and ground/blocker resolver. Desktop applies navigation by moving the camera rig; immersive XR stores a virtual authored navigation position and transforms the generated `#vrodos-authored-world` container, converting collision query rays and hit points between authored and rendered spaces.
-- Ground movement still uses the existing downward navmesh sampling, slope filtering, max-step, max-drop, and recovery logic.
+- Grounded movement uses downward navmesh sampling, slope filtering, max-step handling, and a `0.35m` ground-snap distance so ordinary descending stairs remain smooth.
+- Space on desktop and A/X on immersive controllers trigger a grounded-only kinematic jump. The fixed runtime profile targets a `0.8m` apex with `12m/s²` gravity, `18m/s` terminal fall speed, and `65%` air control; there is no double jump or general rigid-body physics dependency.
+- Drops beyond the ground-snap distance transition to continuous gravity-driven falling, even without movement input. Landing uses swept downward tests so lower walkable steps and platforms cannot be skipped between frames.
+- Airborne capsule sweeps use the current foot height, upward sweeps stop the player below ceilings, and only upward slope-valid `Walkable Surface` geometry can become landing ground. Ordinary colliders remain blocking geometry but are not landable.
+- Airborne horizontal candidates must retain walkable support somewhere below them inside the collision bounds. Unsupported exits and gap jumps are rejected instead of allowing an endless fall outside the authored world.
 - Walkable surfaces with `data-vrodos-walk-behavior="auto"` add rough-terrain support probes around the player footprint only after the direct ground sample fails or detects a small pit. These probes can bridge photogrammetry holes and prefer nearby stable upper support over scan pits, but only when surrounding hits are valid walkable ground.
 - Horizontal movement performs multi-height capsule sweep raycasts against blocker meshes before committing a candidate position.
 - When a blocker is hit, movement tries axis sliding and rejects the movement if sliding would leave valid walkable ground or hit another blocker.
 - For validated `auto` terrain steps/recovery, low riser-height steep hits from the walkable mesh itself can be treated as scan detail so stair risers and pit lips do not snag the capsule. Body/head-height walkable-mesh wall hits and explicit solid/collision-proxy blockers still block.
 - Immersive right-stick yaw smooths input by default, using real A-Frame frame delta. Yaw-only authored-world rotation must not clear authored-space ground caches; doing so makes move+yaw pay unnecessary ground sampling and can feel like collision friction.
-- Manual auto-terrain recovery is available from Space or the mapped controller recovery buttons. It first tries recent stable auto ground, then nearby supported auto ground, and rejects candidates that exceed recovery lift/drop limits, lack footprint support, or hit solid/proxy blocker geometry. The wider nearby search is event-only and stops at the first radius with a valid candidate.
+- Rough-terrain support probing and hole bridging remain internal stability tools. The old nearest-ground recovery teleport is removed; Space/A/X now belong exclusively to jump.
 - Fly mode remains non-colliding in v1.
 
 Collision is CPU-side Three.js geometry work. It is independent of the post-processing engine, Takram atmosphere, scene probes, shadow profiles, and material overrides. PMNDRS/Takram settings can change the rendered scene, but they do not change which mesh geometry participates in player blocking.
@@ -297,6 +301,7 @@ Performance notes:
 
 - BVH construction has an upfront load-time and memory cost.
 - Per-frame collision cost is paid only while movement is being resolved.
+- Grounded idle scenes add no jump/gravity raycast loop. Vertical support and clearance queries run only while airborne, beginning a supported drop, or revalidating changed collision geometry.
 - Default-collidable high-poly art is the main risk; use `Collision Proxy` assets for cheaper blocker geometry around complex models.
 - `scripts/profile-master-client.mjs --nav-profile` reports navmesh and blocker target counts while simulating movement without adding runtime debug UI.
 - Historical collision roadmap findings are summarized in `documentation/archive/rendering-history/README.md`.

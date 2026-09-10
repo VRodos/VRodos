@@ -264,6 +264,10 @@ function validateCapture(capture, options) {
 
     if (hasObject(state.navigation)) {
         assert(typeof state.navigation.navigationMode === "string" && state.navigation.navigationMode.length > 0, "navigation.navigationMode should be a non-empty string.", failures);
+        assert(typeof state.navigation.gravityActive === "boolean", "navigation.gravityActive should be boolean.", failures);
+        assert(state.navigation.verticalState === "grounded" || state.navigation.verticalState === "airborne", "navigation.verticalState should be grounded or airborne.", failures);
+        assert(typeof state.navigation.grounded === "boolean", "navigation.grounded should be boolean.", failures);
+        assert(typeof state.navigation.verticalVelocity === "number" && Number.isFinite(state.navigation.verticalVelocity), "navigation.verticalVelocity should be finite.", failures);
         checkExpectedValue(state.navigation.navigationMode, options.expectNavigationMode, "navigation.navigationMode", failures);
         checkBooleanValue(state.navigation.collisionActive, options.expectCollisionActive, "navigation.collisionActive", failures);
         if (options.minNavMeshTargets !== null) {

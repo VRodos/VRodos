@@ -8,6 +8,15 @@ var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVME
     maxDropHeight: 1.0,
     maxSlope: 45
 };
+const VRODOSVerticalMovementDefaults = {
+    jumpHeight: 0.8,
+    gravity: 12,
+    terminalFallSpeed: 18,
+    airControl: 0.65,
+    groundSnapDistance: 0.35,
+    collisionSkin: 0.05,
+    maxFrameDeltaSeconds: 0.05
+};
 
 AFRAME.registerComponent('vrodos-navmesh-helper', {
     init: function () {
@@ -130,6 +139,26 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition = new THREE.Vector3();
         this.lastGroundHit = this.createGroundHit();
         this.hasLastGroundHit = false;
+        this.verticalState = 'grounded';
+        this.verticalVelocity = 0;
+        this.jumpHeight = VRODOSVerticalMovementDefaults.jumpHeight;
+        this.gravity = VRODOSVerticalMovementDefaults.gravity;
+        this.terminalFallSpeed = VRODOSVerticalMovementDefaults.terminalFallSpeed;
+        this.airControl = VRODOSVerticalMovementDefaults.airControl;
+        this.groundSnapDistance = VRODOSVerticalMovementDefaults.groundSnapDistance;
+        this.verticalCollisionSkin = VRODOSVerticalMovementDefaults.collisionSkin;
+        this.maxVerticalFrameDeltaSeconds = VRODOSVerticalMovementDefaults.maxFrameDeltaSeconds;
+        this.jumpLaunchVelocity = Math.sqrt(2 * this.gravity * this.jumpHeight);
+        this.lastVerticalTransitionReason = 'init';
+        this.lastVerticalTransitionAt = 0;
+        this.lastLandingGroundY = null;
+        this.lastJumpSource = '';
+        this.lastVerticalSupportStatus = 'none';
+        this.lastVerticalSupportBlockedGroundY = null;
+        this.lastGroundedPosition = new THREE.Vector3();
+        this.lastGroundedGroundHit = this.createGroundHit();
+        this.hasLastGroundedPosition = false;
+        this.verticalMotionStep = { deltaY: 0, velocity: 0 };
         this.upVector = new THREE.Vector3(0, 1, 0);
         this.forwardVector = new THREE.Vector3();
         this.rightVector = new THREE.Vector3();
@@ -143,17 +172,30 @@ AFRAME.registerComponent('custom-movement', {
         this.constrainedCurrentPosition = new THREE.Vector3();
         this.stepPosition = new THREE.Vector3();
         this.stepDelta = new THREE.Vector3();
-        this.boundsSize = new THREE.Vector3();
-        this.boundsClosestPoint = new THREE.Vector3();
         this.raycastOrigin = new THREE.Vector3();
         this.raycastDirection = new THREE.Vector3(0, -1, 0);
         this.tempWorldNormal = new THREE.Vector3();
         this.raycaster = new THREE.Raycaster();
         this.blockerRaycaster = new THREE.Raycaster();
+        this.verticalSupportRaycaster = new THREE.Raycaster();
+        this.verticalBlockerRaycaster = new THREE.Raycaster();
         this.blockerRayOrigin = new THREE.Vector3();
         this.blockerRayDirection = new THREE.Vector3();
         this.blockerSideOffset = new THREE.Vector3();
         this.blockerHitNormal = new THREE.Vector3();
+        this.verticalRayOrigin = new THREE.Vector3();
+        this.verticalRayDirection = new THREE.Vector3(0, 1, 0);
+        this.verticalRenderedRayOrigin = new THREE.Vector3();
+        this.verticalRenderedRayDirection = new THREE.Vector3();
+        this.verticalHitNormal = new THREE.Vector3();
+        this.verticalAuthoredHitPoint = new THREE.Vector3();
+        this.airborneCurrentGround = this.createGroundHit();
+        this.airborneTargetGround = this.createGroundHit();
+        this.airborneSupportGround = this.createGroundHit();
+        this.airborneLandingGround = this.createGroundHit();
+        this.airborneTargetPosition = new THREE.Vector3();
+        this.airborneSlidePositionX = new THREE.Vector3();
+        this.airborneSlidePositionZ = new THREE.Vector3();
         this.blockerSlideStepX = {
             position: new THREE.Vector3(),
             ground: this.createGroundHit()
@@ -165,6 +207,13 @@ AFRAME.registerComponent('custom-movement', {
         this.blockerCapsuleRadius = 0.32;
         this.blockerCapsuleHeight = 1.65;
         this.blockerSkin = 0.05;
+        this.verticalCapsuleOffsets = [
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(this.blockerCapsuleRadius, 0),
+            new THREE.Vector2(-this.blockerCapsuleRadius, 0),
+            new THREE.Vector2(0, this.blockerCapsuleRadius),
+            new THREE.Vector2(0, -this.blockerCapsuleRadius)
+        ];
         this.desktopBlockerSweepHeights = [0.25, 0.9, 1.55];
         this.desktopBlockerSweepOffsets = [0, 1, -1];
         this.headsetBlockerSweepHeights = [0.35, 1.35];
@@ -199,7 +248,7 @@ AFRAME.registerComponent('custom-movement', {
             new THREE.Vector2(0, 0.58),
             new THREE.Vector2(0, -0.58)
         ];
-        this.autoRecoveryOffsets = [
+        this.autoSupportValidationOffsets = [
             new THREE.Vector2(0, 0),
             new THREE.Vector2(0.45, 0),
             new THREE.Vector2(-0.45, 0),
@@ -210,40 +259,24 @@ AFRAME.registerComponent('custom-movement', {
             new THREE.Vector2(0.75, -0.75),
             new THREE.Vector2(-0.75, -0.75)
         ];
-        this.autoRecoverySearchRadii = [0.35, 0.7, 1.1, 1.5, 2.0, 2.6, 3.4, 4.5];
-        this.autoRecoverySearchAngles = [0, 45, 90, 135, 180, 225, 270, 315];
         this.autoGroundBridgeMinSupport = 2;
         this.autoGroundPitDropThreshold = 0.12;
         this.autoGroundSupportHeightTolerance = 0.2;
         this.autoGroundStepAssistMaxHeight = 0.95;
         this.autoNavmeshRiserBypassHeight = 0.45;
-        this.autoRecoveryNavmeshBypassHeight = 0.95;
-        this.autoRecoveryMaxLift = 3.2;
-        this.autoRecoveryCooldownMs = 700;
-        this.autoStableGroundMaxAgeMs = 10000;
-        this.autoStableGroundMaxDistance = 4.5;
         this.wasdControlsSuppressed = null;
-        this.lastRecoveryAttemptAt = 0;
-        this.lastManualRecoveryAttemptAt = 0;
-        this.lastAutoRecoveryStatus = 'none';
-        this.lastAutoRecoveryAt = 0;
         this.positionPrimed = false;
         this.sampledGroundHit = this.createGroundHit();
         this.candidateGroundHit = this.createGroundHit();
         this.bestGroundHit = this.createGroundHit();
-        this.recoveryGroundHit = this.createGroundHit();
         this.offsetGroundHit = this.createGroundHit();
         this.autoSupportProbeGroundHit = this.createGroundHit();
         this.autoSupportBestGroundHit = this.createGroundHit();
         this.autoSupportResolvedGroundHit = this.createGroundHit();
-        this.autoRecoveryProbeGroundHit = this.createGroundHit();
-        this.autoRecoveryBestGroundHit = this.createGroundHit();
+        this.autoSupportValidationGroundHit = this.createGroundHit();
         this.autoGroundSampleHit = this.createGroundHit();
         this.autoGroundSamplePosition = new THREE.Vector3();
         this.autoSupportProbePosition = new THREE.Vector3();
-        this.autoRecoveryProbePosition = new THREE.Vector3();
-        this.autoRecoveryCandidatePosition = new THREE.Vector3();
-        this.autoRecoveryTargetPosition = new THREE.Vector3();
         this.immersiveWorldDelta = new THREE.Vector3();
         this.immersivePhysicalAnchorPosition = new THREE.Vector3();
         this.immersivePhysicalForwardDirection = new THREE.Vector3(0, 0, -1);
@@ -356,17 +389,6 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveEntryPoseSettleFrames = 0;
         this.immersiveEntryPoseSettleMaxFrames = 12;
         this.immersiveEntryPoseSettleAppliedFrames = 0;
-        this.autoStableGroundHistorySize = 8;
-        this.autoStableGroundHistoryIndex = 0;
-        this.autoStableGroundHistory = [];
-        for (let stableIndex = 0; stableIndex < this.autoStableGroundHistorySize; stableIndex++) {
-            this.autoStableGroundHistory.push({
-                valid: false,
-                time: 0,
-                position: new THREE.Vector3(),
-                ground: this.createGroundHit()
-            });
-        }
         this.immersiveSmoothnessProbeEnabled = this.isImmersiveSmoothnessDiagnosticsEnabled();
         this.immersiveSmoothnessFrameLimit = 900;
         this.immersiveSmoothnessFrames = [];
@@ -386,10 +408,9 @@ AFRAME.registerComponent('custom-movement', {
         this.hasLastAutoGroundSample = false;
         this.resolvedMovementStep = {
             position: new THREE.Vector3(),
-            ground: this.createGroundHit()
+            ground: this.createGroundHit(),
+            airborne: false
         };
-        this.searchRadii = [0.5, 1, 2, 4, 6];
-        this.searchAngles = [0, 45, 90, 135, 180, 225, 270, 315];
         this.handleThumbstickMove = this.handleThumbstickMove.bind(this);
         this.handleThumbstickEnd = this.handleThumbstickEnd.bind(this);
         this.handleNavmeshModelLoad = this.handleNavmeshModelLoad.bind(this);
@@ -398,7 +419,7 @@ AFRAME.registerComponent('custom-movement', {
         this.handleSceneChildDetached = this.handleSceneChildDetached.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
-        this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
+        this.handleJumpButtonDown = this.handleJumpButtonDown.bind(this);
         this.handleEnterVr = this.handleEnterVr.bind(this);
         this.handleExitVr = this.handleExitVr.bind(this);
         this.handleControllerModelLoaded = this.handleControllerModelLoaded.bind(this);
@@ -406,8 +427,8 @@ AFRAME.registerComponent('custom-movement', {
 
         this.thumbL = document.querySelector('#oculusLeft');
         this.thumbR = document.querySelector('#oculusRight');
-        this.recoveryButtonEvents = ['abuttondown', 'xbuttondown'];
-        this.recoveryButtonEls = [];
+        this.jumpButtonEvents = ['abuttondown', 'xbuttondown'];
+        this.jumpButtonEls = [];
 
         if (this.thumbL) {
             this.thumbL.addEventListener('thumbstickmoved', this.handleThumbstickMove);
@@ -425,14 +446,14 @@ AFRAME.registerComponent('custom-movement', {
 
         ['#oculusLeft', '#oculusRight'].forEach((selector) => {
             const buttonEl = document.querySelector(selector);
-            if (!buttonEl || this.recoveryButtonEls.indexOf(buttonEl) !== -1) {
+            if (!buttonEl || this.jumpButtonEls.indexOf(buttonEl) !== -1) {
                 return;
             }
 
-            this.recoveryButtonEvents.forEach((eventName) => {
-                buttonEl.addEventListener(eventName, this.handleRecoveryButtonDown);
+            this.jumpButtonEvents.forEach((eventName) => {
+                buttonEl.addEventListener(eventName, this.handleJumpButtonDown);
             });
-            this.recoveryButtonEls.push(buttonEl);
+            this.jumpButtonEls.push(buttonEl);
         });
 
         this.sceneEl.addEventListener('model-loaded', this.handleNavmeshModelLoad);
@@ -477,6 +498,135 @@ AFRAME.registerComponent('custom-movement', {
         target.slope = source.slope;
         target.behavior = source.behavior || 'precise';
         return target;
+    },
+    isAirborne: function () {
+        return this.verticalState === 'airborne';
+    },
+    setVerticalState: function (state, reason) {
+        const nextState = state === 'airborne' ? 'airborne' : 'grounded';
+        if (this.verticalState !== nextState) {
+            this.verticalState = nextState;
+            this.lastVerticalTransitionReason = reason || nextState;
+            this.lastVerticalTransitionAt = this.getRuntimeNow();
+        }
+        if (nextState === 'grounded') {
+            this.verticalVelocity = 0;
+        }
+        return this.verticalState;
+    },
+    rememberGroundedPosition: function (position, groundHit) {
+        if (!position || !groundHit) {
+            return false;
+        }
+        this.lastGroundedPosition.copy(position);
+        this.copyGroundHit(groundHit, this.lastGroundedGroundHit);
+        this.hasLastGroundedPosition = true;
+        return true;
+    },
+    restoreLastGroundedPosition: function (reason) {
+        if (!this.hasLastGroundedPosition) {
+            this.setVerticalState('grounded', reason || 'vertical-reset');
+            this.hasLastGroundHit = false;
+            return false;
+        }
+
+        const restored = this.setNavigationWorldPosition(this.lastGroundedPosition);
+        if (restored) {
+            this.lastResolvedPosition.copy(this.lastGroundedPosition);
+            this.copyGroundHit(this.lastGroundedGroundHit, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+        }
+        this.setVerticalState('grounded', reason || 'vertical-reset');
+        return restored;
+    },
+    prepareVerticalMotionForEnterVr: function () {
+        if (!this.isAirborne()) {
+            return;
+        }
+
+        if (this.hasLastGroundedPosition) {
+            this.lastNonImmersiveNavigationPosition.copy(this.lastGroundedPosition);
+            this.hasLastNonImmersiveNavigationPosition = true;
+            this.lastResolvedPosition.copy(this.lastGroundedPosition);
+            this.copyGroundHit(this.lastGroundedGroundHit, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+        }
+        this.setVerticalState('grounded', 'enter-vr');
+    },
+    settleVerticalMotionForExitVr: function () {
+        if (!this.isAirborne()) {
+            return;
+        }
+
+        if (this.hasLastGroundedPosition) {
+            this.immersiveVirtualNavPosition.copy(this.lastGroundedPosition);
+            this.lastResolvedPosition.copy(this.lastGroundedPosition);
+            this.copyGroundHit(this.lastGroundedGroundHit, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+            if (this.isImmersiveXrPresenting()) {
+                this.applyImmersiveRenderTransform();
+            }
+        }
+        this.setVerticalState('grounded', 'exit-vr');
+    },
+    calculateVerticalMotionStep: function (deltaSeconds, output) {
+        output = output || this.verticalMotionStep;
+        const dt = VRODOSMaster.clamp(Number(deltaSeconds) || 0, 0, this.maxVerticalFrameDeltaSeconds);
+        const gravity = Math.max(0, Number(this.gravity) || 0);
+        const terminalVelocity = -Math.abs(Number(this.terminalFallSpeed) || 0);
+        const startVelocity = Number(this.verticalVelocity) || 0;
+
+        if (dt <= 0) {
+            output.deltaY = 0;
+            output.velocity = Math.max(terminalVelocity, startVelocity);
+            return output;
+        }
+
+        const unconstrainedVelocity = startVelocity - (gravity * dt);
+        if (gravity > 0 && unconstrainedVelocity < terminalVelocity) {
+            const timeToTerminal = VRODOSMaster.clamp((startVelocity - terminalVelocity) / gravity, 0, dt);
+            output.deltaY = (startVelocity * timeToTerminal) -
+                (0.5 * gravity * timeToTerminal * timeToTerminal) +
+                (terminalVelocity * (dt - timeToTerminal));
+            output.velocity = terminalVelocity;
+            return output;
+        }
+
+        output.deltaY = (startVelocity * dt) - (0.5 * gravity * dt * dt);
+        output.velocity = Math.max(terminalVelocity, unconstrainedVelocity);
+        return output;
+    },
+    requestJump: function (source) {
+        const settings = this.getSceneSettings();
+        const movementDisabled = settings && (
+            settings.movement_disabled === true ||
+            settings.movement_disabled === 'true' ||
+            settings.movement_disabled === '1'
+        );
+        if (
+            !settings ||
+            movementDisabled ||
+            this.getNavigationMode(settings) !== 'walkable' ||
+            !this.areCollisionsEnabled(settings) ||
+            this.isAirborne() ||
+            !this.hasLastGroundHit ||
+            this.heightOffset === null
+        ) {
+            return false;
+        }
+
+        this.jumpLaunchVelocity = Math.sqrt(2 * this.gravity * this.jumpHeight);
+        this.verticalVelocity = this.jumpLaunchVelocity;
+        this.lastJumpSource = source || 'unknown';
+        this.setVerticalState('airborne', `jump:${this.lastJumpSource}`);
+        return true;
+    },
+    startFalling: function (reason) {
+        if (!this.isAirborne()) {
+            this.verticalVelocity = Math.min(0, Number(this.verticalVelocity) || 0);
+            this.setVerticalState('airborne', reason || 'fall');
+        }
+        return true;
     },
     setResolvedGroundHit: function (sourceGround, resolvedPosition, targetGround) {
         targetGround = targetGround || this.lastGroundHit;
@@ -1185,6 +1335,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     handleEnterVr: function () {
         const runImmersiveEntry = () => {
+            this.prepareVerticalMotionForEnterVr();
             this.resetImmersiveTurnSmoothing('enter-vr');
             this.pendingImmersiveExitNavigationPosition = null;
             this.pendingImmersiveExitNavigationReason = '';
@@ -1222,6 +1373,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.resetImmersiveTurnSmoothing('exit-vr');
+        this.settleVerticalMotionForExitVr();
         const finalImmersiveNavigationPosition = this.immersiveVirtualNavPosition.clone();
         this.pendingImmersiveExitNavigationPosition = finalImmersiveNavigationPosition.clone();
         this.pendingImmersiveExitNavigationReason = 'handle-exit-vr';
@@ -1285,8 +1437,8 @@ AFRAME.registerComponent('custom-movement', {
             this.requestShadowMapRefresh('immersive-input-settle', { deferMs: 140 });
         }
     },
-    handleRecoveryButtonDown: function (event) {
-        if (this.requestAutoTerrainRecovery('controller') && event && typeof event.preventDefault === 'function') {
+    handleJumpButtonDown: function (event) {
+        if (this.requestJump('controller') && event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
     },
@@ -1320,7 +1472,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         const tagName = target.tagName ? target.tagName.toLowerCase() : '';
-        return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
+        return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || tagName === 'button' || target.isContentEditable;
     },
     updateKeyboardAxis: function (code, isPressed) {
         switch (code) {
@@ -1369,9 +1521,9 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        if (this.isRecoveryKeyEvent(event)) {
-            const recovered = this.requestAutoTerrainRecovery('keyboard');
-            if (recovered || this.getNavigationMode() === 'walkable') {
+        if (this.isJumpKeyEvent(event)) {
+            const jumped = event.repeat ? false : this.requestJump('keyboard');
+            if (jumped || this.getNavigationMode() === 'walkable') {
                 event.preventDefault();
             }
             return;
@@ -1390,7 +1542,7 @@ AFRAME.registerComponent('custom-movement', {
             event.preventDefault();
         }
     },
-    isRecoveryKeyEvent: function (event) {
+    isJumpKeyEvent: function (event) {
         return Boolean(event && (
             event.code === 'Space' ||
             event.key === ' ' ||
@@ -1411,13 +1563,13 @@ AFRAME.registerComponent('custom-movement', {
             this.thumbR.removeEventListener('thumbstickup', this.handleThumbstickEnd);
             this.thumbR.removeEventListener('model-loaded', this.handleControllerModelLoaded);
         }
-        if (this.recoveryButtonEls && this.recoveryButtonEvents) {
-            this.recoveryButtonEls.forEach((buttonEl) => {
-                this.recoveryButtonEvents.forEach((eventName) => {
-                    buttonEl.removeEventListener(eventName, this.handleRecoveryButtonDown);
+        if (this.jumpButtonEls && this.jumpButtonEvents) {
+            this.jumpButtonEls.forEach((buttonEl) => {
+                this.jumpButtonEvents.forEach((eventName) => {
+                    buttonEl.removeEventListener(eventName, this.handleJumpButtonDown);
                 });
             });
-            this.recoveryButtonEls = [];
+            this.jumpButtonEls = [];
         }
         this.sceneEl.removeEventListener('model-loaded', this.handleNavmeshModelLoad);
         this.sceneEl.removeEventListener('loaded', this.handleSceneLoaded);
@@ -1729,6 +1881,9 @@ AFRAME.registerComponent('custom-movement', {
         this.rememberNonImmersiveViewForward();
 
         const now = this.getRuntimeNow();
+        if (this.isAirborne()) {
+            return;
+        }
         if (!forceGroundSample && this.hasLastNonImmersiveGround && (now - this.lastNonImmersiveGroundRememberedAt) < 500) {
             return;
         }
@@ -1835,9 +1990,6 @@ AFRAME.registerComponent('custom-movement', {
         this.hasLastGroundHit = false;
         this.hasLastAutoGroundSample = false;
         this.lastAutoGroundSampleAt = 0;
-        for (let i = 0; i < this.autoStableGroundHistory.length; i++) {
-            this.autoStableGroundHistory[i].valid = false;
-        }
     },
     armImmersiveFirstMovementGroundLock: function () {
         this.immersiveFirstMovementGroundLock = this.isImmersiveXrPresenting() && this.hasLastGroundHit;
@@ -2053,6 +2205,7 @@ AFRAME.registerComponent('custom-movement', {
         this.clearImmersiveFirstMovementGroundLock();
         this.clearImmersiveEntryPoseSettle();
         this.clearImmersiveGroundCaches();
+        this.setVerticalState('grounded', 'immersive-entry');
         this.positionPrimed = true;
         this.immersiveWasPresenting = true;
         this.applyImmersiveRenderTransform();
@@ -3096,8 +3249,8 @@ AFRAME.registerComponent('custom-movement', {
         const requiredSupport = typeof minSupport === 'number' ? minSupport : this.autoGroundBridgeMinSupport;
         let supportCount = 0;
 
-        for (let i = 0; i < this.autoRecoveryOffsets.length; i++) {
-            const offset = this.autoRecoveryOffsets[i];
+        for (let i = 0; i < this.autoSupportValidationOffsets.length; i++) {
+            const offset = this.autoSupportValidationOffsets[i];
             this.autoSupportProbePosition.set(
                 position.x + offset.x,
                 position.y,
@@ -3107,7 +3260,7 @@ AFRAME.registerComponent('custom-movement', {
             const supportGround = this.sampleGroundAtSingle(
                 this.autoSupportProbePosition,
                 referenceGroundY,
-                this.autoRecoveryProbeGroundHit,
+                this.autoSupportValidationGroundHit,
                 limits
             );
             if (!this.isAutoGroundHit(supportGround)) {
@@ -3138,24 +3291,6 @@ AFRAME.registerComponent('custom-movement', {
 
         return this.horizontalDistanceSquared(fromPosition, toPosition) <=
             (this.autoGroundMissDistance * this.autoGroundMissDistance);
-    },
-    getRecoverySearchRadius: function (position) {
-        this.refreshNavMeshRoots();
-        if (this.navMeshRoots.length === 0 || this.navMeshBounds.isEmpty()) {
-            return 12;
-        }
-
-        this.navMeshBounds.getSize(this.boundsSize);
-        const boundsRadius = VRODOSMaster.clamp(this.boundsSize.length() * 0.35, 12, 120);
-        if (this.isImmersiveXrPresenting()) {
-            return boundsRadius;
-        }
-
-        this.boundsClosestPoint.copy(position);
-        this.navMeshBounds.clampPoint(position, this.boundsClosestPoint);
-        const horizontalDistanceToBounds = Math.sqrt(this.horizontalDistanceSquared(position, this.boundsClosestPoint));
-
-        return Math.max(boundsRadius, horizontalDistanceToBounds + 6);
     },
     areCollisionsEnabled: function (settings) {
         settings = settings || this.getSceneSettings();
@@ -3753,304 +3888,124 @@ AFRAME.registerComponent('custom-movement', {
         this.storeAutoGroundSample(position, outputGround);
         return outputGround;
     },
-    canAttemptRecovery: function () {
-        const now = performance.now();
-        if (now - this.lastRecoveryAttemptAt < 250) {
-            return false;
+    findWalkableGroundBelowAt: function (position, maxGroundY, outputGround) {
+        this.lastVerticalSupportStatus = 'none';
+        this.lastVerticalSupportBlockedGroundY = null;
+        this.refreshNavMeshRoots();
+        this.refreshCollisionWorld();
+        const targets = this.blockerCollisionTargets.length > 0
+            ? this.blockerCollisionTargets
+            : this.navMeshCollisionTargets;
+        if (!position || targets.length === 0) {
+            return null;
         }
 
-        this.lastRecoveryAttemptAt = now;
-        return true;
-    },
-    findNearestGroundAt: function (position, searchRadius, outputGround) {
-        const radius = typeof searchRadius === 'number' ? searchRadius : 6;
-        const bestGround = outputGround || this.bestGroundHit;
-        let foundBestGround = Boolean(this.sampleGroundAt(position, undefined, bestGround));
-        let bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.rawPoint, position) : Infinity;
+        const maxY = Number.isFinite(maxGroundY)
+            ? maxGroundY
+            : position.y - (this.heightOffset !== null ? this.heightOffset : 1.6);
+        const bounds = !this.collisionWorldBounds.isEmpty() ? this.collisionWorldBounds : this.navMeshBounds;
+        const minY = bounds && !bounds.isEmpty()
+            ? bounds.min.y - 1
+            : maxY - 50;
+        const originY = maxY + this.verticalCollisionSkin;
+        this.verticalRayOrigin.set(position.x, originY, position.z);
 
-        if (foundBestGround && bestDistanceSq < 0.0001) {
-            return bestGround;
-        }
+        const immersivePresenting = this.isImmersiveXrPresenting();
+        const rayOrigin = immersivePresenting
+            ? this.authoredToRenderedPosition(this.verticalRayOrigin, this.verticalRenderedRayOrigin)
+            : this.verticalRayOrigin;
+        const rayDirection = immersivePresenting
+            ? this.authoredToRenderedDirection(this.raycastDirection, this.verticalRenderedRayDirection)
+            : this.raycastDirection;
+        this.verticalSupportRaycaster.set(rayOrigin, rayDirection);
+        this.verticalSupportRaycaster.near = 0;
+        this.verticalSupportRaycaster.far = Math.max(1, rayOrigin.y - minY);
 
-        this.searchRadii[this.searchRadii.length - 1] = radius;
-
-        for (let r = 0; r < this.searchRadii.length; r++) {
-            const offsetRadius = this.searchRadii[r];
-            if (offsetRadius > radius) {
+        const intersections = this.verticalSupportRaycaster.intersectObjects(targets, false);
+        for (let i = 0; i < intersections.length; i++) {
+            const hit = intersections[i];
+            if (!hit.face || !hit.object) {
                 continue;
             }
 
-            for (let a = 0; a < this.searchAngles.length; a++) {
-                const radians = THREE.MathUtils.degToRad(this.searchAngles[a]);
-                this.targetWorldPosition.set(
-                    position.x + Math.cos(radians) * offsetRadius,
-                    position.y,
-                    position.z + Math.sin(radians) * offsetRadius
-                );
-
-                const candidateGround = this.sampleGroundAt(this.targetWorldPosition, undefined, this.candidateGroundHit);
-                if (!candidateGround) {
-                    continue;
-                }
-
-                const distanceSq = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
-                if (distanceSq < bestDistanceSq) {
-                    this.copyGroundHit(candidateGround, bestGround);
-                    foundBestGround = true;
-                    bestDistanceSq = distanceSq;
-                }
+            this.verticalHitNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
+            if (immersivePresenting) {
+                this.renderedToAuthoredDirection(this.verticalHitNormal, this.verticalHitNormal);
             }
-        }
+            const upDot = this.verticalHitNormal.dot(this.upVector);
+            if (upDot <= 0.01) {
+                continue;
+            }
+            const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(upDot, -1, 1)));
 
-        return foundBestGround ? bestGround : null;
-    },
-    recordStableAutoGround: function (position, groundHit) {
-        if (!this.isAutoGroundHit(groundHit) || !position) {
-            return;
-        }
-
-        const slot = this.autoStableGroundHistory[this.autoStableGroundHistoryIndex];
-        slot.valid = true;
-        slot.time = performance.now();
-        slot.position.copy(position);
-        this.copyGroundHit(groundHit, slot.ground);
-        this.autoStableGroundHistoryIndex = (this.autoStableGroundHistoryIndex + 1) % this.autoStableGroundHistory.length;
-    },
-    hasRecentStableAutoGround: function (currentPosition) {
-        const now = performance.now();
-        const maxDistanceSq = this.autoStableGroundMaxDistance * this.autoStableGroundMaxDistance;
-        for (let i = 0; i < this.autoStableGroundHistory.length; i++) {
-            const slot = this.autoStableGroundHistory[i];
-            if (!slot.valid || now - slot.time > this.autoStableGroundMaxAgeMs) {
+            const authoredHitPoint = immersivePresenting
+                ? this.renderedToAuthoredPosition(hit.point, this.verticalAuthoredHitPoint)
+                : hit.point;
+            if (authoredHitPoint.y > maxY + this.verticalCollisionSkin) {
                 continue;
             }
 
-            if (this.horizontalDistanceSquared(slot.position, currentPosition) <= maxDistanceSq) {
-                return true;
-            }
-        }
-
-        return false;
-    },
-    getRecoveryGroundY: function (position, currentGround) {
-        if (currentGround && currentGround.point && typeof currentGround.point.y === 'number') {
-            return currentGround.point.y;
-        }
-
-        if (this.hasLastGroundHit && this.lastGroundHit && this.lastGroundHit.point) {
-            return this.lastGroundHit.point.y;
-        }
-
-        if (this.heightOffset !== null) {
-            return position.y - this.heightOffset;
-        }
-
-        return position.y - 1.6;
-    },
-    setAutoRecoveryStatus: function (status) {
-        this.lastAutoRecoveryStatus = status || 'unknown';
-        this.lastAutoRecoveryAt = performance.now();
-    },
-    isAutoRecoveryCandidateValid: function (currentPosition, currentGround, candidatePosition, candidateGround, minSupport) {
-        if (!this.isAutoGroundHit(candidateGround) || !candidatePosition) {
-            return false;
-        }
-
-        if (candidateGround.slope > this.data.maxSlope + 0.5) {
-            return false;
-        }
-
-        const currentGroundY = this.getRecoveryGroundY(currentPosition, currentGround);
-        const lift = candidateGround.point.y - currentGroundY;
-        if (lift > this.autoRecoveryMaxLift + this.groundProbeStepTolerance ||
-            lift < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
-            return false;
-        }
-
-        if (!this.hasAutoGroundSupportAt(candidatePosition, candidateGround.point.y, minSupport || this.autoGroundBridgeMinSupport)) {
-            return false;
-        }
-
-        const targetY = candidateGround.point.y + (this.heightOffset !== null ? this.heightOffset : 1.6);
-        this.autoRecoveryTargetPosition.set(candidatePosition.x, targetY, candidatePosition.z);
-        return !this.isHorizontalPathBlocked(
-            currentPosition,
-            this.autoRecoveryTargetPosition,
-            currentGround,
-            candidateGround,
-            {
-                ignoreNavmeshBlockers: true,
-                maxIgnoredNavmeshBlockerHeight: this.autoRecoveryNavmeshBypassHeight
-            }
-        );
-    },
-    findRecentStableAutoRecoveryGround: function (currentPosition, currentGround) {
-        const now = performance.now();
-        const maxDistanceSq = this.autoStableGroundMaxDistance * this.autoStableGroundMaxDistance;
-        let foundBest = false;
-        let bestScore = Infinity;
-
-        for (let i = 0; i < this.autoStableGroundHistory.length; i++) {
-            const slot = this.autoStableGroundHistory[i];
-            if (!slot.valid || now - slot.time > this.autoStableGroundMaxAgeMs) {
-                continue;
+            if (
+                this.getCollisionRoleFromObject(hit.object) !== 'navmesh' ||
+                slope > this.data.maxSlope + 0.5
+            ) {
+                this.lastVerticalSupportStatus = 'blocked-solid';
+                this.lastVerticalSupportBlockedGroundY = authoredHitPoint.y;
+                return null;
             }
 
-            const distanceSq = this.horizontalDistanceSquared(slot.position, currentPosition);
-            if (distanceSq > maxDistanceSq) {
-                continue;
-            }
-
-            if (!this.isAutoRecoveryCandidateValid(currentPosition, currentGround, slot.position, slot.ground, 1)) {
-                continue;
-            }
-
-            const ageScore = (now - slot.time) / this.autoStableGroundMaxAgeMs;
-            const score = distanceSq + ageScore;
-            if (score < bestScore) {
-                bestScore = score;
-                foundBest = true;
-                this.autoRecoveryCandidatePosition.copy(slot.position);
-                this.copyGroundHit(slot.ground, this.autoRecoveryBestGroundHit);
-            }
-        }
-
-        return foundBest ? this.autoRecoveryBestGroundHit : null;
-    },
-    findNearbyAutoRecoveryGround: function (currentPosition, currentGround) {
-        const currentGroundY = this.getRecoveryGroundY(currentPosition, currentGround);
-        const recoveryLimits = {
-            maxStepHeight: this.autoRecoveryMaxLift,
-            maxDropHeight: this.data.maxDropHeight
-        };
-        let foundBest = false;
-        let bestScore = Infinity;
-
-        for (let r = 0; r < this.autoRecoverySearchRadii.length; r++) {
-            const radius = this.autoRecoverySearchRadii[r];
-            foundBest = false;
-            bestScore = Infinity;
-
-            for (let a = 0; a < this.autoRecoverySearchAngles.length; a++) {
-                const radians = THREE.MathUtils.degToRad(this.autoRecoverySearchAngles[a]);
-                this.autoRecoveryProbePosition.set(
-                    currentPosition.x + Math.cos(radians) * radius,
-                    currentPosition.y,
-                    currentPosition.z + Math.sin(radians) * radius
-                );
-
-                const candidateGround = this.sampleGroundAtSingle(
-                    this.autoRecoveryProbePosition,
-                    currentGroundY,
-                    this.autoRecoveryProbeGroundHit,
-                    recoveryLimits
-                );
-                if (!this.isAutoGroundHit(candidateGround)) {
-                    continue;
-                }
-
-                if (!this.isAutoRecoveryCandidateValid(
-                    currentPosition,
-                    currentGround,
-                    this.autoRecoveryProbePosition,
-                    candidateGround,
-                    this.autoGroundBridgeMinSupport
-                )) {
-                    continue;
-                }
-
-                const lift = candidateGround.point.y - currentGroundY;
-                const score = (radius * radius) +
-                    (Math.max(0, -lift) * 1.5) +
-                    (Math.max(0, lift) * 0.25) +
-                    (candidateGround.slope * 0.002);
-                if (score < bestScore) {
-                    bestScore = score;
-                    foundBest = true;
-                    this.autoRecoveryCandidatePosition.copy(this.autoRecoveryProbePosition);
-                    this.copyGroundHit(candidateGround, this.autoRecoveryBestGroundHit);
-                }
-            }
-
-            if (foundBest) {
-                return this.autoRecoveryBestGroundHit;
-            }
+            outputGround = outputGround || this.createGroundHit();
+            outputGround.point.set(position.x, authoredHitPoint.y, position.z);
+            outputGround.rawPoint.copy(authoredHitPoint);
+            outputGround.normal.copy(this.verticalHitNormal);
+            outputGround.slope = slope;
+            outputGround.behavior = this.getWalkBehaviorFromIntersection(hit);
+            this.lastVerticalSupportStatus = 'walkable';
+            return outputGround;
         }
 
         return null;
     },
-    snapNavigationToAutoRecoveryGround: function (candidatePosition, groundHit) {
-        if (!candidatePosition || !groundHit) {
-            return false;
+    getUpwardVerticalClearance: function (position, footY, requestedDistance) {
+        const distance = Math.max(0, Number(requestedDistance) || 0);
+        if (!position || distance <= 0) {
+            return distance;
         }
 
-        if (this.heightOffset === null) {
-            this.heightOffset = 1.6;
+        this.refreshCollisionWorld();
+        if (this.blockerCollisionTargets.length === 0) {
+            return distance;
         }
 
-        this.heightOffset = this.resolveNavigationHeightOffset(this.heightOffset);
-        this.targetWorldPosition.set(
-            candidatePosition.x,
-            groundHit.point.y + this.heightOffset,
-            candidatePosition.z
-        );
+        const immersivePresenting = this.isImmersiveXrPresenting();
+        const headY = footY + this.blockerCapsuleHeight;
+        let clearance = distance;
 
-        if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
-            return false;
+        for (let i = 0; i < this.verticalCapsuleOffsets.length; i++) {
+            const offset = this.verticalCapsuleOffsets[i];
+            this.verticalRayOrigin.set(position.x + offset.x, headY, position.z + offset.y);
+            const rayOrigin = immersivePresenting
+                ? this.authoredToRenderedPosition(this.verticalRayOrigin, this.verticalRenderedRayOrigin)
+                : this.verticalRayOrigin;
+            const rayDirection = immersivePresenting
+                ? this.authoredToRenderedDirection(this.verticalRayDirection, this.verticalRenderedRayDirection)
+                : this.verticalRayDirection;
+            this.verticalBlockerRaycaster.set(rayOrigin, rayDirection);
+            this.verticalBlockerRaycaster.near = 0;
+            this.verticalBlockerRaycaster.far = distance + this.verticalCollisionSkin;
+            const intersections = this.verticalBlockerRaycaster.intersectObjects(this.blockerCollisionTargets, false);
+            if (intersections.length === 0) {
+                continue;
+            }
+
+            clearance = Math.min(clearance, Math.max(0, intersections[0].distance - this.verticalCollisionSkin));
         }
 
-        this.lastResolvedPosition.copy(this.targetWorldPosition);
-        this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
-        this.hasLastGroundHit = true;
-        this.recordStableAutoGround(this.targetWorldPosition, this.lastGroundHit);
-        return true;
-    },
-    requestAutoTerrainRecovery: function (source) {
-        const settings = this.getSceneSettings();
-        if (!settings || this.getNavigationMode(settings) !== 'walkable' || !this.areCollisionsEnabled(settings)) {
-            this.setAutoRecoveryStatus('unavailable');
-            return false;
-        }
-
-        const movementDisabled = settings.movement_disabled === true ||
-            settings.movement_disabled === 'true' ||
-            settings.movement_disabled === '1';
-        if (movementDisabled) {
-            this.setAutoRecoveryStatus('movement-disabled');
-            return false;
-        }
-
-        const now = performance.now();
-        if (now - this.lastManualRecoveryAttemptAt < this.autoRecoveryCooldownMs) {
-            this.setAutoRecoveryStatus('cooldown');
-            return false;
-        }
-
-        const currentPosition = this.getNavigationWorldPosition();
-        const currentGround = this.sampleGroundAt(
-            currentPosition,
-            this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined,
-            this.sampledGroundHit
-        );
-        this.lastManualRecoveryAttemptAt = now;
-
-        let recoveryGround = this.findRecentStableAutoRecoveryGround(currentPosition, currentGround);
-        if (recoveryGround && this.snapNavigationToAutoRecoveryGround(this.autoRecoveryCandidatePosition, recoveryGround)) {
-            this.setAutoRecoveryStatus(`${source || 'manual'}:recent`);
-            return true;
-        }
-
-        recoveryGround = this.findNearbyAutoRecoveryGround(currentPosition, currentGround);
-        if (recoveryGround && this.snapNavigationToAutoRecoveryGround(this.autoRecoveryCandidatePosition, recoveryGround)) {
-            this.setAutoRecoveryStatus(`${source || 'manual'}:nearby`);
-            return true;
-        }
-
-        this.setAutoRecoveryStatus('no-valid-target');
-        return false;
+        return clearance;
     },
     resolveMovementAgainstGround: function (currentPosition, deltaX, deltaZ, currentGround, outputStep) {
         outputStep = outputStep || this.resolvedMovementStep;
+        outputStep.airborne = false;
         this.stepDelta.set(deltaX, 0, deltaZ);
         const totalDistance = this.stepDelta.length();
         if (totalDistance < 0.00001) {
@@ -4071,7 +4026,7 @@ AFRAME.registerComponent('custom-movement', {
             this.stepPosition.x += deltaX * (step / steps);
             this.stepPosition.z += deltaZ * (step / steps);
 
-            let stepGround = this.sampleGroundAt(this.stepPosition, bestGround.point.y, this.sampledGroundHit);
+            const stepGround = this.sampleGroundAt(this.stepPosition, bestGround.point.y, this.sampledGroundHit);
             if (!stepGround) {
                 if (this.canUseAutoGroundMissGrace(bestGround, bestPosition, this.stepPosition, autoGroundMisses)) {
                     autoGroundMisses++;
@@ -4079,9 +4034,18 @@ AFRAME.registerComponent('custom-movement', {
                     continue;
                 }
 
-                stepGround = this.findNearestGroundAt(this.stepPosition, 1.5, this.recoveryGroundHit);
-            }
-            if (!stepGround) {
+                const landingGround = this.findWalkableGroundBelowAt(
+                    this.stepPosition,
+                    bestGround.point.y - this.groundSnapDistance,
+                    this.airborneSupportGround
+                );
+                if (!landingGround) {
+                    break;
+                }
+
+                bestPosition.copy(this.stepPosition);
+                this.copyGroundHit(landingGround, bestGround);
+                outputStep.airborne = true;
                 break;
             }
 
@@ -4093,6 +4057,13 @@ AFRAME.registerComponent('custom-movement', {
             if (stepGround.behavior === 'auto' && Math.abs(deltaY) <= this.autoGroundHeightDeadband) {
                 stepGround.point.y = bestGround.point.y;
                 deltaY = 0;
+            }
+
+            if (deltaY < -(this.groundSnapDistance + this.groundProbeStepTolerance)) {
+                bestPosition.copy(this.stepPosition);
+                this.copyGroundHit(stepGround, bestGround);
+                outputStep.airborne = true;
+                break;
             }
 
             const stepMaxHeight = this.getMaxStepHeightForGround(stepGround);
@@ -4263,9 +4234,12 @@ AFRAME.registerComponent('custom-movement', {
             return resolvedStep;
         }
 
-        const blockerOptions = this.getAutoStepNavmeshBlockerOptions(currentGround, resolvedStep.ground);
+        const blockerTargetGround = resolvedStep.airborne ? currentGround : resolvedStep.ground;
+        const blockerOptions = resolvedStep.airborne
+            ? null
+            : this.getAutoStepNavmeshBlockerOptions(currentGround, resolvedStep.ground);
 
-        if (!this.isHorizontalPathBlocked(currentPosition, resolvedStep.position, currentGround, resolvedStep.ground, blockerOptions)) {
+        if (!this.isHorizontalPathBlocked(currentPosition, resolvedStep.position, currentGround, blockerTargetGround, blockerOptions)) {
             return resolvedStep;
         }
 
@@ -4282,8 +4256,11 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
-            const slideBlockerOptions = this.getAutoStepNavmeshBlockerOptions(currentGround, candidateStep.ground);
-            if (this.isHorizontalPathBlocked(currentPosition, candidateStep.position, currentGround, candidateStep.ground, slideBlockerOptions)) {
+            const slideTargetGround = candidateStep.airborne ? currentGround : candidateStep.ground;
+            const slideBlockerOptions = candidateStep.airborne
+                ? null
+                : this.getAutoStepNavmeshBlockerOptions(currentGround, candidateStep.ground);
+            if (this.isHorizontalPathBlocked(currentPosition, candidateStep.position, currentGround, slideTargetGround, slideBlockerOptions)) {
                 return;
             }
 
@@ -4298,6 +4275,154 @@ AFRAME.registerComponent('custom-movement', {
         trySlideStep(0, deltaZ, this.blockerSlideStepZ);
 
         return bestStep;
+    },
+    setAirborneSweepGround: function (groundHit, position, footY) {
+        groundHit.point.set(position.x, footY, position.z);
+        groundHit.rawPoint.copy(groundHit.point);
+        groundHit.normal.set(0, 1, 0);
+        groundHit.slope = 0;
+        groundHit.behavior = 'precise';
+        return groundHit;
+    },
+    resolveAirborneHorizontalCandidate: function (currentPosition, candidatePosition, footY) {
+        const supportGround = this.findWalkableGroundBelowAt(
+            candidatePosition,
+            footY + this.verticalCollisionSkin,
+            this.airborneSupportGround
+        );
+        if (!supportGround) {
+            return false;
+        }
+
+        const fromGround = this.setAirborneSweepGround(this.airborneCurrentGround, currentPosition, footY);
+        const toGround = this.setAirborneSweepGround(this.airborneTargetGround, candidatePosition, footY);
+        return !this.isHorizontalPathBlocked(currentPosition, candidatePosition, fromGround, toGround, null);
+    },
+    applyAirborneMovement: function (deltaX, deltaZ) {
+        if (Math.abs(deltaX) < 0.00001 && Math.abs(deltaZ) < 0.00001) {
+            return false;
+        }
+
+        const currentPosition = this.constrainedCurrentPosition.copy(this.getNavigationWorldPosition());
+        const footY = currentPosition.y - (this.heightOffset !== null ? this.heightOffset : 1.6);
+        this.airborneTargetPosition.copy(currentPosition);
+        this.airborneTargetPosition.x += deltaX;
+        this.airborneTargetPosition.z += deltaZ;
+
+        let resolvedPosition = null;
+        if (this.resolveAirborneHorizontalCandidate(currentPosition, this.airborneTargetPosition, footY)) {
+            resolvedPosition = this.airborneTargetPosition;
+        } else {
+            this.airborneSlidePositionX.copy(currentPosition);
+            this.airborneSlidePositionX.x += deltaX;
+            this.airborneSlidePositionZ.copy(currentPosition);
+            this.airborneSlidePositionZ.z += deltaZ;
+
+            const canSlideX = this.resolveAirborneHorizontalCandidate(currentPosition, this.airborneSlidePositionX, footY);
+            const canSlideZ = this.resolveAirborneHorizontalCandidate(currentPosition, this.airborneSlidePositionZ, footY);
+            if (canSlideX && canSlideZ) {
+                resolvedPosition = Math.abs(deltaX) >= Math.abs(deltaZ)
+                    ? this.airborneSlidePositionX
+                    : this.airborneSlidePositionZ;
+            } else if (canSlideX) {
+                resolvedPosition = this.airborneSlidePositionX;
+            } else if (canSlideZ) {
+                resolvedPosition = this.airborneSlidePositionZ;
+            }
+        }
+
+        if (!resolvedPosition || !this.setNavigationWorldPosition(resolvedPosition)) {
+            return false;
+        }
+
+        this.lastResolvedPosition.copy(resolvedPosition);
+        this.hasLastGroundHit = false;
+        this.notifyDesktopNavigationShadowRefresh('desktop-navigation-airborne-horizontal');
+        return true;
+    },
+    updateVerticalMotion: function (timeDelta, settings, collisionsEnabled) {
+        const walkable = this.getNavigationMode(settings) === 'walkable' && collisionsEnabled;
+        if (!walkable) {
+            if (this.isAirborne()) {
+                this.restoreLastGroundedPosition('vertical-mode-disabled');
+            }
+            return false;
+        }
+
+        if (!this.isAirborne()) {
+            return false;
+        }
+
+        if (this.heightOffset === null) {
+            this.restoreLastGroundedPosition('vertical-height-unavailable');
+            return false;
+        }
+
+        const currentPosition = this.airborneTargetPosition.copy(this.getNavigationWorldPosition());
+        const footY = currentPosition.y - this.heightOffset;
+        const motion = this.calculateVerticalMotionStep((Math.min(Math.max(Number(timeDelta) || 0, 0), 50)) / 1000);
+        let deltaY = motion.deltaY;
+
+        if (deltaY > 0 || motion.velocity > 0) {
+            const clearance = this.getUpwardVerticalClearance(currentPosition, footY, deltaY);
+            if (clearance + 0.00001 < deltaY) {
+                deltaY = clearance;
+                motion.velocity = 0;
+                this.lastVerticalTransitionReason = 'ceiling-contact';
+                this.lastVerticalTransitionAt = this.getRuntimeNow();
+            }
+        } else {
+            const landingGround = this.findWalkableGroundBelowAt(
+                currentPosition,
+                footY + this.verticalCollisionSkin,
+                this.airborneLandingGround
+            );
+            const nextFootY = footY + deltaY;
+            if (
+                landingGround &&
+                landingGround.point.y <= footY + this.verticalCollisionSkin &&
+                nextFootY <= landingGround.point.y + this.verticalCollisionSkin
+            ) {
+                this.targetWorldPosition.set(
+                    currentPosition.x,
+                    landingGround.point.y + this.heightOffset,
+                    currentPosition.z
+                );
+                if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
+                    return false;
+                }
+
+                this.lastResolvedPosition.copy(this.targetWorldPosition);
+                this.setResolvedGroundHit(landingGround, this.targetWorldPosition, this.lastGroundHit);
+                this.hasLastGroundHit = true;
+                this.lastLandingGroundY = landingGround.point.y;
+                this.setVerticalState('grounded', 'landing');
+                this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
+                this.notifyDesktopNavigationShadowRefresh('desktop-navigation-landing');
+                return true;
+            }
+
+            if (
+                !landingGround &&
+                this.lastVerticalSupportStatus === 'blocked-solid' &&
+                Number.isFinite(this.lastVerticalSupportBlockedGroundY) &&
+                nextFootY <= this.lastVerticalSupportBlockedGroundY + this.verticalCollisionSkin
+            ) {
+                return this.restoreLastGroundedPosition('non-walkable-contact');
+            }
+        }
+
+        this.targetWorldPosition.copy(currentPosition);
+        this.targetWorldPosition.y += deltaY;
+        if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
+            return false;
+        }
+
+        this.lastResolvedPosition.copy(this.targetWorldPosition);
+        this.hasLastGroundHit = false;
+        this.verticalVelocity = motion.velocity;
+        this.notifyDesktopNavigationShadowRefresh('desktop-navigation-airborne-vertical');
+        return true;
     },
     snapNavigationVerticallyToGround: function (groundHit, horizontalPosition) {
         if (!groundHit) {
@@ -4324,52 +4449,21 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
-        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
-        return true;
-    },
-    snapNavigationToRecoveredGround: function (groundHit) {
-        if (!groundHit) {
-            return false;
-        }
-
-        if (this.heightOffset === null) {
-            const currentPosition = this.getNavigationWorldPosition();
-            this.heightOffset = currentPosition.y - groundHit.point.y;
-        }
-
-        this.heightOffset = this.resolveNavigationHeightOffset(this.heightOffset);
-        this.targetWorldPosition.set(
-            groundHit.rawPoint.x,
-            groundHit.point.y + this.heightOffset,
-            groundHit.rawPoint.z
-        );
-
-        if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
-            return false;
-        }
-
-        this.lastResolvedPosition.copy(this.targetWorldPosition);
-        this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
-        this.hasLastGroundHit = true;
-        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
+        this.setVerticalState('grounded', 'ground-snap');
+        this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
         return true;
     },
     syncHeightOffset: function () {
+        if (this.isAirborne()) {
+            return;
+        }
         if (!this.areCollisionsEnabled()) {
             return;
         }
 
         const navigationPosition = this.getNavigationWorldPosition();
-        let currentGround = this.sampleGroundAt(navigationPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.sampledGroundHit);
+        const currentGround = this.sampleGroundAt(navigationPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.sampledGroundHit);
         if (!currentGround) {
-            currentGround = this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit);
-            if (!currentGround) {
-                return;
-            }
-
-            this.recordDesktopVisionHeightOffset(navigationPosition, currentGround, 'desktop-recovery-sync');
-            this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
-            this.snapNavigationToRecoveredGround(currentGround);
             return;
         }
 
@@ -4378,6 +4472,9 @@ AFRAME.registerComponent('custom-movement', {
         this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
     syncInitialHeightOffset: function () {
+        if (this.isAirborne()) {
+            return;
+        }
         if (!this.areCollisionsEnabled()) {
             return;
         }
@@ -4474,25 +4571,7 @@ AFRAME.registerComponent('custom-movement', {
                 ));
         }
         if (!currentGround) {
-            const navigationPosition = this.getNavigationWorldPosition();
-            if (!this.canAttemptRecovery()) {
-                return false;
-            }
-
-            currentGround = this.measureImmersiveSmoothness(smoothnessFrame, 'groundRecoveryMs', () => this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit));
-            if (!currentGround) {
-                return finalizeConstrained(false);
-            }
-
-            if (this.heightOffset === null) {
-                this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
-            }
-
-            if (!this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', () => this.snapNavigationToRecoveredGround(currentGround))) {
-                return finalizeConstrained(false);
-            }
-
-            currentPosition.copy(this.lastResolvedPosition);
+            return finalizeConstrained(false);
         }
 
         let resolvedStep = this.measureImmersiveSmoothness(smoothnessFrame, 'groundResolveMs', () => this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep));
@@ -4506,6 +4585,19 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.immersiveLastStepDeltaY = resolvedStep.ground.point.y - currentGround.point.y;
+        if (resolvedStep.airborne) {
+            this.targetWorldPosition.set(resolvedStep.position.x, currentPosition.y, resolvedStep.position.z);
+            if (!this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
+                return finalizeConstrained(false);
+            }
+
+            this.lastResolvedPosition.copy(this.targetWorldPosition);
+            this.hasLastGroundHit = false;
+            this.startFalling('supported-drop');
+            this.notifyDesktopNavigationShadowRefresh('desktop-navigation-fall-start');
+            return finalizeConstrained(true);
+        }
+
         const nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
         this.targetWorldPosition.set(resolvedStep.position.x, nextY, resolvedStep.position.z);
         if (!this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
@@ -4515,7 +4607,7 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(resolvedStep.ground, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
-        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
+        this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
         this.notifyDesktopNavigationShadowRefresh('desktop-navigation-constrained');
         this.captureDesktopFullscreenNavigationPose('desktop-fullscreen-constrained');
         return finalizeConstrained(true);
@@ -4546,6 +4638,9 @@ AFRAME.registerComponent('custom-movement', {
 
             const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {
+                if (this.isAirborne()) {
+                    this.restoreLastGroundedPosition('movement-disabled');
+                }
                 this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', () => {
                     this.setNavigationWorldPosition(this.lastResolvedPosition);
                 });
@@ -4575,6 +4670,9 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             const collisionsEnabled = this.measureImmersiveSmoothness(smoothnessFrame, 'collisionRefreshMs', () => this.areCollisionsEnabled(settings));
+            if (this.isAirborne() && (flyMode || !collisionsEnabled)) {
+                this.restoreLastGroundedPosition('navigation-mode-change');
+            }
             this.measureImmersiveSmoothness(smoothnessFrame, 'wasdStateMs', () => {
                 this.updateWASDControlsState(navigationMode, collisionsEnabled);
             });
@@ -4596,6 +4694,8 @@ AFRAME.registerComponent('custom-movement', {
 
                     if (flyMode) {
                         this.applyFreeMovement(externalDeltaX, externalDeltaY, externalDeltaZ);
+                    } else if (collisionsEnabled && this.isAirborne()) {
+                        this.applyAirborneMovement(externalDeltaX, externalDeltaZ);
                     } else if (collisionsEnabled) {
                         this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
                     } else {
@@ -4629,45 +4729,49 @@ AFRAME.registerComponent('custom-movement', {
                 smoothnessFrame.moveActive = inputX !== 0 || inputY !== 0 || inputVertical !== 0;
             }
 
-            if (inputX === 0 && inputY === 0 && inputVertical === 0) {
-                if (!hasExternalMovement) {
-                    this.lastResolvedPosition.copy(currentPosition);
+            const hasMovementInput = inputX !== 0 || inputY !== 0 || inputVertical !== 0;
+            if (hasMovementInput) {
+                let movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
+                if (!flyMode && this.isAirborne()) {
+                    movementSpeed *= this.airControl;
                 }
-                return;
-            }
+                const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1000);
+                const movementDelta = this.measureImmersiveSmoothness(smoothnessFrame, 'movementBasisMs', () => (
+                    flyMode
+                        ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance)
+                        : this.getMovementDeltaFromInput(inputX, inputY, movementDistance)
+                ));
 
-            const movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
-            const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1000);
-            const movementDelta = this.measureImmersiveSmoothness(smoothnessFrame, 'movementBasisMs', () => (
-                flyMode
-                    ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance)
-                    : this.getMovementDeltaFromInput(inputX, inputY, movementDistance)
-            ));
-            if (!movementDelta) {
-                return;
-            }
+                if (movementDelta) {
+                    if (smoothnessFrame) {
+                        smoothnessFrame.virtualMovementDelta = {
+                            x: this.roundDiagnosticNumber(movementDelta.x || 0, 4),
+                            y: this.roundDiagnosticNumber(movementDelta.y || 0, 4),
+                            z: this.roundDiagnosticNumber(movementDelta.z || 0, 4),
+                            length: this.roundDiagnosticNumber(Math.sqrt(
+                                ((movementDelta.x || 0) * (movementDelta.x || 0)) +
+                                ((movementDelta.y || 0) * (movementDelta.y || 0)) +
+                                ((movementDelta.z || 0) * (movementDelta.z || 0))
+                            ), 4)
+                        };
+                    }
 
-            if (smoothnessFrame) {
-                smoothnessFrame.virtualMovementDelta = {
-                    x: this.roundDiagnosticNumber(movementDelta.x || 0, 4),
-                    y: this.roundDiagnosticNumber(movementDelta.y || 0, 4),
-                    z: this.roundDiagnosticNumber(movementDelta.z || 0, 4),
-                    length: this.roundDiagnosticNumber(Math.sqrt(
-                        ((movementDelta.x || 0) * (movementDelta.x || 0)) +
-                        ((movementDelta.y || 0) * (movementDelta.y || 0)) +
-                        ((movementDelta.z || 0) * (movementDelta.z || 0))
-                    ), 4)
-                };
-            }
-
-            this.measureImmersiveSmoothness(smoothnessFrame, 'movementApplyMs', () => {
-                if (flyMode) {
-                    this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
-                } else if (collisionsEnabled) {
-                    this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
-                } else {
-                    this.applyDirectMovement(movementDelta.x, movementDelta.z);
+                    this.measureImmersiveSmoothness(smoothnessFrame, 'movementApplyMs', () => {
+                        if (flyMode) {
+                            this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
+                        } else if (collisionsEnabled && this.isAirborne()) {
+                            this.applyAirborneMovement(movementDelta.x, movementDelta.z);
+                        } else if (collisionsEnabled) {
+                            this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
+                        } else {
+                            this.applyDirectMovement(movementDelta.x, movementDelta.z);
+                        }
+                    });
                 }
+            }
+
+            this.measureImmersiveSmoothness(smoothnessFrame, 'verticalMovementMs', () => {
+                this.updateVerticalMotion(timeDelta, settings, collisionsEnabled);
             });
         } finally {
             this.finishImmersiveSmoothnessFrame(smoothnessFrame);

@@ -1336,7 +1336,27 @@ AFRAME.registerComponent('scene-settings', {
             collisionConfigured,
             collisionActive: Boolean(collisionConfigured && navMeshTargets > 0),
             immersiveCollisionActive: Boolean(immersiveXrPresenting && collisionConfigured && navMeshTargets > 0),
-            immersivePseudoGravityActive: Boolean(immersiveXrPresenting && collisionConfigured && navMeshTargets > 0 && movement && movement.heightOffset !== null),
+            gravityActive: Boolean(collisionConfigured && navMeshTargets > 0 && movement),
+            verticalState: movement && movement.verticalState ? movement.verticalState : 'grounded',
+            grounded: Boolean(!movement || movement.verticalState !== 'airborne'),
+            verticalVelocity: movement && typeof movement.verticalVelocity === 'number'
+                ? Number(movement.verticalVelocity.toFixed(3))
+                : 0,
+            jumpHeight: movement && typeof movement.jumpHeight === 'number'
+                ? Number(movement.jumpHeight.toFixed(3))
+                : null,
+            airControl: movement && typeof movement.airControl === 'number'
+                ? Number(movement.airControl.toFixed(3))
+                : null,
+            groundSnapDistance: movement && typeof movement.groundSnapDistance === 'number'
+                ? Number(movement.groundSnapDistance.toFixed(3))
+                : null,
+            lastVerticalTransitionReason: movement && movement.lastVerticalTransitionReason
+                ? movement.lastVerticalTransitionReason
+                : 'none',
+            lastLandingGroundY: movement && typeof movement.lastLandingGroundY === 'number'
+                ? Number(movement.lastLandingGroundY.toFixed(3))
+                : null,
             immersiveHeightOffset: movement && typeof movement.heightOffset === 'number'
                 ? Number(movement.heightOffset.toFixed(3))
                 : null,
@@ -1521,8 +1541,7 @@ AFRAME.registerComponent('scene-settings', {
                 : null,
             lastNonImmersiveHeightOffset: movement && typeof movement.lastNonImmersiveHeightOffset === 'number'
                 ? Number(movement.lastNonImmersiveHeightOffset.toFixed(3))
-                : null,
-            lastAutoRecoveryStatus: movement && movement.lastAutoRecoveryStatus ? movement.lastAutoRecoveryStatus : 'none'
+                : null
         };
     },
     getSpatialUiFeatureDiagnostics: function () {
