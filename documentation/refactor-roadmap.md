@@ -58,6 +58,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract renderer quality, material enhancement traversal, and reflection-intensity updates without behavior changes.
 - [x] Extract cloud sun/moon attenuation, shadow factors, smoothing, diagnostics, and star recovery without behavior changes.
 - [x] Extract scene-geometry sun occlusion, target caching, raycast sampling, and sun/haze/lens-flare visibility application.
+- [x] Extract sun sprite texture generation and presentation presets, preserving per-scene caches and haze dithering.
 - [ ] Extract remaining sky and cloud rendering modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -314,3 +315,14 @@ The published virtual-production project 9406 / scene 9407 was running walkable 
 The new regression fails against the previous implementation and passes with the fix. It uses real nested Three Groups and a PerspectiveCamera, exercising keyboard/arrow input across four yaw angles and three pitch angles, forward/backward/strafe direction, and pitch-independent walking speed. All 63 runtime/compiler scripts pass, along with runtime/generated-bundle syntax, build configuration, and diff checks. Changed-source lint has zero errors and five existing warnings. Explicit runtime rebuilding changed only the A-Frame components bundle.
 
 Deploy the updated source/bundle and recompile the published scene for a fresh cache-busting URL; the live server has not been patched by this task. Browser/physical Quest acceptance of the deployed fix remains outstanding. No development server was started and no commit or push was performed.
+
+
+### Sun sprite texture and preset extraction (2026-09-11)
+
+Moved three functions (roughly 110 lines) from quality profiles into the required `VRODOSMaster.SunSprite` module in `vrodos_sun_sprite.js`. The module owns sun/haze canvas texture generation and horizon sun presentation presets. Existing call sites, per-scene texture caches, sprite creation, and disposal ownership are unchanged. The core catalog loads the module before quality profiles, and assembled lighting/shadow fixtures load the same dependency.
+
+Mechanical comparison against HEAD verified all three moved functions and all retained quality-profile source are identical after line-ending normalization, apart from the new required-module binding. Texture sizes, radial gradients, alpha dithering, filtering, and presentation constants are preserved. Behavioral coverage uses real Three CanvasTextures with a recording canvas context to verify drawing inputs, alpha-only dithering/clamping, transparent pixel preservation, cache reuse without repeated uploads, independent scene caches, unavailable document/context handling, retries, and atmosphere/non-atmosphere presets. This does not exercise browser canvas rasterization or GPU rendering.
+
+All 64 regression scripts pass (36 runtime, 28 compiler), with catalog coverage, runtime/generated-core syntax, build configuration, and diff checks passing. Full browser-source lint has zero errors and 242 existing warnings. Runtime artifacts were rebuilt explicitly through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
+
+Remaining sky/cloud rendering extraction, component lifecycle migration, and resource auditing remain open. Published scenes were not recompiled; browser and physical Quest visual acceptance were not performed. No development server was started and no commit or push was performed.

@@ -4,6 +4,7 @@ export const testGroups = Object.freeze({
     "scripts/test-texture-quality.mjs",
     "scripts/test-render-quality.mjs",
     "scripts/test-sun-occlusion.mjs",
+    "scripts/test-sun-sprite.mjs",
     "scripts/test-render-pixel-budget.mjs",
     "scripts/test-celestial-clock.mjs",
     "scripts/test-moon-phase.mjs",
