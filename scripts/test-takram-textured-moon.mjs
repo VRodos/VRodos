@@ -59,7 +59,7 @@ for (const phase of ['auto', ...Object.keys(phaseAngles)]) {
   assert(phaseContract.allowed.includes(phase), `Moon phase contract is missing ${phase}`);
 }
 
-const runtimeSource = read('assets/js/runtime/master/vrodos_quality_profiles.js');
+const runtimeSource = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js');
 const postprocessingSource = read('assets/js/runtime/master/vrodos_postprocessing_pmndrs.js');
 for (const forbidden of [
   'createPmndrsMoonTexture',
@@ -76,8 +76,6 @@ for (const required of [
   'PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5',
   'PMNDRS_MOON_HALO_STRENGTH = 0.012',
   'PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 0.002094',
-  'PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.08',
-  "PMNDRS_NIGHT_MOON_LIGHT_COLOR = '#b9c6df'",
   'material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE',
   'angularRadiusInvariant: true',
   'projectedDiscEnabled: Boolean(defines && defines.VRODOS_PROJECTED_MOON_DISC != null)',
@@ -93,9 +91,7 @@ for (const required of [
   'siderealDriftEnabled: Boolean(config && config.astronomicalMoonPosition)',
   'VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)',
   'config.moonDirection = vta.getMoonDirectionECEF(moonDate',
-  'moonLight.position.copy(moonDirection).normalize().multiplyScalar(28)',
   'config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection)',
-  'illuminatedMoonVisibility',
   "vrodos_debug_disable_textured_moon",
   'moonTextureFailed',
   'native-smooth'

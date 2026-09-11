@@ -56,7 +56,7 @@ const recoveredStars = washedStars + (((washedStars / 0.65) - washedStars) * 0.8
 assert(recoveredStars > washedStars && recoveredStars <= 1, 'Dense moon cover must restore some globally suppressed stars');
 
 const postprocessing = read('assets/js/runtime/master/vrodos_postprocessing_pmndrs.js');
-const quality = read('assets/js/runtime/master/vrodos_quality_profiles.js');
+const quality = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js');
 const component = read('assets/js/runtime/master/components/vrodos_scene_settings.component.js');
 const vendorPatch = read('scripts/build/vendor-patches.mjs');
 

@@ -5,6 +5,7 @@ export const testGroups = Object.freeze({
     "scripts/test-celestial-clock.mjs",
     "scripts/test-moon-phase.mjs",
     "scripts/test-celestial-coordinates.mjs",
+    "scripts/test-celestial-lighting.mjs",
     "scripts/test-light-smoothing.mjs",
     "scripts/test-overlay-interaction.mjs",
     "scripts/test-editor-property-inputs.mjs",
