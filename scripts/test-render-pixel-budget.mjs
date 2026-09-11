@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+const context = vm.createContext({ VRODOSMaster: {}, URLSearchParams, location: { search: '' }, devicePixelRatio: 2 });
+context.window = context;
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_render_pixel_budget.js', import.meta.url), 'utf8'), context);
+const apply = context.VRODOSMaster.RenderPixelBudget.apply;
+const component = { isVrPresentationActive: () => false };
+const renderer = { domElement: { clientWidth: 2000, clientHeight: 1000 } };
+const options = { renderQuality: 'high', isPerformanceQuality: false, minPixelRatio: 0.5, maxPixelRatio: 2 };
+assert.equal(apply(component, renderer, 2, options), 2);
+assert.equal(component._vrodosRenderPixelBudget.source, 'none');
+context.VRODOS_ACTIVE_DESKTOP_PROFILE = { id: 'medium', renderBudget: { pixelBudget: 500000 } };
+assert.equal(apply(component, renderer, 2, options), 0.5);
+assert.equal(component._vrodosRenderPixelBudget.source, 'desktop-medium');
+context.location.search = '?vrodos_dpr_pixel_budget=2000000';
+assert.equal(apply(component, renderer, 2, options), 1);
+assert.equal(component._vrodosRenderPixelBudget.source, 'query');
+component.isVrPresentationActive = () => true;
+assert.equal(apply(component, renderer, 2, options), 2, 'Desktop budgets must not cap immersive XR.');
+component.isVrPresentationActive = () => false;
+context.VRODOS_ACTIVE_DESKTOP_PROFILE = null;
+for (const value of ['-1', '0', 'bad', 'Infinity', '']) {
+    context.location.search = `?vrodos_dpr_pixel_budget=${value}`;
+    assert.equal(apply(component, renderer, 2, options), 2, 'Invalid overrides must be ignored.');
+}
+context.location.search = '';
+assert.equal(apply(component, renderer, 2, { ...options, isPerformanceQuality: true }), Math.sqrt(1650000 / 2000000));
+assert.equal(apply(component, renderer, 2, { ...options, isPerformanceQuality: true, minPixelRatio: 1 }), 1);
+apply(component, { getSize: target => target.set(640, 480) }, 1, options);
+assert.equal(component._vrodosRenderPixelBudget.cssWidth, 640);
+assert.equal(component._vrodosRenderPixelBudget.cssHeight, 480);
+apply(component, { domElement: { width: 1280, height: 960 }, getPixelRatio: () => 2 }, 1, options);
+assert.equal(component._vrodosRenderPixelBudget.cssWidth, 640);
+context.innerWidth = 800;
+context.innerHeight = 600;
+apply(component, null, 1, options);
+assert.equal(component._vrodosRenderPixelBudget.cssHeight, 600);
+console.log('Render pixel budget tests passed.');

@@ -47,6 +47,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [ ] Finish coordinating all property-change side effects through transform/persistence services.
 
 ## G. Runtime ownership
+- [x] Extract desktop pixel-budget calculation into a focused module without changing formulas or constants.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -78,9 +79,9 @@ VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX
 ## Implementation log
 ### Verification and implementation
 
-`scripts/regression-test-catalog.mjs` explicitly owns 52 scripts: 24 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+`scripts/regression-test-catalog.mjs` explicitly owns 53 scripts: 25 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
 
-All **52 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
+All **53 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
@@ -172,3 +173,9 @@ A row assembly fixture rejects collection scans and verifies 20 repeated request
 Removed the assessment-specific control pause/play and cursor-reset fallback. Assessment now delegates to the shared overlay that loads earlier in the same scene-components bundle. A regression asserts this required source order and exercises authored lifecycle code: repeated lock/unlock is idempotent, custom movement uses pause/play, desktop movement/look is locked, cursor cleanup runs on release, and the VR preserve-look option leaves HMD look controls untouched. Existing shared behavior was preserved; this package does not add nested-modal ownership or change control restoration policy.
 
 All 52 regression scripts pass (24 runtime, 28 compiler), with build configuration and diff checks passing. Changed-source ESLint has zero errors and one existing chained-assignment warning. Runtime bundles were explicitly rebuilt using the direct Node build entrypoint; only the scene-components bundle changed. Greek spatial/browser/headset acceptance and published-scene recompilation remain outstanding. No server was started and no commit/push was performed.
+
+### First rendering module extraction (2026-09-11)
+
+Moved desktop render pixel-budget parsing, CSS-size resolution, and budget calculation into `vrodos_render_pixel_budget.js`. Quality profiles call `VRODOSMaster.RenderPixelBudget.apply`; the core build catalog loads the module first. The three moved function bodies were compared against the prior Git revision and are identical. No rendering constants, shadow policy, navigation, or library versions changed.
+
+New behavioral fixtures cover uncapped Custom rendering, active-profile and query precedence, invalid overrides, performance defaults, ratio limits, immersive XR exclusion, renderer-size fallback, backing-canvas scaling, and viewport fallback. All 53 regression scripts pass (25 runtime, 28 compiler), plus build configuration and diff checks. Runtime artifacts were rebuilt explicitly. Lint has zero errors; the quality helper retains its existing nine warnings. This is an initial boundary extraction; quality/shadows, celestial lighting, sky/cloud ownership, and browser/headset acceptance remain open. No server was started or commit/push performed.

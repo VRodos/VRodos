@@ -83,6 +83,7 @@ export const runtimeBuildChunks = Object.freeze([
       masterSource('vrodos_spector_debug.js'),
       masterSource('vrodos_master_rendering.js'),
       masterSource('vrodos_scene_probe.js'),
+      masterSource('vrodos_render_pixel_budget.js'),
       masterSource('vrodos_quality_profiles.js')
     ]
   },

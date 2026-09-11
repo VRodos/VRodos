@@ -4071,96 +4071,8 @@ ${STOCHASTIC_GLSL}`).replace(
     };
   })();
   (function() {
-    const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
-    const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
-    const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
-    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.08;
-    const PMNDRS_NIGHT_MOON_LIGHT_COLOR = "#b9c6df";
-    const PMNDRS_NIGHT_AUTO_EXPOSURE = 3.4;
-    const PMNDRS_DAWN_AUTO_EXPOSURE = 2.2;
-    const PMNDRS_STARS_NIGHT_INTENSITY = 6;
-    const PMNDRS_STARS_DAWN_INTENSITY = 0.35;
-    const PMNDRS_STARS_POINT_SIZE = 1.8;
-    const PMNDRS_STARS_FALLBACK_POINT_SIZE = 1.65;
-    const PMNDRS_STARS_FALLBACK_RADIUS = 6e3;
-    const PMNDRS_TAKRAM_STARS_RELATIVE_PATH = "assets/vendor/takram-atmosphere/stars.bin";
-    const PMNDRS_TAKRAM_MOON_COLOR_RELATIVE_PATH = "assets/vendor/nasa-moon/lroc_color_poles_1k.jpg";
-    const PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS = 45e-4;
-    const PMNDRS_MOON_ANGULAR_RADIUS = 0.015708;
-    const PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8;
-    const PMNDRS_MOON_VISIBILITY_BOOST = 8;
-    const PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5;
-    const PMNDRS_MOON_HALO_STRENGTH = 0.012;
-    const PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 2094e-6;
-    const PMNDRS_MOON_RADIANCE_SCALE = Math.pow(
-      PMNDRS_MOON_ANGULAR_RADIUS / PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS,
-      2
-    ) * PMNDRS_MOON_VISIBILITY_BOOST;
-    const PMNDRS_MOON_PHASE_ANGLES_DEG = Object.freeze({
-      full: 0,
-      "waxing-gibbous": -45,
-      "first-quarter": -90,
-      "waxing-crescent": -135,
-      new: 180,
-      "waning-crescent": 135,
-      "last-quarter": 90,
-      "waning-gibbous": 45
-    });
-    const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
-    const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 1e4;
-    const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
-    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
-    const PMNDRS_DAY_NIGHT_CYCLE_MAX_MINUTES = 1440;
-    const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 864e5;
     const PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET = 165e4;
     const DPR_PIXEL_BUDGET_QUERY_PARAM = "vrodos_dpr_pixel_budget";
-    const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
-    const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
-    const PMNDRS_SUN_DIRECT_LIGHT_START_Y = 0;
-    const PMNDRS_SUN_DIRECT_LIGHT_FULL_Y = 0.08;
-    const PMNDRS_MOON_DIRECT_LIGHT_START_Y = 0.02;
-    const PMNDRS_MOON_DIRECT_LIGHT_FULL_Y = 0.16;
-    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_HIGH = 2.4;
-    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM = 1.8;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START = 0.22;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL = 0.82;
-    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_START = 0.18;
-    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_FULL = 0.78;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN = 0.18;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN = 0.56;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN = 0.66;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN = 0.78;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN = 0.68;
-    const PMNDRS_CLOUD_SUN_SHADOW_INTENSITY_MIN = 0.7;
-    const PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST = 0.85;
-    const PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN = 0.025;
-    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_START = 0.22;
-    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_FULL = 0.86;
-    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_START = 0.14;
-    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_FULL = 0.82;
-    const PMNDRS_CLOUD_MOON_DIRECT_MIN = 0.12;
-    const PMNDRS_CLOUD_MOON_INDIRECT_MIN = 0.58;
-    const PMNDRS_CLOUD_MOON_REFLECTION_MIN = 0.62;
-    const PMNDRS_CLOUD_MOON_SHADOW_INTENSITY_MIN = 0.58;
-    const PMNDRS_CLOUD_MOON_SHADOW_RADIUS_BOOST = 1.1;
-    const PMNDRS_CLOUD_MOON_DISC_VISIBILITY_MIN = 0.035;
-    const PMNDRS_CLOUD_SUN_DISK_SPRITE_ACTIVATE_VISIBILITY = 0.985;
-    const PMNDRS_CLOUD_SUN_DISK_SPRITE_RELEASE_VISIBILITY = 0.997;
-    const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_MIN = 0.56;
-    const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_CURVE = 0.45;
-    const PMNDRS_CLOUD_SUN_DISK_SPRITE_INTENSITY_SCALE = 1.05;
-    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_HIDE_VISIBILITY = 0.14;
-    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_RELEASE_VISIBILITY = 0.24;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
-    const WGS84_EQUATORIAL_RADIUS = 6378137;
-    const WGS84_POLAR_RADIUS = 6356752314245179e-9;
-    const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
-    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
-    if (!runtimeSettingsContract.horizonHelperLightPresets || !runtimeSettingsContract.atmosphereLookDefaults) {
-      throw new Error("VRodos runtime settings contract is missing required atmosphere presets.");
-    }
-    const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets;
     function readDprPixelBudgetOverride() {
       try {
         const params = new URLSearchParams(window.location.search || "");
@@ -4246,6 +4158,97 @@ ${STOCHASTIC_GLSL}`).replace(
       }
       return targetPixelRatio;
     }
+    VRODOSMaster.RenderPixelBudget = Object.freeze({ apply: applyDesktopRenderPixelBudget });
+  })();
+  (function() {
+    const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+    const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
+    const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
+    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.08;
+    const PMNDRS_NIGHT_MOON_LIGHT_COLOR = "#b9c6df";
+    const PMNDRS_NIGHT_AUTO_EXPOSURE = 3.4;
+    const PMNDRS_DAWN_AUTO_EXPOSURE = 2.2;
+    const PMNDRS_STARS_NIGHT_INTENSITY = 6;
+    const PMNDRS_STARS_DAWN_INTENSITY = 0.35;
+    const PMNDRS_STARS_POINT_SIZE = 1.8;
+    const PMNDRS_STARS_FALLBACK_POINT_SIZE = 1.65;
+    const PMNDRS_STARS_FALLBACK_RADIUS = 6e3;
+    const PMNDRS_TAKRAM_STARS_RELATIVE_PATH = "assets/vendor/takram-atmosphere/stars.bin";
+    const PMNDRS_TAKRAM_MOON_COLOR_RELATIVE_PATH = "assets/vendor/nasa-moon/lroc_color_poles_1k.jpg";
+    const PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS = 45e-4;
+    const PMNDRS_MOON_ANGULAR_RADIUS = 0.015708;
+    const PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8;
+    const PMNDRS_MOON_VISIBILITY_BOOST = 8;
+    const PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5;
+    const PMNDRS_MOON_HALO_STRENGTH = 0.012;
+    const PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 2094e-6;
+    const PMNDRS_MOON_RADIANCE_SCALE = Math.pow(
+      PMNDRS_MOON_ANGULAR_RADIUS / PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS,
+      2
+    ) * PMNDRS_MOON_VISIBILITY_BOOST;
+    const PMNDRS_MOON_PHASE_ANGLES_DEG = Object.freeze({
+      full: 0,
+      "waxing-gibbous": -45,
+      "first-quarter": -90,
+      "waxing-crescent": -135,
+      new: 180,
+      "waning-crescent": 135,
+      "last-quarter": 90,
+      "waning-gibbous": 45
+    });
+    const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
+    const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 1e4;
+    const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
+    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
+    const PMNDRS_DAY_NIGHT_CYCLE_MAX_MINUTES = 1440;
+    const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 864e5;
+    const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
+    const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
+    const PMNDRS_SUN_DIRECT_LIGHT_START_Y = 0;
+    const PMNDRS_SUN_DIRECT_LIGHT_FULL_Y = 0.08;
+    const PMNDRS_MOON_DIRECT_LIGHT_START_Y = 0.02;
+    const PMNDRS_MOON_DIRECT_LIGHT_FULL_Y = 0.16;
+    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_HIGH = 2.4;
+    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM = 1.8;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START = 0.22;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL = 0.82;
+    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_START = 0.18;
+    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_FULL = 0.78;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN = 0.18;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN = 0.56;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN = 0.66;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN = 0.78;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN = 0.68;
+    const PMNDRS_CLOUD_SUN_SHADOW_INTENSITY_MIN = 0.7;
+    const PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST = 0.85;
+    const PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN = 0.025;
+    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_START = 0.22;
+    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_FULL = 0.86;
+    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_START = 0.14;
+    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_FULL = 0.82;
+    const PMNDRS_CLOUD_MOON_DIRECT_MIN = 0.12;
+    const PMNDRS_CLOUD_MOON_INDIRECT_MIN = 0.58;
+    const PMNDRS_CLOUD_MOON_REFLECTION_MIN = 0.62;
+    const PMNDRS_CLOUD_MOON_SHADOW_INTENSITY_MIN = 0.58;
+    const PMNDRS_CLOUD_MOON_SHADOW_RADIUS_BOOST = 1.1;
+    const PMNDRS_CLOUD_MOON_DISC_VISIBILITY_MIN = 0.035;
+    const PMNDRS_CLOUD_SUN_DISK_SPRITE_ACTIVATE_VISIBILITY = 0.985;
+    const PMNDRS_CLOUD_SUN_DISK_SPRITE_RELEASE_VISIBILITY = 0.997;
+    const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_MIN = 0.56;
+    const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_CURVE = 0.45;
+    const PMNDRS_CLOUD_SUN_DISK_SPRITE_INTENSITY_SCALE = 1.05;
+    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_HIDE_VISIBILITY = 0.14;
+    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_RELEASE_VISIBILITY = 0.24;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
+    const WGS84_EQUATORIAL_RADIUS = 6378137;
+    const WGS84_POLAR_RADIUS = 6356752314245179e-9;
+    const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
+    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
+    if (!runtimeSettingsContract.horizonHelperLightPresets || !runtimeSettingsContract.atmosphereLookDefaults) {
+      throw new Error("VRodos runtime settings contract is missing required atmosphere presets.");
+    }
+    const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets;
     const PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = runtimeSettingsContract.atmosphereLookDefaults;
     function clampPmndrsNumber(value, min, max, fallback) {
       const n = parseFloat(value);
@@ -10682,7 +10685,7 @@ ${shader.fragmentShader}` : withUniform;
       if (this.shouldUseEdgeAAOversample()) {
         targetPixelRatio = Math.max(targetPixelRatio, 1.15 + this.getEdgeAAStrengthFactor() * 0.7);
       }
-      targetPixelRatio = applyDesktopRenderPixelBudget(this, renderer, targetPixelRatio, {
+      targetPixelRatio = VRODOSMaster.RenderPixelBudget.apply(this, renderer, targetPixelRatio, {
         renderQuality,
         isPerformanceQuality,
         minPixelRatio: activeRenderBudget ? Number(activeRenderBudget.minPixelRatio || 0.75) : isPerformanceQuality ? 0.75 : 1,
