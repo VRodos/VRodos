@@ -560,7 +560,13 @@ AFRAME.registerComponent('scene-settings', {
         return this.vrRuntimeAllows('clouds', authored);
     },
     getReflectionSource: function () {
-        return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
+        switch (this.data.reflectionSource) {
+            case 'takram-sky':
+            case 'scene-probe':
+                return this.data.reflectionSource;
+            default:
+                return 'hdr';
+        }
     },
     getSceneProbeUpdateMode: function () {
         return this.data.sceneProbeUpdateMode === 'slow-dynamic' ? 'slow-dynamic' : 'static';
@@ -898,7 +904,9 @@ AFRAME.registerComponent('scene-settings', {
 
         const presentationEligible = (!this.isVrPresentationActive() && !this.isMobileDevice()) ||
             this.canUseVrTakramSkyEnvironment();
-        const takramSkyEnvironmentRequested = vrodosRuntimeDebugFlag('enableTakramSkyEnvironment', 'vrodos_debug_takram_sky_environment') ||
+        const authoredTakramSkyEnvironment = this.getReflectionSource() === 'takram-sky';
+        const takramSkyEnvironmentRequested = authoredTakramSkyEnvironment ||
+            vrodosRuntimeDebugFlag('enableTakramSkyEnvironment', 'vrodos_debug_takram_sky_environment') ||
             this.canUseVrTakramSkyEnvironment();
         const atmosphereState = this._pmndrsAtmosphereState || null;
         const atmosphereTextures = atmosphereState && atmosphereState.textures ? atmosphereState.textures : null;
@@ -919,8 +927,10 @@ AFRAME.registerComponent('scene-settings', {
             takramSkyReady &&
             typeof this.isPmndrsAtmosphereEnabled === 'function' &&
             this.isPmndrsAtmosphereEnabled() &&
-            typeof this.isPmndrsDayNightCycleActive === 'function' &&
-            this.isPmndrsDayNightCycleActive() &&
+            (authoredTakramSkyEnvironment || (
+                typeof this.isPmndrsDayNightCycleActive === 'function' &&
+                this.isPmndrsDayNightCycleActive()
+            )) &&
             presentationEligible &&
             Boolean(this.el.renderer) &&
             typeof THREE.WebGLCubeRenderTarget !== 'undefined' &&

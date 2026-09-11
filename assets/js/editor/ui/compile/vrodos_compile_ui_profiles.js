@@ -35,7 +35,7 @@ VRODOS.ui = VRODOS.ui || {};
         postFXSSRStrength: ['off', 'subtle', 'balanced', 'strong'],
         bloomStrength: ['off', 'soft', 'medium'],
         reflectionProfile: ['soft', 'balanced', 'enhanced'],
-        reflectionSource: ['hdr', 'scene-probe'],
+        reflectionSource: ['hdr', 'takram-sky', 'scene-probe'],
         sceneProbeResolution: ['64', '128', '256'],
         sceneProbeUpdateMode: ['static', 'slow-dynamic'],
         pmndrsAAMode: ['none', 'smaa', 'msaa'],

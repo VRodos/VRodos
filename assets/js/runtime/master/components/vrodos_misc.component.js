@@ -10,41 +10,41 @@ AFRAME.registerComponent('autoplay-sound', {
     }
 });
 
-AFRAME.registerComponent('vrodos-surface-variation', {
+AFRAME.registerComponent('vrodos-stochastic-tiling', {
     dependencies: ['material'],
     schema: {
         enabled: { type: 'boolean', default: true },
-        scale: { type: 'number', default: 32 },
-        strength: { type: 'number', default: 0.12 },
+        patchTiles: { type: 'number', default: 1.25 },
+        blendSharpness: { type: 'number', default: 4 },
         seed: { type: 'number', default: 0 }
     },
     init: function () {
-        this.applyVariation = this.applyVariation.bind(this);
-        this.el.addEventListener('object3dset', this.applyVariation);
-        this.el.addEventListener('materialtextureloaded', this.applyVariation);
-        this.applyVariation();
+        this.applyTiling = this.applyTiling.bind(this);
+        this.el.addEventListener('object3dset', this.applyTiling);
+        this.el.addEventListener('materialtextureloaded', this.applyTiling);
+        this.applyTiling();
     },
     update: function () {
-        this.applyVariation();
+        this.applyTiling();
     },
-    applyVariation: function () {
+    applyTiling: function () {
         const helper = window.VRODOSSurfaceMaterial;
         const mesh = this.el.getObject3D('mesh');
         if (!helper || !mesh) return;
         mesh.traverse((node) => {
             if (!node.isMesh || !node.material) return;
             const materials = Array.isArray(node.material) ? node.material : [node.material];
-            materials.forEach((material) => helper.applyBalancedVariation(material, {
+            materials.forEach((material) => helper.applyStochasticTiling(material, {
                 enabled: this.data.enabled && Boolean(material.map),
-                scale: this.data.scale,
-                strength: this.data.strength,
+                patchTiles: this.data.patchTiles,
+                blendSharpness: this.data.blendSharpness,
                 seed: this.data.seed
             }));
         });
     },
     remove: function () {
-        this.el.removeEventListener('object3dset', this.applyVariation);
-        this.el.removeEventListener('materialtextureloaded', this.applyVariation);
+        this.el.removeEventListener('object3dset', this.applyTiling);
+        this.el.removeEventListener('materialtextureloaded', this.applyTiling);
         const mesh = this.el.getObject3D('mesh');
         const helper = window.VRODOSSurfaceMaterial;
         if (!mesh || !helper) return;
@@ -52,7 +52,7 @@ AFRAME.registerComponent('vrodos-surface-variation', {
             const materials = node && node.material
                 ? (Array.isArray(node.material) ? node.material : [node.material])
                 : [];
-            materials.forEach((material) => helper.applyBalancedVariation(material, { enabled: false }));
+            materials.forEach((material) => helper.applyStochasticTiling(material, { enabled: false }));
         });
     }
 });

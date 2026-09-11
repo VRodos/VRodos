@@ -553,8 +553,8 @@ VRODOS.editor.PropertyCommand = class {
                 'surfaceAoIntensity',
                 'surfaceNormalYSign',
                 'surfaceAntiTilingEnabled',
-                'surfaceVariationScaleMeters',
-                'surfaceVariationStrength'
+                'surfaceAntiTilingPatchTiles',
+                'surfaceAntiTilingBlendSharpness'
             ].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
                 VRODOS.loader.refreshPrimitivePlaneMaterial(obj);
             }

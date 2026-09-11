@@ -144,6 +144,8 @@ function editorHarness() {
 }
 
 const editor = editorHarness();
+const runtimeContract = JSON.parse(readFileSync(resolve(root, 'assets/runtime-settings-contract.json'), 'utf8'));
+assertEqual(runtimeContract.sceneSettings.reflectionSource.allowed.join(','), 'hdr,takram-sky,scene-probe', 'reflection source contract');
 const defaultProfiles = editor.api.migrateState();
 assertEqual(defaultProfiles.buildMode, 'custom', 'editor defaults new scenes to Custom-only builds');
 assertEqual(defaultProfiles.activeTab, 'custom', 'editor opens the Custom tab for new scenes');

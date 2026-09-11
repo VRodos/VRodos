@@ -66,8 +66,8 @@ const oldState = {
     properties: {
         surfaceNormalYSign: 1,
         surfaceAntiTilingEnabled: false,
-        surfaceVariationScaleMeters: 32,
-        surfaceVariationStrength: 0.12
+        surfaceAntiTilingPatchTiles: 1.25,
+        surfaceAntiTilingBlendSharpness: 4
     }
 };
 const newState = {
@@ -82,8 +82,8 @@ const newState = {
     properties: {
         surfaceNormalYSign: -1,
         surfaceAntiTilingEnabled: true,
-        surfaceVariationScaleMeters: 32,
-        surfaceVariationStrength: 0.12
+        surfaceAntiTilingPatchTiles: 1.25,
+        surfaceAntiTilingBlendSharpness: 4
     }
 };
 

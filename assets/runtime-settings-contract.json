@@ -358,6 +358,7 @@
       "default": "hdr",
       "allowed": [
         "hdr",
+        "takram-sky",
         "scene-probe"
       ],
       "wireKey": "reflectionSource"

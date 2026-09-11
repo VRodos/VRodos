@@ -507,6 +507,10 @@
         this._currentReflectionSource = 'takram-sky';
         this.applyMaterialProfiles();
         this.applyTakramSkyEnvironmentIntensity(atmosphereConfig, now);
+        if (!this._takramSkyEnvironmentCaptureLogged) {
+            this._takramSkyEnvironmentCaptureLogged = true;
+            console.info('[VRodos] Takram sky environment captured once into the global PMREM for PBR materials.');
+        }
         return true;
     };
     H.updateTakramSkyEnvironment = function (now) {
@@ -526,8 +530,8 @@
             this.applyMaterialProfiles();
         }
 
-        const needsCapture = this._takramSkyEnvironmentNeedsUpdate || !hasSkyTarget;
         const timeMs = getTakramSkyEnvironmentTimeMs(now);
+        const needsCapture = !hasSkyTarget;
 
         this.applyTakramSkyEnvironmentIntensity(atmosphereConfig, now);
         if (needsCapture) {

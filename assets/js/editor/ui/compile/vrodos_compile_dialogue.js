@@ -52,6 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
             reflectionControlsWrapper: document.getElementById('compileReflectionControlsWrapper'),
             reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
+            reflectionSourceHint: document.getElementById('compileReflectionSourceHint'),
             sceneProbeControlsWrapper: document.getElementById('compileSceneProbeControlsWrapper'),
             sceneProbeUpdateMode: document.getElementById('compileSceneProbeUpdateModeSelect'),
             sceneProbeResolution: document.getElementById('compileSceneProbeResolutionSelect'),
@@ -289,6 +290,23 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.bloomStrength.disabled = !postFxEnabled;
         controls.reflectionProfile.disabled = !reflectionControlsEnabled;
         controls.reflectionSource.disabled = !reflectionControlsEnabled;
+
+        if (controls.reflectionSourceHint) {
+            if (reflectionSource === 'takram-sky') {
+                const takramReady = isPmndrs && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true;
+                controls.reflectionSourceHint.textContent = takramReady
+                    ? 'Captures the active Takram sky once and reuses one global PBR environment throughout the experience.'
+                    : 'Requires the PMNDRS engine and Takram atmosphere.';
+                controls.reflectionSourceHint.classList.toggle('tw-text-amber-600', !takramReady);
+                controls.reflectionSourceHint.classList.toggle('tw-text-slate-400', takramReady);
+            } else {
+                controls.reflectionSourceHint.textContent = reflectionSource === 'scene-probe'
+                    ? 'Captures authored scene surroundings for reflections.'
+                    : 'Uses the selected HDR environment for PBR lighting and reflections.';
+                controls.reflectionSourceHint.classList.remove('tw-text-amber-600');
+                controls.reflectionSourceHint.classList.add('tw-text-slate-400');
+            }
+        }
 
         if (controls.reflectionControlsWrapper) {
             controls.reflectionControlsWrapper.style.display = reflectionControlsVisible ? '' : 'none';

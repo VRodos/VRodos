@@ -1455,8 +1455,8 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
             'surfaceAoIntensity',
             'surfaceNormalYSign',
             'surfaceAntiTilingEnabled',
-            'surfaceVariationScaleMeters',
-            'surfaceVariationStrength'
+            'surfaceAntiTilingPatchTiles',
+            'surfaceAntiTilingBlendSharpness'
         ].includes(prop) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
             VRODOS.loader.refreshPrimitivePlaneMaterial(targetObject);
         }
@@ -1542,8 +1542,8 @@ function vrodosPlaneSurfaceMaterialState(object) {
         properties: {
             surfaceNormalYSign: Number(object.surfaceNormalYSign) < 0 ? -1 : 1,
             surfaceAntiTilingEnabled: ![false, 0, '0', 'false'].includes(object.surfaceAntiTilingEnabled),
-            surfaceVariationScaleMeters: vrodosPlaneNumericValue(object.surfaceVariationScaleMeters, 32, 1, 10000),
-            surfaceVariationStrength: vrodosPlaneNumericValue(object.surfaceVariationStrength, 0.12, 0, 0.5)
+            surfaceAntiTilingPatchTiles: vrodosPlaneNumericValue(object.surfaceAntiTilingPatchTiles, 1.25, 0.5, 4),
+            surfaceAntiTilingBlendSharpness: vrodosPlaneNumericValue(object.surfaceAntiTilingBlendSharpness, 4, 1, 12)
         }
     };
 }
@@ -1647,11 +1647,11 @@ function ensurePrimitivePlanePropertiesSection() {
                 <span>Break up repetition</span>
             </label>
             <div class="tw-grid tw-grid-cols-2 tw-gap-2">
-                <label class="tw-text-[10px] tw-text-slate-300">Variation scale (m)<input id="planeVariationScaleInput" type="number" min="1" max="10000" step="1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
-                <label class="tw-text-[10px] tw-text-slate-300">Variation strength<input id="planeVariationStrengthInput" type="number" min="0" max="0.5" step="0.01" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Patch size (tiles)<input id="planePatchTilesInput" type="number" min="0.5" max="4" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Blend sharpness<input id="planeBlendSharpnessInput" type="number" min="1" max="12" step="0.5" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
             </div>
             <div class="tw-mt-1 tw-flex tw-flex-col tw-gap-2">${textureRows}</div>
-            <div class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400">Use seamless OpenGL PBR maps. Tile size stays constant when the plane is resized. ZIP import keeps the current tile size. Recommended: 1K; maximum: 2K.</div>
+            <div class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400">Use seamless OpenGL PBR maps. Stochastic tiling blends three seeded samples across the full PBR surface while preserving physical tile size. ZIP import keeps the current tile size. Recommended: 1K; maximum: 2K.</div>
         </div>`;
     container.appendChild(section);
 
@@ -1663,8 +1663,8 @@ function ensurePrimitivePlanePropertiesSection() {
         ['planeMetalnessInput', 'surfaceMetalness', 0, 0, 1],
         ['planeNormalScaleInput', 'surfaceNormalScale', 1, 0, 2],
         ['planeAoIntensityInput', 'surfaceAoIntensity', 1, 0, 2],
-        ['planeVariationScaleInput', 'surfaceVariationScaleMeters', 32, 1, 10000],
-        ['planeVariationStrengthInput', 'surfaceVariationStrength', 0.12, 0, 0.5]
+        ['planePatchTilesInput', 'surfaceAntiTilingPatchTiles', 1.25, 0.5, 4],
+        ['planeBlendSharpnessInput', 'surfaceAntiTilingBlendSharpness', 4, 1, 12]
     ];
     numericBindings.forEach(([id, property, fallback, minimum, maximum]) => {
         document.getElementById(id)?.addEventListener('change', function() {
@@ -1810,8 +1810,8 @@ function displayPrimitivePlaneProperties(object) {
         planeMetalnessInput: object.surfaceMetalness,
         planeNormalScaleInput: object.surfaceNormalScale,
         planeAoIntensityInput: object.surfaceAoIntensity,
-        planeVariationScaleInput: object.surfaceVariationScaleMeters ?? 32,
-        planeVariationStrengthInput: object.surfaceVariationStrength ?? 0.12
+        planePatchTilesInput: object.surfaceAntiTilingPatchTiles ?? 1.25,
+        planeBlendSharpnessInput: object.surfaceAntiTilingBlendSharpness ?? 4
     };
     Object.entries(values).forEach(([id, value]) => {
         const input = document.getElementById(id);

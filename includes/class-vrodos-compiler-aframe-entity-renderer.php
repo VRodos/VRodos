@@ -1264,13 +1264,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( $has_albedo && $anti_tiling_enabled ) {
 			$seed = hexdec( hash( 'fnv1a32', $uuid ) ) / 4294967295;
 			$entity->setAttribute(
-				'vrodos-surface-variation',
+				'vrodos-stochastic-tiling',
 				VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute(
 					[
-						'enabled'  => true,
-						'scale'    => $this->number_attribute( $this->bounded_number( $obj->surfaceVariationScaleMeters ?? 32, 1, 10000, 32 ) ),
-						'strength' => $this->number_attribute( $this->bounded_number( $obj->surfaceVariationStrength ?? 0.12, 0, 0.5, 0.12 ) ),
-						'seed'     => $this->number_attribute( $seed ),
+						'enabled'        => true,
+						'patchTiles'     => $this->number_attribute( $this->bounded_number( $obj->surfaceAntiTilingPatchTiles ?? 1.25, 0.5, 4, 1.25 ) ),
+						'blendSharpness' => $this->number_attribute( $this->bounded_number( $obj->surfaceAntiTilingBlendSharpness ?? 4, 1, 12, 4 ) ),
+						'seed'           => $this->number_attribute( $seed ),
 					]
 				)
 			);

@@ -332,6 +332,38 @@ const desktopPmndrs = createFeatureStateFixture({
         bloomStrength: "medium"
     }
 });
+
+const desktopStaticTakramEnvironment = createFeatureStateFixture({
+    pmndrsActive: true,
+    postprocessingBundle: true,
+    takramBundle: true,
+    dayNightCycleActive: false,
+    atmosphereState: {
+        ready: true,
+        failed: false,
+        profileSignature: "fixture",
+        skyMesh: {},
+        skyMaterial: { userData: {} },
+        textures: {
+            irradianceTexture: {},
+            scatteringTexture: {},
+            transmittanceTexture: {}
+        }
+    },
+    data: {
+        postFXEnabled: "1",
+        postFXEngine: "pmndrs",
+        pmndrsAtmosphereEnabled: "1",
+        reflectionsEnabled: "1",
+        reflectionSource: "takram-sky",
+        envMapPreset: "none"
+    }
+});
+assertPath(desktopStaticTakramEnvironment.reflections.authoredSource, "takram-sky", "desktop static Takram authored source");
+assertPath(desktopStaticTakramEnvironment.reflections.takramSkyEnvironmentCapable, true, "desktop static Takram environment capability");
+assertPath(desktopStaticTakramEnvironment.reflections.effectiveSource, "takram-sky", "desktop static Takram effective source");
+assertPath(desktopStaticTakramEnvironment.pipelineComponents.indexOf("vrodos-reflections") !== -1, true, "desktop static Takram reflection component");
+
 const policy = createVmContext("Mozilla/5.0 Chrome").window.VRODOSMaster.RuntimeProfilePolicy;
 const renderPolicy = createVmContext("Mozilla/5.0 Chrome").window.VRODOSMaster.RuntimeRenderPolicy;
 assertPath(policy.normalizeRuntimeProfile("balanced"), "headset", "legacy headset profile normalization");
@@ -607,6 +639,13 @@ assertPath(spatialUi.spatialUi.bundleLoaded, true, "spatial UI bundle diagnostic
 assertPath(spatialUi.spatialUi.activePanel, false, "spatial UI panel diagnostic");
 
 const pmndrsPostFxSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"), "utf8");
+const sceneProbeSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_scene_probe.js"), "utf8");
+assert(
+    sceneProbeSource.includes("const needsCapture = !hasSkyTarget") &&
+        !sceneProbeSource.includes("const skyChanged = dayNightCycleActive") &&
+        !sceneProbeSource.includes("(timeMs - this._takramSkyEnvironmentLastCaptureMs) < 5000"),
+    "Takram sky should use one global PMREM without periodic day/night recaptures"
+);
 assert(
     pmndrsPostFxSource.includes("function constrainPmndrsHorizonAerialToVanillaLightSourceMode"),
     "Horizon aerial compositor constraint should remain present"

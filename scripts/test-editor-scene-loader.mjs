@@ -389,8 +389,8 @@ const planeLoadResult = await new context.VRODOS.loader.LoaderMulti().load(null,
         surfaceMetalnessUrl: "/ground-metalness.jpg",
         surfaceNormalYSign: -1,
         surfaceAntiTilingEnabled: true,
-        surfaceVariationScaleMeters: 32,
-        surfaceVariationStrength: 0.12,
+        surfaceAntiTilingPatchTiles: 1.25,
+        surfaceAntiTilingBlendSharpness: 4,
         position: [2, 0, 3],
         rotation: [-Math.PI / 2, 0, 0],
         scale: [1, 1, 1],
@@ -407,19 +407,22 @@ for (const map of [planeObject.material.map, planeObject.material.normalMap, pla
     assert(map.repeat.x === 10 && map.repeat.y === 4, "every PBR map must share the same physical tile repeat");
 }
 assert(planeObject.material.normalScale.y === -1, "DirectX normal packages must invert the runtime normal Y scale without rewriting the image");
-assert(planeObject.material.__vrodosSurfaceVariationState?.scale === 32, "plane materials must receive deterministic macro variation settings");
-assert(planeObject.material.customProgramCacheKey().includes("vrodos-balanced-surface-variation-v1"), "surface variation must provide a stable shader cache key");
+assert(planeObject.material.__vrodosStochasticTilingState?.patchTiles === 1.25, "plane materials must receive stochastic patch settings");
+assert(planeObject.material.customProgramCacheKey().includes("vrodos-stochastic-pbr-tiling-v2"), "stochastic tiling must provide a stable shader cache key");
 const surfaceShader = {
     uniforms: {},
     vertexShader: "#include <common>\n#include <begin_vertex>",
-    fragmentShader: "#include <common>\nvoid main() {\n#include <map_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n#include <aomap_fragment>\n}"
+    fragmentShader: "#include <common>\nvoid main() {\n#include <map_fragment>\n#include <roughnessmap_fragment>\n#include <metalnessmap_fragment>\n#include <normal_fragment_maps>\n#include <aomap_fragment>\n}"
 };
 planeObject.material.onBeforeCompile(surfaceShader, {});
-assert(surfaceShader.vertexShader.includes("vVrodosSurfaceMeters = position.xy"), "macro variation must use physical plane coordinates");
-assert(surfaceShader.fragmentShader.includes("diffuseColor.rgb *= clamp"), "macro variation must affect the albedo result");
-assert(surfaceShader.fragmentShader.includes("roughnessFactor = clamp"), "macro variation must affect the roughness result");
-assert(surfaceShader.fragmentShader.includes("#include <normal_fragment_maps>"), "macro variation must leave normal-map evaluation untouched");
-assert(surfaceShader.fragmentShader.includes("#include <aomap_fragment>"), "macro variation must leave AO-map evaluation untouched");
+assert(surfaceShader.fragmentShader.includes("vrodosBuildStochasticUv(vMapUv,"), "stochastic tiling must derive one shared sample pattern from the albedo UVs");
+assert(surfaceShader.fragmentShader.includes("vrodosStochasticAlbedo(map"), "stochastic tiling must replace repeated albedo sampling");
+assert(surfaceShader.fragmentShader.includes("vrodosStochasticTexture(roughnessMap"), "stochastic tiling must keep roughness sampling aligned");
+assert(surfaceShader.fragmentShader.includes("vrodosStochasticTexture(normalMap"), "stochastic tiling must keep normal sampling aligned");
+assert(surfaceShader.fragmentShader.includes("vrodosStochasticTexture(aoMap"), "stochastic tiling must keep AO sampling aligned");
+assert(surfaceShader.fragmentShader.includes("vrodosStochasticTexture(metalnessMap"), "stochastic tiling must keep metalness sampling aligned");
+assert(!surfaceShader.fragmentShader.includes("#include <normal_fragment_maps>"), "the stock repeated normal-map sample must be replaced");
+assert(!surfaceShader.fragmentShader.includes("#include <aomap_fragment>"), "the stock repeated AO-map sample must be replaced");
 planeObject.planeWidth = 60;
 context.VRODOS.loader.refreshPrimitivePlaneGeometry(planeObject);
 context.VRODOS.loader.refreshPrimitivePlaneMaterial(planeObject);

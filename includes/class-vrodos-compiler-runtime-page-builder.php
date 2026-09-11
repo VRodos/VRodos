@@ -157,9 +157,12 @@ class VRodos_Compiler_Runtime_Page_Builder {
 
 		$reflection_source = (string) ( $scene_settings['reflectionSource'] ?? 'hdr' );
 		$env_map_preset    = (string) ( $scene_settings['envMapPreset'] ?? 'none' );
+		$takram_reflections = 'takram-sky' === $reflection_source &&
+			'pmndrs' === (string) ( $scene_settings['postFXEngine'] ?? 'legacy' ) &&
+			$this->setting_bool( $scene_settings, 'pmndrsAtmosphereEnabled' );
 		if (
 			$this->setting_bool( $scene_settings, 'reflectionsEnabled', true ) &&
-			( 'hdr' === $reflection_source || 'none' !== $env_map_preset )
+			( 'hdr' === $reflection_source || 'none' !== $env_map_preset || $takram_reflections )
 		) {
 			$components[] = 'vrodos-reflections';
 		}

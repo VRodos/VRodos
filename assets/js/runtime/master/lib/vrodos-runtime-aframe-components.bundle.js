@@ -1250,7 +1250,13 @@
       return this.vrRuntimeAllows("clouds", authored);
     },
     getReflectionSource: function() {
-      return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
+      switch (this.data.reflectionSource) {
+        case "takram-sky":
+        case "scene-probe":
+          return this.data.reflectionSource;
+        default:
+          return "hdr";
+      }
     },
     getSceneProbeUpdateMode: function() {
       return this.data.sceneProbeUpdateMode === "slow-dynamic" ? "slow-dynamic" : "static";
@@ -1540,11 +1546,12 @@
         return false;
       }
       const presentationEligible = !this.isVrPresentationActive() && !this.isMobileDevice() || this.canUseVrTakramSkyEnvironment();
-      const takramSkyEnvironmentRequested = vrodosRuntimeDebugFlag("enableTakramSkyEnvironment", "vrodos_debug_takram_sky_environment") || this.canUseVrTakramSkyEnvironment();
+      const authoredTakramSkyEnvironment = this.getReflectionSource() === "takram-sky";
+      const takramSkyEnvironmentRequested = authoredTakramSkyEnvironment || vrodosRuntimeDebugFlag("enableTakramSkyEnvironment", "vrodos_debug_takram_sky_environment") || this.canUseVrTakramSkyEnvironment();
       const atmosphereState = this._pmndrsAtmosphereState || null;
       const atmosphereTextures = atmosphereState && atmosphereState.textures ? atmosphereState.textures : null;
       const takramSkyReady = Boolean(window.VRODOS_TAKRAM_ATMOSPHERE && atmosphereState && atmosphereState.ready && !atmosphereState.failed && atmosphereState.skyMesh && atmosphereState.skyMaterial && atmosphereTextures && atmosphereTextures.irradianceTexture && atmosphereTextures.scatteringTexture && atmosphereTextures.transmittanceTexture);
-      return takramSkyEnvironmentRequested && this.data.renderQuality === "high" && this.data.postFXEngine === "pmndrs" && takramSkyReady && typeof this.isPmndrsAtmosphereEnabled === "function" && this.isPmndrsAtmosphereEnabled() && typeof this.isPmndrsDayNightCycleActive === "function" && this.isPmndrsDayNightCycleActive() && presentationEligible && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
+      return takramSkyEnvironmentRequested && this.data.renderQuality === "high" && this.data.postFXEngine === "pmndrs" && takramSkyReady && typeof this.isPmndrsAtmosphereEnabled === "function" && this.isPmndrsAtmosphereEnabled() && (authoredTakramSkyEnvironment || typeof this.isPmndrsDayNightCycleActive === "function" && this.isPmndrsDayNightCycleActive()) && presentationEligible && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
     },
     getEffectiveReflectionSource: function() {
       if (!this.vrRuntimeAllows("reflections", this.areReflectionsEnabled())) {
@@ -8017,47 +8024,47 @@
       });
     }
   });
-  AFRAME.registerComponent("vrodos-surface-variation", {
+  AFRAME.registerComponent("vrodos-stochastic-tiling", {
     dependencies: ["material"],
     schema: {
       enabled: { type: "boolean", default: true },
-      scale: { type: "number", default: 32 },
-      strength: { type: "number", default: 0.12 },
+      patchTiles: { type: "number", default: 1.25 },
+      blendSharpness: { type: "number", default: 4 },
       seed: { type: "number", default: 0 }
     },
     init: function() {
-      this.applyVariation = this.applyVariation.bind(this);
-      this.el.addEventListener("object3dset", this.applyVariation);
-      this.el.addEventListener("materialtextureloaded", this.applyVariation);
-      this.applyVariation();
+      this.applyTiling = this.applyTiling.bind(this);
+      this.el.addEventListener("object3dset", this.applyTiling);
+      this.el.addEventListener("materialtextureloaded", this.applyTiling);
+      this.applyTiling();
     },
     update: function() {
-      this.applyVariation();
+      this.applyTiling();
     },
-    applyVariation: function() {
+    applyTiling: function() {
       const helper = window.VRODOSSurfaceMaterial;
       const mesh = this.el.getObject3D("mesh");
       if (!helper || !mesh) return;
       mesh.traverse((node) => {
         if (!node.isMesh || !node.material) return;
         const materials = Array.isArray(node.material) ? node.material : [node.material];
-        materials.forEach((material) => helper.applyBalancedVariation(material, {
+        materials.forEach((material) => helper.applyStochasticTiling(material, {
           enabled: this.data.enabled && Boolean(material.map),
-          scale: this.data.scale,
-          strength: this.data.strength,
+          patchTiles: this.data.patchTiles,
+          blendSharpness: this.data.blendSharpness,
           seed: this.data.seed
         }));
       });
     },
     remove: function() {
-      this.el.removeEventListener("object3dset", this.applyVariation);
-      this.el.removeEventListener("materialtextureloaded", this.applyVariation);
+      this.el.removeEventListener("object3dset", this.applyTiling);
+      this.el.removeEventListener("materialtextureloaded", this.applyTiling);
       const mesh = this.el.getObject3D("mesh");
       const helper = window.VRODOSSurfaceMaterial;
       if (!mesh || !helper) return;
       mesh.traverse((node) => {
         const materials = node && node.material ? Array.isArray(node.material) ? node.material : [node.material] : [];
-        materials.forEach((material) => helper.applyBalancedVariation(material, { enabled: false }));
+        materials.forEach((material) => helper.applyStochasticTiling(material, { enabled: false }));
       });
     }
   });

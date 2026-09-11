@@ -308,11 +308,13 @@
 							<div class="tw-space-y-3">
 								<div id="compileReflectionControlsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
 									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose HDR lighting, the active Takram atmosphere, or a live scene-based reflection probe">Reflection Source</span>
 									<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 											<option value="hdr">HDR</option>
+											<option value="takram-sky">Takram Sky</option>
 											<option value="scene-probe">Scene Probe</option>
 									</select>
+										<p id="compileReflectionSourceHint" class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400 tw-mt-1"></p>
 								</label>
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Reflection quality</span>

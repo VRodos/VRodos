@@ -44,7 +44,7 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     function normalizeReflectionSource(value) {
-        if (value === 'hdr' || value === 'scene-probe') {
+        if (value === 'hdr' || value === 'takram-sky' || value === 'scene-probe') {
             return value;
         }
         return 'hdr';
