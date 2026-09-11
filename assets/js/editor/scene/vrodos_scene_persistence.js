@@ -260,7 +260,7 @@ VRODOS.exporter.SceneExporter = class {
             return false;
         }
 
-        if (node instanceof THREE.Mesh && node.category_name !== "pawn" && node.category_slug !== "image") {
+        if (node instanceof THREE.Mesh && node.category_name !== "pawn" && !['image', 'primitive-plane'].includes(node.category_slug)) {
             return false;
         }
 
@@ -302,6 +302,10 @@ VRODOS.exporter.SceneExporter = class {
             'editor_preview_loaded',
             'editor_preview_status',
             'editor_preview_message',
+            'surfaceAlbedoUrl',
+            'surfaceNormalUrl',
+            'surfaceRoughnessUrl',
+            'surfaceAoUrl',
             'follow_camera',
             'follow_camera_x',
             'follow_camera_z'

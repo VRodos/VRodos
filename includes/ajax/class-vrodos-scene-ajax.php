@@ -11,12 +11,21 @@ require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-standalone-exp
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 
 class VRodos_Scene_AJAX {
+	private const SURFACE_TEXTURE_ROLE = 'surface-textures';
+	private const SURFACE_TEXTURE_FIELDS = [
+		'surfaceAlbedoAttachmentId',
+		'surfaceNormalAttachmentId',
+		'surfaceRoughnessAttachmentId',
+		'surfaceAoAttachmentId',
+	];
 
 	public function __construct() {
 		add_action( 'wp_ajax_vrodos_save_scene_async_action', [ $this, 'save_scene_async_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_delete_scene_action', [ $this, 'delete_scene_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_reorder_scenes_action', [ $this, 'reorder_scenes_callback' ] );
 		add_action( 'wp_ajax_image_upload_action', [ $this, 'image_upload_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_upload_surface_texture_action', [ $this, 'upload_surface_texture_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_delete_surface_texture_action', [ $this, 'delete_surface_texture_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_compile_action', [ $this, 'compile_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_cancel_compile_action', [ $this, 'cancel_compile_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_export_scene_zip_action', [ $this, 'export_scene_zip_action_callback' ] );
@@ -45,6 +54,15 @@ class VRodos_Scene_AJAX {
 		$scene_model = new Vrodos_Scene_Model( $scene_json );
 		if ( ! $scene_model->is_valid() ) {
 			wp_send_json_error( 'Invalid scene JSON: ' . $scene_model->get_error_message(), 400 );
+		}
+		$surface_texture_ids = $this->surface_texture_ids_from_objects( $scene_model->objects );
+		foreach ( $surface_texture_ids as $attachment_id ) {
+			if (
+				! VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'scene', $scene_id )
+				|| ! VRodos_Storage_Manager::attachment_has_role( $attachment_id, self::SURFACE_TEXTURE_ROLE )
+			) {
+				wp_send_json_error( 'A plane surface texture does not belong to this scene.', 400 );
+			}
 		}
 
 		$pending_screenshot_id = 0;
@@ -88,10 +106,97 @@ class VRodos_Scene_AJAX {
 		}
 
 		update_post_meta( $scene_id, 'vrodos_scene_caption', sanitize_textarea_field( wp_unslash( $_POST['scene_caption'] ?? '' ) ) );
+		$retained_texture_ids = json_decode( wp_unslash( (string) ( $_POST['retained_surface_texture_ids'] ?? '[]' ) ), true );
+		$retained_texture_ids = is_array( $retained_texture_ids ) ? array_map( 'absint', $retained_texture_ids ) : [];
+		$retained_texture_ids = array_values(
+			array_filter(
+				$retained_texture_ids,
+				static fn( int $attachment_id ): bool =>
+					VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'scene', $scene_id )
+					&& VRodos_Storage_Manager::attachment_has_role( $attachment_id, self::SURFACE_TEXTURE_ROLE )
+			)
+		);
+		$this->cleanup_unreferenced_surface_textures( $scene_id, array_merge( $surface_texture_ids, $retained_texture_ids ) );
 
 		wp_send_json_success( [
 			'scene_id' => $scene_id,
 		] );
+	}
+
+	public function upload_surface_texture_action_callback(): void {
+		$this->require_storage_schema();
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$project_id = absint( $_POST['project_id'] ?? 0 );
+		$scene_id   = absint( $_POST['scene_id'] ?? 0 );
+		$slot       = sanitize_key( (string) ( $_POST['slot'] ?? '' ) );
+		if ( ! $this->can_edit_project_scene( $project_id, $scene_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+		if ( ! in_array( $slot, [ 'albedo', 'normal', 'roughness', 'ao' ], true ) ) {
+			wp_send_json_error( 'Unsupported surface texture slot.', 400 );
+		}
+
+		$file = $_FILES['texture'] ?? null;
+		if ( ! is_array( $file ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			wp_send_json_error( 'The texture upload is incomplete.', 400 );
+		}
+		$path = (string) ( $file['tmp_name'] ?? '' );
+		$size = is_file( $path ) ? filesize( $path ) : false;
+		if ( ! is_int( $size ) || $size <= 0 || $size > 10 * 1024 * 1024 ) {
+			wp_send_json_error( 'Surface textures must be 10 MiB or smaller.', 413 );
+		}
+		$extension = strtolower( pathinfo( (string) ( $file['name'] ?? '' ), PATHINFO_EXTENSION ) );
+		if ( ! in_array( $extension, [ 'jpg', 'jpeg', 'png', 'webp' ], true ) ) {
+			wp_send_json_error( 'Surface textures must be JPEG, PNG, or WebP.', 415 );
+		}
+		$image = function_exists( 'wp_getimagesize' ) ? wp_getimagesize( $path ) : getimagesize( $path );
+		$mime  = is_array( $image ) ? strtolower( (string) ( $image['mime'] ?? '' ) ) : '';
+		if ( ! is_array( $image ) || ! in_array( $mime, [ 'image/jpeg', 'image/png', 'image/webp' ], true ) ) {
+			wp_send_json_error( 'The uploaded file is not a supported image.', 415 );
+		}
+		if ( (int) $image[0] > 2048 || (int) $image[1] > 2048 ) {
+			wp_send_json_error( 'Surface textures may be at most 2048 pixels on either axis.', 413 );
+		}
+
+		$attachment_id = VRodos_Storage_Manager::store_uploaded_attachment( $file, $scene_id, 'scene', self::SURFACE_TEXTURE_ROLE );
+		if ( is_wp_error( $attachment_id ) ) {
+			wp_send_json_error( $attachment_id->get_error_message(), 500 );
+		}
+		$url = VRodos_Storage_Manager::authoring_url_for_attachment( (int) $attachment_id );
+		wp_send_json_success(
+			[
+				'attachmentId' => (int) $attachment_id,
+				'url'          => ( new VRodos_URL_Normalizer() )->normalize( $url ),
+				'width'        => (int) $image[0],
+				'height'       => (int) $image[1],
+			]
+		);
+	}
+
+	public function delete_surface_texture_action_callback(): void {
+		$this->require_storage_schema();
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$scene_id      = absint( $_POST['scene_id'] ?? 0 );
+		$attachment_id = absint( $_POST['attachment_id'] ?? 0 );
+		if ( ! $scene_id || 'vrodos_scene' !== get_post_type( $scene_id ) || ! current_user_can( 'edit_post', $scene_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+		if (
+			! VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'scene', $scene_id )
+			|| ! VRodos_Storage_Manager::attachment_has_role( $attachment_id, self::SURFACE_TEXTURE_ROLE )
+		) {
+			wp_send_json_error( 'Surface texture not found.', 404 );
+		}
+		$saved_scene = new Vrodos_Scene_Model( (string) get_post_field( 'post_content', $scene_id ) );
+		if ( in_array( $attachment_id, $this->surface_texture_ids_from_objects( $saved_scene->objects ), true ) ) {
+			wp_send_json_error( 'The surface texture is still used by the saved scene.', 409 );
+		}
+		VRodos_Storage_Manager::delete_attachment_if_owned_by( $attachment_id, 'scene', $scene_id );
+		wp_send_json_success( [ 'attachmentId' => $attachment_id ] );
 	}
 
 	/**
@@ -360,6 +465,63 @@ class VRodos_Scene_AJAX {
 		header( 'X-Content-Type-Options: nosniff' );
 		readfile( $zip_path );
 		exit;
+	}
+
+	/** @return int[] */
+	private function surface_texture_ids_from_objects( $objects ): array {
+		if ( ! is_object( $objects ) ) {
+			return [];
+		}
+
+		$attachment_ids = [];
+		foreach ( get_object_vars( $objects ) as $object ) {
+			if ( ! is_object( $object ) || 'primitive-plane' !== sanitize_title( (string) ( $object->category_slug ?? $object->category_name ?? '' ) ) ) {
+				continue;
+			}
+			foreach ( self::SURFACE_TEXTURE_FIELDS as $field ) {
+				$attachment_id = absint( $object->{$field} ?? 0 );
+				if ( $attachment_id > 0 ) {
+					$attachment_ids[] = $attachment_id;
+				}
+			}
+		}
+
+		return array_values( array_unique( $attachment_ids ) );
+	}
+
+	/** @param int[] $retained_attachment_ids */
+	private function cleanup_unreferenced_surface_textures( int $scene_id, array $retained_attachment_ids ): void {
+		$retained_attachment_ids = array_values( array_unique( array_filter( array_map( 'absint', $retained_attachment_ids ) ) ) );
+		foreach ( VRodos_Storage_Manager::owned_attachment_ids( 'scene', $scene_id, self::SURFACE_TEXTURE_ROLE ) as $attachment_id ) {
+			if ( ! in_array( $attachment_id, $retained_attachment_ids, true ) ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( $attachment_id, 'scene', $scene_id );
+			}
+		}
+	}
+
+	private function can_edit_project_scene( int $project_id, int $scene_id ): bool {
+		if (
+			$project_id <= 0
+			|| $scene_id <= 0
+			|| 'vrodos_game' !== get_post_type( $project_id )
+			|| 'vrodos_scene' !== get_post_type( $scene_id )
+			|| ! current_user_can( 'edit_post', $project_id )
+			|| ! current_user_can( 'edit_post', $scene_id )
+		) {
+			return false;
+		}
+
+		$project = get_post( $project_id );
+		if ( ! $project instanceof WP_Post ) {
+			return false;
+		}
+		$project_term = get_term_by( 'slug', (string) $project->post_name, 'vrodos_scene_pgame' );
+		if ( ! $project_term || is_wp_error( $project_term ) ) {
+			return false;
+		}
+
+		$scene_ids = array_map( 'absint', VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( (int) $project_term->term_id ) );
+		return in_array( $scene_id, $scene_ids, true );
 	}
 
 	private function require_storage_schema(): void {

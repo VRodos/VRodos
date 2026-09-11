@@ -12,6 +12,13 @@ require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
 final class VRodos_Compiler_Resource_Publisher {
 	private const INVENTORY_META = '_vrodos_published_inventory';
 	private const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
+	private const SURFACE_TEXTURE_ROLE = 'surface-textures';
+	private const SURFACE_TEXTURE_URL_FIELDS = [
+		'surfaceAlbedoAttachmentId'    => 'surfaceAlbedoUrl',
+		'surfaceNormalAttachmentId'    => 'surfaceNormalUrl',
+		'surfaceRoughnessAttachmentId' => 'surfaceRoughnessUrl',
+		'surfaceAoAttachmentId'        => 'surfaceAoUrl',
+	];
 	private int $project_id = 0;
 	private array $media = [];
 	private array $created_files = [];
@@ -57,6 +64,7 @@ final class VRodos_Compiler_Resource_Publisher {
 					$this->desktop_profile_definitions[ $slot ] = $definition;
 				}
 				$this->hydrate_value( $scene->scene_json );
+				$this->hydrate_scene_surface_textures( $scene->scene_json, $scene->scene_id );
 				$background_id = absint( get_post_meta( $scene->scene_id, 'vrodos_scene_bg_image', true ) );
 				if ( $background_id && isset( $scene->scene_json->metadata ) && is_object( $scene->scene_json->metadata ) ) {
 					if ( ! VRodos_Storage_Manager::attachment_is_owned_by( $background_id, 'scene', $scene->scene_id ) ) {
@@ -162,6 +170,33 @@ final class VRodos_Compiler_Resource_Publisher {
 		foreach ( get_object_vars( $value ) as $property => $child ) {
 			if ( 'asset_id' !== $property ) {
 				$this->hydrate_value( $value->{$property} );
+			}
+		}
+	}
+
+	private function hydrate_scene_surface_textures( object $scene, int $scene_id ): void {
+		if ( ! is_object( $scene->objects ?? null ) ) {
+			return;
+		}
+
+		foreach ( get_object_vars( $scene->objects ) as $object_key => $object ) {
+			if ( ! is_object( $object ) || 'primitive-plane' !== sanitize_title( (string) ( $object->category_slug ?? $object->category_name ?? '' ) ) ) {
+				continue;
+			}
+			foreach ( self::SURFACE_TEXTURE_URL_FIELDS as $attachment_field => $url_field ) {
+				unset( $object->{$url_field} );
+				$attachment_id = absint( $object->{$attachment_field} ?? 0 );
+				if ( $attachment_id <= 0 ) {
+					continue;
+				}
+				if (
+					! VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'scene', $scene_id )
+					|| ! VRodos_Storage_Manager::attachment_has_role( $attachment_id, self::SURFACE_TEXTURE_ROLE )
+				) {
+					throw new RuntimeException( sprintf( '[VRodos] Plane surface attachment #%d is not owned by scene #%d.', $attachment_id, $scene_id ) );
+				}
+				$context = sprintf( 'scene-%d-plane-%s-%s', $scene_id, sanitize_key( (string) $object_key ), sanitize_key( $attachment_field ) );
+				$object->{$url_field} = $this->publish_attachment( $attachment_id, $context );
 			}
 		}
 	}

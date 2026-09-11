@@ -33,6 +33,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private array $diagnostic_category_counts = [];
 	private array $diagnostic_load_phases = [];
 	private array $critical_gltf_asset_dom_ids = [];
+	private array $surface_image_asset_ids = [];
 	private bool $suppress_flat_media_shadow_casting = false;
 	private bool $use_flat_media_materials = false;
 	private string $runtime_profile = 'desktop';
@@ -60,6 +61,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 						},
 						'pawn' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
 							$this->render_pawn_entity( $context->dom, $context->scene, $context->assets, $context->entity, $context->config );
+						},
+						'primitive' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_primitive_plane_entity( $context->dom, $context->scene, $context->assets, $context->entity );
 						},
 					]
 				),
@@ -106,6 +110,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_category_counts = [];
 		$this->diagnostic_load_phases     = [];
 		$this->critical_gltf_asset_dom_ids = [];
+		$this->surface_image_asset_ids    = [];
 		$this->diagnostic_object_count    = 0;
 		$this->diagnostic_collider_count  = 0;
 	}
@@ -904,20 +909,40 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function is_compiled_collision_enabled( $obj ): bool {
+		$source_category = is_object( $obj )
+			? $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) )
+			: '';
+		$default_enabled = is_object( $obj ) && (
+			'decoration' === $this->semantic_entity_category( $obj )
+			|| 'primitive-plane' === $source_category
+		);
 		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {
 			$value = $obj->compiledCollisionEnabled;
 			if ( is_bool( $value ) ) {
 				return $value;
 			}
 			if ( null === $value || '' === trim( (string) $value ) ) {
-				return 'decoration' === $this->entity_policy->effective_category( $obj );
+				return $default_enabled;
 			}
 
 			$normalized = strtolower( trim( (string) $value ) );
 			return ! in_array( $normalized, [ '0', 'false', 'no', 'off' ], true );
 		}
 
-		return is_object( $obj ) && 'decoration' === $this->entity_policy->effective_category( $obj );
+		return $default_enabled;
+	}
+
+	private function semantic_entity_category( $obj ): string {
+		if ( ! is_object( $obj ) ) {
+			return '';
+		}
+		$category = $this->entity_policy->effective_category( $obj );
+		if ( 'primitive-plane' !== $category ) {
+			return $category;
+		}
+
+		$scene_role = $this->entity_policy->canonical_category( (string) ( $obj->sceneAssetRole ?? '' ) );
+		return in_array( $scene_role, [ 'decoration', 'walkable-surface' ], true ) ? $scene_role : 'walkable-surface';
 	}
 
 	private function normalize_runtime_category( string $category ): string {
@@ -933,7 +958,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return;
 		}
 
-		$category = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		$category = $this->semantic_entity_category( $obj );
 		$uuid     = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
 		$role     = 'walkable-surface' === $category ? 'navmesh' : 'solid';
 		$hidden_collision = 'collision-proxy' === $category;
@@ -1173,6 +1198,112 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$a_light->setAttribute( 'light', $light_attr );
 		$ascene->appendChild( $a_light );
+	}
+
+	private function render_primitive_plane_entity( DOMDocument $dom, DOMElement $ascene, DOMElement $assets, object $obj ): void {
+		if ( 'primitive-plane' !== $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) ) ) {
+			return;
+		}
+
+		$uuid      = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
+		$width     = $this->bounded_number( $obj->planeWidth ?? 20, 0.1, 10000, 20 );
+		$depth     = $this->bounded_number( $obj->planeDepth ?? 20, 0.1, 10000, 20 );
+		$tile_size = $this->bounded_number( $obj->surfaceTileSizeMeters ?? 2, 0.01, 10000, 2 );
+		if ( '' === $uuid ) {
+			return;
+		}
+
+		$repeat_u = $width / $tile_size;
+		$repeat_v = $depth / $tile_size;
+		$repeat   = $this->number_attribute( $repeat_u ) . ' ' . $this->number_attribute( $repeat_v );
+		$color    = sanitize_hex_color( (string) ( $obj->surfaceColor ?? '#ffffff' ) ) ?: '#ffffff';
+		$material = [
+			'shader'    => 'standard',
+			'color'     => $color,
+			'roughness' => $this->number_attribute( $this->bounded_number( $obj->surfaceRoughness ?? 1, 0, 1, 1 ) ),
+			'metalness' => $this->number_attribute( $this->bounded_number( $obj->surfaceMetalness ?? 0, 0, 1, 0 ) ),
+			'side'      => 'front',
+		];
+
+		$texture_fields = [
+			'surfaceAlbedoUrl'    => [ 'src', 'repeat', null ],
+			'surfaceNormalUrl'    => [ 'normalMap', 'normalTextureRepeat', 'normalScale' ],
+			'surfaceRoughnessUrl' => [ 'roughnessMap', 'roughnessTextureRepeat', null ],
+			'surfaceAoUrl'        => [ 'ambientOcclusionMap', 'ambientOcclusionTextureRepeat', 'ambientOcclusionMapIntensity' ],
+		];
+		foreach ( $texture_fields as $field => [ $map_property, $repeat_property, $strength_property ] ) {
+			$url = $this->normalize_url( (string) ( $obj->{$field} ?? '' ) );
+			if ( '' === $url ) {
+				continue;
+			}
+			$asset_id = $this->get_or_create_surface_image_asset( $dom, $assets, $url, 'primitive-plane:' . $uuid . ':' . $field );
+			$material[ $map_property ]    = '#' . $asset_id;
+			$material[ $repeat_property ] = $repeat;
+			if ( 'normalScale' === $strength_property ) {
+				$strength = $this->bounded_number( $obj->surfaceNormalScale ?? 1, 0, 2, 1 );
+				$material[ $strength_property ] = $this->number_attribute( $strength ) . ' ' . $this->number_attribute( $strength );
+			} elseif ( 'ambientOcclusionMapIntensity' === $strength_property ) {
+				$material[ $strength_property ] = $this->number_attribute( $this->bounded_number( $obj->surfaceAoIntensity ?? 1, 0, 2, 1 ) );
+			}
+		}
+
+		$entity = $dom->createElement( 'a-plane' );
+		$entity->setAttribute( 'id', 'plane_' . sanitize_key( $uuid ) );
+		$entity->setAttribute( 'width', $this->number_attribute( $width ) );
+		$entity->setAttribute( 'height', $this->number_attribute( $depth ) );
+		$entity->setAttribute( 'material', VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute( $material ) );
+		$entity->setAttribute( 'class', 'override-materials hideable' );
+		$entity->setAttribute( 'data-vrodos-surface-tile-size', $this->number_attribute( $tile_size ) );
+		$this->setAffineTransformations( $entity, $obj, true );
+
+		$semantic_category = $this->semantic_entity_category( $obj );
+		if ( 'walkable-surface' === $semantic_category ) {
+			$this->append_class( $entity, 'vrodos-navmesh' );
+			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
+			$walk_behavior = 'auto' === strtolower( trim( (string) ( $obj->walkableBehavior ?? '' ) ) ) ? 'auto' : 'precise';
+			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
+		}
+		$this->apply_compiled_collision_attributes( $entity, $obj, 'primitive-plane' );
+		$shadow_role = $this->resolve_object_shadow_role( $obj, 'receiver' );
+		$this->set_world_lighting_attributes( $entity, $shadow_role );
+		if ( $this->has_authored_shadow_role( $obj ) ) {
+			$entity->setAttribute( 'data-vrodos-shadow-role-authored', 'true' );
+		}
+		$material_role = $this->resolve_object_material_role( $obj );
+		$entity->setAttribute( 'data-vrodos-material-role', 'auto' === $material_role ? 'authored-pbr' : $material_role );
+		$entity->setAttribute( 'clear-frustum-culling', '' );
+		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
+		$ascene->appendChild( $entity );
+	}
+
+	private function get_or_create_surface_image_asset( DOMDocument $dom, DOMElement $assets, string $url, string $context ): string {
+		if ( isset( $this->surface_image_asset_ids[ $url ] ) ) {
+			$this->track_runtime_asset( 'image', $url, $context );
+			return $this->surface_image_asset_ids[ $url ];
+		}
+
+		$asset_id = 'surface_' . substr( hash( 'sha256', $url ), 0, 16 );
+		$image = $dom->createElement( 'img' );
+		$image->setAttribute( 'id', $asset_id );
+		$image->setAttribute( 'src', $url );
+		$image->setAttribute( 'crossorigin', 'anonymous' );
+		$assets->appendChild( $image );
+		$this->surface_image_asset_ids[ $url ] = $asset_id;
+		$this->track_runtime_asset( 'image', $url, $context );
+		return $asset_id;
+	}
+
+	private function bounded_number( $value, float $minimum, float $maximum, float $fallback ): float {
+		$number = is_numeric( $value ) ? (float) $value : $fallback;
+		if ( ! is_finite( $number ) ) {
+			$number = $fallback;
+		}
+		return min( $maximum, max( $minimum, $number ) );
+	}
+
+	private function number_attribute( float $value ): string {
+		$value = abs( $value ) < 0.0000005 ? 0.0 : $value;
+		return rtrim( rtrim( number_format( $value, 6, '.', '' ), '0' ), '.' );
 	}
 
 	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {

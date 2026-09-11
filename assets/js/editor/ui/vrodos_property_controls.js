@@ -855,6 +855,7 @@ function humanizeObjectTypeLabel(typeValue) {
     if (!typeValue) return '';
 
     const aliases = {
+        'primitive-plane': 'Plane',
         'walkable-surface': 'Walkable Surface',
         '3d-text': '3D Text',
         'poi-imagetext': 'Image Text POI',
@@ -882,6 +883,10 @@ function humanizeObjectTypeLabel(typeValue) {
 
 function getObjectTypeLabel(object) {
     if (!object) return '';
+
+    if (String(object.category_slug || object.category_name || '').toLowerCase() === 'primitive-plane') {
+        return 'Plane';
+    }
 
     return humanizeObjectTypeLabel(
         vrodosGetEffectiveObjectCategory(object) || object.asset_type || ''
@@ -1190,7 +1195,7 @@ function vrodosIsShadowRoleEligible(object) {
         return false;
     }
 
-    return Boolean(object.glb_path || object.image_path || object.video_path || object.poi_img_path || object.poi_image_path || object.text_content);
+    return categorySlug === 'primitive-plane' || Boolean(object.glb_path || object.image_path || object.video_path || object.poi_img_path || object.poi_image_path || object.text_content);
 }
 
 function vrodosIsMaterialRoleEligible(object) {
@@ -1206,7 +1211,7 @@ function vrodosIsMaterialRoleEligible(object) {
         return false;
     }
 
-    return Boolean(object.glb_path);
+    return categorySlug === 'primitive-plane' || Boolean(object.glb_path);
 }
 
 function ensureCollisionPropertiesSection() {
@@ -1435,15 +1440,224 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
         targetObject.userData[prop] = nextValue;
     }
 
+    if (targetObject.category_slug === 'primitive-plane' && VRODOS.loader) {
+        if (['planeWidth', 'planeDepth'].includes(prop) && typeof VRODOS.loader.refreshPrimitivePlaneGeometry === 'function') {
+            VRODOS.loader.refreshPrimitivePlaneGeometry(targetObject);
+        }
+        if ([
+            'planeWidth',
+            'planeDepth',
+            'surfaceColor',
+            'surfaceRoughness',
+            'surfaceMetalness',
+            'surfaceTileSizeMeters',
+            'surfaceNormalScale',
+            'surfaceAoIntensity'
+        ].includes(prop) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
+            VRODOS.loader.refreshPrimitivePlaneMaterial(targetObject);
+        }
+    }
+
     if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
         VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue));
     }
 
-    if (typeof saveChanges === 'function') {
+    if (typeof VRODOS.api.saveChanges === 'function') {
         VRODOS.api.saveChanges();
     } else if (typeof VRODOS.editor.envir !== 'undefined' && VRODOS.editor.envir.scene) {
         VRODOS.editor.envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
     }
+}
+
+const VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES = Object.freeze({
+    albedo: { attachment: 'surfaceAlbedoAttachmentId', url: 'surfaceAlbedoUrl', label: 'Albedo' },
+    normal: { attachment: 'surfaceNormalAttachmentId', url: 'surfaceNormalUrl', label: 'Normal' },
+    roughness: { attachment: 'surfaceRoughnessAttachmentId', url: 'surfaceRoughnessUrl', label: 'Roughness' },
+    ao: { attachment: 'surfaceAoAttachmentId', url: 'surfaceAoUrl', label: 'Ambient Occlusion' }
+});
+
+function vrodosPlaneNumericValue(value, fallback, minimum, maximum) {
+    const number = Number(value);
+    return Math.min(maximum, Math.max(minimum, Number.isFinite(number) ? number : fallback));
+}
+
+function vrodosApplyPlaneTextureState(object, slot, state) {
+    const definition = VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES[slot];
+    if (!object || !definition) return;
+
+    object[definition.attachment] = Number(state.attachmentId) || 0;
+    object[definition.url] = String(state.url || '');
+    object.userData = object.userData || {};
+    object.userData[definition.attachment] = object[definition.attachment];
+    if (object[definition.url]) object.userData[definition.url] = object[definition.url];
+    else delete object.userData[definition.url];
+    if (VRODOS.loader && typeof VRODOS.loader.setPrimitivePlaneTexture === 'function') {
+        VRODOS.loader.setPrimitivePlaneTexture(object, slot, object[definition.url]);
+    }
+}
+
+function vrodosPlaneTextureState(object, slot) {
+    const definition = VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES[slot];
+    return {
+        attachmentId: definition ? Number(object[definition.attachment]) || 0 : 0,
+        url: definition ? String(object[definition.url] || '') : ''
+    };
+}
+
+function vrodosAddPlaneTextureUndo(object, slot, oldState, newState) {
+    if (typeof VRODOS.editor.undoManager === 'undefined' || VRODOS.editor.undoManager.isExecuting || typeof VRODOS.editor.PlaneTextureCommand !== 'function') {
+        return null;
+    }
+    const command = new VRODOS.editor.PlaneTextureCommand(object, slot, oldState, newState);
+    VRODOS.editor.undoManager.add(command);
+    return command;
+}
+
+function vrodosRemoveFailedPlaneTextureUndo(command) {
+    const manager = VRODOS.editor.undoManager;
+    if (!manager || !command || manager.undoStack.at(-1) !== command) return;
+    manager.undoStack.pop();
+    manager.updateButtons();
+}
+
+async function vrodosSavePlaneTextureChange(object, slot, oldState, newState) {
+    vrodosApplyPlaneTextureState(object, slot, newState);
+    const command = vrodosAddPlaneTextureUndo(object, slot, oldState, newState);
+    try {
+        await VRODOS.api.saveChanges({ force: true });
+    } catch (error) {
+        vrodosRemoveFailedPlaneTextureUndo(command);
+        vrodosApplyPlaneTextureState(object, slot, oldState);
+        if (newState.attachmentId && newState.attachmentId !== oldState.attachmentId) {
+            VRODOS.api.deleteSurfaceTexture(newState.attachmentId).catch((deleteError) => {
+                console.warn('VRodos: could not clean up the failed surface texture upload.', deleteError);
+            });
+        }
+        throw error;
+    }
+}
+
+function ensurePrimitivePlanePropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('primitivePlanePropertiesDiv');
+    if (section) return section;
+
+    section = document.createElement('div');
+    section.id = 'primitivePlanePropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    const textureRows = Object.entries(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).map(([slot, definition]) => (
+        '<div class="tw-flex tw-items-center tw-gap-2">' +
+        `<label class="tw-w-24 tw-text-[10px] tw-font-semibold tw-text-slate-300" for="planeTexture_${slot}">${definition.label}</label>` +
+        `<input id="planeTexture_${slot}" data-plane-texture-input="${slot}" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="tw-file-input tw-file-input-bordered tw-file-input-xs tw-min-w-0 tw-flex-1">` +
+        `<button type="button" data-plane-texture-remove="${slot}" class="tw-btn tw-btn-ghost tw-btn-xs" title="Remove ${definition.label} map">×</button>` +
+        `<span data-plane-texture-status="${slot}" class="tw-w-14 tw-text-right tw-text-[9px] tw-text-slate-400"></span>` +
+        '</div>'
+    )).join('');
+    section.innerHTML = `
+        <div class="prop-section-title">Plane Surface</div>
+        <div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3">
+            <div class="tw-grid tw-grid-cols-2 tw-gap-2">
+                <label class="tw-text-[10px] tw-text-slate-300">Width (m)<input id="planeWidthInput" type="number" min="0.1" max="10000" step="0.1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Depth (m)<input id="planeDepthInput" type="number" min="0.1" max="10000" step="0.1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Base color<input id="planeSurfaceColorInput" type="color" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Tile size (m)<input id="planeTileSizeInput" type="number" min="0.01" max="10000" step="0.1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Roughness<input id="planeRoughnessInput" type="number" min="0" max="1" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Metalness<input id="planeMetalnessInput" type="number" min="0" max="1" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Normal strength<input id="planeNormalScaleInput" type="number" min="0" max="2" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">AO intensity<input id="planeAoIntensityInput" type="number" min="0" max="2" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+            </div>
+            <div class="tw-mt-1 tw-flex tw-flex-col tw-gap-2">${textureRows}</div>
+            <div class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400">Use seamless OpenGL PBR maps. Tile size stays constant when the plane is resized. Recommended: 1K; maximum: 2K.</div>
+        </div>`;
+    container.appendChild(section);
+
+    const numericBindings = [
+        ['planeWidthInput', 'planeWidth', 20, 0.1, 10000],
+        ['planeDepthInput', 'planeDepth', 20, 0.1, 10000],
+        ['planeTileSizeInput', 'surfaceTileSizeMeters', 2, 0.01, 10000],
+        ['planeRoughnessInput', 'surfaceRoughness', 1, 0, 1],
+        ['planeMetalnessInput', 'surfaceMetalness', 0, 0, 1],
+        ['planeNormalScaleInput', 'surfaceNormalScale', 1, 0, 2],
+        ['planeAoIntensityInput', 'surfaceAoIntensity', 1, 0, 2]
+    ];
+    numericBindings.forEach(([id, property, fallback, minimum, maximum]) => {
+        document.getElementById(id)?.addEventListener('change', function() {
+            const value = vrodosPlaneNumericValue(this.value, fallback, minimum, maximum);
+            this.value = value;
+            vrodosCommitObjectControlsProperty(property, value);
+        });
+    });
+    document.getElementById('planeSurfaceColorInput')?.addEventListener('change', function() {
+        vrodosCommitObjectControlsProperty('surfaceColor', this.value);
+    });
+
+    section.querySelectorAll('[data-plane-texture-input]').forEach((input) => {
+        input.addEventListener('change', async function() {
+            const file = this.files && this.files[0];
+            const slot = this.dataset.planeTextureInput;
+            const object = getObjectControlsTargetObject();
+            const status = section.querySelector(`[data-plane-texture-status="${slot}"]`);
+            if (!file || !object || object.category_slug !== 'primitive-plane') return;
+            if (status) status.textContent = 'Uploading…';
+            try {
+                const oldState = vrodosPlaneTextureState(object, slot);
+                const uploaded = await VRODOS.api.uploadSurfaceTexture(file, slot);
+                await vrodosSavePlaneTextureChange(object, slot, oldState, {
+                    attachmentId: uploaded.attachmentId,
+                    url: uploaded.url
+                });
+                if (status) status.textContent = 'Assigned';
+            } catch (error) {
+                if (status) status.textContent = 'Failed';
+                window.alert(error.message || 'Texture upload failed.');
+            } finally {
+                this.value = '';
+            }
+        });
+    });
+    section.querySelectorAll('[data-plane-texture-remove]').forEach((button) => {
+        button.addEventListener('click', async function() {
+            const slot = this.dataset.planeTextureRemove;
+            const object = getObjectControlsTargetObject();
+            if (!object || object.category_slug !== 'primitive-plane') return;
+            const oldState = vrodosPlaneTextureState(object, slot);
+            if (!oldState.attachmentId && !oldState.url) return;
+            try {
+                await vrodosSavePlaneTextureChange(object, slot, oldState, { attachmentId: 0, url: '' });
+                displayPrimitivePlaneProperties(object);
+            } catch (error) {
+                window.alert(error.message || 'Could not remove the texture.');
+            }
+        });
+    });
+    return section;
+}
+
+function displayPrimitivePlaneProperties(object) {
+    const section = ensurePrimitivePlanePropertiesSection();
+    if (!section || !object) return;
+    const values = {
+        planeWidthInput: object.planeWidth,
+        planeDepthInput: object.planeDepth,
+        planeSurfaceColorInput: object.surfaceColor || '#ffffff',
+        planeTileSizeInput: object.surfaceTileSizeMeters,
+        planeRoughnessInput: object.surfaceRoughness,
+        planeMetalnessInput: object.surfaceMetalness,
+        planeNormalScaleInput: object.surfaceNormalScale,
+        planeAoIntensityInput: object.surfaceAoIntensity
+    };
+    Object.entries(values).forEach(([id, value]) => {
+        const input = document.getElementById(id);
+        if (input) input.value = value;
+    });
+    Object.entries(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).forEach(([slot, definition]) => {
+        const status = section.querySelector(`[data-plane-texture-status="${slot}"]`);
+        if (status) status.textContent = Number(object[definition.attachment]) > 0 ? 'Assigned' : 'None';
+    });
+    section.style.display = 'block';
 }
 
 function ensureAudioPropertiesSection() {
@@ -1612,6 +1826,11 @@ function showPropertiesInPanel(object) {
 
     if (typeof VRODOS.utils.isSceneAssetRoleEligible === 'function' && VRODOS.utils.isSceneAssetRoleEligible(object)) {
         displaySceneAssetRoleProperties(object);
+        hasProperties = true;
+    }
+
+    if (String(object.category_slug || object.category_name || '').toLowerCase() === 'primitive-plane') {
+        displayPrimitivePlaneProperties(object);
         hasProperties = true;
     }
 

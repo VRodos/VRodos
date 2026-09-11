@@ -262,6 +262,24 @@ extract( $data );
 
 				<!-- Lights -->
 				<div class="environmentBar hidable tw-flex tw-items-center tw-gap-2">
+					<details id="create-object-menu" class="tw-relative">
+						<summary class="EditorToolbarBtnStyle tw-btn tw-btn-sm tw-list-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1"
+								 title="Create scene object">
+							<i data-lucide="plus" class="tw-w-4 tw-h-4"></i>
+							<span>Create</span>
+							<i data-lucide="chevron-down" class="tw-w-3 tw-h-3"></i>
+						</summary>
+						<div class="tw-absolute tw-left-0 tw-top-full tw-mt-1 tw-w-40 tw-rounded-lg tw-border tw-border-white/15 tw-bg-slate-800 tw-p-1 tw-shadow-xl tw-z-[1200]">
+							<button id="create-plane-button" type="button"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-justify-start tw-gap-2 tw-text-white"
+									title="Create a procedural walkable plane">
+								<i data-lucide="square" class="tw-w-4 tw-h-4"></i>
+								<span>Plane</span>
+							</button>
+						</div>
+					</details>
+
+					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
 
 					<?php if ( ! isset( $project_type_slug ) || $project_type_slug !== 'vrexpo_games' ) : ?>
 					<div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">

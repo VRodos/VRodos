@@ -3,6 +3,42 @@ VRODOS.api.isSceneSavePending = false;
 VRODOS.api.isSceneSaveQueued = false;
 VRODOS.api.sceneSaveGeneration = 0;
 
+const VRODOS_SURFACE_TEXTURE_ATTACHMENT_KEYS = new Set([
+	'surfaceAlbedoAttachmentId',
+	'surfaceNormalAttachmentId',
+	'surfaceRoughnessAttachmentId',
+	'surfaceAoAttachmentId',
+	'attachmentId'
+]);
+
+function collectRetainedSurfaceTextureIds() {
+	const retained = new Set();
+	const collect = (value) => {
+		if (!value || typeof value !== 'object') return;
+		if (Array.isArray(value)) {
+			value.forEach(collect);
+			return;
+		}
+		Object.entries(value).forEach(([key, child]) => {
+			if (VRODOS_SURFACE_TEXTURE_ATTACHMENT_KEYS.has(key)) {
+				const attachmentId = Number(child) || 0;
+				if (attachmentId > 0) retained.add(attachmentId);
+				return;
+			}
+			if (key !== 'object3D') collect(child);
+		});
+	};
+	const manager = VRODOS.editor && VRODOS.editor.undoManager;
+	if (manager) {
+		[...(manager.undoStack || []), ...(manager.redoStack || [])].forEach((command) => {
+			collect(command.objectData);
+			collect(command.oldState);
+			collect(command.newState);
+		});
+	}
+	return Array.from(retained);
+}
+
 VRODOS.api.whenSceneSaveSettles = function() {
 	return VRODOS.api.sceneSavePromise || Promise.resolve();
 }
@@ -103,6 +139,7 @@ VRODOS.api.saveScene = function() {
 		'scene_title': document.getElementById( "sceneTitleInput" ).value,
 		'scene_caption': ''
 	});
+	postdata.append('retained_surface_texture_ids', JSON.stringify(collectRetainedSurfaceTextureIds()));
 
 	let pendingScreenshotData = null;
 	if (VRODOS.api.newScreenshotData) {

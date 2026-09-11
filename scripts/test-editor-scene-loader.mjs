@@ -163,6 +163,7 @@ class MockTexture {
     constructor() {
         this.isTexture = true;
         this.disposeCount = 0;
+        this.repeat = new MockVector(1, 1);
     }
 
     dispose() {
@@ -255,6 +256,10 @@ const context = {
             }
         },
         TextureLoader: MockTextureLoader,
+        RepeatWrapping: 1000,
+        SRGBColorSpace: "srgb",
+        NoColorSpace: "",
+        Vector2: MockVector,
         Vector3: MockVector
     },
     VRODOS: {
@@ -366,6 +371,37 @@ for (const { object, options } of context.VRODOS.editor.objectFactory.added) {
 }
 const thumbnailScreen = context.VRODOS.editor.objectFactory.added[0].object.children.find((child) => child.name.includes("screen"));
 assert(Boolean(thumbnailScreen.material.map), "the existing video thumbnail texture path must target the generated screen mesh");
+
+const planeAddedStart = context.VRODOS.editor.objectFactory.added.length;
+const planeLoadResult = await new context.VRODOS.loader.LoaderMulti().load(null, {
+    ground: {
+        category_slug: "primitive-plane",
+        planeWidth: 30,
+        planeDepth: 12,
+        surfaceTileSizeMeters: 3,
+        surfaceAlbedoUrl: "/ground-albedo.jpg",
+        surfaceNormalUrl: "/ground-normal.jpg",
+        surfaceRoughnessUrl: "/ground-roughness.jpg",
+        surfaceAoUrl: "/ground-ao.jpg",
+        position: [2, 0, 3],
+        rotation: [-Math.PI / 2, 0, 0],
+        scale: [1, 1, 1],
+        trs: { translation: [2, 0, 3], rotation: [-Math.PI / 2, 0, 0], scale: [1, 1, 1] }
+    }
+}, "/plugin");
+assert(planeLoadResult.every((result) => result.status === "fulfilled"), "procedural planes must settle successfully");
+assert(gltfLoaderCreations === 0, "procedural planes must not create a GLTF loader");
+const planeObject = context.VRODOS.editor.objectFactory.added.slice(planeAddedStart).at(-1).object;
+assert(planeObject.category_slug === "primitive-plane" && planeObject.isMesh === true, "procedural planes must load as selectable meshes");
+assert(planeObject.geometry.args[0] === 30 && planeObject.geometry.args[1] === 12, "procedural plane geometry must use authored metre dimensions");
+assert(planeObject.material.map.repeat.x === 10 && planeObject.material.map.repeat.y === 4, "albedo repeat must derive from dimensions divided by metres per tile");
+for (const map of [planeObject.material.map, planeObject.material.normalMap, planeObject.material.roughnessMap, planeObject.material.aoMap]) {
+    assert(map.repeat.x === 10 && map.repeat.y === 4, "every PBR map must share the same physical tile repeat");
+}
+planeObject.planeWidth = 60;
+context.VRODOS.loader.refreshPrimitivePlaneGeometry(planeObject);
+context.VRODOS.loader.refreshPrimitivePlaneMaterial(planeObject);
+assert(planeObject.material.map.repeat.x === 20 && planeObject.material.map.repeat.y === 4, "resizing a plane must retile rather than stretch its textures");
 
 let metadataRequests = 0;
 context.fetch = async () => {

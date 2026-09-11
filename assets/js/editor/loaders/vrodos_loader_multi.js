@@ -51,6 +51,10 @@ VRODOS.loader.LoaderMulti = class {
 
                 pendingLoads.push(VRODOS.loader.loadVideoAsset(name, resource, resources3D));
 
+            } else if (categorySlug === 'primitive-plane') {
+
+                pendingLoads.push(VRODOS.loader.loadPrimitivePlaneAsset(name, resource, resources3D));
+
             } else if (VRODOS.utils.isSceneImageCategory(categorySlug)) { // Flat image plane
 
                 pendingLoads.push(VRODOS.loader.loadImageAsset(manager, name, resource, resources3D));

@@ -17,6 +17,12 @@ assert.match(compileAjax, /wp_ajax_vrodos_cancel_compile_action/);
 assert.match(compileAjax, /VRodos_Compiler_Build_State::cancel/);
 assert.match(compileAjax, /202 === \$status/);
 assert.match(compileAjax, /wp_send_json\( array_merge\( \[ 'status' => 'pending' \]/);
+assert.match(compileAjax, /wp_ajax_vrodos_upload_surface_texture_action/);
+assert.match(compileAjax, /wp_ajax_vrodos_delete_surface_texture_action/);
+assert.match(compileAjax, /check_ajax_referer\( 'vrodos_scene_mutation', 'nonce', false \)/);
+assert.match(compileAjax, /can_edit_project_scene\( \$project_id, \$scene_id \)/);
+assert.match(compileAjax, /attachment_is_owned_by\( \$attachment_id, 'scene', \$scene_id \)/);
+assert.match(compileAjax, /Surface textures may be at most 2048 pixels/);
 
 const compileRequest = read("assets/js/editor/ajax/vrodos_request_compile.js");
 assert.match(compileRequest, /method: 'POST'/);

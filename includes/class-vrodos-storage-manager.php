@@ -505,6 +505,41 @@ final class VRodos_Storage_Manager {
 			&& absint( get_post_meta( $attachment_id, self::OWNER_ID_META, true ) ) === $owner_id;
 	}
 
+	public static function attachment_has_role( int $attachment_id, string $role ): bool {
+		return $attachment_id > 0
+			&& self::is_private_attachment( $attachment_id )
+			&& sanitize_key( (string) get_post_meta( $attachment_id, self::ROLE_META, true ) ) === sanitize_key( $role );
+	}
+
+	/** @return int[] */
+	public static function owned_attachment_ids( string $owner_type, int $owner_id, string $role = '' ): array {
+		if ( ! in_array( $owner_type, [ 'asset', 'scene' ], true ) || $owner_id < 1 ) {
+			return [];
+		}
+		$meta_query = [
+			'relation' => 'AND',
+			[ 'key' => self::PRIVATE_MARKER_META, 'value' => '1' ],
+			[ 'key' => self::OWNER_TYPE_META, 'value' => $owner_type ],
+			[ 'key' => self::OWNER_ID_META, 'value' => $owner_id, 'type' => 'NUMERIC' ],
+		];
+		if ( '' !== $role ) {
+			$meta_query[] = [ 'key' => self::ROLE_META, 'value' => sanitize_key( $role ) ];
+		}
+
+		return array_map(
+			'absint',
+			get_posts(
+				[
+					'post_type'      => 'attachment',
+					'post_status'    => 'any',
+					'fields'         => 'ids',
+					'posts_per_page' => -1,
+					'meta_query'     => $meta_query,
+				]
+			)
+		);
+	}
+
 	public static function mark_attachment_private( int $attachment_id, int $owner_id, string $owner_type, string $role ): bool {
 		$values = [
 			self::PRIVATE_MARKER_META => '1',

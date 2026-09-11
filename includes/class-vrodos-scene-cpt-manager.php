@@ -8,6 +8,13 @@ class VRodos_Scene_CPT_Manager {
 
 	private const SCENE_PROJECT_TAXONOMY = 'vrodos_scene_pgame';
 	private const SCENE_PROJECT_NONCE_NAME = 'vrodos_scene_pgame_noncename';
+	private const SURFACE_TEXTURE_ROLE = 'surface-textures';
+	private const SURFACE_TEXTURE_URL_FIELDS = [
+		'surfaceAlbedoAttachmentId'    => 'surfaceAlbedoUrl',
+		'surfaceNormalAttachmentId'    => 'surfaceNormalUrl',
+		'surfaceRoughnessAttachmentId' => 'surfaceRoughnessUrl',
+		'surfaceAoAttachmentId'        => 'surfaceAoUrl',
+	];
 
 	private array $vrodos_scenes_metas_definition;
 
@@ -467,6 +474,8 @@ class VRodos_Scene_CPT_Manager {
 					// Immerse connector integration: assessment scene objects are editor/runtime
 					// placeholders and do not point to an uploaded binary asset.
 					$object_data['path'] = '';
+				} elseif ( ( $object_data['category_slug'] ?? '' ) === 'primitive-plane' ) {
+					$object_data['path'] = '';
 				} else {
 					// Standard Object
 					$object_data['path']             = $relative_path . ( $value->fnPath ?? '' );
@@ -528,19 +537,43 @@ class VRodos_Scene_CPT_Manager {
 		$scene_json_from_db = ( $scene_post && $scene_post->post_content )
 			? $scene_post->post_content
 			: VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ?? '' ) );
-		$background_id = absint( get_post_meta( (int) $current_scene_id, 'vrodos_scene_bg_image', true ) );
-		if ( $background_id ) {
-			$decoded_scene = json_decode( html_entity_decode( (string) $scene_json_from_db ) );
-			if ( is_object( $decoded_scene ) && isset( $decoded_scene->metadata ) && is_object( $decoded_scene->metadata ) ) {
+		$decoded_scene = json_decode( html_entity_decode( (string) $scene_json_from_db ) );
+		if ( is_object( $decoded_scene ) ) {
+			$background_id = absint( get_post_meta( (int) $current_scene_id, 'vrodos_scene_bg_image', true ) );
+			if ( $background_id && isset( $decoded_scene->metadata ) && is_object( $decoded_scene->metadata ) ) {
 				$decoded_scene->metadata->backgroundImagePath = VRodos_Storage_Manager::authoring_url_for_attachment( $background_id );
-				$scene_json_from_db = wp_json_encode( $decoded_scene, JSON_UNESCAPED_SLASHES );
 			}
+			self::hydrate_editor_surface_texture_urls( $decoded_scene, (int) $current_scene_id );
+			$scene_json_from_db = wp_json_encode( $decoded_scene, JSON_UNESCAPED_SLASHES );
 		}
 
 		$scene_model = new Vrodos_Scene_Model( $scene_json_from_db );
 		$sceneJSON   = $scene_model->to_json();
 
 		return self::parse_scene_json_and_prepare_script_data( $sceneJSON, $upload_url );
+	}
+
+	private static function hydrate_editor_surface_texture_urls( object $scene, int $scene_id ): void {
+		if ( $scene_id <= 0 || ! is_object( $scene->objects ?? null ) ) {
+			return;
+		}
+
+		foreach ( get_object_vars( $scene->objects ) as $object ) {
+			if ( ! is_object( $object ) || 'primitive-plane' !== sanitize_title( (string) ( $object->category_slug ?? $object->category_name ?? '' ) ) ) {
+				continue;
+			}
+			foreach ( self::SURFACE_TEXTURE_URL_FIELDS as $attachment_field => $url_field ) {
+				unset( $object->{$url_field} );
+				$attachment_id = absint( $object->{$attachment_field} ?? 0 );
+				if (
+					$attachment_id > 0
+					&& VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'scene', $scene_id )
+					&& VRodos_Storage_Manager::attachment_has_role( $attachment_id, self::SURFACE_TEXTURE_ROLE )
+				) {
+					$object->{$url_field} = VRodos_Storage_Manager::authoring_url_for_attachment( $attachment_id );
+				}
+			}
+		}
 	}
 
 

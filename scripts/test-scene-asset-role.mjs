@@ -57,6 +57,12 @@ assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, { ...de
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(false, decoration) === false, "an explicitly disabled decoration must stay non-collidable");
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, { category_slug: "door" }) === false, "other asset categories must keep collision disabled by default");
 
+const primitivePlane = { category_slug: "primitive-plane" };
+assert(context.VRODOS.utils.resolveSceneAssetCategory(primitivePlane) === "walkable-surface", "planes must default to walkable surfaces");
+assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...primitivePlane, sceneAssetRole: "decoration" }) === "decoration", "planes may be authored as visual-only decoration");
+assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, primitivePlane) === true, "planes must default to compiled collision");
+assert(context.VRODOS.utils.initializeWalkableBehaviorForRoleChange(primitivePlane) === "precise", "walkable planes must default to precise geometry");
+
 const newDecoration = context.VRODOS.utils.sceneCreateObjectRecord("chair", "/chair.glb", "Decoration", {}, [0, 0, 0], 1);
 const disabledDecoration = context.VRODOS.utils.sceneCreateObjectRecord("table", "/table.glb", "Decoration", {
     compiledCollisionEnabled: false

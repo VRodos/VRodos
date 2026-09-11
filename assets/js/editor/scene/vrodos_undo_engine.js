@@ -538,6 +538,24 @@ VRODOS.editor.PropertyCommand = class {
             obj[this.property] = val;
         }
 
+        if (obj.category_slug === 'primitive-plane' && VRODOS.loader) {
+            if (['planeWidth', 'planeDepth'].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneGeometry === 'function') {
+                VRODOS.loader.refreshPrimitivePlaneGeometry(obj);
+            }
+            if ([
+                'planeWidth',
+                'planeDepth',
+                'surfaceColor',
+                'surfaceRoughness',
+                'surfaceMetalness',
+                'surfaceTileSizeMeters',
+                'surfaceNormalScale',
+                'surfaceAoIntensity'
+            ].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
+                VRODOS.loader.refreshPrimitivePlaneMaterial(obj);
+            }
+        }
+
         if (this.property === 'walkableBehavior') {
             obj.userData = obj.userData || {};
             obj.userData.walkableBehavior = val;
@@ -575,6 +593,55 @@ VRODOS.editor.PropertyCommand = class {
 
     redo() {
         this.apply(this.newValue);
+    }
+};
+
+VRODOS.editor.PlaneTextureCommand = class {
+    constructor(object, slot, oldState, newState) {
+        this.objectUuid = object.uuid;
+        this.objectName = object.name;
+        this.slot = slot;
+        this.oldState = JSON.parse(JSON.stringify(oldState || {}));
+        this.newState = JSON.parse(JSON.stringify(newState || {}));
+    }
+
+    apply(state) {
+        const object = vrodosUndoGetObjectByUuid(this.objectUuid) || vrodosUndoGetObjectByName(this.objectName);
+        if (!object) return;
+
+        const slotName = this.slot.charAt(0).toUpperCase() + this.slot.slice(1);
+        const attachmentProperty = `surface${slotName}AttachmentId`;
+        const urlProperty = `surface${slotName}Url`;
+        const attachmentId = Number(state.attachmentId) || 0;
+        const url = String(state.url || '');
+        object[attachmentProperty] = attachmentId;
+        object[urlProperty] = url;
+        object.userData = object.userData || {};
+        object.userData[attachmentProperty] = attachmentId;
+        if (url) object.userData[urlProperty] = url;
+        else delete object.userData[urlProperty];
+
+        if (VRODOS.loader && typeof VRODOS.loader.setPrimitivePlaneTexture === 'function') {
+            VRODOS.loader.setPrimitivePlaneTexture(object, this.slot, url);
+        }
+        if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+            VRODOS.ui.showPropertiesInPanel(object);
+        }
+        if (typeof VRODOS.api.triggerAutoSave === 'function') {
+            VRODOS.api.triggerAutoSave();
+        }
+    }
+
+    execute() {
+        this.apply(this.newState);
+    }
+
+    undo() {
+        this.apply(this.oldState);
+    }
+
+    redo() {
+        this.apply(this.newState);
     }
 };
 // Global instance

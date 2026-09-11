@@ -188,11 +188,15 @@ VRODOS.importer = VRODOS.importer || {};
     }
 
     function isSceneAssetRoleEligible(resource) {
-        return sceneAssetRoleSet.has(getSceneAssetSourceCategory(resource));
+        const sourceCategory = getSceneAssetSourceCategory(resource);
+        return sceneAssetRoleSet.has(sourceCategory) || sourceCategory === 'primitive-plane';
     }
 
     function resolveSceneAssetCategory(resource) {
         const sourceCategory = getSceneAssetSourceCategory(resource);
+        if (sourceCategory === 'primitive-plane') {
+            return normalizeSceneAssetRole(resource.sceneAssetRole) || 'walkable-surface';
+        }
         if (!sceneAssetRoleSet.has(sourceCategory)) {
             return sourceCategory;
         }
@@ -202,7 +206,7 @@ VRODOS.importer = VRODOS.importer || {};
 
     function normalizeCompiledCollisionEnabled(value, resource) {
         if (value === undefined || value === null || value === '') {
-            return getSceneAssetSourceCategory(resource) === 'decoration';
+            return ['decoration', 'primitive-plane'].includes(getSceneAssetSourceCategory(resource));
         }
 
         const normalized = String(value).trim().toLowerCase();
@@ -212,7 +216,8 @@ VRODOS.importer = VRODOS.importer || {};
     function sceneAssetRoleOverrideFor(resource, selectedRole) {
         const sourceCategory = getSceneAssetSourceCategory(resource);
         const normalizedRole = normalizeSceneAssetRole(selectedRole);
-        if (!sceneAssetRoleSet.has(sourceCategory) || !normalizedRole || normalizedRole === sourceCategory) {
+        const defaultRole = sourceCategory === 'primitive-plane' ? 'walkable-surface' : sourceCategory;
+        if ((!sceneAssetRoleSet.has(sourceCategory) && sourceCategory !== 'primitive-plane') || !normalizedRole || normalizedRole === defaultRole) {
             return '';
         }
 
@@ -229,10 +234,11 @@ VRODOS.importer = VRODOS.importer || {};
             return existing;
         }
 
-        resource.walkableBehavior = 'auto';
-        resource.userData = resource.userData || {};
-        resource.userData.walkableBehavior = 'auto';
-        return 'auto';
+		const behavior = getSceneAssetSourceCategory(resource) === 'primitive-plane' ? 'precise' : 'auto';
+		resource.walkableBehavior = behavior;
+		resource.userData = resource.userData || {};
+		resource.userData.walkableBehavior = behavior;
+		return behavior;
     }
 
     function isSceneLightCategory(category) {

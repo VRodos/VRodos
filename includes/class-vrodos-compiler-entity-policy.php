@@ -11,14 +11,14 @@ final class VRodos_Compiler_Entity_Policy {
 	private const CATEGORY_ALIASES = [
 		'lightsun' => 'light-sun', 'lightspot' => 'light-spot', 'lightlamp' => 'light-lamp', 'lightambient' => 'light-ambient',
 		'walkablesurface' => 'walkable-surface', 'collisionproxy' => 'collision-proxy', 'poilink' => 'poi-link', 'poichat' => 'poi-chat',
-		'poiimagetext' => 'poi-imagetext', 'poi-image-text' => 'poi-imagetext', '3dtext' => '3d-text',
+		'poiimagetext' => 'poi-imagetext', 'poi-image-text' => 'poi-imagetext', '3dtext' => '3d-text', 'primitiveplane' => 'primitive-plane',
 	];
 
 	private const CATEGORY_FAMILIES = [
 		'light-sun' => 'light', 'light-spot' => 'light', 'light-lamp' => 'light', 'light-ambient' => 'light',
 		'decoration' => 'gltf', 'walkable-surface' => 'gltf', 'collision-proxy' => 'gltf', 'door' => 'gltf', 'poi-link' => 'gltf',
 		'chat' => 'gltf', 'poi-chat' => 'gltf', 'audio' => 'audio', 'image' => 'media', 'video' => 'media', '3d-text' => 'text',
-		'poi-imagetext' => 'poi-imagetext', 'pawn' => 'pawn', 'assessment' => 'assessment',
+		'poi-imagetext' => 'poi-imagetext', 'pawn' => 'pawn', 'assessment' => 'assessment', 'primitive-plane' => 'primitive',
 	];
 
 	public function normalize( object $source, int $scene_id, string $object_key ): object {
@@ -28,7 +28,7 @@ final class VRodos_Compiler_Entity_Policy {
 			null === $source->compiledCollisionEnabled ||
 			( ! is_bool( $source->compiledCollisionEnabled ) && '' === trim( (string) $source->compiledCollisionEnabled ) );
 		if ( $collision_value_missing ) {
-			$source->compiledCollisionEnabled = 'decoration' === $source_category;
+			$source->compiledCollisionEnabled = in_array( $source_category, [ 'decoration', 'primitive-plane' ], true );
 		}
 		$source->category_slug = $this->effective_category( $source );
 		$source->name          = empty( $source->name ) ? $object_key : $source->name;

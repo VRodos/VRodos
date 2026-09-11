@@ -42,6 +42,11 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 		return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 	}
 }
+if ( ! function_exists( 'sanitize_hex_color' ) ) {
+	function sanitize_hex_color( string $value ): string {
+		return preg_match( '/^#[0-9a-f]{6}$/i', $value ) ? strtolower( $value ) : '';
+	}
+}
 if ( ! function_exists( 'absint' ) ) {
 	function absint( $value ): int {
 		return abs( (int) $value );
@@ -166,9 +171,10 @@ foreach ( $light_aliases as $expected => $aliases ) {
 		vrodos_foundation_assert( 'light' === $registry->family_for( $canonical ), 'light alias renderer family: ' . $alias );
 	}
 }
-foreach ( [ 'walkableSurface' => 'walkable-surface', 'collisionProxy' => 'collision-proxy', 'poiLink' => 'poi-link', 'poiChat' => 'poi-chat', 'poiImageText' => 'poi-imagetext', '3dText' => '3d-text' ] as $alias => $expected ) {
+foreach ( [ 'walkableSurface' => 'walkable-surface', 'collisionProxy' => 'collision-proxy', 'poiLink' => 'poi-link', 'poiChat' => 'poi-chat', 'poiImageText' => 'poi-imagetext', '3dText' => '3d-text', 'primitivePlane' => 'primitive-plane' ] as $alias => $expected ) {
 	vrodos_foundation_assert( $expected === $normalizer->canonical_category( $alias ), 'canonical entity category: ' . $alias );
 }
+vrodos_foundation_assert( 'primitive' === $registry->family_for( 'primitive-plane' ), 'plane uses the primitive renderer family' );
 
 vrodos_foundation_assert(
 	'walkable-surface' === $normalizer->effective_category( (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'walkable-surface' ] ),
@@ -257,6 +263,24 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'rotation' => [ 0, 0, 0 ],
 				'scale' => [ 1, 1, 1 ],
 			],
+			'proceduralGround' => (object) [
+				'category_slug' => 'primitive-plane',
+				'planeWidth' => 30,
+				'planeDepth' => 12,
+				'surfaceColor' => '#d0d0d0',
+				'surfaceRoughness' => 0.8,
+				'surfaceMetalness' => 0.1,
+				'surfaceTileSizeMeters' => 3,
+				'surfaceNormalScale' => 0.75,
+				'surfaceAoIntensity' => 0.6,
+				'surfaceAlbedoUrl' => '/published/ground-albedo.jpg',
+				'surfaceNormalUrl' => '/published/ground-normal.jpg',
+				'surfaceRoughnessUrl' => '/published/ground-roughness.jpg',
+				'surfaceAoUrl' => '/published/ground-ao.jpg',
+				'position' => [ 0, 0, 0 ],
+				'rotation' => [ -pi() / 2, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			],
 		],
 		1,
 		42,
@@ -283,6 +307,19 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( 'solid' === $converted_decoration->getAttribute( 'data-vrodos-collision-role' ), 'converted decoration preserves explicitly enabled solid collision' );
 	vrodos_foundation_assert( 'solid' === $default_collidable_decoration->getAttribute( 'data-vrodos-collision-role' ), 'decoration collision defaults to enabled when no value is persisted' );
 	vrodos_foundation_assert( ! $disabled_collision_decoration->hasAttribute( 'data-vrodos-collider' ), 'explicitly disabled decoration collision remains disabled' );
+	$procedural_ground = $dom->getElementsByTagName( 'a-plane' )->item( 0 );
+	vrodos_foundation_assert( $procedural_ground instanceof DOMElement, 'primitive plane emits an A-Frame plane' );
+	vrodos_foundation_assert( '30' === $procedural_ground->getAttribute( 'width' ) && '12' === $procedural_ground->getAttribute( 'height' ), 'primitive plane keeps authored dimensions' );
+	vrodos_foundation_assert( '-90 0 0' === $procedural_ground->getAttribute( 'rotation' ), 'primitive plane keeps its horizontal editor rotation' );
+	vrodos_foundation_assert( 'true' === $procedural_ground->getAttribute( 'data-vrodos-navmesh' ), 'primitive plane defaults to a walkable navmesh' );
+	vrodos_foundation_assert( 'navmesh' === $procedural_ground->getAttribute( 'data-vrodos-collision-role' ), 'primitive plane collision is a navigation surface' );
+	vrodos_foundation_assert( 'walkable-surface' === $procedural_ground->getAttribute( 'data-vrodos-collision-category' ), 'primitive plane exposes its semantic collision category' );
+	$plane_material = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $procedural_ground->getAttribute( 'material' ) );
+	vrodos_foundation_assert( '10 4' === $plane_material['repeat'], 'plane albedo repeats by metres per tile' );
+	vrodos_foundation_assert( '10 4' === $plane_material['normalTextureRepeat'], 'plane normal map repeat stays aligned' );
+	vrodos_foundation_assert( '10 4' === $plane_material['roughnessTextureRepeat'], 'plane roughness map repeat stays aligned' );
+	vrodos_foundation_assert( '10 4' === $plane_material['ambientOcclusionTextureRepeat'], 'plane AO map repeat stays aligned' );
+	vrodos_foundation_assert( 4 === $assets->getElementsByTagName( 'img' )->length, 'plane PBR maps are emitted as A-Frame image assets' );
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 

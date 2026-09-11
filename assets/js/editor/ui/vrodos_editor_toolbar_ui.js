@@ -20,6 +20,8 @@ VRODOS.api = VRODOS.api || {};
         axisDecrease: 'axis-size-decrease-btn',
         translateSwitch: 'translate-switch',
         scaleLock: 'scaleLockCheckbox',
+        createMenu: 'create-object-menu',
+        createPlane: 'create-plane-button',
         loadingNotice: 'result_download'
     };
 
@@ -39,6 +41,7 @@ VRODOS.api = VRODOS.api || {};
             bindTransformModeControls();
             bindScaleLockControl();
             bindDimensionToggle();
+            bindCreateControls();
 
             this.isBound = true;
             return true;
@@ -129,6 +132,18 @@ VRODOS.api = VRODOS.api || {};
                 }
             });
         }
+    }
+
+    function bindCreateControls() {
+        const planeButton = getElement(TOOLBAR_IDS.createPlane);
+        if (!planeButton) return;
+
+        planeButton.addEventListener('click', () => {
+            if (typeof VRODOS.api.createPrimitive !== 'function') return;
+            VRODOS.api.createPrimitive('plane');
+            const menu = getElement(TOOLBAR_IDS.createMenu);
+            if (menu) menu.open = false;
+        });
     }
 
     function bindOrbitAutoRotateControl() {

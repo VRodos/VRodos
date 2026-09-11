@@ -646,6 +646,58 @@ VRODOS.api.createVideoAsset = function(nameModel, addedAt) {
     return videoObject;
 }
 
+VRODOS.api.createPrimitivePlane = function(nameModel, addedAt) {
+    const resource = getSceneObjectRecord(nameModel) || {};
+    let planeObject = VRODOS.loader.createPrimitivePlaneObject(nameModel, {
+        ...resource,
+        addedAt
+    });
+
+    planeObject = VRODOS.loader.setObjectProperties(
+        planeObject,
+        nameModel,
+        VRODOS.utils.getSceneDataObjectMap({ create: false }) || {}
+    );
+    planeObject.addedAt = addedAt;
+    VRODOS.loader.refreshPrimitivePlaneMaterial(planeObject);
+
+    VRODOS.ui.finalizeSceneObjectAdd(planeObject, {
+        registerOptions: addedObjectRegisterOptions('primitive-plane-added'),
+        selectOptions: { source: 'primitive-plane-added' }
+    });
+    VRODOS.loader.loadPrimitivePlaneTextures(planeObject);
+    return planeObject;
+};
+
+VRODOS.api.createPrimitive = function(type) {
+    if (type !== 'plane') return null;
+
+    const objects = VRODOS.utils.getSceneDataObjectMap() || {};
+    const name = VRODOS.utils.sceneUniqueObjectName('Plane', objects);
+    return VRODOS.api.addAssetToCanvas(name, '', 'primitive-plane', {
+        asset_name: name,
+        category_name: 'primitive-plane',
+        category_slug: 'primitive-plane',
+        planeWidth: 20,
+        planeDepth: 20,
+        surfaceColor: '#ffffff',
+        surfaceRoughness: 1,
+        surfaceMetalness: 0,
+        surfaceTileSizeMeters: 2,
+        surfaceNormalScale: 1,
+        surfaceAoIntensity: 1,
+        compiledCollisionEnabled: true,
+        walkableBehavior: 'precise',
+        vrodosShadowRole: 'receiver',
+        vrodosMaterialRole: 'authored-pbr',
+        trs: {
+            translation: [0, 0, 0],
+            rotation: [-Math.PI / 2, 0, 0],
+            scale: [1, 1, 1]
+        }
+    }, [0, 0, 0], VRODOS.data.pluginPath);
+};
+
 /**
  * Main function to add objects to the canvas.
  */
@@ -700,6 +752,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
         '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
         'video': () => VRODOS.api.createVideoAsset(nameModel, addedAt),
+        'primitive-plane': () => VRODOS.api.createPrimitivePlane(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
     const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);
