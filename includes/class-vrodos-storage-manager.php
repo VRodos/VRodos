@@ -26,6 +26,7 @@ final class VRodos_Storage_Manager {
 		add_action( 'delete_attachment', [ self::class, 'delete_private_attachment_file' ], 5 );
 		add_action( 'admin_notices', [ self::class, 'render_storage_diagnostic' ] );
 		add_filter( 'wp_get_attachment_url', [ self::class, 'filter_private_attachment_url' ], 10, 2 );
+		add_filter( 'image_downsize', [ self::class, 'filter_private_image_downsize' ], 10, 3 );
 	}
 
 	public static function storage_schema_ready(): bool {
@@ -491,6 +492,31 @@ final class VRodos_Storage_Manager {
 		return self::is_private_attachment( $attachment_id )
 			? add_query_arg( [ 'action' => 'vrodos_private_media', 'id' => $attachment_id ], admin_url( 'admin-ajax.php' ) )
 			: $url;
+	}
+
+	/** Keep WordPress from replacing an authenticated endpoint with a thumbnail filename. */
+	public static function filter_private_image_downsize( $downsize, int $attachment_id, $size ) {
+		if ( ! self::is_private_attachment( $attachment_id ) || ! wp_attachment_is_image( $attachment_id ) ) {
+			return $downsize;
+		}
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$width = absint( $metadata['width'] ?? 0 );
+		$height = absint( $metadata['height'] ?? 0 );
+		$image_size = '';
+		$intermediate = image_get_intermediate_size( $attachment_id, $size );
+		if ( $intermediate ) {
+			// Array dimensions also resolve to an existing named size in attachment metadata.
+			foreach ( (array) ( $metadata['sizes'] ?? [] ) as $name => $candidate ) {
+				if ( ( $candidate['file'] ?? '' ) === ( $intermediate['file'] ?? '' ) && ! empty( $candidate['file'] ) ) {
+					$image_size = (string) $name;
+					$width = absint( $intermediate['width'] );
+					$height = absint( $intermediate['height'] );
+					break;
+				}
+			}
+		}
+		[ $width, $height ] = image_constrain_size_for_editor( $width, $height, $size );
+		return [ self::authoring_url_for_attachment( $attachment_id, $image_size ), $width, $height, '' !== $image_size ];
 	}
 
 	public static function is_private_attachment( int $attachment_id ): bool {

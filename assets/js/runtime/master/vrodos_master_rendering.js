@@ -597,10 +597,18 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
         if (typeof THREE.LinearFilter !== 'undefined') {
             texture.magFilter = THREE.LinearFilter;
         }
-        if (typeof THREE.LinearMipmapLinearFilter !== 'undefined') {
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
+        // Compressed textures ship their mip chain; WebGL cannot generate it.
+        if (texture.isCompressedTexture) {
+            texture.generateMipmaps = false;
+            texture.minFilter = texture.mipmaps.length > 1
+                ? THREE.LinearMipmapLinearFilter
+                : THREE.LinearFilter;
+        } else {
+            if (typeof THREE.LinearMipmapLinearFilter !== 'undefined') {
+                texture.minFilter = THREE.LinearMipmapLinearFilter;
+            }
+            texture.generateMipmaps = true;
         }
-        texture.generateMipmaps = true;
     }
 
     texture.needsUpdate = true;

@@ -77,7 +77,19 @@ function wp_insert_attachment( array $attachment, string $path, int $parent_id, 
 	$test_post_mime_types[ $attachment_id ] = (string) ( $attachment['post_mime_type'] ?? '' );
 	return $attachment_id;
 }
-function wp_attachment_is_image( int $attachment_id ): bool { return false; }
+function wp_attachment_is_image( int $attachment_id ): bool { return 502 === $attachment_id; }
+function wp_get_attachment_metadata( int $attachment_id ) { return $GLOBALS['test_image_metadata'][ $attachment_id ] ?? false; }
+function image_get_intermediate_size( int $attachment_id, $size ) {
+	$metadata = wp_get_attachment_metadata( $attachment_id );
+	return $metadata['sizes'][ is_array( $size ) ? 'medium' : $size ] ?? false;
+}
+function image_constrain_size_for_editor( int $width, int $height, $size ): array {
+	if ( is_array( $size ) && $width && $height ) {
+		$ratio = min( 1, $size[0] / $width, $size[1] / $height );
+		return [ (int) round( $width * $ratio ), (int) round( $height * $ratio ) ];
+	}
+	return [ $width, $height ];
+}
 function update_attached_file( int $attachment_id, string $file ) {
 	global $test_attached_files;
 	$test_attached_files[ $attachment_id ] = stripslashes( $file );
@@ -123,6 +135,22 @@ try {
 	$test_meta[502] = [ '_vrodos_private_storage' => '1' ];
 	$thumbnail_url = VRodos_Storage_Manager::authoring_url_for_attachment( 502, 'thumbnail' );
 	vrodos_storage_assert( $thumbnail_url === 'https://example.test/wp-admin/admin-ajax.php?action=vrodos_private_media&id=502&size=thumbnail', 'private image size uses authenticated delivery' );
+	$test_image_metadata[502] = [ 'width' => 1200, 'height' => 800, 'sizes' => [
+		'thumbnail' => [ 'file' => '1107_sshot-150x150.png', 'width' => 150, 'height' => 150 ],
+		'medium' => [ 'file' => '1107_sshot-300x200.png', 'width' => 300, 'height' => 200 ],
+	] ];
+	$thumbnail = VRodos_Storage_Manager::filter_private_image_downsize( false, 502, 'thumbnail' );
+	vrodos_storage_assert( [ $thumbnail_url, 150, 150, true ] === $thumbnail, 'WordPress thumbnail downsizing preserves authenticated endpoint and dimensions' );
+	$array_size = VRodos_Storage_Manager::filter_private_image_downsize( false, 502, [ 150, 100 ] );
+	vrodos_storage_assert( [ VRodos_Storage_Manager::authoring_url_for_attachment( 502, 'medium' ), 150, 100, true ] === $array_size, 'dimension requests resolve to a stored named size with constrained dimensions' );
+	foreach ( [ 'full', 'missing-size' ] as $size ) {
+		vrodos_storage_assert( [ VRodos_Storage_Manager::authoring_url_for_attachment( 502 ), 1200, 800, false ] === VRodos_Storage_Manager::filter_private_image_downsize( false, 502, $size ), 'full or unavailable sizes use the original authenticated image' );
+	}
+	$existing_downsize = [ 'https://example.test/public.png', 80, 80, true ];
+	vrodos_storage_assert( $existing_downsize === VRodos_Storage_Manager::filter_private_image_downsize( $existing_downsize, 999, 'thumbnail' ), 'public attachment handling is unchanged' );
+	vrodos_storage_assert( false === VRodos_Storage_Manager::filter_private_image_downsize( false, 501, 'thumbnail' ), 'private GLBs do not enter image handling' );
+	unset( $test_image_metadata[502] );
+	vrodos_storage_assert( [ VRodos_Storage_Manager::authoring_url_for_attachment( 502 ), 0, 0, false ] === VRodos_Storage_Manager::filter_private_image_downsize( false, 502, 'thumbnail' ), 'missing image metadata cannot create a relative thumbnail URL' );
 	vrodos_storage_assert( ! str_contains( $source, 'project-slug' ), 'no slug-derived path' );
 	$derivative = VRodos_Storage_Manager::private_entity_directory( 'asset', 42, 'derivatives', 'safe-draco' );
 	vrodos_storage_assert( str_ends_with( wp_normalize_path( $derivative ), '/site-7/assets/42/derivatives/safe-draco/' ), 'profile derivative path' );
