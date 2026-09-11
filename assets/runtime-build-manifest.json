@@ -128,6 +128,7 @@
         "assets/js/runtime/master/vrodos_cloud_occlusion.js",
         "assets/js/runtime/master/vrodos_sun_occlusion.js",
         "assets/js/runtime/master/vrodos_sun_sprite.js",
+        "assets/js/runtime/master/vrodos_gradient_sky.js",
         "assets/js/runtime/master/vrodos_quality_profiles.js"
       ],
       "generatedBy": "build:runtime"

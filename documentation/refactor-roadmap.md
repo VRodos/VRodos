@@ -59,6 +59,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract cloud sun/moon attenuation, shadow factors, smoothing, diagnostics, and star recovery without behavior changes.
 - [x] Extract scene-geometry sun occlusion, target caching, raycast sampling, and sun/haze/lens-flare visibility application.
 - [x] Extract sun sprite texture generation and presentation presets, preserving per-scene caches and haze dithering.
+- [x] Extract lights-only gradient sky creation, preset updates, and removal with mesh reuse/disposal coverage.
 - [ ] Extract remaining sky and cloud rendering modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -326,3 +327,14 @@ Mechanical comparison against HEAD verified all three moved functions and all re
 All 64 regression scripts pass (36 runtime, 28 compiler), with catalog coverage, runtime/generated-core syntax, build configuration, and diff checks passing. Full browser-source lint has zero errors and 242 existing warnings. Runtime artifacts were rebuilt explicitly through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
 
 Remaining sky/cloud rendering extraction, component lifecycle migration, and resource auditing remain open. Published scenes were not recompiled; browser and physical Quest visual acceptance were not performed. No development server was started and no commit or push was performed.
+
+
+### Lights-only gradient sky extraction (2026-09-11)
+
+Moved three functions (roughly 100 lines) into the required `VRODOSMaster.GradientSky` module in `vrodos_gradient_sky.js`: lights-only gradient color presets, mesh creation/update, and removal. Quality profiles retains policy, call sites, and scene-owned state. Lower-haze colors and direct Takram sky calibration remain in quality profiles. Core build ordering and assembled lighting/shadow fixtures load the new dependency before quality profiles.
+
+Mechanical comparison against HEAD verified all moved functions, including GLSL shader text, and all retained quality-profile source are identical after line-ending normalization apart from the module binding. Behavioral tests use real Three geometry, materials, scene groups, and disposal events to cover presets/defaults, rendering flags, raycast exclusion, mesh/material/uniform reuse, visibility restoration, parent reattachment, independent scene resources, detach-before-dispose ordering, repeated removal, recreation, and missing inputs. This is not a GPU shader or browser visual test.
+
+All 65 regression scripts pass (37 runtime, 28 compiler), plus runtime/generated-core syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint has zero errors and 242 existing warnings. Runtime outputs were rebuilt explicitly through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated artifacts.
+
+Remaining sky/cloud extraction, component lifecycle migration, and the full resource-ownership audit remain open. Published scenes were not recompiled; browser/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.
