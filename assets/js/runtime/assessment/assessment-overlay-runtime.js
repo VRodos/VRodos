@@ -340,62 +340,9 @@
     }
 
 
-    function setAttributeEnabled(el, attrName, enabled) {
-        if (!el) {
-            return;
-        }
-
-        const hasComponent = Boolean(el.components && el.components[attrName]);
-        const hasAttribute = el.hasAttribute && el.hasAttribute(attrName);
-        if (!hasComponent && !hasAttribute) {
-            return;
-        }
-
-        if (hasComponent) {
-            if (enabled && typeof el.components[attrName].play === "function") {
-                el.components[attrName].play();
-            } else if (!enabled && typeof el.components[attrName].pause === "function") {
-                el.components[attrName].pause();
-            }
-        }
-
-        if (attrName === "custom-movement") {
-            return;
-        }
-
-        el.setAttribute(attrName, "enabled: " + (enabled ? "true" : "false"));
-    }
-
     function setAssessmentSceneInteractionLocked(isLocked) {
-        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
-            window.VRODOSRuntimeOverlay.lockSceneInteraction(isLocked);
-            return;
-        }
-
-        const player = document.getElementById("player");
-        const camera = document.getElementById("cameraA");
-        const scene = document.querySelector("a-scene");
-        const canvas = scene && scene.canvas ? scene.canvas : null;
-
-        setAttributeEnabled(player, "custom-movement", !isLocked);
-        setAttributeEnabled(player, "wasd-controls", !isLocked);
-        setAttributeEnabled(player, "look-controls", !isLocked);
-        setAttributeEnabled(camera, "custom-movement", !isLocked);
-        setAttributeEnabled(camera, "look-controls", !isLocked);
-
-        if (!isLocked) {
-            document.body.style.cursor = "";
-            document.documentElement.style.cursor = "";
-            document.body.classList.remove("a-grab-cursor", "a-grabbing");
-            document.documentElement.classList.remove("a-grab-cursor", "a-grabbing");
-
-            if (canvas) {
-                canvas.style.cursor = "";
-                canvas.classList.remove("a-grab-cursor", "a-grabbing");
-            }
-        }
+        window.VRODOSRuntimeOverlay.lockSceneInteraction(isLocked);
     }
-
 
     namespace.getOverlayRuntime = getOverlayRuntime;
     namespace.getOverlayRuntimeV2 = getOverlayRuntimeV2;

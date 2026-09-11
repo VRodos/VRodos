@@ -22,7 +22,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Share question, pair, grid, and text response/grading builders between DOM and spatial renderers.
 - [x] Preserve aliases, payloads, ordering, ungraded semantics, and distinct layouts in regression tests.
 - [x] Share equivalent DOM overlay mounting.
-- [ ] Share equivalent control lifecycle behavior and validate Greek spatial interaction in browser/headset.
+- [x] Use the required shared overlay for assessment control locking; test repeated open/close and VR look preservation.
+- [ ] Validate Greek spatial interaction in browser/headset.
 
 ## E. Optimizer
 - [x] Extract source metadata, GLB analysis, and dashboard aggregation/sorting classes; route manager domain APIs through a service.
@@ -77,9 +78,9 @@ VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX
 ## Implementation log
 ### Verification and implementation
 
-`scripts/regression-test-catalog.mjs` explicitly owns 51 scripts: 23 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+`scripts/regression-test-catalog.mjs` explicitly owns 52 scripts: 24 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
 
-All **51 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
+All **52 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
@@ -165,3 +166,9 @@ Undo/redo popup preference: keep a closed panel closed; explicitly synchronize G
 Single-row dashboard refresh previously scanned every GLB and merged buckets only to obtain the requested asset title. It now reads that title directly and retains its existing per-asset source/analysis/derivative reads. Full-list global sorting and pagination are unchanged. No new cache, invalidation layer, or persistent storage was added.
 
 A row assembly fixture rejects collection scans and verifies 20 repeated requests each read only the requested asset, preserving payload keys and reacting to renamed titles, stale analysis, replaced sources, and missing sources. Real temporary-file source fixtures also verify repeated read-only inspection, content-generation advancement, same-content attachment replacement, and deleted files. Existing lifecycle tests cover cancellation and derivative cleanup. These are isolated regressions, not live WordPress replacement/deletion acceptance.
+
+### Shared assessment interaction lifecycle (2026-09-11)
+
+Removed the assessment-specific control pause/play and cursor-reset fallback. Assessment now delegates to the shared overlay that loads earlier in the same scene-components bundle. A regression asserts this required source order and exercises authored lifecycle code: repeated lock/unlock is idempotent, custom movement uses pause/play, desktop movement/look is locked, cursor cleanup runs on release, and the VR preserve-look option leaves HMD look controls untouched. Existing shared behavior was preserved; this package does not add nested-modal ownership or change control restoration policy.
+
+All 52 regression scripts pass (24 runtime, 28 compiler), with build configuration and diff checks passing. Changed-source ESLint has zero errors and one existing chained-assignment warning. Runtime bundles were explicitly rebuilt using the direct Node build entrypoint; only the scene-components bundle changed. Greek spatial/browser/headset acceptance and published-scene recompilation remain outstanding. No server was started and no commit/push was performed.
