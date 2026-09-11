@@ -52,6 +52,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract MoonPhase normalization, illumination, direction, and orientation calculations with behavioral coverage.
 - [x] Extract celestial coordinate frames and local/ECEF transforms, preserving WGS84 constants and config-owned caches.
 - [x] Extract shared light value/color interpolation, preserving clock selection, pause limits, and component-owned state.
+- [x] Extract shadow-map type mapping, sampler compatibility, and render-target disposal without changing refresh policy.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -216,3 +217,11 @@ Moved clock selection, smoothing alpha, numeric interpolation, and color interpo
 The new regression executes authored code with real Three colors. It covers first samples, live-value initialization, repeated ticks, target changes, independent channels/components, long pauses, backwards clocks, disabled/re-enabled smoothing, invalid numeric targets, clock fallback/source changes, color cloning/interpolation, and the existing component reset contract. The shadow fixture loads the required module. All 57 regression scripts pass (29 runtime, 28 compiler), along with catalog coverage, runtime/generated-core syntax, build configuration, and diff checks. Changed-source lint has zero errors; quality profiles retain nine existing warnings and the new module has none. Runtime artifacts were rebuilt explicitly with the direct Node entrypoint; only the core bundle and manifest changed.
 
 Broader celestial lighting/sky/cloud extraction, lifecycle ownership, published-scene recompilation, and browser/Quest acceptance remain outstanding. No server was started and no commit or push was performed.
+
+### Shadow map compatibility and disposal extraction (2026-09-11)
+
+Moved shadow-map type normalization, Three/A-Frame mapping, diagnostic names, sampler compatibility, and target disposal into `vrodos_shadow_maps.js`. Quality profiles bind the required `VRODOSMaster.ShadowMaps` API, loaded earlier in the core bundle. All six moved function bodies were mechanically compared against the previous Git revision and are unchanged. Scene traversal, forced refresh, material invalidation, diagnostic counters, and shadow tuning stay at their existing call sites.
+
+New behavioral coverage uses real Three render targets/depth textures to verify disposal events, ordering, reference clearing, and repeated cleanup. It also covers Basic/PCF sampler compatibility, type normalization, missing inputs/constants, optional disposal methods, and the existing early return when only a secondary map pass remains. This extraction deliberately preserves that behavior; it does not claim a completed resource-ownership audit. The existing integration fixture loads the required module and continues checking scene-level shadow refresh.
+
+All 58 regression scripts pass (30 runtime, 28 compiler), plus catalog coverage, runtime/generated-core syntax, build configuration, and diff checks. Changed-source lint has zero errors, with nine existing quality-helper warnings and none in the new module. Explicit rebuilding through the direct Node entrypoint changed only the generated core bundle and runtime manifest. Broader shadow/lifecycle ownership, published-scene recompilation, and browser/Quest validation remain outstanding. No server was started and no commit or push was performed.

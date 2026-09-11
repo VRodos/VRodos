@@ -88,6 +88,7 @@ export const runtimeBuildChunks = Object.freeze([
       masterSource('vrodos_moon_phase.js'),
       masterSource('vrodos_celestial_coordinates.js'),
       masterSource('vrodos_light_smoothing.js'),
+      masterSource('vrodos_shadow_maps.js'),
       masterSource('vrodos_quality_profiles.js')
     ]
   },

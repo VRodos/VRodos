@@ -121,6 +121,7 @@
         "assets/js/runtime/master/vrodos_moon_phase.js",
         "assets/js/runtime/master/vrodos_celestial_coordinates.js",
         "assets/js/runtime/master/vrodos_light_smoothing.js",
+        "assets/js/runtime/master/vrodos_shadow_maps.js",
         "assets/js/runtime/master/vrodos_quality_profiles.js"
       ],
       "generatedBy": "build:runtime"

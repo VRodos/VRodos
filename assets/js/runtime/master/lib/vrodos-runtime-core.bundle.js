@@ -4529,6 +4529,85 @@ ${STOCHASTIC_GLSL}`).replace(
     });
   })();
   (function() {
+    function normalizeAFrameShadowMapType(value, fallback) {
+      switch (String(value || "").toLowerCase()) {
+        case "basic":
+        case "pcf":
+          return String(value).toLowerCase();
+        default:
+          return fallback || "pcf";
+      }
+    }
+    function getThreeShadowMapType(type) {
+      switch (normalizeAFrameShadowMapType(type, "pcf")) {
+        case "basic":
+          return typeof THREE.BasicShadowMap !== "undefined" ? THREE.BasicShadowMap : THREE.PCFShadowMap;
+        case "pcf":
+        default:
+          return THREE.PCFShadowMap;
+      }
+    }
+    function getThreeShadowMapTypeName(type) {
+      if (typeof THREE !== "undefined") {
+        if (typeof THREE.BasicShadowMap !== "undefined" && type === THREE.BasicShadowMap) {
+          return "BasicShadowMap";
+        }
+        if (type === THREE.PCFShadowMap) {
+          return "PCFShadowMap";
+        }
+      }
+      return typeof type === "number" ? `ShadowMap(${type})` : String(type || "unknown");
+    }
+    function getAFrameShadowComponentType(type) {
+      const normalized = normalizeAFrameShadowMapType(type, "pcf");
+      return normalized === "basic" ? "basic" : "pcf";
+    }
+    function disposeLightShadowMap(shadow) {
+      if (!shadow || !shadow.map) {
+        return false;
+      }
+      if (shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === "function") {
+        shadow.map.depthTexture.dispose();
+      }
+      if (typeof shadow.map.dispose === "function") {
+        shadow.map.dispose();
+      }
+      shadow.map = null;
+      if (shadow.mapPass) {
+        if (shadow.mapPass.depthTexture && typeof shadow.mapPass.depthTexture.dispose === "function") {
+          shadow.mapPass.depthTexture.dispose();
+        }
+        if (typeof shadow.mapPass.dispose === "function") {
+          shadow.mapPass.dispose();
+        }
+        shadow.mapPass = null;
+      }
+      shadow.needsUpdate = true;
+      return true;
+    }
+    function isLightShadowMapCompatibleWithType(shadow, shadowMapType) {
+      if (!shadow || !shadow.map || typeof THREE === "undefined") {
+        return true;
+      }
+      const depthTexture = shadow.map.depthTexture || null;
+      if (shadowMapType === THREE.PCFShadowMap) {
+        return Boolean(depthTexture && depthTexture.compareFunction);
+      }
+      if (typeof THREE.BasicShadowMap !== "undefined" && shadowMapType === THREE.BasicShadowMap) {
+        return Boolean(!depthTexture || !depthTexture.compareFunction);
+      }
+      return true;
+    }
+    VRODOSMaster.ShadowMaps = Object.freeze({
+      normalizeType: normalizeAFrameShadowMapType,
+      threeType: getThreeShadowMapType,
+      typeName: getThreeShadowMapTypeName,
+      componentType: getAFrameShadowComponentType,
+      dispose: disposeLightShadowMap,
+      isCompatible: isLightShadowMapCompatibleWithType
+    });
+  })();
+  (function() {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
@@ -4601,6 +4680,12 @@ ${STOCHASTIC_GLSL}`).replace(
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
     const smoothPmndrsRuntimeLightValue = VRODOSMaster.LightSmoothing.value;
     const smoothPmndrsRuntimeLightColor = VRODOSMaster.LightSmoothing.color;
+    const normalizeAFrameShadowMapType = VRODOSMaster.ShadowMaps.normalizeType;
+    const getThreeShadowMapType = VRODOSMaster.ShadowMaps.threeType;
+    const getThreeShadowMapTypeName = VRODOSMaster.ShadowMaps.typeName;
+    const getAFrameShadowComponentType = VRODOSMaster.ShadowMaps.componentType;
+    const disposeLightShadowMap = VRODOSMaster.ShadowMaps.dispose;
+    const isLightShadowMapCompatibleWithType = VRODOSMaster.ShadowMaps.isCompatible;
     const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
     const buildPmndrsLocalSunDirection = VRODOSMaster.CelestialCoordinates.localSunDirection;
     const getPmndrsResolvedGeospatialFrame = VRODOSMaster.CelestialCoordinates.resolveFrame;
@@ -4658,39 +4743,6 @@ ${STOCHASTIC_GLSL}`).replace(
         default:
           return typeof THREE.AgXToneMapping !== "undefined" ? THREE.AgXToneMapping : typeof THREE.ACESFilmicToneMapping !== "undefined" ? THREE.ACESFilmicToneMapping : null;
       }
-    }
-    function normalizeAFrameShadowMapType(value, fallback) {
-      switch (String(value || "").toLowerCase()) {
-        case "basic":
-        case "pcf":
-          return String(value).toLowerCase();
-        default:
-          return fallback || "pcf";
-      }
-    }
-    function getThreeShadowMapType(type) {
-      switch (normalizeAFrameShadowMapType(type, "pcf")) {
-        case "basic":
-          return typeof THREE.BasicShadowMap !== "undefined" ? THREE.BasicShadowMap : THREE.PCFShadowMap;
-        case "pcf":
-        default:
-          return THREE.PCFShadowMap;
-      }
-    }
-    function getThreeShadowMapTypeName(type) {
-      if (typeof THREE !== "undefined") {
-        if (typeof THREE.BasicShadowMap !== "undefined" && type === THREE.BasicShadowMap) {
-          return "BasicShadowMap";
-        }
-        if (type === THREE.PCFShadowMap) {
-          return "PCFShadowMap";
-        }
-      }
-      return typeof type === "number" ? `ShadowMap(${type})` : String(type || "unknown");
-    }
-    function getAFrameShadowComponentType(type) {
-      const normalized = normalizeAFrameShadowMapType(type, "pcf");
-      return normalized === "basic" ? "basic" : "pcf";
     }
     function normalizeReflectionOcclusionMode(value) {
       switch (value) {
@@ -6824,42 +6876,6 @@ ${STOCHASTIC_GLSL}`).replace(
       self._vrodosShadowLastProgramRefreshReason = reason || "shadow-map-type";
       self._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
       markShadowProgramMaterialsDirty(self);
-      return true;
-    }
-    function disposeLightShadowMap(shadow) {
-      if (!shadow || !shadow.map) {
-        return false;
-      }
-      if (shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === "function") {
-        shadow.map.depthTexture.dispose();
-      }
-      if (typeof shadow.map.dispose === "function") {
-        shadow.map.dispose();
-      }
-      shadow.map = null;
-      if (shadow.mapPass) {
-        if (shadow.mapPass.depthTexture && typeof shadow.mapPass.depthTexture.dispose === "function") {
-          shadow.mapPass.depthTexture.dispose();
-        }
-        if (typeof shadow.mapPass.dispose === "function") {
-          shadow.mapPass.dispose();
-        }
-        shadow.mapPass = null;
-      }
-      shadow.needsUpdate = true;
-      return true;
-    }
-    function isLightShadowMapCompatibleWithType(shadow, shadowMapType) {
-      if (!shadow || !shadow.map || typeof THREE === "undefined") {
-        return true;
-      }
-      const depthTexture = shadow.map.depthTexture || null;
-      if (shadowMapType === THREE.PCFShadowMap) {
-        return Boolean(depthTexture && depthTexture.compareFunction);
-      }
-      if (typeof THREE.BasicShadowMap !== "undefined" && shadowMapType === THREE.BasicShadowMap) {
-        return Boolean(!depthTexture || !depthTexture.compareFunction);
-      }
       return true;
     }
     function refreshShadowMapResourcesForType(self, shadowMapType, force, reason) {
