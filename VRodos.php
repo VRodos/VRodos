@@ -95,6 +95,7 @@ VRodos_Storage_Manager::register_hooks();
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-glb-normalizer.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-blender-converter.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-zip-package.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-surface-material-package.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-manager.php');
 new VRodos_Asset_Import_Manager();
 

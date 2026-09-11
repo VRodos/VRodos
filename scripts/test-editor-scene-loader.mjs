@@ -304,6 +304,7 @@ const context = {
 context.window = context;
 
 for (const relativePath of [
+    "assets/js/runtime/master/vrodos_surface_material.js",
     "assets/js/editor/core/vrodos_editor_core_utils.js",
     "assets/js/editor/loaders/vrodos_loader_object_factories.js",
     "assets/js/editor/loaders/vrodos_loader_generated_assets.js",
@@ -385,6 +386,11 @@ const planeLoadResult = await new context.VRODOS.loader.LoaderMulti().load(null,
         surfaceNormalUrl: "/ground-normal.jpg",
         surfaceRoughnessUrl: "/ground-roughness.jpg",
         surfaceAoUrl: "/ground-ao.jpg",
+        surfaceMetalnessUrl: "/ground-metalness.jpg",
+        surfaceNormalYSign: -1,
+        surfaceAntiTilingEnabled: true,
+        surfaceVariationScaleMeters: 32,
+        surfaceVariationStrength: 0.12,
         position: [2, 0, 3],
         rotation: [-Math.PI / 2, 0, 0],
         scale: [1, 1, 1],
@@ -397,9 +403,23 @@ const planeObject = context.VRODOS.editor.objectFactory.added.slice(planeAddedSt
 assert(planeObject.category_slug === "primitive-plane" && planeObject.isMesh === true, "procedural planes must load as selectable meshes");
 assert(planeObject.geometry.args[0] === 30 && planeObject.geometry.args[1] === 12, "procedural plane geometry must use authored metre dimensions");
 assert(planeObject.material.map.repeat.x === 10 && planeObject.material.map.repeat.y === 4, "albedo repeat must derive from dimensions divided by metres per tile");
-for (const map of [planeObject.material.map, planeObject.material.normalMap, planeObject.material.roughnessMap, planeObject.material.aoMap]) {
+for (const map of [planeObject.material.map, planeObject.material.normalMap, planeObject.material.roughnessMap, planeObject.material.aoMap, planeObject.material.metalnessMap]) {
     assert(map.repeat.x === 10 && map.repeat.y === 4, "every PBR map must share the same physical tile repeat");
 }
+assert(planeObject.material.normalScale.y === -1, "DirectX normal packages must invert the runtime normal Y scale without rewriting the image");
+assert(planeObject.material.__vrodosSurfaceVariationState?.scale === 32, "plane materials must receive deterministic macro variation settings");
+assert(planeObject.material.customProgramCacheKey().includes("vrodos-balanced-surface-variation-v1"), "surface variation must provide a stable shader cache key");
+const surfaceShader = {
+    uniforms: {},
+    vertexShader: "#include <common>\n#include <begin_vertex>",
+    fragmentShader: "#include <common>\nvoid main() {\n#include <map_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n#include <aomap_fragment>\n}"
+};
+planeObject.material.onBeforeCompile(surfaceShader, {});
+assert(surfaceShader.vertexShader.includes("vVrodosSurfaceMeters = position.xy"), "macro variation must use physical plane coordinates");
+assert(surfaceShader.fragmentShader.includes("diffuseColor.rgb *= clamp"), "macro variation must affect the albedo result");
+assert(surfaceShader.fragmentShader.includes("roughnessFactor = clamp"), "macro variation must affect the roughness result");
+assert(surfaceShader.fragmentShader.includes("#include <normal_fragment_maps>"), "macro variation must leave normal-map evaluation untouched");
+assert(surfaceShader.fragmentShader.includes("#include <aomap_fragment>"), "macro variation must leave AO-map evaluation untouched");
 planeObject.planeWidth = 60;
 context.VRODOS.loader.refreshPrimitivePlaneGeometry(planeObject);
 context.VRODOS.loader.refreshPrimitivePlaneMaterial(planeObject);

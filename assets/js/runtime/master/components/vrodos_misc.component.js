@@ -10,6 +10,53 @@ AFRAME.registerComponent('autoplay-sound', {
     }
 });
 
+AFRAME.registerComponent('vrodos-surface-variation', {
+    dependencies: ['material'],
+    schema: {
+        enabled: { type: 'boolean', default: true },
+        scale: { type: 'number', default: 32 },
+        strength: { type: 'number', default: 0.12 },
+        seed: { type: 'number', default: 0 }
+    },
+    init: function () {
+        this.applyVariation = this.applyVariation.bind(this);
+        this.el.addEventListener('object3dset', this.applyVariation);
+        this.el.addEventListener('materialtextureloaded', this.applyVariation);
+        this.applyVariation();
+    },
+    update: function () {
+        this.applyVariation();
+    },
+    applyVariation: function () {
+        const helper = window.VRODOSSurfaceMaterial;
+        const mesh = this.el.getObject3D('mesh');
+        if (!helper || !mesh) return;
+        mesh.traverse((node) => {
+            if (!node.isMesh || !node.material) return;
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            materials.forEach((material) => helper.applyBalancedVariation(material, {
+                enabled: this.data.enabled && Boolean(material.map),
+                scale: this.data.scale,
+                strength: this.data.strength,
+                seed: this.data.seed
+            }));
+        });
+    },
+    remove: function () {
+        this.el.removeEventListener('object3dset', this.applyVariation);
+        this.el.removeEventListener('materialtextureloaded', this.applyVariation);
+        const mesh = this.el.getObject3D('mesh');
+        const helper = window.VRODOSSurfaceMaterial;
+        if (!mesh || !helper) return;
+        mesh.traverse((node) => {
+            const materials = node && node.material
+                ? (Array.isArray(node.material) ? node.material : [node.material])
+                : [];
+            materials.forEach((material) => helper.applyBalancedVariation(material, { enabled: false }));
+        });
+    }
+});
+
 AFRAME.registerComponent('entity-movement-emitter', {
     schema: {
         clip: { type: "string", default: "idle" },

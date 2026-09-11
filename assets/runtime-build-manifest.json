@@ -103,6 +103,7 @@
       ],
       "sourceFiles": [
         "assets/js/runtime/master/lib/vrodos-runtime-settings-contract.generated.js",
+        "assets/js/runtime/master/vrodos_surface_material.js",
         "assets/js/runtime/master/vrodos_master_shared.js",
         "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
         "assets/js/runtime/master/vrodos_runtime_profile_policy.js",

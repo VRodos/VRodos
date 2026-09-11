@@ -130,14 +130,19 @@ const VRODOS_PRIMITIVE_PLANE_DEFAULTS = Object.freeze({
     surfaceMetalness: 0,
     surfaceTileSizeMeters: 2,
     surfaceNormalScale: 1,
-    surfaceAoIntensity: 1
+    surfaceAoIntensity: 1,
+    surfaceNormalYSign: 1,
+    surfaceAntiTilingEnabled: true,
+    surfaceVariationScaleMeters: 32,
+    surfaceVariationStrength: 0.12
 });
 
 const VRODOS_PRIMITIVE_PLANE_TEXTURES = Object.freeze({
     albedo: { url: 'surfaceAlbedoUrl', material: 'map', color: true },
     normal: { url: 'surfaceNormalUrl', material: 'normalMap', color: false },
     roughness: { url: 'surfaceRoughnessUrl', material: 'roughnessMap', color: false },
-    ao: { url: 'surfaceAoUrl', material: 'aoMap', color: false }
+    ao: { url: 'surfaceAoUrl', material: 'aoMap', color: false },
+    metalness: { url: 'surfaceMetalnessUrl', material: 'metalnessMap', color: false }
 });
 
 function vrodosClampPrimitivePlaneNumber(value, fallback, minimum, maximum) {
@@ -153,6 +158,10 @@ function vrodosNormalizePrimitivePlane(object) {
     object.surfaceTileSizeMeters = vrodosClampPrimitivePlaneNumber(object.surfaceTileSizeMeters, VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceTileSizeMeters, 0.01, 10000);
     object.surfaceNormalScale = vrodosClampPrimitivePlaneNumber(object.surfaceNormalScale, VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceNormalScale, 0, 2);
     object.surfaceAoIntensity = vrodosClampPrimitivePlaneNumber(object.surfaceAoIntensity, VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceAoIntensity, 0, 2);
+    object.surfaceNormalYSign = Number(object.surfaceNormalYSign) < 0 ? -1 : 1;
+    object.surfaceAntiTilingEnabled = ![false, 0, '0', 'false'].includes(object.surfaceAntiTilingEnabled);
+    object.surfaceVariationScaleMeters = vrodosClampPrimitivePlaneNumber(object.surfaceVariationScaleMeters, VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceVariationScaleMeters, 1, 10000);
+    object.surfaceVariationStrength = vrodosClampPrimitivePlaneNumber(object.surfaceVariationStrength, VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceVariationStrength, 0, 0.5);
     object.surfaceColor = /^#[0-9a-f]{6}$/i.test(String(object.surfaceColor || ''))
         ? String(object.surfaceColor)
         : VRODOS_PRIMITIVE_PLANE_DEFAULTS.surfaceColor;
@@ -210,11 +219,19 @@ VRODOS.loader.refreshPrimitivePlaneMaterial = function(object) {
     object.material.metalness = object.surfaceMetalness;
     object.material.aoMapIntensity = object.surfaceAoIntensity;
     if (object.material.normalScale && typeof object.material.normalScale.set === 'function') {
-        object.material.normalScale.set(object.surfaceNormalScale, object.surfaceNormalScale);
+        object.material.normalScale.set(object.surfaceNormalScale, object.surfaceNormalScale * object.surfaceNormalYSign);
     }
     Object.values(VRODOS_PRIMITIVE_PLANE_TEXTURES).forEach((definition) => {
         vrodosConfigurePrimitivePlaneTexture(object.material[definition.material], object, definition.color);
     });
+    if (window.VRODOSSurfaceMaterial) {
+        window.VRODOSSurfaceMaterial.applyBalancedVariation(object.material, {
+            enabled: object.surfaceAntiTilingEnabled && Boolean(object.surfaceAlbedoUrl || object.material.map),
+            scale: object.surfaceVariationScaleMeters,
+            strength: object.surfaceVariationStrength,
+            seed: window.VRODOSSurfaceMaterial.seedFromString(object.uuid)
+        });
+    }
     object.material.needsUpdate = true;
     if (typeof VRODOS.editor.requestRender === 'function') {
         VRODOS.editor.requestRender('primitive-plane-material');
@@ -230,8 +247,8 @@ VRODOS.loader.setPrimitivePlaneTexture = function(object, slot, url) {
     object[definition.url] = String(url || '');
     if (!object[definition.url]) {
         object.material[definition.material] = null;
-        object.material.needsUpdate = true;
         if (previousTexture && typeof previousTexture.dispose === 'function') previousTexture.dispose();
+        VRODOS.loader.refreshPrimitivePlaneMaterial(object);
         if (typeof VRODOS.editor.requestRender === 'function') VRODOS.editor.requestRender('primitive-plane-texture-cleared');
         return Promise.resolve(null);
     }
@@ -251,7 +268,7 @@ VRODOS.loader.setPrimitivePlaneTexture = function(object, slot, url) {
         );
         vrodosConfigurePrimitivePlaneTexture(nextTexture, object, definition.color);
         object.material[definition.material] = nextTexture;
-        object.material.needsUpdate = true;
+        VRODOS.loader.refreshPrimitivePlaneMaterial(object);
         if (previousTexture && previousTexture !== nextTexture && typeof previousTexture.dispose === 'function') {
             previousTexture.dispose();
         }
@@ -266,7 +283,7 @@ VRODOS.loader.loadPrimitivePlaneTextures = function(object) {
 
 VRODOS.loader.createPrimitivePlaneObject = function(name, resource) {
     const values = vrodosNormalizePrimitivePlane(Object.assign({}, VRODOS_PRIMITIVE_PLANE_DEFAULTS, resource || {}));
-    const normalScale = THREE.Vector2 ? new THREE.Vector2(values.surfaceNormalScale, values.surfaceNormalScale) : undefined;
+    const normalScale = THREE.Vector2 ? new THREE.Vector2(values.surfaceNormalScale, values.surfaceNormalScale * values.surfaceNormalYSign) : undefined;
     const materialOptions = {
         color: values.surfaceColor,
         roughness: values.surfaceRoughness,
@@ -288,6 +305,10 @@ VRODOS.loader.createPrimitivePlaneObject = function(name, resource) {
     object.surfaceTileSizeMeters = values.surfaceTileSizeMeters;
     object.surfaceNormalScale = values.surfaceNormalScale;
     object.surfaceAoIntensity = values.surfaceAoIntensity;
+    object.surfaceNormalYSign = values.surfaceNormalYSign;
+    object.surfaceAntiTilingEnabled = values.surfaceAntiTilingEnabled;
+    object.surfaceVariationScaleMeters = values.surfaceVariationScaleMeters;
+    object.surfaceVariationStrength = values.surfaceVariationStrength;
     object.name = name;
     object.asset_name = values.asset_name || name;
     object.category_name = 'primitive-plane';

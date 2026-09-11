@@ -18,6 +18,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		'surfaceNormalAttachmentId'    => 'surfaceNormalUrl',
 		'surfaceRoughnessAttachmentId' => 'surfaceRoughnessUrl',
 		'surfaceAoAttachmentId'        => 'surfaceAoUrl',
+		'surfaceMetalnessAttachmentId' => 'surfaceMetalnessUrl',
 	];
 	private int $project_id = 0;
 	private array $media = [];

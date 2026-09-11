@@ -277,6 +277,12 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'surfaceNormalUrl' => '/published/ground-normal.jpg',
 				'surfaceRoughnessUrl' => '/published/ground-roughness.jpg',
 				'surfaceAoUrl' => '/published/ground-ao.jpg',
+				'surfaceMetalnessUrl' => '/published/ground-metalness.jpg',
+				'surfaceDisplacementUrl' => '/private/ground-displacement.jpg',
+				'surfaceNormalYSign' => -1,
+				'surfaceAntiTilingEnabled' => true,
+				'surfaceVariationScaleMeters' => 32,
+				'surfaceVariationStrength' => 0.12,
 				'position' => [ 0, 0, 0 ],
 				'rotation' => [ -pi() / 2, 0, 0 ],
 				'scale' => [ 1, 1, 1 ],
@@ -319,7 +325,13 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( '10 4' === $plane_material['normalTextureRepeat'], 'plane normal map repeat stays aligned' );
 	vrodos_foundation_assert( '10 4' === $plane_material['roughnessTextureRepeat'], 'plane roughness map repeat stays aligned' );
 	vrodos_foundation_assert( '10 4' === $plane_material['ambientOcclusionTextureRepeat'], 'plane AO map repeat stays aligned' );
-	vrodos_foundation_assert( 4 === $assets->getElementsByTagName( 'img' )->length, 'plane PBR maps are emitted as A-Frame image assets' );
+	vrodos_foundation_assert( '10 4' === $plane_material['metalnessTextureRepeat'], 'plane metalness map repeat stays aligned' );
+	vrodos_foundation_assert( '0.75 -0.75' === $plane_material['normalScale'], 'DirectX normal packages invert the compiled normal Y scale' );
+	vrodos_foundation_assert( $procedural_ground->hasAttribute( 'vrodos-surface-variation' ), 'textured planes emit the balanced surface variation component' );
+	$variation = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $procedural_ground->getAttribute( 'vrodos-surface-variation' ) );
+	vrodos_foundation_assert( '32' === $variation['scale'] && '0.12' === $variation['strength'], 'compiled macro variation preserves authored scale and strength' );
+	vrodos_foundation_assert( ! str_contains( $procedural_ground->getAttribute( 'material' ), 'displacement' ), 'stored displacement remains authoring-only' );
+	vrodos_foundation_assert( 5 === $assets->getElementsByTagName( 'img' )->length, 'active plane PBR maps are emitted as A-Frame image assets' );
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 

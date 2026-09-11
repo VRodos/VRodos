@@ -1230,7 +1230,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'surfaceNormalUrl'    => [ 'normalMap', 'normalTextureRepeat', 'normalScale' ],
 			'surfaceRoughnessUrl' => [ 'roughnessMap', 'roughnessTextureRepeat', null ],
 			'surfaceAoUrl'        => [ 'ambientOcclusionMap', 'ambientOcclusionTextureRepeat', 'ambientOcclusionMapIntensity' ],
+			'surfaceMetalnessUrl' => [ 'metalnessMap', 'metalnessTextureRepeat', null ],
 		];
+		$has_albedo = false;
 		foreach ( $texture_fields as $field => [ $map_property, $repeat_property, $strength_property ] ) {
 			$url = $this->normalize_url( (string) ( $obj->{$field} ?? '' ) );
 			if ( '' === $url ) {
@@ -1239,9 +1241,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$asset_id = $this->get_or_create_surface_image_asset( $dom, $assets, $url, 'primitive-plane:' . $uuid . ':' . $field );
 			$material[ $map_property ]    = '#' . $asset_id;
 			$material[ $repeat_property ] = $repeat;
+			if ( 'surfaceAlbedoUrl' === $field ) {
+				$has_albedo = true;
+			}
 			if ( 'normalScale' === $strength_property ) {
 				$strength = $this->bounded_number( $obj->surfaceNormalScale ?? 1, 0, 2, 1 );
-				$material[ $strength_property ] = $this->number_attribute( $strength ) . ' ' . $this->number_attribute( $strength );
+				$normal_y_sign = is_numeric( $obj->surfaceNormalYSign ?? 1 ) && (float) $obj->surfaceNormalYSign < 0 ? -1 : 1;
+				$material[ $strength_property ] = $this->number_attribute( $strength ) . ' ' . $this->number_attribute( $strength * $normal_y_sign );
 			} elseif ( 'ambientOcclusionMapIntensity' === $strength_property ) {
 				$material[ $strength_property ] = $this->number_attribute( $this->bounded_number( $obj->surfaceAoIntensity ?? 1, 0, 2, 1 ) );
 			}
@@ -1254,6 +1260,21 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'material', VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute( $material ) );
 		$entity->setAttribute( 'class', 'override-materials hideable' );
 		$entity->setAttribute( 'data-vrodos-surface-tile-size', $this->number_attribute( $tile_size ) );
+		$anti_tiling_enabled = ! property_exists( $obj, 'surfaceAntiTilingEnabled' ) || ! in_array( $obj->surfaceAntiTilingEnabled, [ false, 0, '0', 'false' ], true );
+		if ( $has_albedo && $anti_tiling_enabled ) {
+			$seed = hexdec( hash( 'fnv1a32', $uuid ) ) / 4294967295;
+			$entity->setAttribute(
+				'vrodos-surface-variation',
+				VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute(
+					[
+						'enabled'  => true,
+						'scale'    => $this->number_attribute( $this->bounded_number( $obj->surfaceVariationScaleMeters ?? 32, 1, 10000, 32 ) ),
+						'strength' => $this->number_attribute( $this->bounded_number( $obj->surfaceVariationStrength ?? 0.12, 0, 0.5, 0.12 ) ),
+						'seed'     => $this->number_attribute( $seed ),
+					]
+				)
+			);
+		}
 		$this->setAffineTransformations( $entity, $obj, true );
 
 		$semantic_category = $this->semantic_entity_category( $obj );

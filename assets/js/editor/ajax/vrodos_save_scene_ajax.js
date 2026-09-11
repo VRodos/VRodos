@@ -8,6 +8,8 @@ const VRODOS_SURFACE_TEXTURE_ATTACHMENT_KEYS = new Set([
 	'surfaceNormalAttachmentId',
 	'surfaceRoughnessAttachmentId',
 	'surfaceAoAttachmentId',
+	'surfaceMetalnessAttachmentId',
+	'surfaceDisplacementAttachmentId',
 	'attachmentId'
 ]);
 

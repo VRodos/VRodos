@@ -17,6 +17,8 @@ class VRodos_Scene_AJAX {
 		'surfaceNormalAttachmentId',
 		'surfaceRoughnessAttachmentId',
 		'surfaceAoAttachmentId',
+		'surfaceMetalnessAttachmentId',
+		'surfaceDisplacementAttachmentId',
 	];
 
 	public function __construct() {
@@ -25,6 +27,7 @@ class VRodos_Scene_AJAX {
 		add_action( 'wp_ajax_vrodos_reorder_scenes_action', [ $this, 'reorder_scenes_callback' ] );
 		add_action( 'wp_ajax_image_upload_action', [ $this, 'image_upload_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_upload_surface_texture_action', [ $this, 'upload_surface_texture_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_upload_surface_material_package_action', [ $this, 'upload_surface_material_package_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_delete_surface_texture_action', [ $this, 'delete_surface_texture_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_compile_action', [ $this, 'compile_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_cancel_compile_action', [ $this, 'cancel_compile_action_callback' ] );
@@ -134,7 +137,7 @@ class VRodos_Scene_AJAX {
 		if ( ! $this->can_edit_project_scene( $project_id, $scene_id ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
-		if ( ! in_array( $slot, [ 'albedo', 'normal', 'roughness', 'ao' ], true ) ) {
+		if ( ! in_array( $slot, [ 'albedo', 'normal', 'roughness', 'ao', 'metalness', 'displacement' ], true ) ) {
 			wp_send_json_error( 'Unsupported surface texture slot.', 400 );
 		}
 
@@ -173,6 +176,42 @@ class VRodos_Scene_AJAX {
 				'height'       => (int) $image[1],
 			]
 		);
+	}
+
+	public function upload_surface_material_package_action_callback(): void {
+		$this->require_storage_schema();
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$project_id = absint( $_POST['project_id'] ?? 0 );
+		$scene_id   = absint( $_POST['scene_id'] ?? 0 );
+		if ( ! $this->can_edit_project_scene( $project_id, $scene_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$file = $_FILES['surface_package'] ?? null;
+		if ( ! is_array( $file ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			wp_send_json_error( 'The PBR ZIP upload is incomplete. Check the active PHP upload limits and try again.', 400 );
+		}
+		$path = (string) ( $file['tmp_name'] ?? '' );
+		$size = is_file( $path ) ? filesize( $path ) : false;
+		if ( ! is_int( $size ) || $size <= 0 || $size > VRodos_Surface_Material_Package::MAX_PACKAGE_BYTES ) {
+			wp_send_json_error( 'PBR ZIP packages must be 128 MiB or smaller.', 413 );
+		}
+		if ( 'zip' !== strtolower( pathinfo( (string) ( $file['name'] ?? '' ), PATHINFO_EXTENSION ) ) ) {
+			wp_send_json_error( 'Choose a .zip PBR material package.', 415 );
+		}
+
+		$result = VRodos_Surface_Material_Package::import( $path, $scene_id );
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) ? absint( $data['status'] ?? 400 ) : 400;
+			wp_send_json_error(
+				[ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ],
+				$status > 0 ? $status : 400
+			);
+		}
+		wp_send_json_success( $result );
 	}
 
 	public function delete_surface_texture_action_callback(): void {

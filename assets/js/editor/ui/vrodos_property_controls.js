@@ -1452,7 +1452,11 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
             'surfaceMetalness',
             'surfaceTileSizeMeters',
             'surfaceNormalScale',
-            'surfaceAoIntensity'
+            'surfaceAoIntensity',
+            'surfaceNormalYSign',
+            'surfaceAntiTilingEnabled',
+            'surfaceVariationScaleMeters',
+            'surfaceVariationStrength'
         ].includes(prop) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
             VRODOS.loader.refreshPrimitivePlaneMaterial(targetObject);
         }
@@ -1473,7 +1477,9 @@ const VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES = Object.freeze({
     albedo: { attachment: 'surfaceAlbedoAttachmentId', url: 'surfaceAlbedoUrl', label: 'Albedo' },
     normal: { attachment: 'surfaceNormalAttachmentId', url: 'surfaceNormalUrl', label: 'Normal' },
     roughness: { attachment: 'surfaceRoughnessAttachmentId', url: 'surfaceRoughnessUrl', label: 'Roughness' },
-    ao: { attachment: 'surfaceAoAttachmentId', url: 'surfaceAoUrl', label: 'Ambient Occlusion' }
+    ao: { attachment: 'surfaceAoAttachmentId', url: 'surfaceAoUrl', label: 'Ambient Occlusion' },
+    metalness: { attachment: 'surfaceMetalnessAttachmentId', url: 'surfaceMetalnessUrl', label: 'Metalness' },
+    displacement: { attachment: 'surfaceDisplacementAttachmentId', url: 'surfaceDisplacementUrl', label: 'Displacement', authoringOnly: true }
 });
 
 function vrodosPlaneNumericValue(value, fallback, minimum, maximum) {
@@ -1491,6 +1497,10 @@ function vrodosApplyPlaneTextureState(object, slot, state) {
     object.userData[definition.attachment] = object[definition.attachment];
     if (object[definition.url]) object.userData[definition.url] = object[definition.url];
     else delete object.userData[definition.url];
+    if (slot === 'normal' && Object.prototype.hasOwnProperty.call(state, 'normalYSign')) {
+        object.surfaceNormalYSign = Number(state.normalYSign) < 0 ? -1 : 1;
+        object.userData.surfaceNormalYSign = object.surfaceNormalYSign;
+    }
     if (VRODOS.loader && typeof VRODOS.loader.setPrimitivePlaneTexture === 'function') {
         VRODOS.loader.setPrimitivePlaneTexture(object, slot, object[definition.url]);
     }
@@ -1498,10 +1508,12 @@ function vrodosApplyPlaneTextureState(object, slot, state) {
 
 function vrodosPlaneTextureState(object, slot) {
     const definition = VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES[slot];
-    return {
+    const state = {
         attachmentId: definition ? Number(object[definition.attachment]) || 0 : 0,
         url: definition ? String(object[definition.url] || '') : ''
     };
+    if (slot === 'normal') state.normalYSign = Number(object.surfaceNormalYSign) < 0 ? -1 : 1;
+    return state;
 }
 
 function vrodosAddPlaneTextureUndo(object, slot, oldState, newState) {
@@ -1518,6 +1530,56 @@ function vrodosRemoveFailedPlaneTextureUndo(command) {
     if (!manager || !command || manager.undoStack.at(-1) !== command) return;
     manager.undoStack.pop();
     manager.updateButtons();
+}
+
+function vrodosPlaneSurfaceMaterialState(object) {
+    const slots = {};
+    Object.keys(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).forEach((slot) => {
+        slots[slot] = vrodosPlaneTextureState(object, slot);
+    });
+    return {
+        slots,
+        properties: {
+            surfaceNormalYSign: Number(object.surfaceNormalYSign) < 0 ? -1 : 1,
+            surfaceAntiTilingEnabled: ![false, 0, '0', 'false'].includes(object.surfaceAntiTilingEnabled),
+            surfaceVariationScaleMeters: vrodosPlaneNumericValue(object.surfaceVariationScaleMeters, 32, 1, 10000),
+            surfaceVariationStrength: vrodosPlaneNumericValue(object.surfaceVariationStrength, 0.12, 0, 0.5)
+        }
+    };
+}
+
+async function vrodosSavePlaneSurfaceMaterialPackage(object, oldState, packageData) {
+    const maps = packageData && packageData.maps ? packageData.maps : {};
+    const nextState = {
+        slots: {},
+        properties: {
+            ...oldState.properties,
+            surfaceNormalYSign: Number(packageData.normalYSign) < 0 ? -1 : 1,
+            surfaceAntiTilingEnabled: Boolean(maps.albedo)
+        }
+    };
+    Object.keys(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).forEach((slot) => {
+        const map = maps[slot];
+        nextState.slots[slot] = map
+            ? { attachmentId: Number(map.attachmentId) || 0, url: String(map.url || '') }
+            : { attachmentId: 0, url: '' };
+    });
+
+    let command = null;
+    try {
+        VRODOS.editor.applyPlaneSurfaceMaterialState(object, nextState, { updateUi: false, autosave: false });
+        command = new VRODOS.editor.PlaneSurfaceMaterialCommand(object, oldState, nextState);
+        VRODOS.editor.undoManager.add(command);
+        await VRODOS.api.saveChanges({ force: true });
+        return nextState;
+    } catch (error) {
+        vrodosRemoveFailedPlaneTextureUndo(command);
+        VRODOS.editor.applyPlaneSurfaceMaterialState(object, oldState, { updateUi: false, autosave: false });
+        await Promise.allSettled(Object.values(maps).map((map) => (
+            map && map.attachmentId ? VRODOS.api.deleteSurfaceTexture(map.attachmentId) : Promise.resolve()
+        )));
+        throw error;
+    }
 }
 
 async function vrodosSavePlaneTextureChange(object, slot, oldState, newState) {
@@ -1564,6 +1626,12 @@ function ensurePrimitivePlanePropertiesSection() {
     section.innerHTML = `
         <div class="prop-section-title">Plane Surface</div>
         <div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3">
+            <input id="planeSurfacePackageInput" type="file" accept=".zip,application/zip" class="tw-hidden">
+            <button id="planeSurfacePackageButton" type="button" class="tw-btn tw-btn-primary tw-btn-sm tw-w-full">Import PBR ZIP</button>
+            <div id="planeSurfacePackageProgressWrap" class="tw-hidden tw-w-full tw-overflow-hidden tw-rounded tw-bg-slate-800" aria-hidden="true">
+                <div id="planeSurfacePackageProgress" role="progressbar" aria-label="PBR ZIP upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="tw-h-1.5 tw-bg-sky-400" style="width:0%"></div>
+            </div>
+            <div id="planeSurfacePackageSummary" role="status" aria-live="polite" class="tw-text-[9px] tw-leading-relaxed tw-text-slate-300"></div>
             <div class="tw-grid tw-grid-cols-2 tw-gap-2">
                 <label class="tw-text-[10px] tw-text-slate-300">Width (m)<input id="planeWidthInput" type="number" min="0.1" max="10000" step="0.1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
                 <label class="tw-text-[10px] tw-text-slate-300">Depth (m)<input id="planeDepthInput" type="number" min="0.1" max="10000" step="0.1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
@@ -1574,8 +1642,16 @@ function ensurePrimitivePlanePropertiesSection() {
                 <label class="tw-text-[10px] tw-text-slate-300">Normal strength<input id="planeNormalScaleInput" type="number" min="0" max="2" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
                 <label class="tw-text-[10px] tw-text-slate-300">AO intensity<input id="planeAoIntensityInput" type="number" min="0" max="2" step="0.05" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
             </div>
+            <label class="tw-flex tw-items-center tw-gap-2 tw-rounded-md tw-border tw-border-white/10 tw-bg-slate-900/30 tw-px-2 tw-py-2 tw-text-[10px] tw-font-semibold tw-text-slate-200">
+                <input id="planeAntiTilingInput" type="checkbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">
+                <span>Break up repetition</span>
+            </label>
+            <div class="tw-grid tw-grid-cols-2 tw-gap-2">
+                <label class="tw-text-[10px] tw-text-slate-300">Variation scale (m)<input id="planeVariationScaleInput" type="number" min="1" max="10000" step="1" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+                <label class="tw-text-[10px] tw-text-slate-300">Variation strength<input id="planeVariationStrengthInput" type="number" min="0" max="0.5" step="0.01" class="tw-input tw-input-xs tw-w-full tw-bg-slate-900/70"></label>
+            </div>
             <div class="tw-mt-1 tw-flex tw-flex-col tw-gap-2">${textureRows}</div>
-            <div class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400">Use seamless OpenGL PBR maps. Tile size stays constant when the plane is resized. Recommended: 1K; maximum: 2K.</div>
+            <div class="tw-text-[9px] tw-leading-relaxed tw-text-slate-400">Use seamless OpenGL PBR maps. Tile size stays constant when the plane is resized. ZIP import keeps the current tile size. Recommended: 1K; maximum: 2K.</div>
         </div>`;
     container.appendChild(section);
 
@@ -1586,7 +1662,9 @@ function ensurePrimitivePlanePropertiesSection() {
         ['planeRoughnessInput', 'surfaceRoughness', 1, 0, 1],
         ['planeMetalnessInput', 'surfaceMetalness', 0, 0, 1],
         ['planeNormalScaleInput', 'surfaceNormalScale', 1, 0, 2],
-        ['planeAoIntensityInput', 'surfaceAoIntensity', 1, 0, 2]
+        ['planeAoIntensityInput', 'surfaceAoIntensity', 1, 0, 2],
+        ['planeVariationScaleInput', 'surfaceVariationScaleMeters', 32, 1, 10000],
+        ['planeVariationStrengthInput', 'surfaceVariationStrength', 0.12, 0, 0.5]
     ];
     numericBindings.forEach(([id, property, fallback, minimum, maximum]) => {
         document.getElementById(id)?.addEventListener('change', function() {
@@ -1597,6 +1675,74 @@ function ensurePrimitivePlanePropertiesSection() {
     });
     document.getElementById('planeSurfaceColorInput')?.addEventListener('change', function() {
         vrodosCommitObjectControlsProperty('surfaceColor', this.value);
+    });
+    document.getElementById('planeAntiTilingInput')?.addEventListener('change', function() {
+        vrodosCommitObjectControlsProperty('surfaceAntiTilingEnabled', this.checked);
+    });
+
+    document.getElementById('planeSurfacePackageButton')?.addEventListener('click', () => {
+        document.getElementById('planeSurfacePackageInput')?.click();
+    });
+    document.getElementById('planeSurfacePackageInput')?.addEventListener('change', async function() {
+        const file = this.files && this.files[0];
+        const object = getObjectControlsTargetObject();
+        const button = document.getElementById('planeSurfacePackageButton');
+        const progressWrap = document.getElementById('planeSurfacePackageProgressWrap');
+        const progress = document.getElementById('planeSurfacePackageProgress');
+        const summary = document.getElementById('planeSurfacePackageSummary');
+        if (!file || !object || object.category_slug !== 'primitive-plane') return;
+        if (file.size > 128 * 1024 * 1024) {
+            const message = 'PBR ZIP packages must be 128 MiB or smaller.';
+            if (summary) summary.textContent = message;
+            window.alert(message);
+            this.value = '';
+            return;
+        }
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Uploading…';
+        }
+        if (progressWrap) {
+            progressWrap.classList.remove('tw-hidden');
+            progressWrap.setAttribute('aria-hidden', 'false');
+        }
+        if (summary) summary.textContent = 'Uploading package…';
+        try {
+            const oldState = vrodosPlaneSurfaceMaterialState(object);
+            const imported = await VRODOS.api.uploadSurfaceMaterialPackage(file, (percent) => {
+                if (progress) {
+                    progress.style.width = `${percent}%`;
+                    progress.setAttribute('aria-valuenow', String(percent));
+                }
+                if (summary) summary.textContent = percent < 100 ? `Uploading package… ${percent}%` : 'Detecting and validating maps…';
+            });
+            await vrodosSavePlaneSurfaceMaterialPackage(object, oldState, imported);
+            const detected = Object.keys(imported.maps || {}).map((slot) => VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES[slot]?.label || slot);
+            const ignoredCount = Array.isArray(imported.ignoredFiles) ? imported.ignoredFiles.length : 0;
+            const warning = Array.isArray(imported.warnings) && imported.warnings[0] ? ` ${imported.warnings[0]}` : '';
+            if (summary) {
+                summary.dataset.planeUuid = object.uuid;
+                summary.textContent = `Detected: ${detected.join(', ')}.${ignoredCount ? ` Ignored ${ignoredCount} unrelated/alternate file${ignoredCount === 1 ? '' : 's'}.` : ''}${warning}`;
+            }
+            displayPrimitivePlaneProperties(object);
+        } catch (error) {
+            if (summary) summary.textContent = `Import failed: ${error.message || 'Unknown error.'}`;
+            window.alert(error.message || 'PBR ZIP import failed.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent = 'Import PBR ZIP';
+            }
+            if (progressWrap) {
+                progressWrap.classList.add('tw-hidden');
+                progressWrap.setAttribute('aria-hidden', 'true');
+            }
+            if (progress) {
+                progress.style.width = '0%';
+                progress.setAttribute('aria-valuenow', '0');
+            }
+            this.value = '';
+        }
     });
 
     section.querySelectorAll('[data-plane-texture-upload]').forEach((button) => {
@@ -1618,7 +1764,8 @@ function ensurePrimitivePlanePropertiesSection() {
                 const uploaded = await VRODOS.api.uploadSurfaceTexture(file, slot);
                 await vrodosSavePlaneTextureChange(object, slot, oldState, {
                     attachmentId: uploaded.attachmentId,
-                    url: uploaded.url
+                    url: uploaded.url,
+                    ...(slot === 'normal' ? { normalYSign: 1 } : {})
                 });
                 displayPrimitivePlaneProperties(object);
             } catch (error) {
@@ -1637,7 +1784,11 @@ function ensurePrimitivePlanePropertiesSection() {
             const oldState = vrodosPlaneTextureState(object, slot);
             if (!oldState.attachmentId && !oldState.url) return;
             try {
-                await vrodosSavePlaneTextureChange(object, slot, oldState, { attachmentId: 0, url: '' });
+                await vrodosSavePlaneTextureChange(object, slot, oldState, {
+                    attachmentId: 0,
+                    url: '',
+                    ...(slot === 'normal' ? { normalYSign: 1 } : {})
+                });
                 displayPrimitivePlaneProperties(object);
             } catch (error) {
                 window.alert(error.message || 'Could not remove the texture.');
@@ -1658,18 +1809,31 @@ function displayPrimitivePlaneProperties(object) {
         planeRoughnessInput: object.surfaceRoughness,
         planeMetalnessInput: object.surfaceMetalness,
         planeNormalScaleInput: object.surfaceNormalScale,
-        planeAoIntensityInput: object.surfaceAoIntensity
+        planeAoIntensityInput: object.surfaceAoIntensity,
+        planeVariationScaleInput: object.surfaceVariationScaleMeters ?? 32,
+        planeVariationStrengthInput: object.surfaceVariationStrength ?? 0.12
     };
     Object.entries(values).forEach(([id, value]) => {
         const input = document.getElementById(id);
         if (input) input.value = value;
     });
+    const antiTiling = document.getElementById('planeAntiTilingInput');
+    if (antiTiling) antiTiling.checked = ![false, 0, '0', 'false'].includes(object.surfaceAntiTilingEnabled);
+    const packageSummary = document.getElementById('planeSurfacePackageSummary');
+    if (packageSummary?.dataset.planeUuid && packageSummary.dataset.planeUuid !== object.uuid) {
+        packageSummary.textContent = '';
+        delete packageSummary.dataset.planeUuid;
+    }
     Object.entries(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).forEach(([slot, definition]) => {
-        const hasTexture = Number(object[definition.attachment]) > 0;
+        const hasTexture = Number(object[definition.attachment]) > 0 || Boolean(object[definition.url]);
         const status = section.querySelector(`[data-plane-texture-status="${slot}"]`);
         const upload = section.querySelector(`[data-plane-texture-upload="${slot}"]`);
         const remove = section.querySelector(`[data-plane-texture-remove="${slot}"]`);
-        if (status) status.textContent = hasTexture ? 'Assigned' : 'No map assigned';
+        if (status) {
+            if (hasTexture && definition.authoringOnly) status.textContent = 'Imported — not rendered';
+            else if (hasTexture && slot === 'normal' && Number(object.surfaceNormalYSign) < 0) status.textContent = 'Assigned — DirectX Y corrected';
+            else status.textContent = hasTexture ? 'Assigned' : 'No map assigned';
+        }
         if (upload) upload.textContent = hasTexture ? 'Replace' : 'Upload';
         if (remove) remove.disabled = !hasTexture;
     });

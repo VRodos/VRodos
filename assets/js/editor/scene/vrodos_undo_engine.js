@@ -550,7 +550,11 @@ VRODOS.editor.PropertyCommand = class {
                 'surfaceMetalness',
                 'surfaceTileSizeMeters',
                 'surfaceNormalScale',
-                'surfaceAoIntensity'
+                'surfaceAoIntensity',
+                'surfaceNormalYSign',
+                'surfaceAntiTilingEnabled',
+                'surfaceVariationScaleMeters',
+                'surfaceVariationStrength'
             ].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
                 VRODOS.loader.refreshPrimitivePlaneMaterial(obj);
             }
@@ -620,9 +624,16 @@ VRODOS.editor.PlaneTextureCommand = class {
         object.userData[attachmentProperty] = attachmentId;
         if (url) object.userData[urlProperty] = url;
         else delete object.userData[urlProperty];
+        if (this.slot === 'normal' && Object.prototype.hasOwnProperty.call(state, 'normalYSign')) {
+            object.surfaceNormalYSign = Number(state.normalYSign) < 0 ? -1 : 1;
+            object.userData.surfaceNormalYSign = object.surfaceNormalYSign;
+        }
 
         if (VRODOS.loader && typeof VRODOS.loader.setPrimitivePlaneTexture === 'function') {
             VRODOS.loader.setPrimitivePlaneTexture(object, this.slot, url);
+        }
+        if (VRODOS.loader && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
+            VRODOS.loader.refreshPrimitivePlaneMaterial(object);
         }
         if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
             VRODOS.ui.showPropertiesInPanel(object);
@@ -630,6 +641,71 @@ VRODOS.editor.PlaneTextureCommand = class {
         if (typeof VRODOS.api.triggerAutoSave === 'function') {
             VRODOS.api.triggerAutoSave();
         }
+    }
+
+    execute() {
+        this.apply(this.newState);
+    }
+
+    undo() {
+        this.apply(this.oldState);
+    }
+
+    redo() {
+        this.apply(this.newState);
+    }
+};
+
+const VRODOS_PLANE_SURFACE_STATE_SLOTS = Object.freeze({
+    albedo: ['surfaceAlbedoAttachmentId', 'surfaceAlbedoUrl'],
+    normal: ['surfaceNormalAttachmentId', 'surfaceNormalUrl'],
+    roughness: ['surfaceRoughnessAttachmentId', 'surfaceRoughnessUrl'],
+    ao: ['surfaceAoAttachmentId', 'surfaceAoUrl'],
+    metalness: ['surfaceMetalnessAttachmentId', 'surfaceMetalnessUrl'],
+    displacement: ['surfaceDisplacementAttachmentId', 'surfaceDisplacementUrl']
+});
+
+VRODOS.editor.applyPlaneSurfaceMaterialState = function(object, state, options) {
+    if (!object || !state) return;
+    const settings = Object.assign({ updateUi: true, autosave: true }, options || {});
+    object.userData = object.userData || {};
+    Object.entries(VRODOS_PLANE_SURFACE_STATE_SLOTS).forEach(([slot, [attachmentProperty, urlProperty]]) => {
+        const slotState = state.slots && state.slots[slot] ? state.slots[slot] : { attachmentId: 0, url: '' };
+        object[attachmentProperty] = Number(slotState.attachmentId) || 0;
+        object[urlProperty] = String(slotState.url || '');
+        object.userData[attachmentProperty] = object[attachmentProperty];
+        if (object[urlProperty]) object.userData[urlProperty] = object[urlProperty];
+        else delete object.userData[urlProperty];
+        if (slot !== 'displacement' && VRODOS.loader && typeof VRODOS.loader.setPrimitivePlaneTexture === 'function') {
+            VRODOS.loader.setPrimitivePlaneTexture(object, slot, object[urlProperty]);
+        }
+    });
+    Object.entries(state.properties || {}).forEach(([property, value]) => {
+        object[property] = value;
+        object.userData[property] = value;
+    });
+    if (VRODOS.loader && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
+        VRODOS.loader.refreshPrimitivePlaneMaterial(object);
+    }
+    if (settings.updateUi && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+        VRODOS.ui.showPropertiesInPanel(object);
+    }
+    if (settings.autosave && typeof VRODOS.api.triggerAutoSave === 'function') {
+        VRODOS.api.triggerAutoSave();
+    }
+};
+
+VRODOS.editor.PlaneSurfaceMaterialCommand = class {
+    constructor(object, oldState, newState) {
+        this.objectUuid = object.uuid;
+        this.objectName = object.name;
+        this.oldState = JSON.parse(JSON.stringify(oldState || {}));
+        this.newState = JSON.parse(JSON.stringify(newState || {}));
+    }
+
+    apply(state) {
+        const object = vrodosUndoGetObjectByUuid(this.objectUuid) || vrodosUndoGetObjectByName(this.objectName);
+        if (object) VRODOS.editor.applyPlaneSurfaceMaterialState(object, state);
     }
 
     execute() {

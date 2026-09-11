@@ -5,6 +5,121 @@
     window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = { "runtimeMode": "single-player", "clearColor": "#ffffff", "backgroundStyleOption": "0", "backgroundImagePath": "0", "backgroundPresetOption": "None", "backgroundPresetGroundEnabled": "0", "fogCategory": "0", "fogColor": "#ffffff", "fogFar": "1000", "fogNear": "0", "fogDensity": "1e-8", "movementDisabled": "0", "avatarEnabled": "0", "generalChatEnabled": "0", "collisionMode": "auto", "fpsMeterEnabled": "0", "hoveringInteractables": "1", "renderQuality": "standard", "shadowQuality": "medium", "aaQuality": "balanced", "ambientOcclusionPreset": "balanced", "contactShadowPreset": "soft", "legacyHorizonStageSize": "5000", "vrRuntimeProfile": "desktop", "vrFramebufferScale": "0", "vrFoveationStrength": "-1", "vrHeadsetStereoPostFxEnabled": "0", "postFXColorEnabled": "0", "postFXEnabled": "0", "postFXEngine": "legacy", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "1", "postFXEdgeAAStrength": "3", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "exposurePreset": "neutral", "contrastPreset": "balanced", "reflectionProfile": "balanced", "reflectionSource": "hdr", "envMapPreset": "none", "horizonSkyPreset": "natural", "navigationMode": "walkable", "shadowUpdateMode": "static", "flatMediaShadowCasting": "1", "pmndrsAAMode": "inherit", "pmndrsAAPreset": "inherit", "pmndrsBloomIntensity": "1", "pmndrsBloomThreshold": "0.62", "pmndrsVignetteEnabled": "0", "pmndrsVignetteDarkness": "0.5", "pmndrsToneMappingExposure": "1", "pmndrsLowLightAutoExposureEnabled": "1", "pmndrsToneMappingExposureAuthored": "0", "pmndrsToneMappingMode": "agx", "pmndrsLensFlareEnabled": "0", "pmndrsLutEnabled": "0", "pmndrsLutLook": "neutral", "pmndrsLutStrength": "1", "pmndrsNoiseEnabled": "0", "pmndrsNoiseOpacity": "0.04", "pmndrsChromaticAberrationEnabled": "0", "pmndrsChromaticAberrationOffset": "0.0015", "pmndrsAtmosphereEnabled": "1", "pmndrsAtmospherePreset": "midday", "pmndrsAtmospherePresetIntensity": "1", "pmndrsAtmosphereQuality": "balanced", "pmndrsAerialPerspectiveEnabled": "0", "pmndrsCloudsEnabled": "0", "pmndrsCloudsLightShaftsEnabled": "1", "pmndrsCloudsQuality": "low", "pmndrsCloudsCoverage": "0.35", "pmndrsCloudsStyle": "default", "pmndrsCloudsWindEnabled": "1", "pmndrsCloudsWindSpeed": "1", "pmndrsCloudsWindDirectionDeg": "0", "pmndrsCorrectAltitudeEnabled": "1", "pmndrsGeospatialEnabled": "0", "pmndrsGeospatialLatitudeDeg": "0", "pmndrsGeospatialLongitudeDeg": "0", "pmndrsGeospatialAltitudeMeters": "0", "pmndrsCelestialMode": "manual", "pmndrsCelestialTimePreset": "midday", "pmndrsCelestialDate": "2026-06-21", "pmndrsCelestialUtcTime": "12:00", "pmndrsDayNightCycleEnabled": "0", "pmndrsDayNightCycleDurationMinutes": "1", "pmndrsSunElevationDeg": "62", "pmndrsSunAzimuthDeg": "20", "pmndrsSunDistance": "5200", "pmndrsSunAngularRadius": "0.004675", "pmndrsAerialStrength": "0.55", "pmndrsAlbedoScale": "1", "pmndrsTransmittanceEnabled": "1", "pmndrsInscatterEnabled": "1", "pmndrsGroundEnabled": "1", "pmndrsGroundAlbedo": "#1a1a1a", "pmndrsRayleighScale": "1", "pmndrsMieScatteringScale": "1", "pmndrsMieExtinctionScale": "1", "pmndrsMiePhaseG": "0.8", "pmndrsAbsorptionScale": "1", "pmndrsMoonEnabled": "0", "pmndrsMoonPhase": "auto", "pmndrsStarsEnabled": "auto", "pmndrsHorizonLightingPreset": "natural", "pmndrsHorizonKeyLightIntensity": "1.15", "pmndrsHorizonFillLightIntensity": "0.45", "reflectionsEnabled": "1", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "128", "reflectionOcclusionMode": "auto" };
     window.VRODOS_DESKTOP_PERFORMANCE_PROFILE_CONTRACT = { "schemaVersion": 2, "storageKey": "vrodos.desktopQualityOverride.v1", "queryParameter": "vrodos_quality", "managedSettings": ["renderQuality", "shadowQuality", "shadowUpdateMode", "flatMediaShadowCasting", "aaQuality", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "postFXEngine", "postFXBloomEnabled", "postFXEdgeAAEnabled", "postFXTAAEnabled", "postFXSSREnabled", "postFXSSRStrength", "bloomStrength", "reflectionProfile", "reflectionSource", "sceneProbeUpdateMode", "sceneProbeResolution", "pmndrsAAMode", "pmndrsAAPreset", "pmndrsLensFlareEnabled", "pmndrsLutEnabled", "pmndrsVignetteEnabled", "pmndrsNoiseEnabled", "pmndrsChromaticAberrationEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsLightShaftsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled"], "custom": { "label": "Custom", "assetProfile": "web-high", "textureMaxSize": 4096, "textureMemoryBudgetMiB": null, "geometryRatio": 1, "summary": "Exact authored geometry and artistic intent, with textures capped at 4096px and web-compressed to KTX2." }, "profiles": { "low": { "label": "Low", "renderPixelBudget": 165e4, "minPixelRatio": 0.75, "maxPixelRatio": 0.9, "assetProfile": "web-low", "textureMaxSize": 1024, "textureMemoryBudgetMiB": 96, "geometryRatio": 0.5, "summary": "1.65 MP, DPR 0.75-0.9, 1024px textures, 96 MiB texture target, 50% visual geometry.", "editableSettings": ["pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled", "reflectionProfile"], "allowedValues": { "pmndrsAtmosphereEnabled": [false, true], "pmndrsAtmosphereQuality": ["performance"], "pmndrsCloudsEnabled": [false, true], "pmndrsCloudsQuality": ["low"], "reflectionsEnabled": [false, true], "reflectionProfile": ["soft"] }, "settings": { "renderQuality": "performance", "shadowQuality": "off", "shadowUpdateMode": "static", "flatMediaShadowCasting": "false", "aaQuality": "off", "ambientOcclusionPreset": "off", "contactShadowPreset": "off", "postFXEnabled": "0", "postFXEngine": "pmndrs", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "0", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "reflectionProfile": "soft", "reflectionSource": "hdr", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "64", "pmndrsAAMode": "none", "pmndrsAAPreset": "low", "pmndrsLensFlareEnabled": "false", "pmndrsLutEnabled": "false", "pmndrsVignetteEnabled": "false", "pmndrsNoiseEnabled": "false", "pmndrsChromaticAberrationEnabled": "false", "pmndrsAtmosphereQuality": "performance", "pmndrsAerialPerspectiveEnabled": "false", "pmndrsCloudsLightShaftsEnabled": "false", "pmndrsCloudsQuality": "low" } }, "medium": { "label": "Medium", "renderPixelBudget": 37e5, "minPixelRatio": 0.75, "maxPixelRatio": 1, "assetProfile": "web-medium", "textureMaxSize": 2048, "textureMemoryBudgetMiB": 192, "geometryRatio": 0.8, "summary": "3.7 MP, DPR up to 1, 2048px textures, 192 MiB texture target, 80% visual geometry.", "editableSettings": ["shadowQuality", "pmndrsAAMode", "pmndrsAAPreset", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled", "reflectionProfile"], "allowedValues": { "shadowQuality": ["off", "medium"], "pmndrsAAMode": ["none", "smaa"], "pmndrsAAPreset": ["low", "medium"], "ambientOcclusionPreset": ["off", "soft"], "contactShadowPreset": ["off", "soft"], "postFXEnabled": [false, true], "pmndrsAtmosphereEnabled": [false, true], "pmndrsAtmosphereQuality": ["performance", "balanced"], "pmndrsAerialPerspectiveEnabled": [false, true], "pmndrsCloudsEnabled": [false, true], "pmndrsCloudsQuality": ["low", "medium"], "reflectionsEnabled": [false, true], "reflectionProfile": ["soft", "balanced"] }, "settings": { "renderQuality": "standard", "shadowQuality": "medium", "shadowUpdateMode": "static", "flatMediaShadowCasting": "false", "aaQuality": "balanced", "ambientOcclusionPreset": "soft", "contactShadowPreset": "soft", "postFXEnabled": "1", "postFXEngine": "pmndrs", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "0", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "reflectionProfile": "balanced", "reflectionSource": "hdr", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "64", "pmndrsAAMode": "smaa", "pmndrsAAPreset": "medium", "pmndrsLensFlareEnabled": "false", "pmndrsNoiseEnabled": "false", "pmndrsChromaticAberrationEnabled": "false", "pmndrsAtmosphereQuality": "balanced", "pmndrsCloudsLightShaftsEnabled": "false", "pmndrsCloudsQuality": "medium" } }, "high": { "label": "High", "renderPixelBudget": null, "minPixelRatio": 0.75, "maxPixelRatio": 1.5, "assetProfile": "web-high", "textureMaxSize": 4096, "textureMemoryBudgetMiB": null, "geometryRatio": 1, "summary": "Authored resolution up to DPR 1.5, exact geometry, and textures capped at 4096px with KTX2 and Draco compression.", "editableSettings": ["shadowQuality", "shadowUpdateMode", "flatMediaShadowCasting", "aaQuality", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "postFXEngine", "postFXBloomEnabled", "postFXEdgeAAEnabled", "postFXTAAEnabled", "postFXSSREnabled", "postFXSSRStrength", "bloomStrength", "pmndrsAAMode", "pmndrsAAPreset", "pmndrsLensFlareEnabled", "pmndrsLutEnabled", "pmndrsVignetteEnabled", "pmndrsNoiseEnabled", "pmndrsChromaticAberrationEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "pmndrsCloudsLightShaftsEnabled", "reflectionsEnabled", "reflectionProfile", "reflectionSource", "sceneProbeResolution", "sceneProbeUpdateMode"], "settings": { "renderQuality": "high" } } }, "selection": { "benchmarkDurationMs": 450, "lowFrameMs": 18, "highFrameMs": 8, "lowDeviceMemoryGiB": 4, "highDeviceMemoryGiB": 8, "highHardwareConcurrency": 8, "minimumTextureSize": 8192, "downgradeAverageFps": 45, "severeAverageFps": 28, "downgradeP95FrameMs": 33 } };
   })();
+  (function(root) {
+    "use strict";
+    const STATE_PROPERTY = "__vrodosSurfaceVariationState";
+    const CACHE_KEY = "vrodos-balanced-surface-variation-v1";
+    function finiteNumber(value, fallback, minimum, maximum) {
+      const number = Number(value);
+      return Math.min(maximum, Math.max(minimum, Number.isFinite(number) ? number : fallback));
+    }
+    function seedFromString(value) {
+      const text = String(value || "vrodos-surface");
+      let hash = 2166136261;
+      for (let index = 0; index < text.length; index++) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0) / 4294967295;
+    }
+    function installPatch(material) {
+      const previousCompile = typeof material.onBeforeCompile === "function" ? material.onBeforeCompile : function() {
+        return void 0;
+      };
+      const previousCacheKey = typeof material.customProgramCacheKey === "function" ? material.customProgramCacheKey : function() {
+        return "";
+      };
+      const state = {
+        enabled: true,
+        scale: 32,
+        strength: 0.12,
+        seed: 0,
+        uniforms: null
+      };
+      Object.defineProperty(material, STATE_PROPERTY, {
+        value: state,
+        configurable: true
+      });
+      material.onBeforeCompile = function(shader, renderer) {
+        previousCompile.call(this, shader, renderer);
+        shader.uniforms.vrodosVariationScale = { value: state.scale };
+        shader.uniforms.vrodosVariationStrength = { value: state.enabled ? state.strength : 0 };
+        shader.uniforms.vrodosVariationSeed = { value: state.seed };
+        state.uniforms = shader.uniforms;
+        shader.vertexShader = shader.vertexShader.replace(
+          "#include <common>",
+          "#include <common>\nvarying vec2 vVrodosSurfaceMeters;"
+        ).replace(
+          "#include <begin_vertex>",
+          "#include <begin_vertex>\nvVrodosSurfaceMeters = position.xy;"
+        );
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <common>",
+          `#include <common>
+varying vec2 vVrodosSurfaceMeters;
+uniform float vrodosVariationScale;
+uniform float vrodosVariationStrength;
+uniform float vrodosVariationSeed;
+
+float vrodosSurfaceHash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32 + vrodosVariationSeed * 19.17);
+    return fract(p.x * p.y);
+}
+
+float vrodosSurfaceNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+        mix(vrodosSurfaceHash(i), vrodosSurfaceHash(i + vec2(1.0, 0.0)), f.x),
+        mix(vrodosSurfaceHash(i + vec2(0.0, 1.0)), vrodosSurfaceHash(i + vec2(1.0, 1.0)), f.x),
+        f.y
+    );
+}`
+        ).replace(
+          "void main() {",
+          "void main() {\nfloat vrodosMacroVariation = 0.0;"
+        ).replace(
+          "#include <map_fragment>",
+          `#include <map_fragment>
+vrodosMacroVariation = 0.68 * vrodosSurfaceNoise(vVrodosSurfaceMeters / max(vrodosVariationScale, 0.001))
+    + 0.32 * vrodosSurfaceNoise(vVrodosSurfaceMeters / max(vrodosVariationScale * 0.47, 0.001) + 17.0);
+float vrodosVariationSigned = (vrodosMacroVariation - 0.5) * 2.0;
+diffuseColor.rgb *= clamp(1.0 + vrodosVariationSigned * vrodosVariationStrength, 0.75, 1.25);`
+        ).replace(
+          "#include <roughnessmap_fragment>",
+          `#include <roughnessmap_fragment>
+roughnessFactor = clamp(roughnessFactor + (vrodosMacroVariation - 0.5) * vrodosVariationStrength * 0.35, 0.0, 1.0);`
+        );
+      };
+      material.customProgramCacheKey = function() {
+        return `${previousCacheKey.call(this)}|${CACHE_KEY}`;
+      };
+      material.needsUpdate = true;
+      return state;
+    }
+    function applyBalancedVariation(material, options) {
+      if (!material) return null;
+      const settings = options || {};
+      if (!material[STATE_PROPERTY] && settings.enabled === false) return null;
+      const state = material[STATE_PROPERTY] || installPatch(material);
+      state.enabled = settings.enabled !== false;
+      state.scale = finiteNumber(settings.scale, 32, 1, 1e4);
+      state.strength = finiteNumber(settings.strength, 0.12, 0, 0.5);
+      state.seed = finiteNumber(settings.seed, 0, 0, 1);
+      if (state.uniforms) {
+        state.uniforms.vrodosVariationScale.value = state.scale;
+        state.uniforms.vrodosVariationStrength.value = state.enabled ? state.strength : 0;
+        state.uniforms.vrodosVariationSeed.value = state.seed;
+      }
+      return state;
+    }
+    root.VRODOSSurfaceMaterial = Object.freeze({
+      applyBalancedVariation,
+      seedFromString
+    });
+  })(typeof window !== "undefined" ? window : globalThis);
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
   VRODOSMaster.domCache = VRODOSMaster.domCache || {};
   VRODOSMaster.getElement = function(id, refresh) {

@@ -14,6 +14,8 @@ class VRodos_Scene_CPT_Manager {
 		'surfaceNormalAttachmentId'    => 'surfaceNormalUrl',
 		'surfaceRoughnessAttachmentId' => 'surfaceRoughnessUrl',
 		'surfaceAoAttachmentId'        => 'surfaceAoUrl',
+		'surfaceMetalnessAttachmentId' => 'surfaceMetalnessUrl',
+		'surfaceDisplacementAttachmentId' => 'surfaceDisplacementUrl',
 	];
 
 	private array $vrodos_scenes_metas_definition;

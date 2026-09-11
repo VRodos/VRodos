@@ -70,6 +70,7 @@ export const runtimeBuildChunks = Object.freeze([
     features: ['runtime-core', 'ui', 'rendering', 'quality-profiles', 'scene-probe'],
     sourceFiles: [
       generatedRuntimeContractPath,
+      masterSource('vrodos_surface_material.js'),
       masterSource('vrodos_master_shared.js'),
       masterSource('vrodos_runtime_settings_helpers.js'),
       masterSource('vrodos_runtime_profile_policy.js'),

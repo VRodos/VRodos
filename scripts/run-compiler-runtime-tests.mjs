@@ -84,7 +84,8 @@ if (!php) {
 	"scripts/test-desktop-profile-pipeline.php",
 	"scripts/test-asset-optimization-lifecycle.php",
 	"scripts/test-asset-origin-contract.php",
-	"scripts/test-glb-legacy-material-normalizer.php"
+	"scripts/test-glb-legacy-material-normalizer.php",
+	"scripts/test-surface-material-package.php"
 ].forEach((testFile) => {
     const result = spawnSync(php, [resolve(root, testFile)], {
         cwd: root,
@@ -121,6 +122,15 @@ const optimizerProgressResult = spawnSync(process.execPath, [resolve(root, "scri
 });
 if (optimizerProgressResult.status !== 0) {
     process.exit(optimizerProgressResult.status || 1);
+}
+
+const planeSurfaceTransactionResult = spawnSync(process.execPath, [resolve(root, "scripts/test-plane-surface-transaction.mjs")], {
+	cwd: root,
+	stdio: "inherit",
+	shell: false
+});
+if (planeSurfaceTransactionResult.status !== 0) {
+	process.exit(planeSurfaceTransactionResult.status || 1);
 }
 
 const storageSecurityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-storage-security-contract.mjs")], {

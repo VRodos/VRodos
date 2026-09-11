@@ -306,6 +306,8 @@ VRODOS.exporter.SceneExporter = class {
             'surfaceNormalUrl',
             'surfaceRoughnessUrl',
             'surfaceAoUrl',
+            'surfaceMetalnessUrl',
+            'surfaceDisplacementUrl',
             'follow_camera',
             'follow_camera_x',
             'follow_camera_z'

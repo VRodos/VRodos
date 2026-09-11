@@ -342,6 +342,7 @@ class VRodos_Asset_Manager {
 		$scripts = [
       // Foundation
       ['vrodos_namespace', VRodos_Path_Manager::editor_js_url( 'vrodos_namespace.js' )],
+      ['vrodos_surface_material', VRodos_Path_Manager::runtime_master_url( 'vrodos_surface_material.js' ), ['vrodos_three_vendor_bundle']],
       ['vrodos_scene_light_artifacts', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_light_artifacts.js' ), ['vrodos_namespace', 'vrodos_three_vendor_bundle']],
       ['vrodos_editor_core_utils', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_core_utils.js' ), ['vrodos_namespace']],
       ['vrodos_editor_diagnostics', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_diagnostics.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
@@ -397,7 +398,7 @@ class VRodos_Asset_Manager {
       ['vrodos_loader_pawn_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_pawn_assets.js' ), ['vrodos_namespace', 'vrodos_loader_scene_asset_helpers', 'vrodos_loader_decoder_config']],
       ['vrodos_loader_resource_metadata', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_resource_metadata.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_sync', 'vrodos_editor_services']],
       ['vrodos_loader_director_camera', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_director_camera.js' ), ['vrodos_namespace', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
-      ['vrodos_loader_generated_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_generated_assets.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
+      ['vrodos_loader_generated_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_generated_assets.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_three_vendor_bundle', 'vrodos_surface_material']],
       ['vrodos_loader_glb_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_glb_assets.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_loader_decoder_config', 'vrodos_loader_glb_asset_cache', 'vrodos_model_origin']],
       ['vrodos_LoaderMulti', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_multi.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_loader_resource_metadata', 'vrodos_loader_director_camera', 'vrodos_loader_generated_assets', 'vrodos_loader_glb_assets', 'vrodos_loader_decoder_config', 'vrodos_scene_settings_sync', 'vrodos_editor_services']],
       ['vrodos_LightsPawn_Loader', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_lights_pawn.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_resource_metadata', 'vrodos_loader_light_assets', 'vrodos_loader_pawn_assets', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
