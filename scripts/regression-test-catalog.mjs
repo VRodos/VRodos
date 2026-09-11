@@ -28,6 +28,7 @@ export const testGroups = Object.freeze({
     "scripts/test-takram-cloud-profile-safety.mjs",
     "scripts/test-takram-textured-moon.mjs",
     "scripts/test-takram-cloud-moon-interaction.mjs",
+    "scripts/test-shadow-runtime.mjs",
     "scripts/test-shadow-maps.mjs",
     "scripts/test-shadow-map-compatibility.mjs",
     "scripts/test-profile-feature-state-check.mjs"

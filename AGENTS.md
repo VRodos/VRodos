@@ -119,7 +119,8 @@ Lighting/shadow ownership:
 
 - `RENDERING_PIPELINE.md` is the canonical current reference for PMNDRS/Takram day-night lighting, adaptive directional shadows, terrain self-shadow stabilization, and emissive/readability handling.
 - Direct sun and moon scene lights are horizon-gated. Do not reintroduce below-horizon sun/moon key light to fix night readability; tune the indirect bridge instead.
-- Large-terrain soft triangle/band artifacts are a shadow precision and terrain self-shadow issue, not an SSAO/refraction issue. Fixes belong in `assets/js/runtime/master/vrodos_quality_profiles.js` and `assets/js/runtime/master/vrodos_master_rendering.js`.
+- Large-terrain soft triangle/band artifacts are a shadow precision and terrain self-shadow issue, not an SSAO/refraction issue. Shadow-role, adaptive-fit, and terrain depth-material fixes belong in `assets/js/runtime/master/vrodos_shadow_runtime.js`; material shader fixes belong in `assets/js/runtime/master/vrodos_master_rendering.js`.
+- `VRODOSMaster.ShadowRuntime.create` assembles shadow helpers with explicit host callbacks; `vrodos_quality_profiles.js` installs its component methods into `SceneSettingsHelpers`. State, tracked resources, and teardown remain on the existing scene component until the lifecycle migration is completed.
 - Do not hardcode Takram shadow bias/normalBias values. Use the existing contact-shadow profile and keep day/night shadow radius changes shared across Takram and VRodos-managed directional lights.
 - Emissive material output and flat-media readability boosts are not scene lights. Do not use emissive settings as substitutes for direct sun/moon lighting or the indirect PBR fill profile.
 

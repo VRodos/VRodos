@@ -64,7 +64,9 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/vrodos_spector_debug.js` | Debug-only Spector.js loader for `?vrodos_spector=1` |
 | `assets/js/runtime/master/vrodos_scene_probe.js` | HDR, scene-probe, and one-time Takram-sky PMREM environment support |
 | `assets/js/runtime/master/vrodos_surface_material.js` | Shared deterministic stochastic-tiling patch for editor and compiled standard PBR plane materials |
-| `assets/js/runtime/master/vrodos_quality_profiles.js` | Source for render, shadow, material, background, post-FX, Horizon, and Takram quality profiles |
+| `assets/js/runtime/master/vrodos_quality_profiles.js` | Render, material, background, post-FX, Horizon, and Takram quality profiles; assembles the shadow helpers |
+| `assets/js/runtime/master/vrodos_shadow_runtime.js` | Shadow roles, terrain stabilization, adaptive fitting, refresh scheduling, diagnostics, and presented-light transforms; state remains on the scene component |
+| `assets/js/runtime/master/vrodos_shadow_maps.js` | Shadow-map type mapping, sampler compatibility, and render-target disposal |
 | `assets/js/runtime/master/lib/vrodos-runtime-core.bundle.js` | Generated compiled-scene core runtime bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-scene-components.bundle.js` | Generated compiled-scene POI/media/assessment component bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
@@ -627,7 +629,7 @@ Cloud style presets are intentionally separate from quality. Quality controls Ta
 
 ## 10. Shadow-Aware Lighting And Reflections
 
-Compiled scenes run a lighting-participation pass from `vrodos_quality_profiles.js` and material shader hooks from `vrodos_master_rendering.js`.
+Compiled scenes share lighting-participation rules from `vrodos_shadow_runtime.js` across shadow and material profiles, assembled by `vrodos_quality_profiles.js`, with material shader hooks from `vrodos_master_rendering.js`.
 
 Scene settings:
 
