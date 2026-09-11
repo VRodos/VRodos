@@ -203,6 +203,8 @@ assert.equal(VRODOS.api.isCompileRunning(), true, 'compile remains active while 
 assert.equal(started, 1, 'the build UI enters its running state once');
 assert.equal(requests[0].action, 'vrodos_compile_action', 'the first request starts the build');
 assert.match(requests[0].params.get('buildId'), /^[a-f0-9]{32}$/);
+assert.equal(requests[0].params.get('runtimeMode'), 'single-player');
+assert.equal(requests[0].params.get('vrRuntimeProfile'), 'desktop');
 assert.equal(servedStatuses[0], 202, 'expected background work uses HTTP 202');
 assert.equal(progress.at(-1).ready, 1);
 assert.equal(progress.at(-1).percent, 48);
@@ -211,14 +213,20 @@ assert.equal(progress.at(-1).profiles[1].message, 'Resizing textures');
 assert.equal(progress.at(-1).profiles[1].step, 6);
 assert.equal(timers.length, 1, 'pending work schedules one retry');
 
+VRODOS.editor.envir.scene.aframeRuntimeMode = 'networked';
+VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'headset';
 timers.shift()();
 await flushPromises();
 assert.equal(servedStatuses[1], 200, 'the retry can complete with HTTP 200');
+assert.equal(requests[1].params.get('runtimeMode'), 'single-player', 'a retry keeps the runtime mode captured when the build started');
+assert.equal(requests[1].params.get('vrRuntimeProfile'), 'desktop', 'a retry keeps the target captured when the build started');
 assert.equal(VRODOS.api.isCompileRunning(), false, 'successful compile clears the active build');
 assert.equal(finished, 1, 'successful compile releases the build controls');
 assert.equal(hidden, 1, 'successful compile hides the progress panel');
 assert.equal(links.at(-1), 'http://localhost:8088/build/scene-89.html');
 assert.equal(consoleErrors.length, 0, 'normal pending and successful responses do not log errors');
+VRODOS.editor.envir.scene.aframeRuntimeMode = 'single-player';
+VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
 
 responses.push(response(202, pendingPayload));
 VRODOS.api.compileScene(false, { skipSave: true });
@@ -322,6 +330,8 @@ sceneSaveWait = new Promise((resolvePromise) => {
 });
 const compileRequestsBeforeSettingsSave = requests.filter((request) => request.action === 'vrodos_compile_action').length;
 responses.push(response(200, { CurrentSceneMasterClient: 'http://localhost:8088/build/scene-89-settings.html' }));
+VRODOS.editor.envir.scene.aframeRuntimeMode = 'networked';
+VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'headset';
 VRODOS.api.compileScene(false);
 await flushPromises();
 assert.equal(settingsSaveCount, 0, 'build preflight waits for an already-running full scene save');
@@ -331,6 +341,8 @@ assert.equal(
     'compilation cannot start while the full scene save is pending'
 );
 
+VRODOS.editor.envir.scene.aframeRuntimeMode = 'single-player';
+VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
 releasePendingSceneSave();
 await flushPromises();
 await flushPromises();
@@ -342,6 +354,9 @@ assert.equal(
     compileRequestsBeforeSettingsSave + 1,
     'compilation starts only after the metadata save succeeds'
 );
+const savedSettingsCompileRequest = requests.filter((request) => request.action === 'vrodos_compile_action').at(-1);
+assert.equal(savedSettingsCompileRequest.params.get('runtimeMode'), 'networked', 'the build keeps the mode selected before its asynchronous save');
+assert.equal(savedSettingsCompileRequest.params.get('vrRuntimeProfile'), 'headset', 'the build keeps the unsaved target selected before its asynchronous save');
 
 const compileRequestsBeforeSaveFailure = requests.filter((request) => request.action === 'vrodos_compile_action').length;
 sceneSaveWait = Promise.resolve();

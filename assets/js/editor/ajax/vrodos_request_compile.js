@@ -28,16 +28,23 @@ VRODOS.utils = VRODOS.utils || {};
 			'';
 	}
 
-	function buildCompileRequest(projectId, sceneId, showPawnPositions, buildId) {
+	function captureCompileSettings() {
 		const scene = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene : {};
+		return Object.freeze({
+			runtimeMode: scene.aframeRuntimeMode === 'networked' ? 'networked' : 'single-player',
+			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop'
+		});
+	}
+
+	function buildCompileRequest(build) {
 		const params = new URLSearchParams({
 			action: 'vrodos_compile_action',
-			projectId,
-			showPawnPositions,
-			vrodos_scene: sceneId,
-			runtimeMode: scene.aframeRuntimeMode === 'networked' ? 'networked' : 'single-player',
-			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop',
-			buildId,
+			projectId: build.projectId,
+			showPawnPositions: build.showPawnPositions,
+			vrodos_scene: build.sceneId,
+			runtimeMode: build.compileSettings.runtimeMode,
+			vrRuntimeProfile: build.compileSettings.vrRuntimeProfile,
+			buildId: build.id,
 			nonce: VRODOS.config.compileNonce || VRODOS.data.compile_nonce || (window.vrodos_api_config && window.vrodos_api_config.compileNonce) || ''
 		});
 		const ajaxBase = VRODOS.config.isAdmin === 'back' ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
@@ -170,7 +177,7 @@ VRODOS.utils = VRODOS.utils || {};
 			build.message = 'Checking build requirements…';
 			dialogState.showBuildProgress(build);
 		}
-		const request = buildCompileRequest(build.projectId, build.sceneId, build.showPawnPositions, build.id);
+		const request = buildCompileRequest(build);
 		build.controller = new window.AbortController();
 
 		fetch(request.url, {
@@ -229,12 +236,13 @@ VRODOS.utils = VRODOS.utils || {};
 		return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
 	}
 
-	function createActiveBuild(projectId, sceneId, showPawnPositions) {
+	function createActiveBuild(projectId, sceneId, showPawnPositions, compileSettings) {
 		activeBuild = {
 			id: createBuildId(),
 			projectId,
 			sceneId,
 			showPawnPositions,
+			compileSettings,
 			ready: 0,
 			total: 0,
 			percent: 0,
@@ -317,7 +325,7 @@ VRODOS.utils = VRODOS.utils || {};
 		if (!compileOptions.skipSave && typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
 			VRODOS.ui.applyCompileDialogSettingsToScene();
 		}
-		const build = createActiveBuild(projectId, sceneId, resolvedShowPawnPositions);
+		const build = createActiveBuild(projectId, sceneId, resolvedShowPawnPositions, captureCompileSettings());
 		if (!compileOptions.skipSave && !shouldSaveBeforeCompile(compileOptions)) {
 			activeBuild = null;
 			console.warn('VRodos: compile blocked because the build settings save API is unavailable.');
