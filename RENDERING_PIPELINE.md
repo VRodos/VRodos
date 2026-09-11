@@ -502,6 +502,7 @@ Composer lifecycle:
 
 - `RenderPass` stays first.
 - Compatible fullscreen effects are merged into the fewest practical `EffectPass` instances; convolution effects stay isolated when PMNDRS cannot merge them safely.
+- Lighting-mask and Horizon foliage selections wait for the critical scene-loader batch to finish, then refresh once. Later scene mutations are coalesced for 120 ms before refreshing. Production builds keep selection-count messages silent unless Horizon diagnostics are enabled.
 - Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
 - Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.
 

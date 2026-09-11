@@ -3349,6 +3349,8 @@
       this.postProcessingSize = new THREE.Vector2();
       this.sceneQueryCache = {};
       this.sceneCollectionsDirty = true;
+      this._pmndrsSceneSelectionsDirty = true;
+      this._pmndrsSceneSelectionRefreshAfterMs = 0;
       this.queuedQualityRefreshId = null;
       this.pendingQualityRefreshWaitForSettle = false;
       this.postProcessingTarget = null;

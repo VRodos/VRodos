@@ -14,10 +14,6 @@ VRODOS.utils = VRODOS.utils || {};
 	const STALLED_BUILD_TIMEOUT_MS = 15 * 60 * 1000;
 	let activeBuild = null;
 
-	function getElement(key) {
-		return dialogState.getElement(key);
-	}
-
 	function resolvePrimaryExperienceUrl(urls) {
 		return urls.CurrentSceneMasterClient ||
 			urls.LocalCurrentSceneMasterClient ||
@@ -161,8 +157,7 @@ VRODOS.utils = VRODOS.utils || {};
 	function shouldSaveBeforeCompile(compileOptions) {
 		return !compileOptions.skipSave &&
 			typeof VRODOS.api.waitForLatestSceneSave === 'function' &&
-			typeof VRODOS.api.saveChanges === 'function' &&
-			getElement('saveButton') &&
+			typeof VRODOS.api.saveSceneSettings === 'function' &&
 			VRODOS.editor.envir &&
 			VRODOS.editor.envir.scene;
 	}
@@ -244,7 +239,7 @@ VRODOS.utils = VRODOS.utils || {};
 			total: 0,
 			percent: 0,
 			message: 'Starting build…',
-			phase: { key: 'save', step: 1, totalSteps: 3, label: 'Saving scene changes' },
+			phase: { key: 'save', step: 1, totalSteps: 3, label: 'Saving build settings' },
 			profiles: [],
 			cancelled: false,
 			stalled: false,
@@ -323,13 +318,21 @@ VRODOS.utils = VRODOS.utils || {};
 			VRODOS.ui.applyCompileDialogSettingsToScene();
 		}
 		const build = createActiveBuild(projectId, sceneId, resolvedShowPawnPositions);
+		if (!compileOptions.skipSave && !shouldSaveBeforeCompile(compileOptions)) {
+			activeBuild = null;
+			console.warn('VRodos: compile blocked because the build settings save API is unavailable.');
+			dialogState.finishBuildState();
+			dialogState.hideBuildProgress();
+			dialogState.showSaveFailedMessage();
+			return;
+		}
 
 		if (shouldSaveBeforeCompile(compileOptions)) {
-			build.message = 'Saving build settings and latest scene changes…';
+			build.message = 'Saving build settings…';
 			dialogState.showSavePendingMessage();
 			dialogState.showBuildProgress(build);
 			VRODOS.api.waitForLatestSceneSave()
-				.then(() => VRODOS.api.saveChanges({ force: true }))
+				.then(() => VRODOS.api.saveSceneSettings())
 				.then(() => {
 					if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;
 					build.message = 'Starting build…';

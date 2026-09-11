@@ -2,6 +2,8 @@ VRODOS.api.sceneSavePromise = Promise.resolve();
 VRODOS.api.isSceneSavePending = false;
 VRODOS.api.isSceneSaveQueued = false;
 VRODOS.api.sceneSaveGeneration = 0;
+VRODOS.api.sceneSettingsSavePromise = Promise.resolve();
+VRODOS.api.isSceneSettingsSavePending = false;
 
 const VRODOS_SURFACE_TEXTURE_ATTACHMENT_KEYS = new Set([
 	'surfaceAlbedoAttachmentId',
@@ -39,6 +41,27 @@ function collectRetainedSurfaceTextureIds() {
 		});
 	}
 	return Array.from(retained);
+}
+
+function parseSceneSaveResponse(response) {
+	return response.text().then((text) => {
+		const trimmedText = String(text || '').trim();
+		let payload = null;
+		try {
+			payload = JSON.parse(trimmedText);
+		} catch (err) {
+			payload = null;
+		}
+
+		if (!response.ok || trimmedText === 'false' || trimmedText === '0' || (payload && payload.success === false)) {
+			const message = payload && payload.data
+				? (typeof payload.data === 'string' ? payload.data : JSON.stringify(payload.data))
+				: (trimmedText || `HTTP ${response.status}`);
+			throw new Error(message);
+		}
+
+		return payload || trimmedText;
+	});
 }
 
 VRODOS.api.whenSceneSaveSettles = function() {
@@ -157,24 +180,7 @@ VRODOS.api.saveScene = function() {
 		method: 'POST',
 		body: postdata
 	})
-	.then( (response) => response.text().then((text) => {
-		const trimmedText = String(text || '').trim();
-		let payload = null;
-		try {
-			payload = JSON.parse(trimmedText);
-		} catch (err) {
-			payload = null;
-		}
-
-		if (!response.ok || trimmedText === 'false' || trimmedText === '0' || (payload && payload.success === false)) {
-			const message = payload && payload.data
-				? (typeof payload.data === 'string' ? payload.data : JSON.stringify(payload.data))
-				: (trimmedText || `HTTP ${response.status}`);
-			throw new Error(message);
-		}
-
-		return payload || trimmedText;
-	}))
+	.then(parseSceneSaveResponse)
 	.then( (data) => {
 
 		VRODOS.api.setSceneSaveControlsSaved(saveGeneration);
@@ -205,6 +211,45 @@ VRODOS.api.saveScene = function() {
 	});
 
 	return VRODOS.api.sceneSavePromise;
+}
+
+VRODOS.api.saveSceneSettings = function() {
+	if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
+		return Promise.reject(new Error('Scene settings cannot be saved while the scene is loading.'));
+	}
+
+	if (VRODOS.api.isSceneSettingsSavePending) {
+		return VRODOS.api.sceneSettingsSavePromise;
+	}
+
+	if (typeof VRODOS.api.exportCurrentSceneMetadata !== 'function') {
+		return Promise.reject(new Error('The scene settings exporter is unavailable.'));
+	}
+
+	const sceneMetadata = VRODOS.api.exportCurrentSceneMetadata();
+	if (!sceneMetadata) {
+		return Promise.reject(new Error('Scene settings could not be exported.'));
+	}
+
+	const postdata = new URLSearchParams({
+		'action': 'vrodos_save_scene_settings_action',
+		'nonce': window.vrodos_data.scene_mutation_nonce,
+		'scene_id': VRODOS.config.sceneId,
+		'scene_metadata': sceneMetadata
+	});
+
+	VRODOS.api.isSceneSettingsSavePending = true;
+	VRODOS.api.sceneSettingsSavePromise = fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
+		method: 'POST',
+		credentials: 'same-origin',
+		body: postdata
+	})
+		.then(parseSceneSaveResponse)
+		.finally(() => {
+			VRODOS.api.isSceneSettingsSavePending = false;
+		});
+
+	return VRODOS.api.sceneSettingsSavePromise;
 }
 
 VRODOS.api.clickSceneSaveButton = function() {

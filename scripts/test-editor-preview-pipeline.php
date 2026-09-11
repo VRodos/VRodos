@@ -52,9 +52,18 @@ function wp_next_scheduled( string $hook, array $args = [] ) {
 	return $GLOBALS['vrodos_test_events'][ $key ] ?? false;
 }
 
-function wp_schedule_single_event( int $timestamp, string $hook, array $args = [] ): bool {
+function wp_schedule_single_event( int $timestamp, string $hook, array $args = [], bool $wp_error = false ): bool {
 	$key = $hook . ':' . implode( ',', $args );
 	$GLOBALS['vrodos_test_events'][ $key ] = $timestamp;
+	return true;
+}
+
+function wp_unschedule_event( int $timestamp, string $hook, array $args = [], bool $wp_error = false ) {
+	$key = $hook . ':' . implode( ',', $args );
+	if ( ( $GLOBALS['vrodos_test_events'][ $key ] ?? false ) !== $timestamp ) {
+		return false;
+	}
+	unset( $GLOBALS['vrodos_test_events'][ $key ] );
 	return true;
 }
 
@@ -67,6 +76,10 @@ function wp_clear_scheduled_hook( string $hook, array $args = [] ): int {
 
 function is_wp_error( $value ): bool {
 	return $value instanceof WP_Error;
+}
+
+function sanitize_key( string $value ): string {
+	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 }
 
 function wp_normalize_path( string $path ): string {
@@ -116,9 +129,11 @@ class VRodos_Storage_Manager {
 	}
 }
 
+require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-queue.php';
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
 
 class VRodos_Editor_Preview_Test_Harness {
+	use VRodos_Asset_Optimization_Queue;
 	use VRodos_Asset_Optimization_Editor_Preview;
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
@@ -149,8 +164,8 @@ class VRodos_Editor_Preview_Test_Harness {
 		$GLOBALS['vrodos_test_removed_results'][] = $paths;
 	}
 
-	private static function maybe_queue_web_high( int $asset_id, array $source, array $analysis ) {
-		unset( $asset_id, $source, $analysis );
+	private static function maybe_queue_web_high( int $asset_id, array $source, array $analysis, string $queue_priority = 'normal' ) {
+		unset( $asset_id, $source, $analysis, $queue_priority );
 		return false;
 	}
 
@@ -221,6 +236,11 @@ $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::M
 $GLOBALS['vrodos_test_events'] = [];
 invoke_preview_method( 'maybe_queue_editor_preview', [ $asset_id, $source, $analysis, [ 'shouldPreview' => true, 'reasons' => [ 'source-size' ] ] ] );
 vrodos_preview_assert( 1 === count( $GLOBALS['vrodos_test_events'] ), 'a queued record with a missing cron event must repair its schedule' );
+
+invoke_preview_method( 'maybe_queue_editor_preview', [ $asset_id, $source, $analysis, [ 'shouldPreview' => true, 'reasons' => [ 'source-size' ] ], 'build' ] );
+$prioritized_preview = $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::META_KEY ]['derivatives']['editor-preview'];
+vrodos_preview_assert( 1 === (int) array_values( $GLOBALS['vrodos_test_events'] )[0], 'an active build must promote a queued editor preview ahead of background work' );
+vrodos_preview_assert( 'build' === (string) ( $prioritized_preview['queuePriority'] ?? '' ), 'editor preview must retain build priority for the ordered family' );
 
 $GLOBALS['vrodos_test_meta'][ $asset_id ][ VRodos_Editor_Preview_Test_Harness::META_KEY ]['derivatives']['editor-preview'] = [
 	'status'            => 'running',

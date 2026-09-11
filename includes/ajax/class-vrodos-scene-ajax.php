@@ -9,6 +9,7 @@ require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-build-state.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-standalone-exporter.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-settings-merger.php';
 
 class VRodos_Scene_AJAX {
 	private const SURFACE_TEXTURE_ROLE = 'surface-textures';
@@ -23,6 +24,7 @@ class VRodos_Scene_AJAX {
 
 	public function __construct() {
 		add_action( 'wp_ajax_vrodos_save_scene_async_action', [ $this, 'save_scene_async_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_save_scene_settings_action', [ $this, 'save_scene_settings_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_delete_scene_action', [ $this, 'delete_scene_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_reorder_scenes_action', [ $this, 'reorder_scenes_callback' ] );
 		add_action( 'wp_ajax_image_upload_action', [ $this, 'image_upload_action_callback' ] );
@@ -124,6 +126,61 @@ class VRodos_Scene_AJAX {
 		wp_send_json_success( [
 			'scene_id' => $scene_id,
 		] );
+	}
+
+	/** Saves build settings by merging metadata into the latest canonical scene. */
+	public function save_scene_settings_action_callback(): void {
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$scene_id = absint( $_POST['scene_id'] ?? 0 );
+		if ( $scene_id <= 0 ) {
+			wp_send_json_error( 'Invalid scene id.', 400 );
+		}
+		if ( 'vrodos_scene' !== get_post_type( $scene_id ) || ! current_user_can( 'edit_post', $scene_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$metadata_json = isset( $_POST['scene_metadata'] ) ? wp_unslash( $_POST['scene_metadata'] ) : '';
+		if ( ! is_string( $metadata_json ) || '' === trim( $metadata_json ) ) {
+			wp_send_json_error( 'Missing scene settings.', 400 );
+		}
+
+		try {
+			$scene = VRodos_Scene_Settings_Merger::merge_json(
+				(string) get_post_field( 'post_content', $scene_id ),
+				$metadata_json
+			);
+		} catch ( InvalidArgumentException $error ) {
+			wp_send_json_error( $error->getMessage(), 400 );
+		} catch ( RuntimeException $error ) {
+			wp_send_json_error( 'Scene settings validation failed: ' . $error->getMessage(), 500 );
+		}
+
+		$encoded_scene = wp_json_encode( $scene, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+		if ( ! is_string( $encoded_scene ) || '' === $encoded_scene ) {
+			wp_send_json_error( 'Scene settings could not be encoded.', 500 );
+		}
+		$result = wp_update_post(
+			[
+				'ID'           => $scene_id,
+				'post_content' => $encoded_scene,
+			],
+			true
+		);
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( 'Scene settings save failed: ' . $result->get_error_message(), 500 );
+		}
+		if ( ! $result ) {
+			wp_send_json_error( 'Scene settings save failed.', 500 );
+		}
+
+		wp_send_json_success(
+			[
+				'scene_id'     => $scene_id,
+				'object_count' => (int) $scene->metadata->objects,
+			]
+		);
 	}
 
 	public function upload_surface_texture_action_callback(): void {

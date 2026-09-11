@@ -3508,6 +3508,7 @@ ${STOCHASTIC_GLSL}`).replace(
         resource.dispose();
       }
     };
+    const SCENE_SELECTION_SETTLE_MS = 120;
     H.clearHdrEnvironmentMap = function(clearSceneEnvironment) {
       disposeRuntimeResource(this._envMapRenderTarget);
       this._envMapRenderTarget = null;
@@ -3598,9 +3599,12 @@ ${STOCHASTIC_GLSL}`).replace(
     };
     H.markSceneCollectionsDirty = function() {
       this.sceneCollectionsDirty = true;
+      this.sceneQueryCache = {};
+      this._pmndrsSceneSelectionsDirty = true;
+      this._pmndrsSceneSelectionRefreshAfterMs = (typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now()) + SCENE_SELECTION_SETTLE_MS;
     };
     H.getCachedSceneQuery = function(key, selector) {
-      if (!this.sceneQueryCache || this.sceneCollectionsDirty || !this.sceneQueryCache[key]) {
+      if (!this.sceneQueryCache || !this.sceneQueryCache[key]) {
         this.sceneQueryCache = this.sceneQueryCache || {};
         this.sceneQueryCache[key] = this.el.querySelectorAll(selector);
       }

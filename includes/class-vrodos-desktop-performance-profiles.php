@@ -90,6 +90,84 @@ final class VRodos_Desktop_Performance_Profiles {
 		];
 	}
 
+	/** Normalizes the compact editor-owned profile state before it is persisted. */
+	public static function normalize_stored_state_for_save( $raw_state ): array {
+		if ( is_object( $raw_state ) ) {
+			$raw_state = json_decode( wp_json_encode( $raw_state ), true );
+		}
+		if ( ! is_array( $raw_state ) ) {
+			throw new InvalidArgumentException( 'Desktop performance profiles must be a JSON object.' );
+		}
+		if ( isset( $raw_state['schemaVersion'] ) && ! in_array( (int) $raw_state['schemaVersion'], [ 1, 2 ], true ) ) {
+			throw new InvalidArgumentException( 'Desktop performance profile schema is unsupported.' );
+		}
+		if ( isset( $raw_state['profiles'] ) && ! is_array( $raw_state['profiles'] ) ) {
+			throw new InvalidArgumentException( 'Desktop performance profile slots must be a JSON object.' );
+		}
+
+		$state = self::migrate_stored_state( $raw_state );
+		foreach ( [ 'low', 'medium', 'high' ] as $profile_id ) {
+			$profile = $state['profiles'][ $profile_id ] ?? [];
+			if ( is_object( $profile ) ) {
+				$profile = json_decode( wp_json_encode( $profile ), true );
+			}
+			if ( ! is_array( $profile ) ) {
+				throw new InvalidArgumentException( sprintf( 'Desktop %s profile must be a JSON object.', ucfirst( $profile_id ) ) );
+			}
+			foreach ( [ 'settings', 'presetSettings' ] as $field ) {
+				$settings = $profile[ $field ] ?? [];
+				if ( is_object( $settings ) ) {
+					$settings = json_decode( wp_json_encode( $settings ), true );
+				}
+				if ( ! is_array( $settings ) ) {
+					throw new InvalidArgumentException( sprintf( 'Desktop %s %s must be a JSON object.', ucfirst( $profile_id ), $field ) );
+				}
+				$profile[ $field ] = $settings;
+			}
+			$state['profiles'][ $profile_id ] = $profile;
+		}
+
+		$errors = self::validate_stored_state( $state );
+		if ( $errors ) {
+			throw new InvalidArgumentException( implode( ' ', $errors ) );
+		}
+
+		$build_mode = 'adaptive' === (string) ( $state['buildMode'] ?? '' ) ? 'adaptive' : 'custom';
+		$active_tab = in_array( (string) ( $state['activeTab'] ?? '' ), [ 'custom', 'low', 'medium', 'high' ], true )
+			? (string) $state['activeTab']
+			: 'custom';
+		if ( 'custom' === $build_mode ) {
+			$active_tab = 'custom';
+		}
+
+		$normalized = [
+			'schemaVersion' => 2,
+			'activeTab'     => $active_tab,
+			'buildMode'     => $build_mode,
+			'profiles'      => [],
+		];
+		foreach ( [ 'low', 'medium', 'high' ] as $profile_id ) {
+			$profile = $state['profiles'][ $profile_id ];
+			$normalized_profile = [];
+			foreach ( [ 'settings', 'presetSettings' ] as $field ) {
+				$settings = $profile[ $field ];
+				$editable = array_fill_keys( (array) ( self::contract()['profiles'][ $profile_id ]['editableSettings'] ?? [] ), true );
+				$normalized_settings = [];
+				foreach ( $settings as $key => $value ) {
+					$key = (string) $key;
+					if ( empty( $editable[ $key ] ) ) {
+						continue;
+					}
+					$normalized_settings[ $key ] = VRodos_Runtime_Settings_Contract::normalize( $key, $value );
+				}
+				$normalized_profile[ $field ] = (object) $normalized_settings;
+			}
+			$normalized['profiles'][ $profile_id ] = (object) $normalized_profile;
+		}
+
+		return $normalized;
+	}
+
 	private static function migrate_stored_state( array $state ): array {
 		if ( 2 === (int) ( $state['schemaVersion'] ?? 0 ) ) {
 			return $state;
@@ -242,7 +320,7 @@ final class VRodos_Desktop_Performance_Profiles {
 		$raw = is_object( $metadata ) && property_exists( $metadata, $metadata_key )
 			? $metadata->{$metadata_key}
 			: [];
-		if ( is_object( $raw ) ) {
+		if ( is_object( $raw ) || is_array( $raw ) ) {
 			$raw = json_decode( wp_json_encode( $raw ), true );
 		}
 		return is_array( $raw ) ? $raw : [];

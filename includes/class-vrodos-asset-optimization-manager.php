@@ -10,6 +10,7 @@ require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-dash
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-analysis.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
+require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-queue.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-load.php';

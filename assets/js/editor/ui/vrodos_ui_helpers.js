@@ -340,12 +340,14 @@ VRODOS.ui.compileDialogState = (function(existing) {
 	function buildProfileStatusLabel(profile) {
 		if (profile.status === 'ready') return 'Ready';
 		if (profile.status === 'failed') return 'Failed';
+		const percent = Math.max(0, Math.min(99, Math.round(Number(profile.percent) || 0)));
 		if (profile.status === 'running') {
+			if (percent > 0) return `Running · ${percent}%`;
 			return profile.totalSteps > 0 && profile.step > 0
 				? `Running — step ${profile.step}/${profile.totalSteps}`
 				: 'Running';
 		}
-		return 'Queued';
+		return percent > 0 ? `Queued · ${percent}%` : 'Queued';
 	}
 
 	function renderBuildProfiles(profiles) {

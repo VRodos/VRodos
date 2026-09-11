@@ -124,40 +124,35 @@ VRODOS.utils.sceneCreateObjectRecord = function(nameModel, path, categoryName, d
 };
 
 VRODOS.exporter.SceneExporter = class {
-    parse(scene) {
-        const output = {
-            metadata: {
-                formatVersion: 4.0,
-                type: 'scene',
-                generatedBy: 'VRODOS.exporter.SceneExporter.js',
-                timestamp: Date.now(),
-                objects: 0,
-            },
-            urlBaseType: 'relativeToScene',
-            objects: {},
-        };
+    exportSettingsMetadata(scene) {
+        const metadata = {};
+        const editorScene = scene || (VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+        if (!editorScene) {
+            return metadata;
+        }
 
-        // Populate metadata using the centralized schema
+        // Populate settings metadata using the centralized schema. This deliberately
+        // avoids scene traversal so build-setting saves cannot rename or serialize objects.
         const schema = VRODOS.config.SCENE_SETTINGS_SCHEMA || {};
         for (const [key, config] of Object.entries(schema)) {
             const envirKey = config.envirKey;
-            let value = VRODOS.editor.envir.scene[envirKey];
+            let value = editorScene[envirKey];
 
             // Special handling for legacy keys or specific logic
             if (key === 'ClearColor') {
-                value = scene.background ? `#${  scene.background.getHexString()}` : '#000000';
+                value = editorScene.background ? `#${  editorScene.background.getHexString()}` : '#000000';
             } else if (key === 'fogtype') {
-                value = (VRODOS.editor.envir.scene.fogCategory === 1) ? 'linear' : (VRODOS.editor.envir.scene.fogCategory === 2 ? 'exponential' : 'none');
+                value = (editorScene.fogCategory === 1) ? 'linear' : (editorScene.fogCategory === 2 ? 'exponential' : 'none');
             } else if (key === 'backgroundImagePath') {
                 // The scene attachment ID is canonical. The editor and compiler hydrate its current URL.
                 value = '0';
             } else if (key === 'aframeNavigationMode') {
                 value = ['walk', 'walkable', 'fly'].includes(value)
                     ? value
-                    : (VRODOS.editor.envir.scene.aframeCollisionMode === 'off' ? 'walk' : 'walkable');
+                    : (editorScene.aframeCollisionMode === 'off' ? 'walk' : 'walkable');
             } else if (key === 'aframeCollisionMode') {
-                const navigationMode = ['walk', 'walkable', 'fly'].includes(VRODOS.editor.envir.scene.aframeNavigationMode)
-                    ? VRODOS.editor.envir.scene.aframeNavigationMode
+                const navigationMode = ['walk', 'walkable', 'fly'].includes(editorScene.aframeNavigationMode)
+                    ? editorScene.aframeNavigationMode
                     : (value === 'off' ? 'walk' : 'walkable');
                 value = navigationMode === 'walkable' ? 'auto' : 'off';
             }
@@ -169,13 +164,29 @@ VRODOS.exporter.SceneExporter = class {
                 if (typeof boolValue !== 'boolean') {
                     boolValue = config.default;
                 }
-                output.metadata[key] = boolValue;
+                metadata[key] = boolValue;
             } else if (config.type === 'number') {
-                output.metadata[key] = (typeof value === 'number') ? value : config.default;
+                metadata[key] = (typeof value === 'number') ? value : config.default;
             } else {
-                output.metadata[key] = value || config.default;
+                metadata[key] = value || config.default;
             }
         }
+
+        return metadata;
+    }
+
+    parse(scene) {
+        const output = {
+            metadata: Object.assign({
+                formatVersion: 4.0,
+                type: 'scene',
+                generatedBy: 'VRODOS.exporter.SceneExporter.js',
+                timestamp: Date.now(),
+                objects: 0,
+            }, this.exportSettingsMetadata(scene)),
+            urlBaseType: 'relativeToScene',
+            objects: {},
+        };
 
         const exportedDuplicateKeys = new Map();
         const skippedDuplicateObjects = [];
@@ -488,6 +499,16 @@ VRODOS.api.exportCurrentSceneJson = function(scene) {
 
     const exporter = new VRODOS.exporter.SceneExporter();
     return exporter.parse(targetScene);
+};
+
+VRODOS.api.exportCurrentSceneMetadata = function(scene) {
+    const targetScene = scene || (VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+    if (!targetScene || !VRODOS.exporter || !VRODOS.exporter.SceneExporter) {
+        return '';
+    }
+
+    const exporter = new VRODOS.exporter.SceneExporter();
+    return JSON.stringify(exporter.exportSettingsMetadata(targetScene));
 };
 
 VRODOS.api.formatSceneJsonForDisplay = function(sceneJson) {

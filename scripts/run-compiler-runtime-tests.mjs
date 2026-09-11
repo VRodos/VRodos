@@ -81,6 +81,7 @@ if (!php) {
 	"scripts/test-private-media-cache-logic.php",
 	"scripts/test-editor-preview-pipeline.php",
 	"scripts/test-editor-load-resolver.php",
+	"scripts/test-scene-settings-save.php",
 	"scripts/test-desktop-profile-pipeline.php",
 	"scripts/test-asset-optimization-lifecycle.php",
 	"scripts/test-asset-origin-contract.php",
@@ -113,6 +114,15 @@ const compileLifecycleResult = spawnSync(process.execPath, [resolve(root, "scrip
 });
 if (compileLifecycleResult.status !== 0) {
     process.exit(compileLifecycleResult.status || 1);
+}
+
+const sceneSettingsSaveResult = spawnSync(process.execPath, [resolve(root, "scripts/test-scene-settings-save.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    shell: false
+});
+if (sceneSettingsSaveResult.status !== 0) {
+    process.exit(sceneSettingsSaveResult.status || 1);
 }
 
 const optimizerProgressResult = spawnSync(process.execPath, [resolve(root, "scripts/test-optimizer-progress.mjs")], {

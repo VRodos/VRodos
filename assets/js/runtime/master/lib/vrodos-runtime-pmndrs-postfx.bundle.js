@@ -2388,7 +2388,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         return null;
       }
       if (self.pmndrsCloudLightingMaskPass) {
-        refreshPmndrsCloudLightingMaskSelection(self, scene);
         return self.pmndrsCloudLightingMaskPass;
       }
       try {
@@ -2397,7 +2396,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
           self.pmndrsCloudLightingMaskPass.selectionLayer = PMNDRS_CLOUD_LIGHTING_MASK_LAYER;
         }
         composer.addPass(self.pmndrsCloudLightingMaskPass);
-        refreshPmndrsCloudLightingMaskSelection(self, scene);
+        self._pmndrsSceneSelectionsDirty = true;
+        self._pmndrsSceneSelectionRefreshAfterMs = 0;
         return self.pmndrsCloudLightingMaskPass;
       } catch (err) {
         console.warn("[VRodos] Takram LightingMaskPass construction failed; cloud light shafts will remain off:", err);
@@ -2678,6 +2678,19 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
       }
       return true;
     }
+    function shouldRefreshPmndrsSceneSelections(self) {
+      let loader;
+      let now;
+      if (!self || !self._pmndrsSceneSelectionsDirty || !self.el) {
+        return false;
+      }
+      loader = self.el.components && self.el.components["vrodos-scene-loader"];
+      if (self.el.hasAttribute && self.el.hasAttribute("vrodos-scene-loader") && (!loader || loader.isReady !== true)) {
+        return false;
+      }
+      now = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+      return now >= (Number(self._pmndrsSceneSelectionRefreshAfterMs) || 0);
+    }
     function clearPmndrsCloudLightingMaskSelection(self) {
       if (!self || !self.pmndrsCloudLightingMaskPass || !self.pmndrsCloudLightingMaskPass.selection) {
         return;
@@ -2709,8 +2722,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         maskPass.selection.add(node);
         selectedCount++;
       });
-      if (self._pmndrsCloudLightingMaskSelectedCount !== selectedCount) {
-        console.info(`[VRodos] PMNDRS cloud lighting mask selection refreshed: ${selectedCount} mesh(es) stay on scene light-source lighting.`);
+      if (self._pmndrsCloudLightingMaskSelectedCount !== selectedCount && (hasPmndrsDebugFlag("pmndrsHorizonDiagnostics", "vrodos_debug_pmndrs_horizon") || hasPmndrsDebugFlag("pmndrsHorizonDiagnosticsVerbose", "vrodos_debug_pmndrs_horizon_verbose"))) {
+        console.debug(`[VRodos] PMNDRS cloud lighting mask selection refreshed: ${selectedCount} mesh(es) stay on scene light-source lighting.`);
       }
       self._pmndrsCloudLightingMaskSelectedCount = selectedCount;
       updatePmndrsCloudLinkedDiagnostics(self, {
@@ -2973,7 +2986,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     function refreshPmndrsHorizonFoliageOverlaySelection(self, scene) {
       let overlayPass;
       let selectedCount = 0;
-      const selectedSummaries = [];
+      const diagnosticsEnabled = hasPmndrsDebugFlag("pmndrsHorizonDiagnostics", "vrodos_debug_pmndrs_horizon") || hasPmndrsDebugFlag("pmndrsHorizonDiagnosticsVerbose", "vrodos_debug_pmndrs_horizon_verbose");
+      const selectedSummaries = diagnosticsEnabled ? [] : null;
       if (!self || !scene) {
         return 0;
       }
@@ -2988,7 +3002,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         }
         overlayPass.selection.add(node);
         selectedCount++;
-        if (selectedSummaries.length < 12) {
+        if (selectedSummaries && selectedSummaries.length < 12) {
           const materials = Array.isArray(node.material) ? node.material : [node.material];
           const materialSummary = materials.map((material) => {
             if (!material) {
@@ -3006,14 +3020,14 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
           selectedSummaries.push(`${node.name || node.uuid || "unnamed-mesh"} -> ${materialSummary}`);
         }
       });
-      if (self._pmndrsHorizonFoliageOverlaySelectedCount !== selectedCount) {
-        console.info(`[VRodos] PMNDRS Horizon foliage overlay selection refreshed: ${selectedCount} alpha-cutout mesh(es) will bypass aerial compositing.`);
-        self._pmndrsHorizonFoliageOverlaySelectedCount = selectedCount;
+      if (diagnosticsEnabled && self._pmndrsHorizonFoliageOverlaySelectedCount !== selectedCount) {
+        console.debug(`[VRodos] PMNDRS Horizon foliage overlay selection refreshed: ${selectedCount} alpha-cutout mesh(es) will bypass aerial compositing.`);
         if (selectedSummaries.length > 0) {
-          console.info(`[VRodos] PMNDRS Horizon foliage overlay meshes:
+          console.debug(`[VRodos] PMNDRS Horizon foliage overlay meshes:
 ${selectedSummaries.join("\n")}`);
         }
       }
+      self._pmndrsHorizonFoliageOverlaySelectedCount = selectedCount;
       return selectedCount;
     }
     function PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE2) {
@@ -3875,8 +3889,8 @@ ${selectedSummaries.join("\n")}`);
             }
             if (useHorizonAerial && !this.pmndrsCloudsEffect && PP && PP.Selection && PP.RenderPass) {
               this.pmndrsHorizonFoliageOverlayPass = new PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE2);
-              refreshPmndrsHorizonFoliageOverlaySelection(this, scene);
-              applyPmndrsHorizonFoliageMaterialNormalization(this);
+              this._pmndrsSceneSelectionsDirty = true;
+              this._pmndrsSceneSelectionRefreshAfterMs = 0;
               composer.addPass(this.pmndrsHorizonFoliageOverlayPass);
               this.pmndrsAerialPerspectiveEffect.overlay = this.pmndrsHorizonFoliageOverlayPass;
             } else {
@@ -4280,12 +4294,16 @@ ${selectedSummaries.join("\n")}`);
         }
         syncPmndrsCloudsEffect(self, camera, atmosphereConfig);
         syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig);
-        if (self.pmndrsHorizonFoliageOverlayPass && self.sceneCollectionsDirty) {
-          refreshPmndrsHorizonFoliageOverlaySelection(self, scene);
-          applyPmndrsHorizonFoliageMaterialNormalization(self);
-        }
-        if (self.pmndrsCloudLightingMaskPass && self.sceneCollectionsDirty) {
-          refreshPmndrsCloudLightingMaskSelection(self, scene);
+        if ((self.pmndrsHorizonFoliageOverlayPass || self.pmndrsCloudLightingMaskPass) && shouldRefreshPmndrsSceneSelections(self)) {
+          if (self.pmndrsHorizonFoliageOverlayPass) {
+            refreshPmndrsHorizonFoliageOverlaySelection(self, scene);
+            applyPmndrsHorizonFoliageMaterialNormalization(self);
+          }
+          if (self.pmndrsCloudLightingMaskPass) {
+            refreshPmndrsCloudLightingMaskSelection(self, scene);
+          }
+          self._pmndrsSceneSelectionsDirty = false;
+          self._pmndrsSceneSelectionRefreshAfterMs = 0;
         }
         const useXrStereoComposer = isPmndrsXrStereoComposerActive(self);
         if (!useXrStereoComposer) {

@@ -11,6 +11,7 @@ class VRodos_Asset_Optimization_Admin_Controller {
 	use VRodos_Asset_Optimization_Scanner;
 	use VRodos_Asset_Optimization_Analysis_Service;
 	use VRodos_Asset_Optimization_Derivative_Service;
+	use VRodos_Asset_Optimization_Queue;
 	use VRodos_Asset_Optimization_Editor_Preview;
 	use VRodos_Asset_Optimization_Desktop_Profiles;
 	use VRodos_Asset_Optimization_Editor_Load;

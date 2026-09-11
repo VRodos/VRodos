@@ -129,10 +129,15 @@ VRODOS.api = VRODOS.api || {};
 
             const waitForLatestSave = typeof VRODOS.api.waitForLatestSceneSave === 'function'
                 ? VRODOS.api.waitForLatestSceneSave()
-                : Promise.resolve();
+                : Promise.reject(new Error('The scene save coordinator is unavailable.'));
 
             waitForLatestSave
-                .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({ force: true }) : Promise.resolve())
+                .then(() => {
+                    if (typeof VRODOS.api.saveSceneSettings !== 'function') {
+                        throw new Error('The build settings save API is unavailable.');
+                    }
+                    return VRODOS.api.saveSceneSettings();
+                })
                 .then(() => {
                     if (label) label.textContent = 'Saved';
                     if (status) status.textContent = 'Build settings saved. No build was started.';

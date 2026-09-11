@@ -134,7 +134,8 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 
 		$lease_token = self::acquire_optimizer_lease( 'preview:' . $asset_id, self::EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS );
 		if ( '' === $lease_token ) {
-			self::schedule_editor_preview_job( $asset_id, 60 );
+			$record = self::get_editor_preview_record( $asset_id );
+			self::schedule_editor_preview_job( $asset_id, 60, (string) ( $record['queuePriority'] ?? 'normal' ) );
 			return;
 		}
 
@@ -241,11 +242,12 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		self::continue_web_family_after_editor_preview( $asset_id, $source );
 	}
 
-	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision ): void {
+	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision, string $queue_priority = 'normal' ): void {
 		$record = self::get_editor_preview_record( $asset_id );
 		$current_status = (string) ( $record['status'] ?? '' );
 		$current_fingerprint = (string) ( $record['sourceFingerprint'] ?? '' );
 		$source_fingerprint = self::source_fingerprint( $source );
+		$queue_priority = self::optimizer_queue_priority( (string) ( $record['queuePriority'] ?? '' ), $queue_priority );
 
 		if ( 'ready' === $current_status && $current_fingerprint === $source_fingerprint && self::editor_preview_record_is_ready( $record, $source ) ) {
 			return;
@@ -261,6 +263,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'profile'           => self::editor_preview_profile_record(),
 					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
 					'reasons'           => $decision['reasons'],
+					'queuePriority'     => $queue_priority,
 				]
 			);
 			wp_clear_scheduled_hook( self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] );
@@ -268,7 +271,10 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		}
 
 		if ( 'queued' === $current_status && $current_fingerprint === $source_fingerprint ) {
-			self::schedule_editor_preview_job( $asset_id );
+			if ( 'build' === $queue_priority ) {
+				self::store_editor_preview_record( $asset_id, [ 'queuePriority' => 'build' ] );
+			}
+			self::schedule_editor_preview_job( $asset_id, 0, $queue_priority );
 			return;
 		}
 
@@ -287,7 +293,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'retryCount' => absint( $record['retryCount'] ?? 0 ) + 1,
 				]
 			);
-			self::schedule_editor_preview_job( $asset_id );
+			self::schedule_editor_preview_job( $asset_id, 0, $queue_priority );
 			return;
 		}
 		if ( 'failed' === $current_status && $current_fingerprint === $source_fingerprint ) {
@@ -307,10 +313,11 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'editorOnly'        => true,
 				'compileEnabled'    => false,
 				'queuedAt'          => current_time( 'mysql', true ),
+				'queuePriority'     => $queue_priority,
 			]
 		);
 
-		self::schedule_editor_preview_job( $asset_id );
+		self::schedule_editor_preview_job( $asset_id, 0, $queue_priority );
 	}
 
 	private static function editor_preview_waits_for_web_high( int $asset_id, array $source ): bool {
@@ -324,7 +331,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			&& absint( $record['sourceGeneration'] ?? 0 ) === absint( $source['generation'] ?? 0 );
 	}
 
-	private static function schedule_editor_preview_job( int $asset_id, int $delay = 0 ): void {
+	private static function schedule_editor_preview_job( int $asset_id, int $delay = 0, string $queue_priority = 'normal' ): void {
 		$asset_id = absint( $asset_id );
 		if ( $asset_id <= 0 ) {
 			return;
@@ -334,8 +341,9 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			$delay = self::EDITOR_PREVIEW_QUEUE_DELAY_SECONDS;
 		}
 
-		if ( ! wp_next_scheduled( self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] ) ) {
-			wp_schedule_single_event( time() + max( 1, $delay ), self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] );
+		$result = self::schedule_optimizer_event( self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ], $delay, $queue_priority );
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( '[VRodos] Failed to schedule editor preview job for asset #%d: %s', $asset_id, $result->get_error_message() ) );
 		}
 	}
 

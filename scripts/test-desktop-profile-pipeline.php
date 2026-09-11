@@ -110,6 +110,15 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $args = [
 	return true;
 }
 
+function wp_unschedule_event( int $timestamp, string $hook, array $args = [], bool $wp_error = false ) {
+	$key = $hook . ':' . serialize( $args );
+	if ( ( $GLOBALS['vrodos_desktop_test_events'][ $key ] ?? false ) !== $timestamp ) {
+		return false;
+	}
+	unset( $GLOBALS['vrodos_desktop_test_events'][ $key ] );
+	return true;
+}
+
 function wp_strip_all_tags( string $value ): string {
 	return strip_tags( $value );
 }
@@ -119,9 +128,11 @@ function wp_get_post_terms( int $post_id, string $taxonomy, array $args = [] ): 
 	return [ 'walkable-surface' ];
 }
 
+require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-queue.php';
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
 
 final class VRodos_Desktop_Profile_Test_Harness {
+	use VRodos_Asset_Optimization_Queue;
 	use VRodos_Asset_Optimization_Desktop_Profiles;
 
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
@@ -184,8 +195,8 @@ final class VRodos_Desktop_Profile_Test_Harness {
 		return 'ready' === ( $record['status'] ?? '' );
 	}
 
-	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision ): void {
-		wp_schedule_single_event( time() + 10, self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ] );
+	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision, string $queue_priority = 'normal' ): void {
+		self::schedule_optimizer_event( self::EDITOR_PREVIEW_CRON_HOOK, [ $asset_id ], 10, $queue_priority );
 	}
 }
 
@@ -265,6 +276,16 @@ vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a
 VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'an existing cron event must not be duplicated' );
 vrodos_desktop_assert( 1 === substr_count( (string) file_get_contents( $log_path ), 'Recovered missing desktop profile cron job' ), 'lost-job recovery should be logged once' );
+
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$job_key = seed_desktop_profile_record( $asset_id, $profile, 'queued', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
+$queued_record = invoke_desktop_profile_method( 'desktop_profile_record_by_job_key', [ $asset_id, $job_key ] );
+$queued_args = invoke_desktop_profile_method( 'desktop_profile_cron_args', [ $asset_id, $profile, $queued_record['profileOptions'] ] );
+wp_schedule_single_event( time() + 600, VRodos_Desktop_Profile_Test_Harness::DESKTOP_PROFILE_CRON_HOOK, $queued_args );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, array_merge( $options, [ 'queuePriority' => 'build' ] ) );
+$prioritized_record = invoke_desktop_profile_method( 'desktop_profile_record_by_job_key', [ $asset_id, $job_key ] );
+vrodos_desktop_assert( 1 === (int) array_values( $GLOBALS['vrodos_desktop_test_events'] )[0], 'an active build must promote its matching queued derivative ahead of background cron work' );
+vrodos_desktop_assert( 'build' === (string) ( $prioritized_record['profileOptions']['queuePriority'] ?? '' ), 'build priority must remain attached to the queued derivative family' );
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
@@ -426,6 +447,30 @@ vrodos_desktop_assert( 'pending' === $ordered_compile_state['status'], 'a Low bu
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'Build must schedule only one family job for an unoptimized qualifying asset' );
 $ordered_event_key = (string) array_key_first( $GLOBALS['vrodos_desktop_test_events'] );
 vrodos_desktop_assert( str_contains( $ordered_event_key, 'web-high' ) && ! str_contains( $ordered_event_key, 'web-low' ), 'Build must not bypass High and queue Low directly' );
+vrodos_desktop_assert( 1 === (int) array_values( $GLOBALS['vrodos_desktop_test_events'] )[0], 'the first derivative required by a build must enter the priority cron lane' );
+
+$family_progress_asset_id = 90;
+$family_progress_options = array_merge( $family_high_options, [ 'queuePriority' => 'build' ] );
+seed_desktop_profile_record( $family_progress_asset_id, 'web-high', 'ready', $source, $family_progress_options, gmdate( 'Y-m-d H:i:s' ) );
+$GLOBALS['vrodos_desktop_test_meta'][ $family_progress_asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['derivatives']['editor-preview'] = [
+	'status'            => 'queued',
+	'message'           => 'Editor preview is queued for generation.',
+	'sourceFingerprint' => sha1( $source['path'] . ':' . $source['sizeBytes'] ),
+	'queuePriority'     => 'build',
+];
+$family_progress_plan = new VRodos_Project_Compile_Plan();
+$family_progress_plan->request = (object) [ 'vr_runtime_profile' => 'headset' ];
+$family_progress_plan->scenes = [
+	(object) [
+		'scene_id' => 47,
+		'scene_json' => (object) [ 'asset_id' => $family_progress_asset_id ],
+		'desktop_profiles' => [],
+	],
+];
+$family_progress_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $family_progress_plan );
+vrodos_desktop_assert( 25 === $family_progress_state['profiles'][0]['percent'], 'headset build progress must include completed intermediate family stages' );
+vrodos_desktop_assert( '' === $family_progress_state['profiles'][0]['message'], 'family progress rows must stay compact instead of repeating internal stage descriptions' );
+vrodos_desktop_assert( 25 === $family_progress_state['percent'], 'overall build progress must advance before Web Low becomes ready' );
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;

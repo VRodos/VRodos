@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const root = resolve(import.meta.dirname, '..');
 const source = readFileSync(resolve(root, 'assets/js/editor/ajax/vrodos_request_compile.js'), 'utf8');
+const uiSource = readFileSync(resolve(root, 'assets/js/editor/ui/vrodos_ui_helpers.js'), 'utf8');
 const requests = [];
 const responses = [];
 const servedStatuses = [];
@@ -19,6 +20,11 @@ let started = 0;
 let finished = 0;
 let hidden = 0;
 let statusMessage = '';
+let saveFailures = 0;
+let settingsSaveCount = 0;
+let fullSceneSaveCount = 0;
+let sceneSaveWait = Promise.resolve();
+const saveOrder = [];
 
 class TestAbortController {
     constructor() {
@@ -94,7 +100,21 @@ const pendingPayload = {
 };
 
 const VRODOS = {
-    api: {},
+    api: {
+        waitForLatestSceneSave() {
+            saveOrder.push('wait-for-scene-save');
+            return sceneSaveWait;
+        },
+        saveSceneSettings() {
+            settingsSaveCount += 1;
+            saveOrder.push('save-settings');
+            return Promise.resolve({ success: true });
+        },
+        saveChanges() {
+            fullSceneSaveCount += 1;
+            return Promise.resolve({ success: true });
+        }
+    },
     config: { projectId: '88', sceneId: '89', compileNonce: 'test-nonce', isAdmin: 'front' },
     data: {},
     editor: { envir: { scene: { aframeRuntimeMode: 'single-player', aframeVrRuntimeProfile: 'desktop' } } },
@@ -108,7 +128,7 @@ const VRODOS = {
             showBuildStalled(state, message) { stalledBuilds.push({ state: structuredClone(state), message }); },
             showBuildProgress(state) { progress.push(structuredClone(state)); },
             showPrimaryExperienceLink(url) { links.push(url); },
-            showSaveFailedMessage() {},
+            showSaveFailedMessage() { saveFailures += 1; },
             showSavePendingMessage() {},
             showStartedState() { started += 1; }
         }
@@ -168,6 +188,9 @@ const context = vm.createContext({
 windowObject.window = windowObject;
 
 vm.runInContext(source, context, { filename: 'vrodos_request_compile.js' });
+
+assert.match(uiSource, /Running · \$\{percent\}%/, 'running build rows should show compact percentage progress');
+assert.match(uiSource, /Queued · \$\{percent\}%/, 'queued build rows should show completed family progress without verbose details');
 
 responses.push(
     response(202, pendingPayload),
@@ -292,5 +315,48 @@ assert.equal(failures.length, 1, 'a genuine failure remains visible in the progr
 assert.equal(failures[0].state.profiles[0].status, 'failed');
 assert.match(failures[0].message, /KTX-Software/);
 assert.equal(consoleErrors.length, 1, 'only a genuine failure is logged as an error');
+
+let releasePendingSceneSave;
+sceneSaveWait = new Promise((resolvePromise) => {
+    releasePendingSceneSave = resolvePromise;
+});
+const compileRequestsBeforeSettingsSave = requests.filter((request) => request.action === 'vrodos_compile_action').length;
+responses.push(response(200, { CurrentSceneMasterClient: 'http://localhost:8088/build/scene-89-settings.html' }));
+VRODOS.api.compileScene(false);
+await flushPromises();
+assert.equal(settingsSaveCount, 0, 'build preflight waits for an already-running full scene save');
+assert.equal(
+    requests.filter((request) => request.action === 'vrodos_compile_action').length,
+    compileRequestsBeforeSettingsSave,
+    'compilation cannot start while the full scene save is pending'
+);
+
+releasePendingSceneSave();
+await flushPromises();
+await flushPromises();
+assert.equal(settingsSaveCount, 1, 'build preflight performs exactly one metadata-only settings save');
+assert.deepEqual(saveOrder.slice(-2), ['wait-for-scene-save', 'save-settings']);
+assert.equal(fullSceneSaveCount, 0, 'build preflight never invokes the full-scene save path');
+assert.equal(
+    requests.filter((request) => request.action === 'vrodos_compile_action').length,
+    compileRequestsBeforeSettingsSave + 1,
+    'compilation starts only after the metadata save succeeds'
+);
+
+const compileRequestsBeforeSaveFailure = requests.filter((request) => request.action === 'vrodos_compile_action').length;
+sceneSaveWait = Promise.resolve();
+VRODOS.api.saveSceneSettings = () => {
+    settingsSaveCount += 1;
+    return Promise.reject(new Error('settings save rejected'));
+};
+VRODOS.api.compileScene(false);
+await flushPromises();
+await flushPromises();
+assert.equal(
+    requests.filter((request) => request.action === 'vrodos_compile_action').length,
+    compileRequestsBeforeSaveFailure,
+    'a failed metadata save blocks compilation'
+);
+assert.equal(saveFailures, 1, 'a failed metadata save displays the save failure state');
 
 console.log('Compile request lifecycle tests passed.');

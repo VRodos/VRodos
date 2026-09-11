@@ -70,8 +70,10 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$family_result = self::maybe_queue_web_high(
 				(int) $asset_id,
 				$source,
-				is_array( $analysis ) ? $analysis : []
+				is_array( $analysis ) ? $analysis : [],
+				'build'
 			);
+			$family_state = null;
 
 			foreach ( (array) $asset['slots'] as $slot ) {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
@@ -86,6 +88,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'textureMaxSize'  => $texture_max_size,
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => $profile,
+					'queuePriority'   => 'build',
 				];
 				if ( 'web-high' === $profile && $is_standard_profile ) {
 					$options['familySequence'] = true;
@@ -132,12 +135,10 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					continue;
 				}
 				if ( $waits_for_standard_family && true === $family_result ) {
-					$status = in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) ? (string) $record['status'] : 'queued';
-					$message = (string) ( $record['message'] ?? '' );
-					if ( '' === $message ) {
-						$message = 'Waiting for the ordered Web derivative family (High, Editor Preview, Medium, Low).';
+					if ( null === $family_state ) {
+						$family_state = self::get_web_optimization_state( (int) $asset_id );
 					}
-					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $status, $message );
+					$profile_progress[] = self::desktop_profile_family_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $family_state );
 					$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
 					continue;
 				}
@@ -240,7 +241,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		};
 	}
 
-	public static function maybe_queue_web_high( int $asset_id, array $source, array $analysis ) {
+	public static function maybe_queue_web_high( int $asset_id, array $source, array $analysis, string $queue_priority = 'normal' ) {
 		$source_bytes = (int) ( $source['sizeBytes'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$has_uncompressed_textures = $image_bytes > 0 && (int) ( $analysis['counts']['images'] ?? 0 ) > 0;
@@ -256,6 +257,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'familySequence'  => true,
 			'writePreparedBaseline' => $source_bytes >= self::LARGE_SOURCE_PUBLISH_GATE_BYTES,
 		];
+		if ( 'build' === self::normalize_optimizer_queue_priority( $queue_priority ) ) {
+			$options['queuePriority'] = 'build';
+		}
 		return self::ensure_derivative( $asset_id, 'web-high', $source, $options );
 	}
 
@@ -597,6 +601,24 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		];
 	}
 
+	private static function desktop_profile_family_progress_item(
+		int $asset_id,
+		string $slot,
+		string $profile,
+		array $record,
+		array $source,
+		array $options,
+		array $family_state
+	): array {
+		$family_status = sanitize_key( (string) ( $family_state['familyStatus'] ?? 'queued' ) );
+		$status = in_array( $family_status, [ 'queued', 'running' ], true ) ? $family_status : 'queued';
+		$item = self::desktop_profile_progress_item( $asset_id, $slot, $profile, $record, $source, $options, $status, '' );
+		$item['step'] = 0;
+		$item['totalSteps'] = 0;
+		$item['percent'] = max( 0, min( 99, absint( $family_state['familyPercent'] ?? 0 ) ) );
+		return $item;
+	}
+
 	private static function desktop_profile_total_steps( string $profile, array $options ): int {
 		return 'web-high' === $profile || ! empty( $options['protectGeometry'] ) ? 9 : 11;
 	}
@@ -683,6 +705,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$status = (string) ( $record['status'] ?? '' );
 		$matches_request = self::desktop_profile_record_matches_request( $record, $source, $options );
 		$work_generation_matches = absint( $record['sourceGeneration'] ?? 0 ) === absint( $source['generation'] ?? 0 );
+		if ( 'build' === self::optimizer_queue_priority( (string) ( $record['profileOptions']['queuePriority'] ?? '' ), (string) ( $options['queuePriority'] ?? '' ) ) ) {
+			$options['queuePriority'] = 'build';
+		}
 		if ( ! $regenerate && $matches_request && self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
 			self::activate_desktop_profile_variant( $asset_id, $profile, (string) $record['jobKey'] );
 			if ( ! empty( $options['familySequence'] ) ) {
@@ -768,15 +793,12 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	private static function schedule_desktop_profile_job( int $asset_id, string $profile, array $options, int $delay = 2 ) {
 		$args = self::desktop_profile_cron_args( $asset_id, $profile, $options );
-		if ( false !== wp_next_scheduled( self::DESKTOP_PROFILE_CRON_HOOK, $args ) ) {
-			return true;
-		}
-
-		$result = wp_schedule_single_event( time() + max( 1, $delay ), self::DESKTOP_PROFILE_CRON_HOOK, $args, true );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-		return $result ? true : new WP_Error( 'vrodos_web_profile_schedule_failed', 'WordPress did not schedule the web derivative background job.' );
+		return self::schedule_optimizer_event(
+			self::DESKTOP_PROFILE_CRON_HOOK,
+			$args,
+			$delay,
+			(string) ( $options['queuePriority'] ?? 'normal' )
+		);
 	}
 
 	private static function log_desktop_profile_schedule_failure( int $asset_id, string $profile, WP_Error $error ): void {
@@ -848,6 +870,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				$meta['webVariants'][ $job_key ]['profileOptions'][ $key ] = true;
 			}
 		}
+		if ( 'build' === self::normalize_optimizer_queue_priority( (string) ( $options['queuePriority'] ?? '' ) ) ) {
+			$meta['webVariants'][ $job_key ]['profileOptions']['queuePriority'] = 'build';
+		}
 		update_post_meta( $asset_id, self::META_KEY, $meta );
 	}
 
@@ -882,7 +907,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				$preview_status = (string) ( $preview_record['status'] ?? '' );
 				$preview_ready = 'ready' === $preview_status && self::editor_preview_record_is_ready( $preview_record, $source );
 				if ( ! $preview_ready && 'failed' !== $preview_status ) {
-					self::maybe_queue_editor_preview( $asset_id, $source, $analysis, $decision );
+					self::maybe_queue_editor_preview( $asset_id, $source, $analysis, $decision, (string) ( $options['queuePriority'] ?? 'normal' ) );
 					return;
 				}
 			}
@@ -903,6 +928,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'recipe'          => $next_profile,
 			'familySequence'  => true,
 		];
+		if ( 'build' === self::normalize_optimizer_queue_priority( (string) ( $options['queuePriority'] ?? '' ) ) ) {
+			$next_options['queuePriority'] = 'build';
+		}
 		$result = self::ensure_derivative( $asset_id, $next_profile, $source, $next_options );
 		if ( is_wp_error( $result ) ) {
 			error_log( sprintf( '[VRodos] Failed to continue web derivative family for asset #%d (%s): %s', $asset_id, $next_profile, $result->get_error_message() ) );
@@ -926,6 +954,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'recipe'          => 'web-medium',
 			'familySequence'  => true,
 		];
+		if ( 'build' === self::normalize_optimizer_queue_priority( (string) ( $high_options['queuePriority'] ?? '' ) ) ) {
+			$next_options['queuePriority'] = 'build';
+		}
 		$result = self::ensure_derivative( $asset_id, 'web-medium', $source, $next_options );
 		if ( is_wp_error( $result ) ) {
 			error_log( sprintf( '[VRodos] Failed to continue web derivative family for asset #%d (web-medium): %s', $asset_id, $result->get_error_message() ) );
