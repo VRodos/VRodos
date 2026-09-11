@@ -51,6 +51,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract accelerated celestial clock calculations, preserving solar-day wrapping and lunar date progression.
 - [x] Extract MoonPhase normalization, illumination, direction, and orientation calculations with behavioral coverage.
 - [x] Extract celestial coordinate frames and local/ECEF transforms, preserving WGS84 constants and config-owned caches.
+- [x] Extract shared light value/color interpolation, preserving clock selection, pause limits, and component-owned state.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -207,3 +208,11 @@ Moved local sun direction, WGS84 frame construction, local/ECEF conversion, dire
 Behavioral tests use real Three vectors/matrices and cover equatorial and polar anchors, orthonormal bases, round-trip direction conversion, coordinate bounds, independent config caches, authored azimuth/elevation, missing-input behavior, and matrix application. The shadow fixture loads the required module. All 56 regression scripts pass (28 runtime, 28 compiler), with runtime syntax, catalog coverage, build configuration, and diff checks passing. Full browser-source lint has zero errors and 242 warnings; the new module and shared helper have no warnings, while quality profiles retain nine existing warnings. Runtime artifacts were explicitly rebuilt with the direct Node entrypoint; only the core bundle and runtime manifest changed.
 
 This is a coordinate-math boundary extraction, not completion of celestial lighting, sky/cloud modules, or component lifecycle ownership. Published-scene recompilation and browser/Quest rendering acceptance remain outstanding. No server was started and no commit or push was performed.
+
+### Light smoothing extraction (2026-09-11)
+
+Moved clock selection, smoothing alpha, numeric interpolation, and color interpolation into `vrodos_light_smoothing.js`, loaded before quality profiles in the core chunk. Quality profiles call the required `VRODOSMaster.LightSmoothing` API. All four moved function bodies match the previous Git revision exactly. Direct/indirect and cloud smoothing durations remain at their existing policy call sites. State and reset ownership stay on the existing scene component; no lighting constants, navigation math, or resource ownership changed.
+
+The new regression executes authored code with real Three colors. It covers first samples, live-value initialization, repeated ticks, target changes, independent channels/components, long pauses, backwards clocks, disabled/re-enabled smoothing, invalid numeric targets, clock fallback/source changes, color cloning/interpolation, and the existing component reset contract. The shadow fixture loads the required module. All 57 regression scripts pass (29 runtime, 28 compiler), along with catalog coverage, runtime/generated-core syntax, build configuration, and diff checks. Changed-source lint has zero errors; quality profiles retain nine existing warnings and the new module has none. Runtime artifacts were rebuilt explicitly with the direct Node entrypoint; only the core bundle and manifest changed.
+
+Broader celestial lighting/sky/cloud extraction, lifecycle ownership, published-scene recompilation, and browser/Quest acceptance remain outstanding. No server was started and no commit or push was performed.
