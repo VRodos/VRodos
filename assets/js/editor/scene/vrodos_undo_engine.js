@@ -268,7 +268,10 @@ VRODOS.editor.TransformCommand = class {
 
         // Restore one selection owner for the gizmo, hierarchy and property panel.
         if (!isLocked) {
-            VRODOS.editor.selection.select(obj, { source: 'transform-undo-redo', setMode: false });
+            VRODOS.editor.selection.select(obj, {
+                source: 'transform-undo-redo', setMode: false,
+                openPanel: false, syncGui: true, showProperties: true
+            });
         }
         
         if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();

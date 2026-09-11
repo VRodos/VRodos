@@ -1013,8 +1013,9 @@ function _addDragScrub(controller) {
 
     input.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
-        // If input is already focused (user is typing), don't interfere
-        if (isKeyboardEditing) return;
+        // Finish any typed edit before capturing the next drag's starting value.
+        // A focused field must still support scrubbing on the next press.
+        if (isKeyboardEditing) input.blur();
         pointerDown = true;
         dragging = false;
         startX = e.clientX;
@@ -1120,15 +1121,7 @@ function commitUndoTransformFromInput(input) {
 }
 
 function syncLiveGuiTransformChange(target) {
-    if (!target) return;
-
-    target.updateMatrix();
-    target.updateMatrixWorld(true);
-    syncAttachedProxyToObject(target);
-
-    if (typeof VRODOS.editor.requestRender === 'function') {
-        VRODOS.editor.requestRender('transform-gui-drag');
-    }
+    VRODOS.editor.transforms.finishObjectChange(target, { reason: 'transform-gui-drag' });
 }
 
 function controllerDatGuiOnChange() {
@@ -1162,12 +1155,8 @@ function controllerDatGuiOnChange() {
                 const target = getSelectedTransformObject();
                 if (target) {
                     apply(target, value);
-                    target.updateMatrix();
-                    target.updateMatrixWorld();
-                    syncAttachedProxyToObject(target);
+                    VRODOS.editor.transforms.finishObjectChange(target, { commit: true });
                 }
-                VRODOS.editor.animate();
-                VRODOS.api.triggerAutoSave();
             });
         });
     });

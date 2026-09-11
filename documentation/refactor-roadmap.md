@@ -41,6 +41,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Consolidate nine numeric transform handlers; capture undo for keyboard-only focus as well as pointer interaction.
 - [x] Route cross-object transform undo/redo through the selection service to keep hierarchy, gizmo, and property panel aligned.
 - [x] Share light property application between controls and undo; unify preview/commit input handling.
+- [x] Route numeric transform synchronization through the transform service, including bounds invalidation without an attached proxy.
 - [ ] Finish coordinating all property-change side effects through transform/persistence services.
 
 ## G. Runtime ownership
@@ -60,7 +61,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Complete test suite, JS/PHP syntax, lint, build-config, generated outputs, diff checks.
 - [ ] Assessment parity; import retry/failure; optimizer replacement/deletion; read-only dashboard.
 - [x] Authenticated editor selection, numeric properties, undo/redo, save/reload, and Custom desktop build polling.
-- [ ] Complete scene-gizmo dragging and remaining category-specific interaction checks.
+- [x] Validate scene-gizmo translation and undo in the authenticated editor.
+- [ ] Complete remaining category-specific interaction checks.
 - [x] Recompile and visually smoke-test Custom single-player desktop scene 13775.
 - [ ] Recompile Custom/Adaptive, single-player/networked, desktop/headset scenes.
 - [ ] Browser and real Quest checks: XR entry/exit, Greek text, controllers, lighting/shadows/reflections, disposal.
@@ -142,3 +144,17 @@ The new HTTP retry fixture verifies success/error envelopes, queue deduplication
 Light property controls and property undo/redo now use `applyEditorLightProperty` for assignment, color, target linking, and helper/shadow synchronization. Numeric, color, and shadow-radius controls share one preview/commit lifecycle. Shared simple property inputs use one undo/save path, including POI/chat fields. Live previews do not save; unchanged commits do not create duplicate undo entries. Focused edits retain their object identity so a stale event cannot modify another selection. The controls declare their required undo-engine enqueue dependency.
 
 The behavioral fixture executes authored input code, the actual undo engine, and light helpers with Three objects. It covers numeric preview/commit, repeated commits, radius and color undo, target replacement undo/redo, stale selection, absent targets, and non-light inputs. All 50 regression scripts pass (23 runtime, 27 compiler); changed browser files pass ESLint and syntax checks, PHP registration passes syntax, and build configuration and diff checks pass. No generated runtime build was needed. Live browser/category acceptance remains outstanding for this package. No server was started and no commit or push was performed.
+
+### Transform coordination and browser checks (2026-09-11)
+
+`transforms.finishObjectChange` coordinates matrix updates, bounds invalidation, light-helper synchronization, proxy synchronization, render requests, and commit-only autosaving. Both the transform service GUI entrypoint and numeric panel edits use it. Edits without a selected object no longer schedule unnecessary saves. The transform input test now executes the actual service with Three objects and verifies bounds/light updates for every preview/commit, including objects without an attached proxy. All 50 regressions, changed JS lint, build configuration, and diff checks pass.
+
+Authenticated Chrome at `http://160.40.52.199/wp_vrodos/`, 1536 x 799 viewport: scene 13775 loaded and rendered; numeric X translation 0 to 2, undo/redo, saving and reload were verified. A canvas gizmo drag changed X to approximately 9.03; undo restored zero. The original plane position [0,0,0] was restored and saved. Console capture after reconnecting contained no errors/warnings; screenshot showed the restored zero position and rendered scene. Browser automation temporarily lost its connection; checks resumed in a fresh tab. Used the available CUA/Playwright browser API with the existing Chrome login. No server was started and no commit/push was performed. Remaining category-specific, broader property coordination, and headset checks are still open.
+
+### Numeric drag regression and popup behavior (2026-09-11)
+
+A browser reproduction exposed mixed cached editor scripts: new property controls called finishObjectChange while the cached transform service lacked it. Added filemtime versions for controls, transforms, undo, and light helpers. Focused inputs now finish keyboard editing before a new scrub begins. Regression tests cover focused translation/rotation/scale scrubs and one undo/save per gesture. Transform undo/redo selects without opening the properties panel.
+
+Browser verification: translation increased by 0.40, rotation by 0.40 degrees, and scale by 0.20 for 40-pixel drags. Undo and redo both kept a closed panel hidden. Relevant runtime suite (23 scripts), changed-file lint, PHP syntax, build configuration, and diff checks passed. Earlier full-suite count remains 50.
+
+Undo/redo popup preference: keep a closed panel closed; explicitly synchronize GUI and property content when restoring selection so an open panel displays the restored values. Regression assertions cover both flags.

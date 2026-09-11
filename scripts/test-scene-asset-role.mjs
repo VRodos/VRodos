@@ -172,6 +172,8 @@ context.VRODOS.editor.transforms = { syncProxyToObject() {} };
 context.VRODOS.editor.selection = {
     select(object, options) {
         assert(options.setMode === false, 'undo must preserve the active transform mode');
+        assert(options.openPanel === false, 'undo and redo must not open the object properties popup');
+        assert(options.syncGui === true && options.showProperties === true, 'undo and redo must hydrate existing transform and property controls');
         selection = object;
     }
 };

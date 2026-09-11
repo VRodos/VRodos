@@ -284,6 +284,17 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
     };
 
+    transforms.finishObjectChange = function(target, options = {}) {
+        if (!target) return;
+        target.updateMatrix();
+        target.updateMatrixWorld(true);
+        invalidateBounds(target);
+        syncLightArtifacts(target);
+        transforms.syncProxyToObject(target);
+        render.request(options.reason || 'transform-gui-change');
+        if (options.commit) VRODOS.api.triggerAutoSave();
+    };
+
     transforms.applyGuiChange = transforms.applyGuiChange || function(opCode, value, options) {
         const target = transforms.getRealObject();
         if (!target) return;
@@ -306,15 +317,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             default: return;
         }
 
-        target.updateMatrix();
-        target.updateMatrixWorld(true);
-        invalidateBounds(target);
-        syncLightArtifacts(target);
-        transforms.syncProxyToObject(target);
-        if (commit && typeof VRODOS.api.triggerAutoSave === 'function') {
-            VRODOS.api.triggerAutoSave();
-        }
-        render.request('transform-gui-change');
+        transforms.finishObjectChange(target, { commit });
     };
 
     transforms.getMode = function() {
