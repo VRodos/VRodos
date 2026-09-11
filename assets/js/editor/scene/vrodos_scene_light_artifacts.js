@@ -381,6 +381,18 @@ VRODOS.utils = VRODOS.utils || {};
         return helper;
     };
 
+    // Shared by live property controls and property undo/redo.
+    VRODOS.utils.applyEditorLightProperty = function(light, property, value, scene) {
+        if (property === 'color') {
+            VRODOS.utils.applyEditorLightColor(light, value, scene);
+        } else if (property === 'target') {
+            VRODOS.utils.linkEditorLightTarget(light, value);
+        } else {
+            light[property] = value;
+        }
+        VRODOS.utils.syncEditorLightArtifacts(light, scene);
+    };
+
     VRODOS.utils.syncEditorLightArtifacts = function(object, scene) {
         const target = object ? (object.realObject || object) : null;
         if (!target) return null;

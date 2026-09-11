@@ -1,6 +1,7 @@
 // Every executable regression test belongs to exactly one group.
 export const testGroups = Object.freeze({
   "runtime": [
+    "scripts/test-editor-property-inputs.mjs",
     "scripts/test-editor-transform-inputs.mjs",
     "scripts/test-shared-behavior.mjs",
     "scripts/test-navigation-math.mjs",

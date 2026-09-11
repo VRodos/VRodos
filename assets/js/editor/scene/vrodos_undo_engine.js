@@ -524,6 +524,8 @@ VRODOS.editor.PropertyCommand = class {
                 delete obj.sceneAssetRole;
                 delete obj.userData.sceneAssetRole;
             }
+        } else if (obj.isLight) {
+            VRODOS.utils.applyEditorLightProperty(obj, this.property, val, scene);
         } else if (this.property === 'color') {
             if (isLightObject && VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
                 VRODOS.utils.applyEditorLightColor(obj, val, scene);
@@ -548,7 +550,7 @@ VRODOS.editor.PropertyCommand = class {
         const isLocked = vrodosUndoReconcileLockState(obj);
 
         // Sync light helpers
-        if (isLightObject && VRODOS.utils) {
+        if (isLightObject && !obj.isLight && VRODOS.utils) {
             if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
                 VRODOS.utils.syncEditorLightArtifacts(obj, scene);
             } else if (typeof VRODOS.utils.updateEditorLightHelper === 'function') {

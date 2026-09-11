@@ -122,12 +122,6 @@ function _getFirstChildMaterialColorHex(sceneObj) {
         : null;
 }
 
-function _applyEditorLightColor(object, hexColor) {
-    const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
-    if (VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
-        VRODOS.utils.applyEditorLightColor(object, hexColor, scene);
-    }
-}
 
 function _getObjectColorHex(sceneObj) {
     return sceneObj && sceneObj.color && typeof sceneObj.color.getHexString === 'function'
@@ -240,16 +234,6 @@ function _getLightShadowRadius(light) {
     return 0;
 }
 
-function _setLightShadowRadius(light, value) {
-    if (!light || !light.shadow) {
-        return false;
-    }
-
-    const numericValue = sanitizeInputValue(value);
-    light.shadow.radius = numericValue;
-    light.shadowRadius = numericValue;
-    return true;
-}
 
 
 
@@ -329,184 +313,73 @@ function initPersistentPropertyListeners() {
     }
     vrodosPersistentPropertyListenersBound = true;
 
-    const setProp = (prop, isCheckbox, sanitize = false) => function () {
-        const obj = getSelectedPropertyTarget();
-        if (!obj) {
-            return;
+    const applyProperty = (object, property, value) => {
+        if (object.isLight) {
+            VRODOS.utils.applyEditorLightProperty(object, property, value, VRODOS.editor.envir.scene);
+        } else {
+            object[property] = value;
         }
-
-        const oldValue = obj[prop];
-        let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
-        if (sanitize) val = sanitizeInputValue(val);
-
-        if (oldValue !== val) {
-            obj[prop] = val;
-            if (obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
-                VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
-            }
-            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
-            }
-            if (typeof VRODOS.editor.requestRender === 'function') {
-                VRODOS.editor.requestRender('light-property-change');
-            }
-            VRODOS.api.saveChanges();
-        }
+        VRODOS.editor.requestRender('light-property-change');
     };
-
-    const bindProp = (id, prop, isCheckbox = false, sanitize = false) =>
-        _bindEditorInputChange(id, setProp(prop, isCheckbox, sanitize));
+    const commitProperty = (object, property, oldValue, newValue) => {
+        if (oldValue === newValue) return;
+        const manager = VRODOS.editor.undoManager;
+        if (!manager.isExecuting) {
+            manager.add(new VRODOS.editor.PropertyCommand(object, property, oldValue, newValue));
+        }
+        VRODOS.api.saveChanges();
+    };
     const bindPropEntries = (entries) => {
-        entries.forEach((entry) => {
-            bindProp(entry.id, entry.prop, entry.isCheckbox, entry.sanitize);
+        entries.forEach(({ id, prop, isCheckbox = false, sanitize = false }) => {
+            _bindEditorInputChange(id, function() {
+                const object = getSelectedPropertyTarget();
+                if (!object) return;
+                const oldValue = object[prop];
+                let value = isCheckbox ? (this.checked ? 1 : 0) : this.value;
+                if (sanitize) value = sanitizeInputValue(value);
+                if (oldValue === value) return;
+                applyProperty(object, prop, value);
+                commitProperty(object, prop, oldValue, value);
+            });
         });
     };
-    const syncLightPropertyEdit = (obj) => {
-        if (obj && obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
-            VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
-        }
-        if (typeof VRODOS.editor.requestRender === 'function') {
-            VRODOS.editor.requestRender('light-property-change');
-        }
-    };
-    const bindLiveNumericProp = (id, prop) => {
-        const el = _getEditorInput(id);
-        if (!el) {
-            return null;
-        }
-
-        el.addEventListener('focus', function() {
-            const obj = getSelectedPropertyTarget();
-            this._oldVal = obj ? obj[prop] : undefined;
+    const bindLiveProperty = (id, property, readValue, parseValue, eligible = () => true) => {
+        const input = _getEditorInput(id);
+        if (!input) return;
+        let edit = null;
+        input.addEventListener('focus', () => {
+            const object = getSelectedPropertyTarget();
+            edit = object && eligible(object) ? { object, oldValue: readValue(object) } : null;
         });
-        el.addEventListener('input', function () {
-            const obj = getSelectedPropertyTarget();
-            if (!obj) {
-                return;
+        const apply = (commit) => {
+            const object = getSelectedPropertyTarget();
+            if (!object || !eligible(object) || (edit && edit.object !== object)) return;
+            if (!edit) edit = { object, oldValue: readValue(object) };
+            const value = parseValue(input.value);
+            applyProperty(object, property, value);
+            if (commit) {
+                commitProperty(object, property, edit.oldValue, value);
+                edit.oldValue = value;
             }
-
-            obj[prop] = sanitizeInputValue(this.value);
-            syncLightPropertyEdit(obj);
-        });
-        el.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (!obj) {
-                return;
-            }
-
-            const oldValue = this._oldVal;
-            const newValue = sanitizeInputValue(this.value);
-            obj[prop] = newValue;
-            syncLightPropertyEdit(obj);
-            if (oldValue !== newValue) {
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, newValue));
-                }
-                VRODOS.api.saveChanges();
-            }
-        });
-        return el;
+        };
+        input.addEventListener('input', () => apply(false));
+        input.addEventListener('change', () => apply(true));
     };
     const bindLiveNumericEntries = (entries) => {
-        entries.forEach((entry) => {
-            bindLiveNumericProp(entry.id, entry.prop);
-        });
+        entries.forEach(({ id, prop }) => bindLiveProperty(id, prop, object => object[prop], sanitizeInputValue));
     };
-    const bindLiveShadowRadius = (id) => {
-        const el = _getEditorInput(id);
-        if (!el) {
-            return null;
-        }
-
-        el.addEventListener('focus', function() {
-            this._oldVal = _getLightShadowRadius(getSelectedPropertyTarget());
-        });
-        el.addEventListener('input', function () {
-            const obj = getSelectedPropertyTarget();
-            if (_setLightShadowRadius(obj, this.value)) {
-                syncLightPropertyEdit(obj);
-            }
-        });
-        el.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (!_setLightShadowRadius(obj, this.value)) {
-                return;
-            }
-
-            const oldValue = this._oldVal;
-            const newValue = _getLightShadowRadius(obj);
-            syncLightPropertyEdit(obj);
-            if (oldValue !== newValue) {
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'shadowRadius', oldValue, newValue));
-                }
-                VRODOS.api.saveChanges();
-            }
-        });
-        return el;
-    };
-    const bindLiveColor = (id, getCurrentColor) => {
-        const el = _getEditorInput(id);
-        if (!el) {
-            return null;
-        }
-
-        el.addEventListener('focus', function() {
-            const obj = getSelectedPropertyTarget();
-            this._oldVal = obj ? (getCurrentColor(obj) || this.value) : this.value;
-        });
-        el.addEventListener('input', function () {
-            const obj = getSelectedPropertyTarget();
-            if (!obj) {
-                return;
-            }
-
-            _applyEditorLightColor(obj, this.value);
-            syncLightPropertyEdit(obj);
-        });
-        el.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (!obj) {
-                return;
-            }
-
-            const oldVal = this._oldVal || getCurrentColor(obj);
-            const newVal = this.value;
-            if (!oldVal) {
-                return;
-            }
-
-            _applyEditorLightColor(obj, newVal);
-            syncLightPropertyEdit(obj);
-            if (oldVal !== newVal) {
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
-                }
-                VRODOS.api.saveChanges();
-            }
-        });
-        return el;
-    };
+    const bindLiveShadowRadius = (id) => bindLiveProperty(
+        id, 'shadowRadius', _getLightShadowRadius, sanitizeInputValue, object => Boolean(object.shadow)
+    );
+    const bindLiveColor = (id, getCurrentColor) => bindLiveProperty(id, 'color', getCurrentColor, value => value);
     const bindSpotTargetObject = () => {
-        _bindEditorInputChange('spotTargetObject', function () {
-            const obj = getSelectedPropertyTarget();
-            const newTarget = getEditorSceneObjectByName(this.value);
-            if (!obj || !newTarget || obj.target === newTarget) {
-                return;
-            }
-
-            const oldTarget = obj.target;
-            if (typeof VRODOS.utils.linkEditorLightTarget === 'function') {
-                VRODOS.utils.linkEditorLightTarget(obj, newTarget);
-            } else {
-                obj.target = newTarget;
-            }
-            syncLightPropertyEdit(obj);
-
-            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'target', oldTarget, newTarget));
-            }
-            VRODOS.api.saveChanges();
+        _bindEditorInputChange('spotTargetObject', function() {
+            const object = getSelectedPropertyTarget();
+            const target = getEditorSceneObjectByName(this.value);
+            if (!object || !target || object.target === target) return;
+            const previous = object.target;
+            applyProperty(object, 'target', target);
+            commitProperty(object, 'target', previous, target);
         });
     };
 
@@ -633,10 +506,9 @@ function initPersistentPropertyListeners() {
         }
     });
 
-    bindProp('poi_img_title_text', 'poi_img_title');
-    bindProp('poi_image_desc_text', 'poi_img_content');
-
     bindPropEntries([
+        { id: 'poi_img_title_text', prop: 'poi_img_title' },
+        { id: 'poi_image_desc_text', prop: 'poi_img_content' },
         { id: 'poi_chat_title', prop: 'poi_chat_title' },
         { id: 'poi_chat_participants', prop: 'poi_chat_participants', sanitize: true },
         { id: 'poi_chat_indicators', prop: 'poi_chat_indicators', isCheckbox: true }
