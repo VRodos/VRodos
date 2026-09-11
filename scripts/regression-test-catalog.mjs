@@ -2,6 +2,7 @@
 export const testGroups = Object.freeze({
   "runtime": [
     "scripts/test-texture-quality.mjs",
+    "scripts/test-render-quality.mjs",
     "scripts/test-render-pixel-budget.mjs",
     "scripts/test-celestial-clock.mjs",
     "scripts/test-moon-phase.mjs",

@@ -55,7 +55,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract shadow-map type mapping, sampler compatibility, and render-target disposal without changing refresh policy.
 - [x] Extract the shadow subsystem: roles, terrain depth materials, adaptive fitting, refresh scheduling, diagnostics, and presented-light transforms.
 - [x] Extract celestial lighting profiles, exposure, indirect fill, sun/moon gates, helper lights, and Takram light synchronization.
-- [ ] Extract remaining render/material quality, sky, and cloud modules without behavior changes.
+- [x] Extract renderer quality, material enhancement traversal, and reflection-intensity updates without behavior changes.
+- [ ] Extract remaining sky and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -269,3 +270,14 @@ Reproduced the production headset build for project 1098 after the queue fix dep
 Separately, material quality enhancement was setting `generateMipmaps=true` on KTX2 compressed textures. Three.js requires embedded mip chains for compressed data. The helper now disables generation for compressed textures, uses embedded mip filtering when multiple levels exist, and selects linear filtering for a single level. Ordinary image generation and video handling are preserved. Regenerated the core bundle explicitly with the direct Node build entrypoint; no other generated artifacts changed.
 
 The new regression uses real Three textures and covers embedded mip preservation, single-level filtering, repeated refresh, color-space/anisotropy behavior, ordinary images, and videos. All 33 runtime scripts, runtime syntax and build configuration pass; changed-source lint has zero errors and nine existing warnings. Diff checks pass. A browser-only correction of 15 compressed textures in the published headset/Horizon page yielded zero invalid-generation flags and a subsequent WebGL NO_ERROR sample with no context loss. This is not a deployed-code or physical Quest acceptance test; deploy the updated core bundle and recompile for the planner cache-busting URL. The production page was not modified on disk by this browser test. No commit or push performed.
+
+
+### Render and material quality extraction (2026-09-11)
+
+Moved the three renderer-quality, material-profile, and reflection-intensity component methods (roughly 275 lines) into `vrodos_render_quality.js`. Quality profiles assembles the required `VRODOSMaster.RenderQuality` module with explicit shadow, celestial-lighting, and sky/cloud host interfaces. The public methods remain on `SceneSettingsHelpers`; component state, material tracking, shadow invalidation, and lifecycle ownership remain unchanged. The low-level texture/material utilities and compressed-texture mipmap fix remain in `vrodos_master_rendering.js`.
+
+AST comparison against HEAD verified all three moved methods and all 175 retained functions/methods are identical apart from source positions. Behavioral coverage uses real Three scenes/materials with renderer and host test doubles to exercise desktop quality and oversampling, XR pixel-ratio preservation, composer/direct tone mapping, shared-material deduplication, hidden navmesh exclusion, explicit media overrides, shadow-aware reflection policy, retained smoothing state, and both sun- and moon-dominant reflection attenuation. The corresponding moved formula-text assertion was replaced with behavioral coverage; existing lighting/shadow integration fixtures load the required module.
+
+All 62 regression scripts pass (34 runtime, 28 compiler). Runtime and generated-core syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint has zero errors and 242 existing warnings; the new module has no warnings. Runtime artifacts were explicitly rebuilt using the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
+
+No rendering constants, navigation math, library versions, vendor patches, or texture filtering policies changed. Sky/cloud extraction, component lifecycle migration, and resource-ownership auditing remain open. Published scenes were not recompiled, and browser/physical Quest visual acceptance was not performed. No server was started and no commit or push was performed.

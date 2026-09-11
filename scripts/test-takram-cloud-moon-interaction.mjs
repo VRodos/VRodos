@@ -90,7 +90,6 @@ for (const token of [
   'const moonOwnsShadow = helperConfig.useMoonDirection',
   'sunLight.castShadow = shadowEnabled && useSunKey',
   'moonLight.castShadow = shadowEnabled && moonOwnsShadow',
-  'Math.min(cloudSunReflectionFactor, cloudMoonReflectionFactor)',
   'uniforms.vrodosMoonCloudVisibility.value'
 ]) {
   assert(quality.includes(token), `Missing lunar cloud lighting hook: ${token}`);

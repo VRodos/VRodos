@@ -111,6 +111,7 @@ function createQualityProfileContext() {
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_shadow_maps.js'), 'utf8'), context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_shadow_runtime.js'), 'utf8'), context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_celestial_lighting.js'), 'utf8'), context);
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_render_quality.js'), 'utf8'), context);
     vm.runInContext(
         readFileSync(resolve(root, "assets/js/runtime/master/vrodos_quality_profiles.js"), "utf8"),
         context,
