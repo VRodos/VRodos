@@ -146,6 +146,7 @@ function createVmContext(userAgent) {
         "assets/js/runtime/master/vrodos_runtime_render_policy.js",
         "assets/js/runtime/master/vrodos_hardware_capabilities.js",
         "assets/js/runtime/master/vrodos_hardware_diagnostics.js",
+        "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js"
     ].forEach((relativePath) => {
         vm.runInContext(readFileSync(resolve(root, relativePath), "utf8"), context, { filename: relativePath });

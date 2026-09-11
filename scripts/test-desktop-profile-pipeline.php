@@ -162,7 +162,7 @@ final class VRodos_Desktop_Profile_Test_Harness {
 			&& $generation === (int) ( $GLOBALS['vrodos_desktop_test_source']['generation'] ?? 0 );
 	}
 
-	private static function get_source_glb( int $asset_id ) {
+	private static function prepare_source_glb( int $asset_id ) {
 		return $GLOBALS['vrodos_desktop_test_source'];
 	}
 

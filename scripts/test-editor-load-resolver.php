@@ -70,7 +70,7 @@ final class VRodos_Editor_Load_Test_Harness {
 	private const EDITOR_PREVIEW_PROFILE = 'editor-preview';
 	private const WEB_FAMILY_PROFILES = [ 'web-high', 'web-medium', 'web-low' ];
 
-	private static function get_source_glb( int $asset_id ) {
+	private static function prepare_source_glb( int $asset_id ) {
 		return $asset_id > 0 ? $GLOBALS['vrodos_editor_load_source'] : new WP_Error( 'missing', 'Missing source.' );
 	}
 

@@ -18,7 +18,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 		}
 		$previous_snapshot = self::read_source_snapshot( $asset_id );
 		$previous_meta = get_post_meta( $asset_id, self::META_KEY, true );
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return;
 		}
@@ -80,7 +80,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 	public function render_glb_optimization_box( WP_Post $post ): void {
 		$asset_id = (int) $post->ID;
 		$meta     = self::get_derivative_meta( $asset_id );
-		$source   = self::get_source_glb( $asset_id );
+		$source   = self::inspect_source_glb( $asset_id );
 
 		$notice = isset( $_GET['vrodos_optimize_notice'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_optimize_notice'] ) ) : '';
 		if ( '' !== $notice ) {
@@ -158,7 +158,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			$this->redirect_to_asset( $asset_id, 'invalid-profile' );
 		}
 
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			$this->record_error( $asset_id, $source->get_error_message() );
 			$this->redirect_to_asset( $asset_id, 'failed' );
@@ -289,7 +289,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			exit;
 		}
 
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			$this->record_error( $asset_id, $source->get_error_message() );
 			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimize-failed' ] ) );

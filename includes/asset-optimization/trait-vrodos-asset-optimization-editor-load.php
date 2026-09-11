@@ -15,7 +15,7 @@ trait VRodos_Asset_Optimization_Editor_Load {
 			return self::empty_editor_load_state( 'forbidden', 'You are not allowed to load this asset.' );
 		}
 
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return self::empty_editor_load_state( 'missing', $source->get_error_message() );
 		}
@@ -112,7 +112,7 @@ trait VRodos_Asset_Optimization_Editor_Load {
 		);
 	}
 
-	private static function smallest_ready_editor_web_derivative( int $asset_id, array $source ): array {
+	protected static function smallest_ready_editor_web_derivative( int $asset_id, array $source ): array {
 		$candidates = [];
 		foreach ( self::WEB_FAMILY_PROFILES as $profile ) {
 			$record = self::desktop_profile_record( $asset_id, $profile );
@@ -149,13 +149,13 @@ trait VRodos_Asset_Optimization_Editor_Load {
 		return $candidates[0] ?? [];
 	}
 
-	private static function editor_load_reduction_percent( int $source_bytes, int $load_bytes ): float {
+	protected static function editor_load_reduction_percent( int $source_bytes, int $load_bytes ): float {
 		return $source_bytes > 0 && $load_bytes > 0
 			? round( max( 0, 1 - ( $load_bytes / $source_bytes ) ) * 100, 1 )
 			: 0.0;
 	}
 
-	private static function empty_editor_load_state( string $status, string $message = '' ): array {
+	protected static function empty_editor_load_state( string $status, string $message = '' ): array {
 		return [
 			'status'           => $status,
 			'message'          => $message,

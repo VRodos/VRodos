@@ -239,7 +239,7 @@ trait VRodos_Asset_Optimization_Settings_View {
 			$asset_id = (int) ( $candidate['assetId'] ?? 0 );
 			$title    = (string) ( $candidate['title'] ?? ( $asset_id > 0 ? 'Asset #' . $asset_id : 'Asset' ) );
 
-			$source = self::get_source_glb( $asset_id );
+			$source = self::prepare_source_glb( $asset_id );
 			if ( is_wp_error( $source ) ) {
 				$this->record_error( $asset_id, $source->get_error_message() );
 				$report['failed'][] = [

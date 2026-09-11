@@ -4,16 +4,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-admin-actions.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-settings.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-dashboard.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-analysis.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-queue.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
-require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-load.php';
 require_once __DIR__ . '/asset-optimization/class-vrodos-asset-optimization-admin-controller.php';
 
 class VRodos_Asset_Optimization_Manager {
@@ -40,7 +30,7 @@ class VRodos_Asset_Optimization_Manager {
 	}
 
 	public static function dashboard_actionable_assets( int $limit = 10 ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::dashboard_actionable_assets( $limit );
+		return VRodos_Asset_Optimization_Service::dashboard_actionable_assets( $limit );
 	}
 
 	public static function render_dashboard_actionable_assets_table( int $limit = 10 ): void {
@@ -48,34 +38,34 @@ class VRodos_Asset_Optimization_Manager {
 	}
 
 	public static function get_editor_preview_asset_state( int $asset_id ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::get_editor_preview_asset_state( $asset_id );
+		return VRodos_Asset_Optimization_Service::get_editor_preview_asset_state( $asset_id );
 	}
 
 	public static function get_web_optimization_state( int $asset_id ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::get_web_optimization_state( $asset_id );
+		return VRodos_Asset_Optimization_Service::get_web_optimization_state( $asset_id );
 	}
 
 	public static function resolve_editor_glb_load( int $asset_id, bool $force_source = false ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::resolve_editor_glb_load( $asset_id, $force_source );
+		return VRodos_Asset_Optimization_Service::resolve_editor_glb_load( $asset_id, $force_source );
 	}
 
 	public static function retry_editor_preview( int $asset_id ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::retry_editor_preview( $asset_id );
+		return VRodos_Asset_Optimization_Service::retry_editor_preview( $asset_id );
 	}
 
 	public static function prepare_runtime_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::prepare_runtime_profile_derivatives( $plan );
+		return VRodos_Asset_Optimization_Service::prepare_runtime_profile_derivatives( $plan );
 	}
 
 	public static function ensure_derivative( int $asset_id, string $profile, array $source = [], array $options = [], bool $regenerate = false ) {
-		return VRodos_Asset_Optimization_Admin_Controller::ensure_derivative( $asset_id, $profile, $source, $options, $regenerate );
+		return VRodos_Asset_Optimization_Service::ensure_derivative( $asset_id, $profile, $source, $options, $regenerate );
 	}
 
 	public static function runtime_profile_derivative_path( int $asset_id, string $profile, array $options = [] ): string {
-		return VRodos_Asset_Optimization_Admin_Controller::runtime_profile_derivative_path( $asset_id, $profile, $options );
+		return VRodos_Asset_Optimization_Service::runtime_profile_derivative_path( $asset_id, $profile, $options );
 	}
 
 	public static function desktop_profile_derivative_info( int $asset_id, string $slot ): array {
-		return VRodos_Asset_Optimization_Admin_Controller::desktop_profile_derivative_info( $asset_id, $slot );
+		return VRodos_Asset_Optimization_Service::desktop_profile_derivative_info( $asset_id, $slot );
 	}
 }

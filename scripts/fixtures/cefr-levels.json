@@ -1,0 +1,9 @@
+[
+  { "input": [" a1 ", "B2", "A1"], "tokens": ["A1", "B2"], "levels": ["A1", "B2"] },
+  { "input": "[\"A2\",\"B1\"]", "tokens": ["A2", "B1"], "levels": ["A2", "B1"] },
+  { "input": "WyJBMSIsIkIyIl0=", "tokens": ["A1", "B2"], "levels": ["A1", "B2"] },
+  { "input": "ALL LEVELS", "tokens": ["ALL LEVELS"], "levels": ["A1", "A2", "B1", "B2"] },
+  { "input": ["ALL", "A2"], "tokens": ["ALL", "A2"], "levels": ["A1", "A2", "B1", "B2"] },
+  { "input": null, "tokens": [], "levels": [] },
+  { "input": "Ελληνικά: B1, C2", "tokens": ["B1"], "levels": ["B1"] }
+]

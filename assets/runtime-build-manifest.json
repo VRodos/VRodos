@@ -193,8 +193,8 @@
         "assets/js/runtime/master/vrodos_model_origin.js",
         "assets/js/runtime/master/components/vrodos_scene_loader.component.js",
         "assets/js/runtime/master/components/vrodos_avatar.component.js",
-        "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
         "assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js",
+        "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
         "assets/js/runtime/master/components/vrodos_navigation.component.js",
         "assets/js/runtime/master/components/vrodos_misc.component.js"
       ],

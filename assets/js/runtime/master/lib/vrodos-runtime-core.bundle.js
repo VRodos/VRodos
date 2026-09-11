@@ -321,6 +321,12 @@ ${STOCHASTIC_GLSL}`).replace(
     }
     const H = Master.RuntimeSettings;
     const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+    H.queryValue = function(queryKey) {
+      return new URLSearchParams(window.location ? window.location.search : "").get(queryKey);
+    };
+    H.debugFlag = function(debugKey, queryKey) {
+      return Boolean(window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) || H.queryValue(queryKey) === "1";
+    };
     function setting(key) {
       return contract.sceneSettings && contract.sceneSettings[key] ? contract.sceneSettings[key] : {};
     }
@@ -795,27 +801,30 @@ ${STOCHASTIC_GLSL}`).replace(
       Master.RuntimeResources = {};
     }
     const Resources = Master.RuntimeResources;
-    function disposeOne(resource) {
-      if (!resource) {
+    function disposeOne(resource, seen = /* @__PURE__ */ new Set()) {
+      if (!resource || seen.has(resource)) {
         return;
       }
+      seen.add(resource);
       if (Array.isArray(resource)) {
-        resource.forEach(disposeOne);
+        resource.forEach((entry) => disposeOne(entry, seen));
         return;
       }
       if (resource.geometry) {
-        disposeOne(resource.geometry);
+        disposeOne(resource.geometry, seen);
       }
       if (Array.isArray(resource.material)) {
-        resource.material.forEach(disposeOne);
+        resource.material.forEach((entry) => disposeOne(entry, seen));
       } else if (resource.material) {
-        disposeOne(resource.material);
+        disposeOne(resource.material, seen);
       }
       if (typeof resource.dispose === "function") {
         resource.dispose();
       }
     }
-    Resources.dispose = disposeOne;
+    Resources.dispose = function(resource) {
+      disposeOne(resource);
+    };
     Resources.createRegistry = function() {
       const resources = [];
       const listeners = [];
@@ -834,6 +843,7 @@ ${STOCHASTIC_GLSL}`).replace(
           listeners.push({ target, type, handler, options });
         },
         disposeAll: function() {
+          const disposed = /* @__PURE__ */ new Set();
           while (listeners.length) {
             const listener = listeners.pop();
             if (listener.target && typeof listener.target.removeEventListener === "function") {
@@ -841,7 +851,7 @@ ${STOCHASTIC_GLSL}`).replace(
             }
           }
           while (resources.length) {
-            disposeOne(resources.pop());
+            disposeOne(resources.pop(), disposed);
           }
         }
       };
@@ -4147,20 +4157,10 @@ ${STOCHASTIC_GLSL}`).replace(
     const WGS84_POLAR_RADIUS = 6356752314245179e-9;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
     const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
-    const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets || {
-      natural: {
-        keyIntensity: 1.15,
-        fillIntensity: 0.45
-      },
-      clear: {
-        keyIntensity: 1.24,
-        fillIntensity: 0.55
-      },
-      crisp: {
-        keyIntensity: 1.19,
-        fillIntensity: 0.49
-      }
-    };
+    if (!runtimeSettingsContract.horizonHelperLightPresets || !runtimeSettingsContract.atmosphereLookDefaults) {
+      throw new Error("VRodos runtime settings contract is missing required atmosphere presets.");
+    }
+    const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets;
     function readDprPixelBudgetOverride() {
       try {
         const params = new URLSearchParams(window.location.search || "");
@@ -4246,134 +4246,7 @@ ${STOCHASTIC_GLSL}`).replace(
       }
       return targetPixelRatio;
     }
-    const PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = runtimeSettingsContract.atmosphereLookDefaults || {
-      night: {
-        sunElevationDeg: -18,
-        sunAzimuthDeg: 25,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.16,
-        albedoScale: 0.85,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 0.9,
-        mieScatteringScale: 0.45,
-        mieExtinctionScale: 0.55,
-        miePhaseG: 0.8,
-        absorptionScale: 1.05,
-        moonEnabled: true
-      },
-      dawn: {
-        sunElevationDeg: -5,
-        sunAzimuthDeg: -65,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.45,
-        albedoScale: 0.9,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 0.75,
-        mieExtinctionScale: 0.85,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      },
-      sunrise: {
-        sunElevationDeg: 2,
-        sunAzimuthDeg: -55,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.65,
-        albedoScale: 0.96,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 0.9,
-        mieExtinctionScale: 0.95,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      },
-      "early-morning": {
-        sunElevationDeg: 22,
-        sunAzimuthDeg: -28,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.5,
-        albedoScale: 1,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 0.95,
-        mieExtinctionScale: 0.98,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      },
-      midday: {
-        sunElevationDeg: 62,
-        sunAzimuthDeg: 20,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.55,
-        albedoScale: 1,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 1,
-        mieExtinctionScale: 1,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      },
-      "golden-hour": {
-        sunElevationDeg: 5,
-        sunAzimuthDeg: 32,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.65,
-        albedoScale: 0.98,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 0.9,
-        mieExtinctionScale: 0.95,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      },
-      sunset: {
-        sunElevationDeg: 1,
-        sunAzimuthDeg: 38,
-        sunDistance: 5200,
-        sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-        aerialStrength: 0.75,
-        albedoScale: 0.96,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: "#1a1a1a",
-        rayleighScale: 1,
-        mieScatteringScale: 0.95,
-        mieExtinctionScale: 1.05,
-        miePhaseG: 0.8,
-        absorptionScale: 1,
-        moonEnabled: false
-      }
-    };
+    const PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = runtimeSettingsContract.atmosphereLookDefaults;
     function clampPmndrsNumber(value, min, max, fallback) {
       const n = parseFloat(value);
       if (isNaN(n)) {
@@ -5890,18 +5763,7 @@ ${STOCHASTIC_GLSL}`).replace(
       return raw.charAt(0) === "#" ? raw : `#${raw}`;
     }
     function hasPmndrsDebugFlag(debugKey, queryKey) {
-      if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
-        return true;
-      }
-      if (typeof window.location === "undefined" || !window.location.search) {
-        return false;
-      }
-      try {
-        const params = new URLSearchParams(window.location.search);
-        return params.get(queryKey) === "1";
-      } catch (err) {
-        return false;
-      }
+      return window.VRODOSMaster.RuntimeSettings.debugFlag(debugKey, queryKey);
     }
     function readPmndrsDebugNumber(debugKey, queryKey, fallback, minValue, maxValue) {
       let value = null;

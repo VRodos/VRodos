@@ -764,6 +764,130 @@
       }
     }
   });
+  (function() {
+    function sceneSettings(el) {
+      return el && el.components ? el.components["scene-settings"] : null;
+    }
+    AFRAME.registerSystem("vrodos-runtime-pipeline", {
+      getSceneSettings: function(el) {
+        return sceneSettings(el || this.sceneEl);
+      }
+    });
+    AFRAME.registerComponent("vrodos-render-profile", {
+      tick: function(time, timeDelta) {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        if (typeof settings.updateHardwarePerformanceDiagnostics === "function") {
+          settings.updateHardwarePerformanceDiagnostics(time, timeDelta);
+        }
+        if (typeof settings.publishRuntimeFeatureState === "function") {
+          settings.publishRuntimeFeatureState("render-profile-tick", { time, throttleMs: 1500 });
+        }
+        if (settings.fpsStats && typeof settings.fpsStats.update === "function") {
+          settings.fpsStats.update();
+        }
+        settings.updateAdaptiveShadowFit(false);
+      }
+    });
+    AFRAME.registerComponent("vrodos-postfx-router", {
+      sync: function() {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        settings.warnImmersiveXrPostProcessingFallback();
+        if (settings.data.postFXEngine === "pmndrs") {
+          if (settings.postProcessingActive) {
+            settings.disablePostProcessing();
+          }
+          if (settings.shouldUsePostProcessing()) {
+            settings.enablePmndrsPostProcessing();
+            settings.updatePmndrsPostProcessingSize();
+          } else {
+            settings.disablePmndrsPostProcessing();
+          }
+          if (typeof settings.publishRuntimeFeatureState === "function") {
+            settings.publishRuntimeFeatureState("postfx-router");
+          }
+          return;
+        }
+        if (settings.pmndrsActive) {
+          settings.disablePmndrsPostProcessing();
+        }
+        if (settings.shouldUsePostProcessing()) {
+          settings.enablePostProcessing();
+          settings.updatePostProcessingSize();
+        } else {
+          settings.disablePostProcessing();
+        }
+        if (typeof settings.publishRuntimeFeatureState === "function") {
+          settings.publishRuntimeFeatureState("postfx-router");
+        }
+      }
+    });
+    AFRAME.registerComponent("vrodos-atmosphere", {
+      tick: function(time) {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        settings._pmndrsTickTimeMs = typeof time === "number" ? time : null;
+        settings.updatePmndrsHorizonSun();
+        if (typeof settings.updatePmndrsDayNightCycleFrame === "function") {
+          settings.updatePmndrsDayNightCycleFrame(time);
+        }
+      }
+    });
+    AFRAME.registerComponent("vrodos-reflections", {
+      tick: function(time) {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        const effectiveReflectionSource = settings.getEffectiveReflectionSource();
+        if (typeof settings.updateReflectionEnvironmentIntensity === "function") {
+          settings.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
+        }
+        if (effectiveReflectionSource === "takram-sky") {
+          if (typeof settings.updateTakramSkyEnvironment === "function") {
+            settings.updateTakramSkyEnvironment(time);
+          }
+          return;
+        }
+        if (effectiveReflectionSource !== "scene-probe") {
+          return;
+        }
+        const sceneProbeUpdateMode = settings.getSceneProbeUpdateMode();
+        if (sceneProbeUpdateMode === "static" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
+          return;
+        }
+        if (sceneProbeUpdateMode === "slow-dynamic" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
+          const anchorObject = settings.getSceneProbeAnchorObject();
+          if (anchorObject) {
+            anchorObject.updateMatrixWorld(true);
+            anchorObject.getWorldPosition(settings._sceneProbeCurrentPosition);
+            if (settings._sceneProbeCurrentPosition.distanceToSquared(settings._sceneProbeLastPosition) > 6 * 6 || settings.getSceneProbeYawDeltaDegrees(settings.getSceneProbeAnchorYaw(anchorObject), settings._sceneProbeLastYaw) > 45) {
+              settings._sceneProbeNeedsUpdate = true;
+            }
+          }
+        }
+        if (!settings._sceneProbeNeedsUpdate) {
+          return;
+        }
+        const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
+        if (time - settings._sceneProbeLastCaptureMs < captureCooldownMs) {
+          return;
+        }
+        const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
+        if (settings._sceneProbeLastModelEventMs && time - settings._sceneProbeLastModelEventMs < modelSettleMs) {
+          return;
+        }
+        settings.captureSceneProbe(time);
+      }
+    });
+  })();
   window.VRODOSMaster = window.VRODOSMaster || {};
   const VRODOSSceneSettingsMaster = window.VRODOSMaster;
   const VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
@@ -784,29 +908,10 @@
     return String(setting.default);
   }
   function vrodosRuntimeDebugFlag(debugKey, queryKey) {
-    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
-      return true;
-    }
-    if (typeof window.location === "undefined" || !window.location.search) {
-      return false;
-    }
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(queryKey) === "1";
-    } catch (err) {
-      return false;
-    }
+    return window.VRODOSMaster.RuntimeSettings.debugFlag(debugKey, queryKey);
   }
   function vrodosRuntimeQueryValue(queryKey) {
-    if (typeof window.location === "undefined" || !window.location.search) {
-      return null;
-    }
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(queryKey);
-    } catch (err) {
-      return null;
-    }
+    return window.VRODOSMaster.RuntimeSettings.queryValue(queryKey);
   }
   function vrodosRuntimeProfileOverrideValue() {
     const debugConfig = window.VRODOS_DEBUG || {};
@@ -1834,6 +1939,11 @@
         "vrodos-reflections"
       ];
       const active = this.getRuntimePipelineComponentNames();
+      active.forEach((componentName) => {
+        if (!AFRAME.components[componentName]) {
+          throw new Error(`VRodos required pipeline component is not registered: ${componentName}`);
+        }
+      });
       managed.forEach((componentName) => {
         if (active.indexOf(componentName) === -1) {
           if (this.el.hasAttribute(componentName)) {
@@ -3691,189 +3801,8 @@
       } else {
         this.disposeHardwareDiagnostics();
       }
-    },
-    tick: function(time, timeDelta) {
-      const expectedPipelineComponents = typeof this.getRuntimePipelineComponentNames === "function" ? this.getRuntimePipelineComponentNames() : ["vrodos-render-profile", "vrodos-postfx-router", "vrodos-atmosphere", "vrodos-reflections"];
-      const hasFocusedPipeline = this.el.components && expectedPipelineComponents.every((componentName) => Boolean(this.el.components[componentName]));
-      if (hasFocusedPipeline) {
-        return;
-      }
-      this.updateHardwarePerformanceDiagnostics(time, timeDelta);
-      this.publishRuntimeFeatureState("scene-settings-tick", { time, throttleMs: 1500 });
-      if (this.fpsStats && typeof this.fpsStats.update === "function") {
-        this.fpsStats.update();
-      }
-      this._pmndrsTickTimeMs = typeof time === "number" ? time : null;
-      this.updatePmndrsHorizonSun();
-      if (typeof this.updatePmndrsDayNightCycleFrame === "function") {
-        this.updatePmndrsDayNightCycleFrame(time);
-      }
-      this.updateAdaptiveShadowFit(false);
-      const effectiveReflectionSource = this.getEffectiveReflectionSource();
-      if (typeof this.updateReflectionEnvironmentIntensity === "function") {
-        this.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
-      }
-      if (effectiveReflectionSource === "takram-sky") {
-        if (typeof this.updateTakramSkyEnvironment === "function") {
-          this.updateTakramSkyEnvironment(time);
-        }
-        return;
-      }
-      if (effectiveReflectionSource !== "scene-probe") {
-        return;
-      }
-      const sceneProbeUpdateMode = this.getSceneProbeUpdateMode();
-      if (sceneProbeUpdateMode === "static" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
-        return;
-      }
-      if (sceneProbeUpdateMode === "slow-dynamic" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
-        const anchorObject = this.getSceneProbeAnchorObject();
-        if (anchorObject) {
-          anchorObject.updateMatrixWorld(true);
-          anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
-          if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > 6 * 6 || this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 45) {
-            this._sceneProbeNeedsUpdate = true;
-          }
-        }
-      }
-      if (!this._sceneProbeNeedsUpdate) {
-        return;
-      }
-      const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
-      if (time - this._sceneProbeLastCaptureMs < captureCooldownMs) {
-        return;
-      }
-      const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
-      if (this._sceneProbeLastModelEventMs && time - this._sceneProbeLastModelEventMs < modelSettleMs) {
-        return;
-      }
-      this.captureSceneProbe(time);
     }
   });
-  (function() {
-    function sceneSettings(el) {
-      return el && el.components ? el.components["scene-settings"] : null;
-    }
-    AFRAME.registerSystem("vrodos-runtime-pipeline", {
-      getSceneSettings: function(el) {
-        return sceneSettings(el || this.sceneEl);
-      }
-    });
-    AFRAME.registerComponent("vrodos-render-profile", {
-      tick: function(time, timeDelta) {
-        const settings = sceneSettings(this.el);
-        if (!settings) {
-          return;
-        }
-        if (typeof settings.updateHardwarePerformanceDiagnostics === "function") {
-          settings.updateHardwarePerformanceDiagnostics(time, timeDelta);
-        }
-        if (typeof settings.publishRuntimeFeatureState === "function") {
-          settings.publishRuntimeFeatureState("render-profile-tick", { time, throttleMs: 1500 });
-        }
-        if (settings.fpsStats && typeof settings.fpsStats.update === "function") {
-          settings.fpsStats.update();
-        }
-        settings.updateAdaptiveShadowFit(false);
-      }
-    });
-    AFRAME.registerComponent("vrodos-postfx-router", {
-      sync: function() {
-        const settings = sceneSettings(this.el);
-        if (!settings) {
-          return;
-        }
-        settings.warnImmersiveXrPostProcessingFallback();
-        if (settings.data.postFXEngine === "pmndrs") {
-          if (settings.postProcessingActive) {
-            settings.disablePostProcessing();
-          }
-          if (settings.shouldUsePostProcessing()) {
-            settings.enablePmndrsPostProcessing();
-            settings.updatePmndrsPostProcessingSize();
-          } else {
-            settings.disablePmndrsPostProcessing();
-          }
-          if (typeof settings.publishRuntimeFeatureState === "function") {
-            settings.publishRuntimeFeatureState("postfx-router");
-          }
-          return;
-        }
-        if (settings.pmndrsActive) {
-          settings.disablePmndrsPostProcessing();
-        }
-        if (settings.shouldUsePostProcessing()) {
-          settings.enablePostProcessing();
-          settings.updatePostProcessingSize();
-        } else {
-          settings.disablePostProcessing();
-        }
-        if (typeof settings.publishRuntimeFeatureState === "function") {
-          settings.publishRuntimeFeatureState("postfx-router");
-        }
-      }
-    });
-    AFRAME.registerComponent("vrodos-atmosphere", {
-      tick: function(time) {
-        const settings = sceneSettings(this.el);
-        if (!settings) {
-          return;
-        }
-        settings._pmndrsTickTimeMs = typeof time === "number" ? time : null;
-        settings.updatePmndrsHorizonSun();
-        if (typeof settings.updatePmndrsDayNightCycleFrame === "function") {
-          settings.updatePmndrsDayNightCycleFrame(time);
-        }
-      }
-    });
-    AFRAME.registerComponent("vrodos-reflections", {
-      tick: function(time) {
-        const settings = sceneSettings(this.el);
-        if (!settings) {
-          return;
-        }
-        const effectiveReflectionSource = settings.getEffectiveReflectionSource();
-        if (typeof settings.updateReflectionEnvironmentIntensity === "function") {
-          settings.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
-        }
-        if (effectiveReflectionSource === "takram-sky") {
-          if (typeof settings.updateTakramSkyEnvironment === "function") {
-            settings.updateTakramSkyEnvironment(time);
-          }
-          return;
-        }
-        if (effectiveReflectionSource !== "scene-probe") {
-          return;
-        }
-        const sceneProbeUpdateMode = settings.getSceneProbeUpdateMode();
-        if (sceneProbeUpdateMode === "static" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
-          return;
-        }
-        if (sceneProbeUpdateMode === "slow-dynamic" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
-          const anchorObject = settings.getSceneProbeAnchorObject();
-          if (anchorObject) {
-            anchorObject.updateMatrixWorld(true);
-            anchorObject.getWorldPosition(settings._sceneProbeCurrentPosition);
-            if (settings._sceneProbeCurrentPosition.distanceToSquared(settings._sceneProbeLastPosition) > 6 * 6 || settings.getSceneProbeYawDeltaDegrees(settings.getSceneProbeAnchorYaw(anchorObject), settings._sceneProbeLastYaw) > 45) {
-              settings._sceneProbeNeedsUpdate = true;
-            }
-          }
-        }
-        if (!settings._sceneProbeNeedsUpdate) {
-          return;
-        }
-        const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
-        if (time - settings._sceneProbeLastCaptureMs < captureCooldownMs) {
-          return;
-        }
-        const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
-        if (settings._sceneProbeLastModelEventMs && time - settings._sceneProbeLastModelEventMs < modelSettleMs) {
-          return;
-        }
-        settings.captureSceneProbe(time);
-      }
-    });
-  })();
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
   var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
     maxStepHeight: 0.6,

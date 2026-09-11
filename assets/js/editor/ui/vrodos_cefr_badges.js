@@ -10,51 +10,7 @@ VRODOS.ui.badges.decodeText = function(value) {
 
 VRODOS.ui.badges.escapeHTML = VRODOS.utils.escapeHTML;
 
-VRODOS.ui.badges.normalizeCefrLevels = function(levels) {
-    let source = levels;
-    const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
-
-    if (Array.isArray(source)) {
-        return source
-            .map((level) => {
-                if (level && typeof level === 'object') {
-                    return '';
-                }
-                return VRODOS.ui.badges.decodeText(level).trim().toUpperCase();
-            })
-            .filter(Boolean);
-    }
-
-    if (typeof source === 'string' && source.trim() !== '') {
-        try {
-            source = JSON.parse(source);
-        } catch (err) {
-            try {
-                const binary = window.atob(source);
-                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-                const decoded = new TextDecoder('utf-8').decode(bytes);
-                source = JSON.parse(decoded);
-            } catch (base64Err) {
-                const matches = source.toUpperCase().match(/\b(?:ALL LEVELS|ALL|A1|A2|B1|B2)\b/g);
-                source = matches || [];
-            }
-        }
-    }
-
-    if (typeof source === 'string') {
-        const matches = source.toUpperCase().match(/\b(?:ALL LEVELS|ALL|A1|A2|B1|B2)\b/g);
-        source = matches || [];
-    }
-
-    if (!Array.isArray(source)) {
-        return [];
-    }
-
-    return Array.from(new Set(source
-        .map((level) => VRODOS.ui.badges.decodeText(level).trim().toUpperCase())
-        .filter((level) => allowedLevels.indexOf(level) !== -1)
-        .filter(Boolean)));
-};
+VRODOS.ui.badges.normalizeCefrLevels = VRODOS.utils.normalizeCefrLevels;
 
 VRODOS.ui.badges.resolveCefrLevels = function(levels, emptyMeansAll) {
     const normalizedLevels = VRODOS.ui.badges.normalizeCefrLevels(levels);

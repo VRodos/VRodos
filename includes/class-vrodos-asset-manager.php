@@ -211,7 +211,7 @@ class VRodos_Asset_Manager {
 			'vrodos_editor_shell_ui',
 			'vrodos_editor_toolbar_ui',
 			'vrodos_compile_dialog_ui',
-			'vrodos_3d_editor_buttons_drags',
+
 			'vrodos_scene_editor_ui_controller',
 			'vrodos_fetch_asset_scenes_request',
 			'vrodos_compile_dialogue',
@@ -371,7 +371,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_rename_game', VRodos_Path_Manager::editor_ajax_js_url( 'rename_project.js' ), ['vrodos_namespace']],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', VRodos_Path_Manager::editor_js_url( 'vrodos_AssetViewer_3D_kernel.js' ), ['vrodos_namespace', 'vrodos_loader_decoder_config']],
-      ['vrodos_3d_editor_buttons_drags', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_editor_buttons_drags_compat.js' ), ['vrodos_namespace', 'vrodos_scene_editor_ui_controller']],
+
       ['vrodos_scene_editor_ui_controller', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_editor_ui_controller.js' ), ['vrodos_namespace', 'vrodos_compile_dialog_ui', 'vrodos_editor_shell_ui', 'vrodos_scene_list_ui', 'vrodos_scene_snapshot_ui', 'vrodos_floating_panels', 'vrodos_editor_toolbar_ui', 'vrodos_scene_canvas_events_ui']],
       ['vrodos_editor_environment_helpers', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_environment_helpers.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_editor_performance_profile', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_performance_profile.js' ), ['vrodos_namespace', 'vrodos_editor_environment_helpers']],
@@ -389,7 +389,9 @@ class VRodos_Asset_Manager {
       ['vrodos_editor_render_loop', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_render_loop.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
       ['vrodos_keyButtons', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_keyboard_controls.js' ), ['vrodos_namespace', 'vrodos_editor_environment_helpers', 'vrodos_three_vendor_bundle']],
       ['vrodos_rayCasters', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_raycasting.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_services', 'vrodos_auxControlers']],
-      ['vrodos_auxControlers', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_property_controls.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_scene_light_artifacts', 'vrodos_editor_services', 'vrodos_loader_generated_assets', 'ajax-script_surface_texture']],
+      ['vrodos_property_panel', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_property_panel.js' ), ['vrodos_namespace']],
+      ['vrodos_property_categories', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_property_categories.js' ), ['vrodos_namespace']],
+      ['vrodos_auxControlers', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_property_controls.js' ), ['vrodos_namespace', 'vrodos_property_panel', 'vrodos_property_categories', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_scene_light_artifacts', 'vrodos_editor_services', 'vrodos_loader_generated_assets', 'ajax-script_surface_texture']],
       ['vrodos_BordersFinder', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_bounds.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_three_vendor_bundle']],
       ['vrodos_loader_object_factories', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_object_factories.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_three_vendor_bundle']],
       ['vrodos_loader_glb_asset_cache', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_glb_asset_cache.js' ), ['vrodos_namespace', 'vrodos_editor_diagnostics', 'vrodos_three_vendor_bundle']],
@@ -428,7 +430,7 @@ class VRodos_Asset_Manager {
       ['vrodos_CompileUI_Profiles', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_profiles.js' ), ['vrodos_namespace', 'vrodos_compile_dialogue', 'vrodos_runtime_settings_contract'], $compile_profiles_version],
       ['vrodos_project_manager', VRodos_Path_Manager::editor_js_url( 'vrodos_project_manager.js' ), ['vrodos_namespace', 'ajax-script_create_game', 'ajax-script_rename_game'], $project_manager_version],
       ['vrodos_dashboard_assets', VRodos_Path_Manager::editor_js_url( 'vrodos_dashboard_assets.js' ), ['lucide-icons']],
-      ['vrodos_EditorInitializer', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_initializer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_editor_diagnostics', 'vrodos_editor_services', 'vrodos_editor_render_loop', 'vrodos_scripts', 'vrodos_scene_settings_sync', 'ajax-script_savescene', 'vrodos_loader_scene_lifecycle', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags', 'vrodos_scene_editor_ui_controller']],
+      ['vrodos_EditorInitializer', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_initializer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_editor_diagnostics', 'vrodos_editor_services', 'vrodos_editor_render_loop', 'vrodos_scripts', 'vrodos_scene_settings_sync', 'ajax-script_savescene', 'vrodos_loader_scene_lifecycle', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_scene_editor_ui_controller']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' . $three_vendor_bundle )],
       // Other Libraries

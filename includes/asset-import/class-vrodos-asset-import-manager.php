@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-asset-import-session.php';
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -207,9 +209,9 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		$user_id     = get_current_user_id();
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $upload_id );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $upload_id );
 		if ( 0 === $chunk_index && is_dir( $session_dir ) ) {
-			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			self::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 		}
 
 		if ( ! wp_mkdir_p( $session_dir ) ) {
@@ -473,9 +475,9 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		$user_id     = get_current_user_id();
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
-		$session_url = self::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
-		$manifest    = self::read_staged_manifest( $session_dir );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
+		$session_url = VRodos_Asset_Import_Session::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
+		$manifest    = VRodos_Asset_Import_Session::read_owned_manifest( $session_dir );
 		if ( is_wp_error( $manifest ) ) {
 			return [
 				'success' => false,
@@ -483,15 +485,6 @@ class VRodos_Asset_Import_Manager {
 				'error'   => $manifest->get_error_message(),
 			];
 		}
-
-		if ( ! self::can_access_staged_manifest( $manifest ) ) {
-			return [
-				'success' => false,
-				'status'  => 'failed',
-				'error'   => 'The staged model upload belongs to a different user.',
-			];
-		}
-
 		if ( ! self::can_mutate_import_target( $asset_id, $project_id, $manifest ) ) {
 			return [
 				'success' => false,
@@ -510,7 +503,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		$prepared_path = self::prepared_glb_path_from_manifest( $session_dir, $manifest );
+		$prepared_path = VRodos_Asset_Import_Session::prepared_glb_path_from_manifest( $session_dir, $manifest );
 		if ( '' !== $prepared_path && is_file( $prepared_path ) ) {
 			$normalization = self::normalize_glb_path( $prepared_path, $session_dir );
 			if ( is_wp_error( $normalization ) ) {
@@ -548,7 +541,7 @@ class VRodos_Asset_Import_Manager {
 				(string) ( $manifest['selected_entry'] ?? ( $manifest['file_name'] ?? basename( $prepared_path ) ) )
 			);
 			self::maybe_generate_blender_thumbnail( $asset_id, (int) $attachment_id, $project_id );
-			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			self::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			self::clear_asset_browser_cache();
 
 			return [
@@ -584,7 +577,7 @@ class VRodos_Asset_Import_Manager {
 				? (string) $normalization['diagnostic']
 				: 'Direct GLB upload saved.';
 			self::mark_ready( $asset_id, (int) $attachment_id, $diagnostic, (string) ( $manifest['file_name'] ?? 'upload.glb' ) );
-			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			self::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			self::clear_asset_browser_cache();
 
 			return [
@@ -661,7 +654,7 @@ class VRodos_Asset_Import_Manager {
 
 		$user_id     = get_current_user_id();
 		$token       = sanitize_key( wp_generate_uuid4() );
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
 		if ( ! wp_mkdir_p( $session_dir ) ) {
 			return [
 				'success' => false,
@@ -672,7 +665,7 @@ class VRodos_Asset_Import_Manager {
 
 		$source_path = trailingslashit( $session_dir ) . 'upload.' . $extension;
 		if ( ! move_uploaded_file( (string) ( $file['tmp_name'] ?? '' ), $source_path ) ) {
-			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			self::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			return [
 				'success' => false,
 				'status'  => 'failed',
@@ -680,7 +673,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 		if ( ! self::valid_model_signature( $source_path, $extension ) ) {
-			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			self::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			return [
 				'success' => false,
 				'status'  => 'failed',
@@ -725,9 +718,9 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		$user_id     = get_current_user_id();
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
-		$session_url = self::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
-		$manifest    = self::read_staged_manifest( $session_dir );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
+		$session_url = VRodos_Asset_Import_Session::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
+		$manifest    = VRodos_Asset_Import_Session::read_owned_manifest( $session_dir );
 		if ( is_wp_error( $manifest ) ) {
 			return [
 				'success'  => false,
@@ -735,15 +728,6 @@ class VRodos_Asset_Import_Manager {
 				'message'  => $manifest->get_error_message(),
 			];
 		}
-
-		if ( ! self::can_access_staged_manifest( $manifest ) ) {
-			return [
-				'success'  => false,
-				'can_save' => false,
-				'message'  => 'The staged model upload belongs to a different user.',
-			];
-		}
-
 		$extension   = strtolower( (string) ( $manifest['extension'] ?? '' ) );
 		$source_path = trailingslashit( $session_dir ) . 'upload.' . $extension;
 		if ( ! is_file( $source_path ) || ( 'zip' !== $extension && ! self::is_conversion_extension( $extension ) ) ) {
@@ -754,7 +738,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		$manifest = self::update_staged_prepare_progress(
+		$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress(
 			$session_dir,
 			$manifest,
 			5,
@@ -762,9 +746,9 @@ class VRodos_Asset_Import_Manager {
 			'zip' === $extension ? 'inspecting' : 'converting'
 		);
 
-		$existing_prepared_path = self::prepared_glb_path_from_manifest( $session_dir, $manifest );
+		$existing_prepared_path = VRodos_Asset_Import_Session::prepared_glb_path_from_manifest( $session_dir, $manifest );
 		if ( '' !== $existing_prepared_path && is_file( $existing_prepared_path ) ) {
-			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 100, 'Model package is already prepared.', 'ready' );
+			$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, 100, 'Model package is already prepared.', 'ready' );
 			return [
 				'success'          => true,
 				'can_save'         => true,
@@ -772,7 +756,7 @@ class VRodos_Asset_Import_Manager {
 				'selected'         => (string) ( $manifest['selected_entry'] ?? '' ),
 				'diagnostic'       => (string) ( $manifest['prepared_diagnostic'] ?? '' ),
 				'requires_blender' => ! empty( $manifest['prepared_conversion_tool'] ),
-				'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+				'prepared_url'     => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 			];
 		}
 
@@ -783,7 +767,7 @@ class VRodos_Asset_Import_Manager {
 			$prepared_path = trailingslashit( $session_dir ) . 'prepared.glb';
 			$selected      = (string) ( $manifest['file_name'] ?? basename( $source_path ) );
 			$progress_callback = static function ( int $percent, string $message ) use ( $session_dir, &$manifest ): void {
-				$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
+				$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
 			};
 
 			$conversion = VRodos_Asset_Import_Blender_Converter::convert_to_glb(
@@ -798,7 +782,7 @@ class VRodos_Asset_Import_Manager {
 				$diagnostic = (string) ( $conversion['code'] ?? '' ) === 'unsupported-ascii-fbx'
 					? ''
 					: trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) );
-				$manifest   = self::update_staged_prepare_progress(
+				$manifest   = VRodos_Asset_Import_Session::update_staged_prepare_progress(
 					$session_dir,
 					$manifest,
 					(int) ( $manifest['prepare_percent'] ?? 0 ),
@@ -806,7 +790,7 @@ class VRodos_Asset_Import_Manager {
 					'failed'
 				);
 				$manifest['prepared_diagnostic'] = $diagnostic;
-				self::write_staged_manifest( $session_dir, $manifest );
+				VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 
 				return [
 					'success'    => false,
@@ -824,9 +808,9 @@ class VRodos_Asset_Import_Manager {
 
 			if ( ! is_file( $prepared_path ) ) {
 				$diagnostic = trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) );
-				$manifest   = self::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), 'Blender conversion succeeded but the generated GLB could not be staged for asset save.', 'failed' );
+				$manifest   = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), 'Blender conversion succeeded but the generated GLB could not be staged for asset save.', 'failed' );
 				$manifest['prepared_diagnostic'] = $diagnostic;
-				self::write_staged_manifest( $session_dir, $manifest );
+				VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 
 				return [
 					'success'    => false,
@@ -847,7 +831,7 @@ class VRodos_Asset_Import_Manager {
 			$manifest['prepare_percent']             = 100;
 			$manifest['prepare_message']             = 'GLB conversion complete.';
 			$manifest['prepare_updated_at']          = time();
-			self::write_staged_manifest( $session_dir, $manifest );
+			VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 
 			return [
 				'success'          => true,
@@ -856,7 +840,7 @@ class VRodos_Asset_Import_Manager {
 				'selected'         => $selected,
 				'diagnostic'       => (string) $manifest['prepared_diagnostic'],
 				'requires_blender' => true,
-				'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+				'prepared_url'     => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 			];
 		}
 
@@ -872,7 +856,7 @@ class VRodos_Asset_Import_Manager {
 		$cleanup_paths = (array) ( $selection['temp_files'] ?? [] );
 		$diagnostic    = VRodos_Asset_Import_Zip_Package::format_selection_diagnostic( $selection );
 		$prepared_path = trailingslashit( $session_dir ) . 'prepared.glb';
-		$manifest      = self::update_staged_prepare_progress( $session_dir, $manifest, 12, 'ZIP package inspected.', 'inspecting' );
+		$manifest      = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, 12, 'ZIP package inspected.', 'inspecting' );
 
 		if ( empty( $selection['success'] ) ) {
 			VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
@@ -887,14 +871,14 @@ class VRodos_Asset_Import_Manager {
 		if ( ! empty( $selection['glb']['display_entry'] ) ) {
 			$selected_glb = (array) $selection['glb'];
 			if ( ! empty( $selected_glb['requires_repack'] ) ) {
-				$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 15, 'Blender is repacking GLB external resources...', 'converting' );
+				$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, 15, 'Blender is repacking GLB external resources...', 'converting' );
 				$progress_callback = static function ( int $percent, string $message ) use ( $session_dir, &$manifest ): void {
-					$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
+					$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
 				};
 				$conversion = self::convert_zip_candidate_to_glb( $selected_glb, $progress_callback );
 				$cleanup_paths = array_merge( $cleanup_paths, (array) ( $conversion['cleanup_paths'] ?? [] ) );
 				if ( empty( $conversion['success'] ) ) {
-					$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), (string) ( $conversion['message'] ?? 'Blender GLB repack failed.' ), 'failed' );
+					$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), (string) ( $conversion['message'] ?? 'Blender GLB repack failed.' ), 'failed' );
 					VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 					return [
 						'success'    => false,
@@ -906,7 +890,7 @@ class VRodos_Asset_Import_Manager {
 
 				@unlink( $prepared_path );
 				if ( ! @copy( (string) ( $conversion['path'] ?? '' ), $prepared_path ) ) {
-					$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), 'Blender repacked the selected GLB but the generated GLB could not be staged for asset save.', 'failed' );
+					$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), 'Blender repacked the selected GLB but the generated GLB could not be staged for asset save.', 'failed' );
 					VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 					return [
 						'success'    => false,
@@ -927,7 +911,7 @@ class VRodos_Asset_Import_Manager {
 				$manifest['prepare_percent']             = 100;
 				$manifest['prepare_message']             = 'GLB repack complete.';
 				$manifest['prepare_updated_at']          = time();
-				self::write_staged_manifest( $session_dir, $manifest );
+				VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 				VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 
 				return [
@@ -937,11 +921,11 @@ class VRodos_Asset_Import_Manager {
 					'selected'         => (string) $manifest['selected_entry'],
 					'diagnostic'       => (string) $manifest['prepared_diagnostic'],
 					'requires_blender' => true,
-					'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+					'prepared_url'     => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 				];
 			}
 
-			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 25, 'Extracting selected GLB...', 'preparing' );
+			$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, 25, 'Extracting selected GLB...', 'preparing' );
 			$tmp_glb      = VRodos_Asset_Import_Zip_Package::extract_entry_from_path_to_temp_file(
 				(string) ( $selected_glb['container_path'] ?? '' ),
 				(string) ( $selected_glb['zip_entry'] ?? '' )
@@ -980,7 +964,7 @@ class VRodos_Asset_Import_Manager {
 			$manifest['prepare_percent']             = 100;
 			$manifest['prepare_message']             = 'Selected GLB extracted.';
 			$manifest['prepare_updated_at']          = time();
-			self::write_staged_manifest( $session_dir, $manifest );
+			VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 			VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 
 			return [
@@ -990,7 +974,7 @@ class VRodos_Asset_Import_Manager {
 				'selected'         => (string) $manifest['selected_entry'],
 				'diagnostic'       => $diagnostic,
 				'requires_blender' => false,
-				'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+				'prepared_url'     => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 			];
 		}
 
@@ -1004,14 +988,14 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 15, 'Blender is converting the selected source...', 'converting' );
+		$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, 15, 'Blender is converting the selected source...', 'converting' );
 		$progress_callback = static function ( int $percent, string $message ) use ( $session_dir, &$manifest ): void {
-			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
+			$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
 		};
 		$conversion = self::convert_zip_candidate_to_glb( (array) $selection['candidate'], $progress_callback );
 		$cleanup_paths = array_merge( $cleanup_paths, (array) ( $conversion['cleanup_paths'] ?? [] ) );
 		if ( empty( $conversion['success'] ) ) {
-			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), (string) ( $conversion['message'] ?? 'Blender conversion failed.' ), 'failed' );
+			$manifest = VRodos_Asset_Import_Session::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), (string) ( $conversion['message'] ?? 'Blender conversion failed.' ), 'failed' );
 			VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 			return [
 				'success'    => false,
@@ -1043,7 +1027,7 @@ class VRodos_Asset_Import_Manager {
 		$manifest['prepare_percent']             = 100;
 		$manifest['prepare_message']             = 'GLB conversion complete.';
 		$manifest['prepare_updated_at']          = time();
-		self::write_staged_manifest( $session_dir, $manifest );
+		VRodos_Asset_Import_Session::write_staged_manifest( $session_dir, $manifest );
 		VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
 
 		return [
@@ -1053,7 +1037,7 @@ class VRodos_Asset_Import_Manager {
 			'selected'         => (string) $manifest['selected_entry'],
 			'diagnostic'       => (string) $manifest['prepared_diagnostic'],
 			'requires_blender' => true,
-			'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+			'prepared_url'     => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 		];
 	}
 
@@ -1077,8 +1061,8 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		$user_id     = get_current_user_id();
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
-		$manifest    = self::read_staged_manifest( $session_dir );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
+		$manifest    = VRodos_Asset_Import_Session::read_owned_manifest( $session_dir );
 		if ( is_wp_error( $manifest ) ) {
 			return [
 				'success'  => false,
@@ -1086,15 +1070,6 @@ class VRodos_Asset_Import_Manager {
 				'message'  => $manifest->get_error_message(),
 			];
 		}
-
-		if ( ! self::can_access_staged_manifest( $manifest ) ) {
-			return [
-				'success'  => false,
-				'can_save' => false,
-				'message'  => 'The staged model upload belongs to a different user.',
-			];
-		}
-
 		$extension   = strtolower( (string) ( $manifest['extension'] ?? '' ) );
 		$source_path = trailingslashit( $session_dir ) . 'upload.' . $extension;
 		if ( ! self::is_supported_extension( $extension ) || ! is_file( $source_path ) ) {
@@ -1241,23 +1216,15 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		$user_id     = get_current_user_id();
-		$session_dir = self::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
-		$session_url = self::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
-		$manifest    = self::read_staged_manifest( $session_dir );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $token );
+		$session_url = VRodos_Asset_Import_Session::staged_session_url( (string) $upload_dir['baseurl'], $user_id, $token );
+		$manifest    = VRodos_Asset_Import_Session::read_owned_manifest( $session_dir );
 		if ( is_wp_error( $manifest ) ) {
 			return [
 				'success' => false,
 				'message' => $manifest->get_error_message(),
 			];
 		}
-
-		if ( ! self::can_access_staged_manifest( $manifest ) ) {
-			return [
-				'success' => false,
-				'message' => 'The staged model upload belongs to a different user.',
-			];
-		}
-
 		$status  = (string) ( $manifest['prepare_status'] ?? '' );
 		$percent = max( 0, min( 100, (int) ( $manifest['prepare_percent'] ?? 0 ) ) );
 		if ( '' === $status && ! empty( $manifest['prepared_glb'] ) ) {
@@ -1275,8 +1242,8 @@ class VRodos_Asset_Import_Manager {
 			'message'        => (string) ( $manifest['prepare_message'] ?? self::prepare_progress_message( $status, $percent ) ),
 			'selected'       => (string) ( $manifest['selected_entry'] ?? '' ),
 			'diagnostic'     => (string) ( $manifest['prepared_diagnostic'] ?? '' ),
-			'can_save'       => ! empty( $manifest['prepared_glb'] ) && is_file( self::prepared_glb_path_from_manifest( $session_dir, $manifest ) ),
-			'prepared_url'   => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+			'can_save'       => ! empty( $manifest['prepared_glb'] ) && is_file( VRodos_Asset_Import_Session::prepared_glb_path_from_manifest( $session_dir, $manifest ) ),
+			'prepared_url'   => VRodos_Asset_Import_Session::prepared_glb_url_from_manifest( $session_url, $manifest ),
 			'updated_at'     => (int) ( $manifest['prepare_updated_at'] ?? 0 ),
 			'requires_blender' => ! empty( $manifest['prepared_conversion_tool'] ) || in_array( $status, [ 'converting', 'running' ], true ),
 		];
@@ -1462,7 +1429,7 @@ class VRodos_Asset_Import_Manager {
 		if ( '' !== $staged_dir ) {
 			$upload_dir = wp_upload_dir();
 			if ( empty( $upload_dir['error'] ) ) {
-				self::delete_directory_inside_root( $staged_dir, self::user_staged_root( '', get_current_user_id() ) );
+				self::delete_directory_inside_root( $staged_dir, VRodos_Asset_Import_Session::user_staged_root( '', get_current_user_id() ) );
 			}
 		}
 
@@ -1673,38 +1640,8 @@ class VRodos_Asset_Import_Manager {
 		return 'glb_' . $asset_id . '_' . $asset_cat_id . '.glb';
 	}
 
-	private static function read_staged_manifest( string $session_dir ): array|WP_Error {
-		$manifest_path = trailingslashit( $session_dir ) . 'manifest.json';
-		if ( ! is_file( $manifest_path ) ) {
-			return new WP_Error( 'manifest_missing', 'The staged model upload manifest is missing.' );
-		}
 
-		$manifest = json_decode( (string) file_get_contents( $manifest_path ), true );
-		if ( ! is_array( $manifest ) ) {
-			return new WP_Error( 'manifest_invalid', 'The staged model upload manifest is invalid.' );
-		}
 
-		return $manifest;
-	}
-
-	private static function write_staged_manifest( string $session_dir, array $manifest ): void {
-		file_put_contents(
-			trailingslashit( $session_dir ) . 'manifest.json',
-			wp_json_encode( $manifest )
-		);
-	}
-
-	private static function update_staged_prepare_progress( string $session_dir, array $fallback_manifest, int $percent, string $message, string $status ): array {
-		$current_manifest = self::read_staged_manifest( $session_dir );
-		$manifest         = is_wp_error( $current_manifest ) ? $fallback_manifest : $current_manifest;
-		$manifest['prepare_status']     = sanitize_key( $status );
-		$manifest['prepare_percent']    = max( 0, min( 100, $percent ) );
-		$manifest['prepare_message']    = sanitize_text_field( $message );
-		$manifest['prepare_updated_at'] = time();
-		self::write_staged_manifest( $session_dir, $manifest );
-
-		return $manifest;
-	}
 
 	private static function prepare_progress_message( string $status, int $percent ): string {
 		return match ( $status ) {
@@ -1717,24 +1654,7 @@ class VRodos_Asset_Import_Manager {
 		};
 	}
 
-	private static function prepared_glb_path_from_manifest( string $session_dir, array $manifest ): string {
-		$prepared_glb = isset( $manifest['prepared_glb'] ) ? sanitize_file_name( (string) $manifest['prepared_glb'] ) : '';
-		if ( '' === $prepared_glb ) {
-			return '';
-		}
 
-		$path = trailingslashit( $session_dir ) . $prepared_glb;
-		return is_file( $path ) ? $path : '';
-	}
-
-	private static function prepared_glb_url_from_manifest( string $session_url, array $manifest ): string {
-		$prepared_glb = isset( $manifest['prepared_glb'] ) ? sanitize_file_name( (string) $manifest['prepared_glb'] ) : '';
-		if ( '' === $prepared_glb ) {
-			return '';
-		}
-
-		return esc_url_raw( add_query_arg( [ 'file' => basename( $prepared_glb ), 'v' => (string) ( $manifest['prepared_at'] ?? time() ) ], $session_url ) );
-	}
 
 	private static function current_user_can_edit_asset( int $asset_id ): bool {
 		if ( $asset_id <= 0 || ! is_user_logged_in() ) {
@@ -1748,14 +1668,6 @@ class VRodos_Asset_Import_Manager {
 		return (int) get_post_field( 'post_author', $asset_id ) === get_current_user_id();
 	}
 
-	private static function can_access_staged_manifest( array $manifest ): bool {
-		$project_id = absint( $manifest['project_id'] ?? 0 );
-
-		return (int) ( $manifest['user_id'] ?? 0 ) === get_current_user_id()
-			&& $project_id > 0
-			&& 'vrodos_game' === get_post_type( $project_id )
-			&& current_user_can( 'edit_post', $project_id );
-	}
 
 	private static function can_mutate_import_target( int $asset_id, int $project_id, ?array $manifest = null ): bool {
 		if (
@@ -1770,7 +1682,7 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		return null === $manifest
-			|| ( self::can_access_staged_manifest( $manifest ) && (int) ( $manifest['project_id'] ?? 0 ) === $project_id );
+			|| ( VRodos_Asset_Import_Session::can_access_staged_manifest( $manifest ) && (int) ( $manifest['project_id'] ?? 0 ) === $project_id );
 	}
 
 	private static function max_upload_bytes(): int {
@@ -1821,18 +1733,8 @@ class VRodos_Asset_Import_Manager {
 		);
 	}
 
-	private static function user_staged_root( string $upload_basedir, int $user_id ): string {
-		$root = VRodos_Storage_Manager::private_site_root();
-		return is_string( $root ) ? trailingslashit( $root ) . 'tmp/import' : '';
-	}
 
-	private static function staged_session_dir( string $upload_basedir, int $user_id, string $token ): string {
-		return trailingslashit( self::user_staged_root( $upload_basedir, $user_id ) ) . sanitize_key( $token );
-	}
 
-	private static function staged_session_url( string $upload_baseurl, int $user_id, string $token ): string {
-		return add_query_arg( [ 'action' => 'vrodos_private_media', 'staging_token' => sanitize_key( $token ) ], admin_url( 'admin-ajax.php' ) );
-	}
 
 	public function cleanup_staged_uploads(): void {
 		$upload_dir = wp_upload_dir();
@@ -1871,7 +1773,7 @@ class VRodos_Asset_Import_Manager {
 
 			$staged_dir = (string) get_post_meta( $expired_asset_id, self::STAGED_DIR_META, true );
 			if ( '' !== $staged_dir ) {
-				self::delete_directory_inside_root( $staged_dir, self::user_staged_root( '', get_current_user_id() ) );
+				self::delete_directory_inside_root( $staged_dir, VRodos_Asset_Import_Session::user_staged_root( '', get_current_user_id() ) );
 			}
 
 			delete_post_meta( $expired_asset_id, self::SOURCE_PATH_META );

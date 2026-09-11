@@ -5,11 +5,11 @@
     const decodeDisplayText = namespace.decodeDisplayText;
     const escapeHtml = namespace.escapeHtml;
     const normalizeComparableText = namespace.normalizeComparableText;
-    const normalizeWordSearchText = namespace.normalizeWordSearchText;
+
     const normalizeFreeText = namespace.normalizeFreeText;
-    const isPlaceholderText = namespace.isPlaceholderText;
+
     const toArray = namespace.toArray;
-    const uniqueId = namespace.uniqueId;
+
     const shuffleArray = namespace.shuffleArray;
     const arrayEquals = namespace.arrayEquals;
     const normalizeAssessmentLineBreaks = namespace.normalizeAssessmentLineBreaks;
@@ -171,27 +171,12 @@
                 }
 
                 if (state.activeIndex >= items.length - 1) {
-                    const answers = items.map((question, index) => {
-                        const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
-                        const correctIndex = question.correctIndex;
-                        const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
-                        return {
-                            questionId: question.id,
-                            questionIndex: index,
-                            prompt: question.prompt,
-                            options: question.answers.slice(),
-                            selectedIndex: responseIndex,
-                            selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
-                            correctIndex,
-                            correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
-                            isCorrect
-                        };
-                    });
+                    const answers = namespace.buildQuestionAnswers(state);
 
-                    const gradedAnswers = answers.filter((answer) => answer.isCorrect !== null);
+
                     runtime.finish(
                         { answers },
-                        { isCorrect: gradedAnswers.length ? gradedAnswers.every((answer) => answer.isCorrect === true) : null }
+                        { isCorrect: namespace.gradeResponses(answers, "isCorrect", true) }
                     );
                     return;
                 }
@@ -270,23 +255,11 @@
                         return;
                     }
 
-                    const placements = entries.map((entry) => {
-                        const sourceId = state.assignmentsByTarget[entry.id] || "";
-                        const sourceEntry = state.entriesById[sourceId];
-                        return {
-                            targetId: entry.id,
-                            target: entry.target,
-                            selectedSourceId: sourceId,
-                            selectedSource: sourceEntry ? sourceEntry.source : "",
-                            expectedSourceId: entry.id,
-                            expectedSource: entry.source,
-                            isCorrect: sourceId === entry.id
-                        };
-                    });
+                    const placements = namespace.buildPairPlacements(state);
 
                     runtime.finish(
                         { placements, variant: "drag-and-drop" },
-                        { isCorrect: placements.every((placement) => placement.isCorrect === true) }
+                        { isCorrect: namespace.gradeResponses(placements) }
                     );
                     return;
                 }
@@ -295,23 +268,11 @@
                     return;
                 }
 
-                const matches = entries.map((entry) => {
-                    const selectedTargetId = state.matchesBySource[entry.id] || "";
-                    const selectedTarget = state.entriesById[selectedTargetId];
-                    return {
-                        sourceId: entry.id,
-                        source: entry.source,
-                        expectedTargetId: entry.id,
-                        expectedTarget: entry.target,
-                        selectedTargetId,
-                        selectedTarget: selectedTarget ? selectedTarget.target : "",
-                        isCorrect: selectedTargetId === entry.id
-                    };
-                });
+                const matches = namespace.buildPairMatches(state);
 
                 runtime.finish(
                     { matches, variant: "matching" },
-                    { isCorrect: matches.every((match) => match.isCorrect === true) }
+                    { isCorrect: namespace.gradeResponses(matches) }
                 );
             }
         };
@@ -835,20 +796,11 @@
                         return;
                     }
 
-                    const prompts = state.promptOrder.map((entryId, index) => {
-                        const entry = state.entriesById[entryId];
-                        return {
-                            promptIndex: index,
-                            wordId: entry.id,
-                            word: entry.text,
-                            hint: entry.hint,
-                            wasMarked: state.markedIds.has(entry.id)
-                        };
-                    });
+                    const prompts = namespace.buildBingoPrompts(state);
 
                     runtime.finish(
                         { prompts, variant: "vocabulary-bingo" },
-                        { isCorrect: prompts.every((prompt) => prompt.wasMarked === true) }
+                        { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
                     );
                     return;
                 }
@@ -857,16 +809,11 @@
                     return;
                 }
 
-                const words = state.puzzle.entries.map((entry) => ({
-                    wordId: entry.id,
-                    word: entry.text,
-                    hint: entry.hint,
-                    found: state.foundIds.has(entry.id)
-                }));
+                const words = namespace.buildWordSearchAnswers(state);
 
                 runtime.finish(
                     { words, variant: "word-search" },
-                    { isCorrect: words.every((word) => word.found === true) }
+                    { isCorrect: namespace.gradeResponses(words, "found") }
                 );
             }
         };
@@ -1132,38 +1079,20 @@
                         return;
                     }
 
-                    const selections = state.annotations.map((annotation) => ({
-                        annotationId: annotation.id,
-                        text: state.sourceText.slice(annotation.start, annotation.end),
-                        selected: state.selectedIds.has(annotation.id),
-                        isCorrect: state.selectedIds.has(annotation.id)
-                    }));
+                    const selections = namespace.buildHighlightSelections(state);
 
                     runtime.finish(
                         { selections, variant: "highlight" },
-                        { isCorrect: selections.every((selection) => selection.isCorrect === true) }
+                        { isCorrect: namespace.gradeResponses(selections) }
                     );
                     return;
                 }
 
-                const blanks = state.annotations.map((annotation, index) => {
-                    const enteredValue = state.values[annotation.id] || "";
-                    const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
-                    const expectedValue = isPlaceholderText(annotation.correctValue)
-                        ? (wordBankAnswer || annotation.text)
-                        : annotation.correctValue;
-                    const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue);
-                    return {
-                        annotationId: annotation.id,
-                        expectedValue,
-                        enteredValue,
-                        isCorrect
-                    };
-                });
+                const blanks = namespace.buildFillGapAnswers(state);
 
                 runtime.finish(
                     { blanks, variant: "fill-in-the-gaps" },
-                    { isCorrect: blanks.every((blank) => blank.isCorrect === true) }
+                    { isCorrect: namespace.gradeResponses(blanks) }
                 );
             }
         };

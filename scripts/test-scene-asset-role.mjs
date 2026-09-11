@@ -137,6 +137,7 @@ context.VRODOS.ui.refreshSceneAssetRolePresentation = () => {
     presentationRefreshes++;
 };
 
+vm.runInNewContext(readFileSync(resolve(root, 'assets/js/editor/loaders/vrodos_loader_generated_assets.js'), 'utf8'), context);
 vm.runInNewContext(
     readFileSync(resolve(root, "assets/js/editor/scene/vrodos_undo_engine.js"), "utf8"),
     context,

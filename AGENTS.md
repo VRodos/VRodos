@@ -209,6 +209,9 @@ For spatial UI runtime package changes, also commit `assets/js/runtime/master/li
 
 Common checks:
 
+- `npm run check:runtime` runs verification without regenerating tracked bundles. Generate runtime outputs explicitly before checking intentional runtime changes.
+- `scripts/regression-test-catalog.mjs` owns every regression script's runtime/compiler group; `npm run check:tests` detects uncatalogued tests. PHP tests run in separate processes.
+
 - `npm run lint`
 - `node --check` for edited JS files
 - `npm run check:build-config` for build catalog, manifest, package, and generated-artifact drift

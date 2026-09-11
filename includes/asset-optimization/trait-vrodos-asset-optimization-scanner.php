@@ -5,13 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 trait VRodos_Asset_Optimization_Scanner {
-	private static function collect_analysis_candidates( string $target ): array {
+	protected static function collect_analysis_candidates( string $target ): array {
 		$asset_ids = self::collect_glb_asset_ids();
 
 		$candidates = [];
 		foreach ( $asset_ids as $asset_id ) {
 			$asset_id = (int) $asset_id;
-			$source   = self::get_source_glb( $asset_id );
+			$source   = self::inspect_source_glb( $asset_id );
 			if ( is_wp_error( $source ) ) {
 				continue;
 			}
@@ -31,7 +31,7 @@ trait VRodos_Asset_Optimization_Scanner {
 		return $candidates;
 	}
 
-	private static function scan_glb_derivatives( string $profile ): array {
+	protected static function scan_glb_derivatives( string $profile ): array {
 		$asset_ids = self::collect_glb_asset_ids();
 
 		$scan = [
@@ -59,7 +59,7 @@ trait VRodos_Asset_Optimization_Scanner {
 			$asset_id = (int) $asset_id;
 			$title    = get_the_title( $asset_id );
 			$title    = $title ? $title : 'Asset #' . $asset_id;
-			$source   = self::get_source_glb( $asset_id );
+			$source   = self::inspect_source_glb( $asset_id );
 			$item     = [
 				'assetId' => $asset_id,
 				'title'   => $title,
@@ -158,7 +158,7 @@ trait VRodos_Asset_Optimization_Scanner {
 		return $scan;
 	}
 
-	private static function collect_glb_asset_ids(): array {
+	protected static function collect_glb_asset_ids(): array {
 		$asset_ids = get_posts(
 			[
 				'post_type'      => 'vrodos_asset3d',
@@ -171,6 +171,10 @@ trait VRodos_Asset_Optimization_Scanner {
 			]
 		);
 
+		foreach ( array_chunk( $asset_ids, 200 ) as $batch ) {
+			_prime_post_caches( array_map( 'intval', $batch ), false, true );
+		}
+
 		return array_values(
 			array_filter(
 				array_map( 'intval', $asset_ids ),
@@ -179,7 +183,7 @@ trait VRodos_Asset_Optimization_Scanner {
 		);
 	}
 
-	private static function asset_has_glb_source_reference( int $asset_id ): bool {
+	protected static function asset_has_glb_source_reference( int $asset_id ): bool {
 		$source_meta = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$source_url  = VRodos_Core_Manager::resolve_media_meta_url( $source_meta );
 

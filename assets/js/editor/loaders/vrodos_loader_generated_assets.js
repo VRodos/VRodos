@@ -5,6 +5,22 @@ VRODOS.loader = VRODOS.loader || {};
 VRODOS.editor = VRODOS.editor || {};
 VRODOS.utils = VRODOS.utils || {};
 
+VRODOS.loader.primitivePlaneMaterialProperties = Object.freeze([
+    'planeWidth', 'planeDepth', 'surfaceColor', 'surfaceRoughness', 'surfaceMetalness',
+    'surfaceTileSizeMeters', 'surfaceNormalScale', 'surfaceAoIntensity', 'surfaceNormalYSign',
+    'surfaceAntiTilingEnabled', 'surfaceAntiTilingPatchTiles', 'surfaceAntiTilingBlendSharpness'
+]);
+
+VRODOS.loader.refreshPrimitivePlaneProperty = function (object, property) {
+    if (object.category_slug !== 'primitive-plane') return;
+    if (property === 'planeWidth' || property === 'planeDepth') {
+        VRODOS.loader.refreshPrimitivePlaneGeometry(object);
+    }
+    if (VRODOS.loader.primitivePlaneMaterialProperties.includes(property)) {
+        VRODOS.loader.refreshPrimitivePlaneMaterial(object);
+    }
+};
+
 function vrodosLoaderShouldSelectImmediate(resource) {
     return Boolean(resource && resource.trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading));
 }

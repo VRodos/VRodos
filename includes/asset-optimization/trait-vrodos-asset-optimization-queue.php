@@ -6,27 +6,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Schedules optimizer work and lets an active compile jump ahead of background jobs. */
 trait VRodos_Asset_Optimization_Queue {
-	private const BUILD_QUEUE_PRIORITY = 'build';
+	protected const BUILD_QUEUE_PRIORITY = 'build';
 
 	/**
 	 * WP-Cron has no native priority field and dispatches due events by timestamp.
 	 * Reserve the earliest valid timestamp for active-build work so it runs before
 	 * ordinary background derivative jobs on the next scheduler pass.
 	 */
-	private const BUILD_PRIORITY_EVENT_TIMESTAMP = 1;
+	protected const BUILD_PRIORITY_EVENT_TIMESTAMP = 1;
 
-	private static function normalize_optimizer_queue_priority( string $priority ): string {
+	protected static function normalize_optimizer_queue_priority( string $priority ): string {
 		return self::BUILD_QUEUE_PRIORITY === sanitize_key( $priority ) ? self::BUILD_QUEUE_PRIORITY : 'normal';
 	}
 
-	private static function optimizer_queue_priority( string $existing, string $requested = 'normal' ): string {
+	protected static function optimizer_queue_priority( string $existing, string $requested = 'normal' ): string {
 		return self::BUILD_QUEUE_PRIORITY === self::normalize_optimizer_queue_priority( $existing )
 			|| self::BUILD_QUEUE_PRIORITY === self::normalize_optimizer_queue_priority( $requested )
 			? self::BUILD_QUEUE_PRIORITY
 			: 'normal';
 	}
 
-	private static function schedule_optimizer_event( string $hook, array $args, int $delay, string $priority = 'normal' ) {
+	protected static function schedule_optimizer_event( string $hook, array $args, int $delay, string $priority = 'normal' ) {
 		$priority = self::normalize_optimizer_queue_priority( $priority );
 		$timestamp = self::BUILD_QUEUE_PRIORITY === $priority
 			? self::BUILD_PRIORITY_EVENT_TIMESTAMP

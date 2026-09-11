@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-import-temporary-files.php';
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -755,31 +757,7 @@ class VRodos_Asset_Import_Zip_Package {
 	}
 
 	private static function create_temp_file( string $prefix ): string|WP_Error {
-		$prefix = preg_replace( '/[^A-Za-z0-9_-]/', '-', $prefix );
-		foreach ( self::temp_directory_candidates() as $temp_dir ) {
-			$temp_dir = rtrim( (string) $temp_dir, "\\/" );
-			if ( '' === $temp_dir ) {
-				continue;
-			}
-			if ( ! is_dir( $temp_dir ) && ! wp_mkdir_p( $temp_dir ) ) {
-				continue;
-			}
-			if ( ! is_writable( $temp_dir ) ) {
-				continue;
-			}
-
-			$path = @tempnam( $temp_dir, $prefix ?: 'vrodos-' );
-			if ( is_string( $path ) && '' !== $path ) {
-				return $path;
-			}
-		}
-
-		return new WP_Error( 'tmp_failed', 'Could not create a writable temporary file for ZIP extraction.' );
-	}
-
-	private static function temp_directory_candidates(): array {
-		$directory = VRodos_Storage_Manager::temporary_directory( 'conversion', wp_generate_uuid4() );
-		return is_string( $directory ) ? [ $directory ] : [];
+		return VRodos_Import_Temporary_Files::create( $prefix, '', 'Could not create a writable temporary file for ZIP extraction.' );
 	}
 
 	private static function create_temp_directory( string $prefix ): string|WP_Error {

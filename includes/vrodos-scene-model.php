@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-cefr-levels.php';
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -214,53 +216,6 @@ class Vrodos_Scene_Model {
 	}
 
 	private function normalize_assessment_levels( $levels ): array {
-		$source = $levels;
-
-		if ( is_string( $source ) && trim( $source ) !== '' ) {
-			$decoded_json = json_decode( $source, true );
-			if ( is_array( $decoded_json ) ) {
-				$source = $decoded_json;
-			} else {
-				$decoded_base64 = base64_decode( $source, true );
-				if ( is_string( $decoded_base64 ) && $decoded_base64 !== '' ) {
-					$decoded_base64_json = json_decode( $decoded_base64, true );
-					$source              = is_array( $decoded_base64_json ) ? $decoded_base64_json : $source;
-				}
-			}
-		}
-
-		if ( is_string( $source ) ) {
-			preg_match_all( '/\b(?:ALL LEVELS|ALL|A1|A2|B1|B2)\b/i', $source, $matches );
-			$source = $matches[0] ?? [];
-		}
-
-		if ( ! is_array( $source ) ) {
-			return [];
-		}
-
-		$cefr_levels = [ 'A1', 'A2', 'B1', 'B2' ];
-		$all_markers = [ 'ALL', 'ALL LEVELS' ];
-		$normalized = [];
-		$has_all    = false;
-
-		foreach ( $source as $level ) {
-			if ( is_array( $level ) || is_object( $level ) ) {
-				continue;
-			}
-
-			$level = strtoupper( trim( (string) $level ) );
-			if ( in_array( $level, $all_markers, true ) ) {
-				$has_all = true;
-				continue;
-			}
-
-			if ( $level === '' || ! in_array( $level, $cefr_levels, true ) || in_array( $level, $normalized, true ) ) {
-				continue;
-			}
-
-			$normalized[] = $level;
-		}
-
-		return $has_all ? $cefr_levels : $normalized;
+		return VRodos_Cefr_Levels::normalize( $levels );
 	}
 }

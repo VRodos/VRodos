@@ -13,7 +13,7 @@ function assert(condition, message) {
 function createQualityProfileContext() {
     const windowStub = {
         location: { search: "" },
-        VRODOS_RUNTIME_SETTINGS_CONTRACT: {},
+        VRODOS_RUNTIME_SETTINGS_CONTRACT: JSON.parse(readFileSync(resolve(root, 'assets/runtime-settings-contract.json'), 'utf8')),
         VRODOS_DEBUG: {},
         devicePixelRatio: 1
     };
@@ -103,6 +103,7 @@ function createQualityProfileContext() {
     windowStub.THREE = context.THREE;
     context.globalThis = context;
     vm.createContext(context);
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_runtime_settings_helpers.js'), 'utf8'), context);
     vm.runInContext(
         readFileSync(resolve(root, "assets/js/runtime/master/vrodos_quality_profiles.js"), "utf8"),
         context,

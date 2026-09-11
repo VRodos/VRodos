@@ -28,18 +28,7 @@
         return normalizeLevels(decodeBase64Json(genericLevels, []));
     }
 
-    function ensureDomOverlayParent(root) {
-        const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function"
-            ? window.VRODOSMasterUI.ensureOverlayHost()
-            : document.body;
-        if (host && root && root.parentNode !== host) {
-            host.appendChild(root);
-        }
-        if (host && host.style) {
-            host.style.pointerEvents = "auto";
-        }
-        return host;
-    }
+    const ensureDomOverlayParent = namespace.ensureDomOverlayParent;
 
     function getSpatialUiApi() {
         const spatialUi = window.VRODOSSpatialUI || null;

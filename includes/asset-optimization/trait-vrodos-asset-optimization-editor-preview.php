@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait VRodos_Asset_Optimization_Editor_Preview {
 	public static function get_editor_preview_asset_state( int $asset_id ): array {
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return self::empty_editor_preview_state(
 				'none',
@@ -73,7 +73,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	}
 
 	public static function retry_editor_preview( int $asset_id ): array {
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return self::empty_editor_preview_state( 'none', $source->get_error_message() );
 		}
@@ -147,7 +147,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	}
 
 	private function run_editor_preview_job( int $asset_id ): void {
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			self::store_editor_preview_record(
 				$asset_id,
@@ -242,7 +242,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		self::continue_web_family_after_editor_preview( $asset_id, $source );
 	}
 
-	private static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision, string $queue_priority = 'normal' ): void {
+	protected static function maybe_queue_editor_preview( int $asset_id, array $source, array $analysis, array $decision, string $queue_priority = 'normal' ): void {
 		$record = self::get_editor_preview_record( $asset_id );
 		$current_status = (string) ( $record['status'] ?? '' );
 		$current_fingerprint = (string) ( $record['sourceFingerprint'] ?? '' );
@@ -320,7 +320,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		self::schedule_editor_preview_job( $asset_id, 0, $queue_priority );
 	}
 
-	private static function editor_preview_waits_for_web_high( int $asset_id, array $source ): bool {
+	protected static function editor_preview_waits_for_web_high( int $asset_id, array $source ): bool {
 		$record = self::desktop_profile_record( $asset_id, 'web-high' );
 		$options = is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [];
 		$source_hash = (string) ( $source['sha256'] ?? '' );
@@ -331,7 +331,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			&& absint( $record['sourceGeneration'] ?? 0 ) === absint( $source['generation'] ?? 0 );
 	}
 
-	private static function schedule_editor_preview_job( int $asset_id, int $delay = 0, string $queue_priority = 'normal' ): void {
+	protected static function schedule_editor_preview_job( int $asset_id, int $delay = 0, string $queue_priority = 'normal' ): void {
 		$asset_id = absint( $asset_id );
 		if ( $asset_id <= 0 ) {
 			return;
@@ -347,13 +347,13 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		}
 	}
 
-	private static function get_editor_preview_record( int $asset_id ): array {
+	protected static function get_editor_preview_record( int $asset_id ): array {
 		$meta = self::get_derivative_meta( $asset_id );
 		$record = $meta['derivatives'][ self::EDITOR_PREVIEW_PROFILE ] ?? [];
 		return is_array( $record ) ? $record : [];
 	}
 
-	private static function store_editor_preview_record( int $asset_id, array $record ): bool {
+	protected static function store_editor_preview_record( int $asset_id, array $record ): bool {
 		$meta = self::get_derivative_meta( $asset_id );
 		$existing = self::get_editor_preview_record( $asset_id );
 
@@ -484,7 +484,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		}
 	}
 
-	private static function editor_preview_protects_geometry( int $asset_id ): bool {
+	protected static function editor_preview_protects_geometry( int $asset_id ): bool {
 		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat', [ 'fields' => 'slugs' ] );
 		if ( is_wp_error( $terms ) ) {
 			return true;
@@ -493,7 +493,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		return ! empty( array_intersect( [ 'walkable-surface', 'collision-proxy' ], array_map( 'sanitize_title', $terms ) ) );
 	}
 
-	private static function editor_preview_record_is_ready( array $record, array $source ): bool {
+	protected static function editor_preview_record_is_ready( array $record, array $source ): bool {
 		if ( ( $record['status'] ?? '' ) !== 'ready' || empty( $record['url'] ) ) {
 			return false;
 		}
@@ -506,7 +506,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		return (string) ( $record['sourceFingerprint'] ?? '' ) === self::source_fingerprint( $source );
 	}
 
-	private static function editor_preview_decision( int $source_size_bytes, array $analysis ): array {
+	protected static function editor_preview_decision( int $source_size_bytes, array $analysis ): array {
 		$triangles = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
 		$primitives = (int) ( $analysis['counts']['primitives'] ?? 0 );
 		$materials = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
@@ -535,7 +535,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		];
 	}
 
-	private static function editor_preview_profile_record(): array {
+	protected static function editor_preview_profile_record(): array {
 		return [
 			'id'              => self::EDITOR_PREVIEW_PROFILE,
 			'maxTriangles'    => 250000,
@@ -545,7 +545,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		];
 	}
 
-	private static function editor_preview_stats_from_analysis( array $analysis ): array {
+	protected static function editor_preview_stats_from_analysis( array $analysis ): array {
 		return [
 			'triangles'  => (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 ),
 			'vertices'   => (int) ( $analysis['geometry']['vertexCount'] ?? 0 ),
@@ -556,7 +556,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		];
 	}
 
-	private static function public_editor_analysis( array $analysis ): array {
+	protected static function public_editor_analysis( array $analysis ): array {
 		return [
 			'counts'   => is_array( $analysis['counts'] ?? null ) ? $analysis['counts'] : [],
 			'geometry' => is_array( $analysis['geometry'] ?? null ) ? $analysis['geometry'] : [],
@@ -565,7 +565,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		];
 	}
 
-	private static function empty_editor_preview_state( string $status, string $message = '', array $extra = [] ): array {
+	protected static function empty_editor_preview_state( string $status, string $message = '', array $extra = [] ): array {
 		return array_merge(
 			[
 				'url'             => '',

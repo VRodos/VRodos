@@ -2670,7 +2670,18 @@
   });
   (function() {
     "use strict";
+    function ensureDomOverlayParent(root) {
+      const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function" ? window.VRODOSMasterUI.ensureOverlayHost() : document.body;
+      if (host && root && root.parentNode !== host) {
+        host.appendChild(root);
+      }
+      if (host && host.style) {
+        host.style.pointerEvents = "auto";
+      }
+      return host;
+    }
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
+    namespace.ensureDomOverlayParent = ensureDomOverlayParent;
     const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
     const CEFR_ALL_MARKERS = ["ALL", "ALL LEVELS"];
     const ASSESSMENT_RENDERER_KEYS = ["Question", "ImageQuiz", "Pair", "Grid", "Text"];
@@ -3070,6 +3081,107 @@
         response: response || {}
       }, extra || {});
     }
+    function buildQuestionAnswers(state) {
+      return state.items.map((question, index) => {
+        const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
+        const correctIndex = question.correctIndex;
+        const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
+        return {
+          questionId: question.id,
+          questionIndex: index,
+          prompt: question.prompt,
+          options: question.answers.slice(),
+          selectedIndex: responseIndex,
+          selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
+          correctIndex,
+          correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
+          isCorrect
+        };
+      });
+    }
+    namespace.buildQuestionAnswers = buildQuestionAnswers;
+    function buildPairPlacements(state) {
+      return state.entries.map((entry) => {
+        const sourceId = state.assignmentsByTarget[entry.id] || "";
+        const sourceEntry = state.entriesById[sourceId];
+        return {
+          targetId: entry.id,
+          target: entry.target,
+          selectedSourceId: sourceId,
+          selectedSource: sourceEntry ? sourceEntry.source : "",
+          expectedSourceId: entry.id,
+          expectedSource: entry.source,
+          isCorrect: sourceId === entry.id
+        };
+      });
+    }
+    namespace.buildPairPlacements = buildPairPlacements;
+    function buildPairMatches(state) {
+      return state.entries.map((entry) => {
+        const selectedTargetId = state.matchesBySource[entry.id] || "";
+        const selectedTarget = state.entriesById[selectedTargetId];
+        return {
+          sourceId: entry.id,
+          source: entry.source,
+          expectedTargetId: entry.id,
+          expectedTarget: entry.target,
+          selectedTargetId,
+          selectedTarget: selectedTarget ? selectedTarget.target : "",
+          isCorrect: selectedTargetId === entry.id
+        };
+      });
+    }
+    namespace.buildPairMatches = buildPairMatches;
+    function buildBingoPrompts(state) {
+      return state.promptOrder.map((entryId, index) => {
+        const entry = state.entriesById[entryId];
+        return {
+          promptIndex: index,
+          wordId: entry.id,
+          word: entry.text,
+          hint: entry.hint,
+          wasMarked: state.markedIds.has(entry.id)
+        };
+      });
+    }
+    namespace.buildBingoPrompts = buildBingoPrompts;
+    function buildWordSearchAnswers(state) {
+      return state.puzzle.entries.map((entry) => ({
+        wordId: entry.id,
+        word: entry.text,
+        hint: entry.hint,
+        found: state.foundIds.has(entry.id)
+      }));
+    }
+    namespace.buildWordSearchAnswers = buildWordSearchAnswers;
+    function buildHighlightSelections(state) {
+      return state.annotations.map((annotation) => ({
+        annotationId: annotation.id,
+        text: state.sourceText.slice(annotation.start, annotation.end),
+        selected: state.selectedIds.has(annotation.id),
+        isCorrect: state.selectedIds.has(annotation.id)
+      }));
+    }
+    namespace.buildHighlightSelections = buildHighlightSelections;
+    function buildFillGapAnswers(state) {
+      return state.annotations.map((annotation, index) => {
+        const enteredValue = state.values[annotation.id] || "";
+        const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
+        const expectedValue = isPlaceholderText(annotation.correctValue) ? wordBankAnswer || annotation.text : annotation.correctValue;
+        const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue);
+        return {
+          annotationId: annotation.id,
+          expectedValue,
+          enteredValue,
+          isCorrect
+        };
+      });
+    }
+    namespace.buildFillGapAnswers = buildFillGapAnswers;
+    namespace.gradeResponses = function(responses, key = "isCorrect", ignoreUngraded = false) {
+      const graded = ignoreUngraded ? responses.filter((response) => response[key] !== null) : responses;
+      return ignoreUngraded && !graded.length ? null : graded.every((response) => response[key] === true);
+    };
     namespace.CEFR_LEVELS = CEFR_LEVELS;
     namespace.decodeDisplayText = decodeDisplayText;
     namespace.normalizeAssessmentLineBreaks = normalizeAssessmentLineBreaks;
@@ -3599,16 +3711,7 @@
       }
       return normalizeLevels(decodeBase64Json(genericLevels, []));
     }
-    function ensureDomOverlayParent(root) {
-      const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function" ? window.VRODOSMasterUI.ensureOverlayHost() : document.body;
-      if (host && root && root.parentNode !== host) {
-        host.appendChild(root);
-      }
-      if (host && host.style) {
-        host.style.pointerEvents = "auto";
-      }
-      return host;
-    }
+    const ensureDomOverlayParent = namespace.ensureDomOverlayParent;
     function getSpatialUiApi() {
       const spatialUi = window.VRODOSSpatialUI || null;
       return spatialUi && typeof spatialUi.isAvailable === "function" && spatialUi.isAvailable() ? spatialUi : null;
@@ -4524,11 +4627,8 @@
     const decodeDisplayText = namespace.decodeDisplayText;
     const escapeHtml = namespace.escapeHtml;
     const normalizeComparableText = namespace.normalizeComparableText;
-    const normalizeWordSearchText = namespace.normalizeWordSearchText;
     const normalizeFreeText = namespace.normalizeFreeText;
-    const isPlaceholderText = namespace.isPlaceholderText;
     const toArray = namespace.toArray;
-    const uniqueId = namespace.uniqueId;
     const shuffleArray = namespace.shuffleArray;
     const arrayEquals = namespace.arrayEquals;
     const normalizeAssessmentLineBreaks = namespace.normalizeAssessmentLineBreaks;
@@ -4654,26 +4754,10 @@
             return;
           }
           if (state.activeIndex >= items.length - 1) {
-            const answers = items.map((question, index) => {
-              const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
-              const correctIndex = question.correctIndex;
-              const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
-              return {
-                questionId: question.id,
-                questionIndex: index,
-                prompt: question.prompt,
-                options: question.answers.slice(),
-                selectedIndex: responseIndex,
-                selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
-                correctIndex,
-                correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
-                isCorrect
-              };
-            });
-            const gradedAnswers = answers.filter((answer) => answer.isCorrect !== null);
+            const answers = namespace.buildQuestionAnswers(state);
             runtime.finish(
               { answers },
-              { isCorrect: gradedAnswers.length ? gradedAnswers.every((answer) => answer.isCorrect === true) : null }
+              { isCorrect: namespace.gradeResponses(answers, "isCorrect", true) }
             );
             return;
           }
@@ -4742,44 +4826,20 @@
             if (Object.keys(state.assignmentsByTarget).length !== entries.length) {
               return;
             }
-            const placements = entries.map((entry) => {
-              const sourceId = state.assignmentsByTarget[entry.id] || "";
-              const sourceEntry = state.entriesById[sourceId];
-              return {
-                targetId: entry.id,
-                target: entry.target,
-                selectedSourceId: sourceId,
-                selectedSource: sourceEntry ? sourceEntry.source : "",
-                expectedSourceId: entry.id,
-                expectedSource: entry.source,
-                isCorrect: sourceId === entry.id
-              };
-            });
+            const placements = namespace.buildPairPlacements(state);
             runtime.finish(
               { placements, variant: "drag-and-drop" },
-              { isCorrect: placements.every((placement) => placement.isCorrect === true) }
+              { isCorrect: namespace.gradeResponses(placements) }
             );
             return;
           }
           if (Object.keys(state.matchesBySource).length !== entries.length) {
             return;
           }
-          const matches = entries.map((entry) => {
-            const selectedTargetId = state.matchesBySource[entry.id] || "";
-            const selectedTarget = state.entriesById[selectedTargetId];
-            return {
-              sourceId: entry.id,
-              source: entry.source,
-              expectedTargetId: entry.id,
-              expectedTarget: entry.target,
-              selectedTargetId,
-              selectedTarget: selectedTarget ? selectedTarget.target : "",
-              isCorrect: selectedTargetId === entry.id
-            };
-          });
+          const matches = namespace.buildPairMatches(state);
           runtime.finish(
             { matches, variant: "matching" },
-            { isCorrect: matches.every((match) => match.isCorrect === true) }
+            { isCorrect: namespace.gradeResponses(matches) }
           );
         }
       };
@@ -5223,34 +5283,20 @@
             if (state.markedIds.size !== state.entries.length) {
               return;
             }
-            const prompts = state.promptOrder.map((entryId, index) => {
-              const entry = state.entriesById[entryId];
-              return {
-                promptIndex: index,
-                wordId: entry.id,
-                word: entry.text,
-                hint: entry.hint,
-                wasMarked: state.markedIds.has(entry.id)
-              };
-            });
+            const prompts = namespace.buildBingoPrompts(state);
             runtime.finish(
               { prompts, variant: "vocabulary-bingo" },
-              { isCorrect: prompts.every((prompt) => prompt.wasMarked === true) }
+              { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
             );
             return;
           }
           if (!state.puzzle || state.foundIds.size !== state.puzzle.entries.length) {
             return;
           }
-          const words = state.puzzle.entries.map((entry) => ({
-            wordId: entry.id,
-            word: entry.text,
-            hint: entry.hint,
-            found: state.foundIds.has(entry.id)
-          }));
+          const words = namespace.buildWordSearchAnswers(state);
           runtime.finish(
             { words, variant: "word-search" },
-            { isCorrect: words.every((word) => word.found === true) }
+            { isCorrect: namespace.gradeResponses(words, "found") }
           );
         }
       };
@@ -5468,33 +5514,17 @@
             if (state.selectedIds.size !== state.annotations.length) {
               return;
             }
-            const selections = state.annotations.map((annotation) => ({
-              annotationId: annotation.id,
-              text: state.sourceText.slice(annotation.start, annotation.end),
-              selected: state.selectedIds.has(annotation.id),
-              isCorrect: state.selectedIds.has(annotation.id)
-            }));
+            const selections = namespace.buildHighlightSelections(state);
             runtime.finish(
               { selections, variant: "highlight" },
-              { isCorrect: selections.every((selection) => selection.isCorrect === true) }
+              { isCorrect: namespace.gradeResponses(selections) }
             );
             return;
           }
-          const blanks = state.annotations.map((annotation, index) => {
-            const enteredValue = state.values[annotation.id] || "";
-            const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
-            const expectedValue = isPlaceholderText(annotation.correctValue) ? wordBankAnswer || annotation.text : annotation.correctValue;
-            const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue);
-            return {
-              annotationId: annotation.id,
-              expectedValue,
-              enteredValue,
-              isCorrect
-            };
-          });
+          const blanks = namespace.buildFillGapAnswers(state);
           runtime.finish(
             { blanks, variant: "fill-in-the-gaps" },
-            { isCorrect: blanks.every((blank) => blank.isCorrect === true) }
+            { isCorrect: namespace.gradeResponses(blanks) }
           );
         }
       };
@@ -5661,7 +5691,6 @@
     const normalizeComparableText = namespace.normalizeComparableText;
     const normalizeWordSearchText = namespace.normalizeWordSearchText;
     const normalizeFreeText = namespace.normalizeFreeText;
-    const isPlaceholderText = namespace.isPlaceholderText;
     const toArray = namespace.toArray;
     const shuffleArray = namespace.shuffleArray;
     const arrayEquals = namespace.arrayEquals;
@@ -6111,26 +6140,10 @@
     }
     function finishQuestion(runtime) {
       const state = runtime.state;
-      const answers = state.items.map((question, index) => {
-        const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
-        const correctIndex = question.correctIndex;
-        const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
-        return {
-          questionId: question.id,
-          questionIndex: index,
-          prompt: question.prompt,
-          options: question.answers.slice(),
-          selectedIndex: responseIndex,
-          selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
-          correctIndex,
-          correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
-          isCorrect
-        };
-      });
-      const gradedAnswers = answers.filter((answer) => answer.isCorrect !== null);
+      const answers = namespace.buildQuestionAnswers(state);
       runtime.finish(
         { answers },
-        { isCorrect: gradedAnswers.length ? gradedAnswers.every((answer) => answer.isCorrect === true) : null }
+        { isCorrect: namespace.gradeResponses(answers, "isCorrect", true) }
       );
     }
     function createPairRenderer() {
@@ -6373,41 +6386,17 @@
     function finishPair(runtime) {
       const state = runtime.state;
       if (state.mode === "dragdrop") {
-        const placements = state.entries.map((entry) => {
-          const sourceId = state.assignmentsByTarget[entry.id] || "";
-          const sourceEntry = state.entriesById[sourceId];
-          return {
-            targetId: entry.id,
-            target: entry.target,
-            selectedSourceId: sourceId,
-            selectedSource: sourceEntry ? sourceEntry.source : "",
-            expectedSourceId: entry.id,
-            expectedSource: entry.source,
-            isCorrect: sourceId === entry.id
-          };
-        });
+        const placements = namespace.buildPairPlacements(state);
         runtime.finish(
           { placements, variant: "drag-and-drop" },
-          { isCorrect: placements.every((placement) => placement.isCorrect === true) }
+          { isCorrect: namespace.gradeResponses(placements) }
         );
         return;
       }
-      const matches = state.entries.map((entry) => {
-        const selectedTargetId = state.matchesBySource[entry.id] || "";
-        const selectedTarget = state.entriesById[selectedTargetId];
-        return {
-          sourceId: entry.id,
-          source: entry.source,
-          expectedTargetId: entry.id,
-          expectedTarget: entry.target,
-          selectedTargetId,
-          selectedTarget: selectedTarget ? selectedTarget.target : "",
-          isCorrect: selectedTargetId === entry.id
-        };
-      });
+      const matches = namespace.buildPairMatches(state);
       runtime.finish(
         { matches, variant: "matching" },
-        { isCorrect: matches.every((match) => match.isCorrect === true) }
+        { isCorrect: namespace.gradeResponses(matches) }
       );
     }
     function createGridRenderer() {
@@ -6547,15 +6536,10 @@
         label: "Finish",
         disabled: state.foundIds.size !== state.puzzle.entries.length,
         onClick: function() {
-          const words = state.puzzle.entries.map((entry) => ({
-            wordId: entry.id,
-            word: entry.text,
-            hint: entry.hint,
-            found: state.foundIds.has(entry.id)
-          }));
+          const words = namespace.buildWordSearchAnswers(state);
           runtime.finish(
             { words, variant: "word-search" },
-            { isCorrect: words.every((word) => word.found === true) }
+            { isCorrect: namespace.gradeResponses(words, "found") }
           );
         }
       });
@@ -6625,19 +6609,10 @@
         label: "Finish",
         disabled: state.markedIds.size !== state.entries.length,
         onClick: function() {
-          const prompts = state.promptOrder.map((entryId, index) => {
-            const entry = state.entriesById[entryId];
-            return {
-              promptIndex: index,
-              wordId: entry.id,
-              word: entry.text,
-              hint: entry.hint,
-              wasMarked: state.markedIds.has(entry.id)
-            };
-          });
+          const prompts = namespace.buildBingoPrompts(state);
           runtime.finish(
             { prompts, variant: "vocabulary-bingo" },
-            { isCorrect: prompts.every((prompt) => prompt.wasMarked === true) }
+            { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
           );
         }
       });
@@ -6780,20 +6755,10 @@
         label: "Submit",
         disabled: filledCount !== state.annotations.length,
         onClick: function() {
-          const blanks = state.annotations.map((annotation, index) => {
-            const enteredValue = state.values[annotation.id] || "";
-            const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
-            const expectedValue = isPlaceholderText(annotation.correctValue) ? wordBankAnswer || annotation.text : annotation.correctValue;
-            return {
-              annotationId: annotation.id,
-              expectedValue,
-              enteredValue,
-              isCorrect: normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue)
-            };
-          });
+          const blanks = namespace.buildFillGapAnswers(state);
           runtime.finish(
             { blanks, variant: "fill-in-the-gaps" },
-            { isCorrect: blanks.every((blank) => blank.isCorrect === true) }
+            { isCorrect: namespace.gradeResponses(blanks) }
           );
         }
       });
@@ -6856,15 +6821,10 @@
         label: "Finish",
         disabled: state.selectedIds.size !== state.annotations.length,
         onClick: function() {
-          const selections = state.annotations.map((annotation) => ({
-            annotationId: annotation.id,
-            text: state.sourceText.slice(annotation.start, annotation.end),
-            selected: state.selectedIds.has(annotation.id),
-            isCorrect: state.selectedIds.has(annotation.id)
-          }));
+          const selections = namespace.buildHighlightSelections(state);
           runtime.finish(
             { selections, variant: "highlight" },
-            { isCorrect: selections.every((selection) => selection.isCorrect === true) }
+            { isCorrect: namespace.gradeResponses(selections) }
           );
         }
       });
@@ -7082,16 +7042,7 @@
       width: "min(900px, calc(100vw - 48px))",
       height: "min(84vh, 820px)"
     };
-    function ensureDomOverlayParent(root) {
-      const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function" ? window.VRODOSMasterUI.ensureOverlayHost() : document.body;
-      if (host && root && root.parentNode !== host) {
-        host.appendChild(root);
-      }
-      if (host && host.style) {
-        host.style.pointerEvents = "auto";
-      }
-      return host;
-    }
+    const ensureDomOverlayParent = namespace.ensureDomOverlayParent;
     function getOverlayRuntimeV2() {
       if (window.__vrodosImmerseAssessmentRuntime) {
         return window.__vrodosImmerseAssessmentRuntime;

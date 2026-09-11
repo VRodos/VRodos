@@ -4,8 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-asset-optimization-source.php';
+
 trait VRodos_Asset_Optimization_Derivative_Service {
-	private static function supported_profiles(): array {
+	protected static function supported_profiles(): array {
 		return [
 			'safe-draco'    => 'Safe Draco',
 			'safe-meshopt'  => 'Safe Meshopt',
@@ -15,7 +17,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		];
 	}
 
-	private static function get_derivative_meta( int $asset_id ): array {
+	protected static function get_derivative_meta( int $asset_id ): array {
 		$raw = get_post_meta( $asset_id, self::META_KEY, true );
 		if ( ! is_array( $raw ) ) {
 			$raw = [];
@@ -33,7 +35,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		);
 	}
 
-	private static function ensure_current_derivative_schema( int $asset_id ): void {
+	protected static function ensure_current_derivative_schema( int $asset_id ): void {
 		$raw = get_post_meta( $asset_id, self::META_KEY, true );
 		if ( is_array( $raw ) && ! empty( $raw ) && 2 !== absint( $raw['schemaVersion'] ?? 0 ) ) {
 			self::cancel_asset_optimization_jobs( $asset_id );
@@ -41,97 +43,20 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 	}
 
-	private static function get_source_glb( int $asset_id ) {
-		$source_meta = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
-		$source_url  = VRodos_Core_Manager::resolve_media_meta_url( $source_meta );
-
-		if ( '' === $source_url ) {
-			return new WP_Error( 'vrodos_no_glb_source', 'Asset has no GLB source URL.' );
-		}
-
-		$source_path = is_numeric( $source_meta )
-			? get_attached_file( (int) $source_meta )
-			: self::local_path_from_url( $source_url );
-
-		if ( ! is_string( $source_path ) || '' === $source_path || ! is_file( $source_path ) || ! is_readable( $source_path ) ) {
-			return new WP_Error( 'vrodos_glb_source_not_local', 'Only local uploaded GLB files can be optimized.' );
-		}
-
-		if ( ! VRodos_Storage_Manager::is_glb_file( $source_path ) ) {
-			return new WP_Error( 'vrodos_glb_source_invalid_type', 'The source asset is not a GLB file.' );
-		}
-
-		if ( is_numeric( $source_meta ) && VRodos_Storage_Manager::attachment_is_owned_by( (int) $source_meta, 'asset', $asset_id ) ) {
-			$normalized_path = VRodos_Storage_Manager::normalize_glb_attachment( (int) $source_meta, $asset_id );
-			if ( ! is_wp_error( $normalized_path ) ) {
-				$source_path = $normalized_path;
-			}
-		}
-
-		$size = filesize( $source_path );
-
-		$source = [
-			'meta'      => $source_meta,
-			'attachmentId' => is_numeric( $source_meta ) ? (int) $source_meta : 0,
-			'url'       => $source_url,
-			'path'      => $source_path,
-			'sizeBytes' => false === $size ? 0 : (int) $size,
-		];
-		$snapshot = self::refresh_source_snapshot( $asset_id, $source );
-		if ( ! is_wp_error( $snapshot ) ) {
-			$source['sha256'] = (string) $snapshot['sha256'];
-			$source['generation'] = absint( $snapshot['generation'] );
-			$source['modifiedAt'] = absint( $snapshot['modifiedAt'] );
-		}
-		return $source;
+	protected static function prepare_source_glb( int $asset_id ) {
+		return VRodos_Asset_Optimization_Source::prepare( $asset_id, static fn( string $url ): string => self::local_path_from_url( $url ) );
 	}
 
-	private static function read_source_snapshot( int $asset_id ): array {
-		$snapshot = get_post_meta( $asset_id, self::SOURCE_META_KEY, true );
-		return is_array( $snapshot ) ? $snapshot : [];
+	protected static function inspect_source_glb( int $asset_id ) {
+		return VRodos_Asset_Optimization_Source::inspect( $asset_id, static fn( string $url ): string => self::local_path_from_url( $url ) );
 	}
-
-	private static function refresh_source_snapshot( int $asset_id, array $source ) {
-		$path = wp_normalize_path( (string) ( $source['path'] ?? '' ) );
-		if ( '' === $path || ! is_file( $path ) || ! is_readable( $path ) ) {
-			return new WP_Error( 'vrodos_glb_source_hash_failed', 'The active GLB source cannot be hashed.' );
-		}
-
-		$size = (int) ( filesize( $path ) ?: 0 );
-		$modified_at = (int) ( filemtime( $path ) ?: 0 );
-		$attachment_id = absint( $source['attachmentId'] ?? 0 );
-		$existing = self::read_source_snapshot( $asset_id );
-		$same_file = (string) ( $existing['path'] ?? '' ) === $path
-			&& absint( $existing['attachmentId'] ?? 0 ) === $attachment_id
-			&& absint( $existing['sizeBytes'] ?? 0 ) === $size
-			&& absint( $existing['modifiedAt'] ?? 0 ) === $modified_at
-			&& preg_match( '/^[a-f0-9]{64}$/', (string) ( $existing['sha256'] ?? '' ) );
-		if ( $same_file ) {
-			return $existing;
-		}
-
-		$sha256 = hash_file( 'sha256', $path );
-		if ( ! is_string( $sha256 ) || '' === $sha256 ) {
-			return new WP_Error( 'vrodos_glb_source_hash_failed', 'The active GLB source could not be hashed.' );
-		}
-
-		$identity_changed = '' !== (string) ( $existing['sha256'] ?? '' )
-			&& ( (string) $existing['sha256'] !== $sha256 || absint( $existing['attachmentId'] ?? 0 ) !== $attachment_id );
-		$snapshot = [
-			'schemaVersion' => 1,
-			'attachmentId' => $attachment_id,
-			'path'         => $path,
-			'sizeBytes'    => $size,
-			'modifiedAt'   => $modified_at,
-			'sha256'       => $sha256,
-			'generation'   => max( 1, absint( $existing['generation'] ?? 0 ) + ( $identity_changed ? 1 : 0 ) ),
-			'updatedAt'    => current_time( 'mysql', true ),
-		];
-		update_post_meta( $asset_id, self::SOURCE_META_KEY, $snapshot );
-		return $snapshot;
+	protected static function read_source_snapshot( int $asset_id ): array {
+		return VRodos_Asset_Optimization_Source::read_source_snapshot( $asset_id );
 	}
-
-	private static function source_identity_matches( int $asset_id, string $sha256, int $generation ): bool {
+	protected static function refresh_source_snapshot( int $asset_id, array $source ) {
+		return VRodos_Asset_Optimization_Source::refresh_source_snapshot( $asset_id, $source );
+	}
+	protected static function source_identity_matches( int $asset_id, string $sha256, int $generation ): bool {
 		$snapshot = self::read_source_snapshot( $asset_id );
 		$active_source = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$active_attachment_id = is_numeric( $active_source ) ? absint( $active_source ) : 0;
@@ -142,7 +67,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			&& 'vrodos_asset3d' === get_post_type( $asset_id );
 	}
 
-	private static function acquire_optimizer_lease( string $owner, int $ttl_seconds ): string {
+	protected static function acquire_optimizer_lease( string $owner, int $ttl_seconds ): string {
 		$token = wp_generate_uuid4();
 		$lease = [
 			'owner'     => sanitize_text_field( $owner ),
@@ -160,14 +85,14 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return '';
 	}
 
-	private static function release_optimizer_lease( string $token ): void {
+	protected static function release_optimizer_lease( string $token ): void {
 		$current = get_option( self::OPTIMIZER_LEASE_OPTION, [] );
 		if ( is_array( $current ) && '' !== $token && hash_equals( (string) ( $current['token'] ?? '' ), $token ) ) {
 			delete_option( self::OPTIMIZER_LEASE_OPTION );
 		}
 	}
 
-	private static function local_path_from_url( string $url ): string {
+	protected static function local_path_from_url( string $url ): string {
 		$uploads = wp_upload_dir();
 		$clean_url = self::strip_url_query_fragment( $url );
 		$path      = wp_parse_url( $clean_url, PHP_URL_PATH );
@@ -318,7 +243,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		];
 	}
 
-	private static function build_derivative_paths( int $asset_id, array $source, string $profile, string $job_key = '' ): array {
+	protected static function build_derivative_paths( int $asset_id, array $source, string $profile, string $job_key = '' ): array {
 		$dir = VRodos_Storage_Manager::private_entity_directory( 'asset', $asset_id, 'derivatives', $profile );
 		if ( is_wp_error( $dir ) ) {
 			throw new RuntimeException( $dir->get_error_message() );
@@ -341,17 +266,17 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		];
 	}
 
-	private static function derivative_cache_dir( int $asset_id ): string {
+	protected static function derivative_cache_dir( int $asset_id ): string {
 		$root = VRodos_Storage_Manager::private_site_root( false );
 		return is_string( $root ) ? wp_normalize_path( trailingslashit( $root ) . 'assets/' . $asset_id . '/derivatives' ) : '';
 	}
 
-	private static function optimized_assets_base_dir(): string {
+	protected static function optimized_assets_base_dir(): string {
 		$root = VRodos_Storage_Manager::private_site_root( false );
 		return is_string( $root ) ? wp_normalize_path( trailingslashit( $root ) . 'assets' ) : '';
 	}
 
-	private static function delete_asset_derivative_cache( int $asset_id ): void {
+	protected static function delete_asset_derivative_cache( int $asset_id ): void {
 		if ( $asset_id <= 0 ) {
 			return;
 		}
@@ -379,7 +304,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
 	}
 
-	private static function cancel_asset_optimization_jobs( int $asset_id ): void {
+	protected static function cancel_asset_optimization_jobs( int $asset_id ): void {
 		if ( $asset_id <= 0 ) {
 			return;
 		}
@@ -399,7 +324,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 	}
 
-	private static function is_safe_derivative_cache_dir( string $dir, int $asset_id ): bool {
+	protected static function is_safe_derivative_cache_dir( string $dir, int $asset_id ): bool {
 		$base = self::optimized_assets_base_dir();
 		$expected = wp_normalize_path( trailingslashit( $base ) . $asset_id . '/derivatives' );
 
@@ -419,7 +344,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return str_starts_with( $real_dir, trailingslashit( $real_base ) );
 	}
 
-	private static function delete_directory_tree( string $dir ): void {
+	protected static function delete_directory_tree( string $dir ): void {
 		$entries = scandir( $dir );
 		if ( false === $entries ) {
 			return;
@@ -449,7 +374,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		$paths  = $result['paths'];
 		$profile = $result['profile'];
 		$meta   = self::get_derivative_meta( $asset_id );
-		$source = self::get_source_glb( $asset_id );
+		$source = self::prepare_source_glb( $asset_id );
 		$options = is_array( $result['options'] ?? null ) ? $result['options'] : [];
 		$is_web_profile = str_starts_with( $profile, 'web-' );
 		$job_key = sanitize_key( (string) ( $options['jobKey'] ?? $record['jobKey'] ?? '' ) );
@@ -543,7 +468,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 	}
 
-	private static function delete_generated_derivative_files( array $paths ): void {
+	protected static function delete_generated_derivative_files( array $paths ): void {
 		foreach ( [ 'file', 'manifest', 'markdown', 'progress', 'preparedBaseline', 'preparedAnalysis' ] as $key ) {
 			$path = (string) ( $paths[ $key ] ?? '' );
 			if ( '' !== $path && is_file( $path ) ) {
@@ -568,11 +493,11 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		exit;
 	}
 
-	private static function is_derivative_usable( array $derivative, string $source_url ): bool {
+	protected static function is_derivative_usable( array $derivative, string $source_url ): bool {
 		return '' === self::derivative_unusable_reason( $derivative, $source_url );
 	}
 
-	private static function derivative_unusable_reason( array $derivative, string $source_url ): string {
+	protected static function derivative_unusable_reason( array $derivative, string $source_url ): string {
 		if ( ( $derivative['status'] ?? '' ) !== 'ready' || empty( $derivative['url'] ) ) {
 			return 'Derivative is not marked ready.';
 		}
@@ -595,7 +520,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return '';
 	}
 
-	private static function normalize_url_path( string $url ): string {
+	protected static function normalize_url_path( string $url ): string {
 		$path = wp_parse_url( self::strip_url_query_fragment( $url ), PHP_URL_PATH );
 		if ( ! is_string( $path ) ) {
 			return '';
@@ -603,7 +528,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return '/' . ltrim( rawurldecode( str_replace( '\\', '/', $path ) ), '/' );
 	}
 
-	private static function strip_url_query_fragment( string $url ): string {
+	protected static function strip_url_query_fragment( string $url ): string {
 		$without_fragment = explode( '#', $url, 2 )[0];
 		return explode( '?', $without_fragment, 2 )[0];
 	}

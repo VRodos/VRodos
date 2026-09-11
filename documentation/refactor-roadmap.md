@@ -1,0 +1,121 @@
+# VRodos cleanup and refactoring roadmap
+
+Status: **partially implemented; authenticated editor validation pending** (2026-09-11). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
+
+## A. Verification baseline
+- [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
+- [x] Separate verification from generated builds; scope formatting to authored source.
+- [x] Replace affected brittle assertions when refactoring their logic; retain vendor/provenance checks.
+
+## B. Built-in media
+- [x] Reproducibly resize speaker and assessment textures to 1024px without changing formats, geometry, materials, or public paths.
+- [x] Record sizes and validate appearance.
+- [x] Audit dynamic/stored references before deleting unused TV/HDR assets.
+
+## C. Shared helpers
+- [x] Consolidate debug/query parsing and required atmosphere contract defaults.
+- [x] Consolidate PHP/editor CEFR normalization with parity fixtures.
+- [x] Share import temporary-file creation.
+- [x] Remove unused editor button compatibility shim and dependencies.
+
+## D. Assessment
+- [x] Share question, pair, grid, and text response/grading builders between DOM and spatial renderers.
+- [x] Preserve aliases, payloads, ordering, ungraded semantics, and distinct layouts in regression tests.
+- [x] Share equivalent DOM overlay mounting.
+- [ ] Share equivalent control lifecycle behavior and validate Greek spatial interaction in browser/headset.
+
+## E. Optimizer
+- [x] Extract source metadata, GLB analysis, and dashboard aggregation/sorting classes; route manager domain APIs through a service.
+- [ ] Finish worker/source-change hook separation from admin controller; orchestration still composes existing traits.
+- [x] Separate read-only lookup from explicit normalization/snapshot updates.
+- [x] Bulk-load dashboard metadata, preserve global sorting, avoid page-render writes/hashing.
+- [x] Preserve immutable jobs, leases, source generations, retries, and profile chaining in regression coverage.
+- [ ] Evaluate additional request-local scan reuse and validate live replacement/deletion/status flows.
+
+## F. Import and editor
+- [x] Extract staged-session access from import HTTP controller.
+- [ ] Extract import execution from the HTTP/settings manager.
+- [x] Share session validation with ownership checks.
+- [x] Separate property panel presentation, category controls, and change application.
+- [x] Share primitive-plane material definitions and refresh behavior with undo.
+- [ ] Finish coordinating all property-change side effects through transform/persistence services.
+
+## G. Runtime ownership
+- [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
+- [ ] Move lifecycle/state ownership to existing focused components.
+- [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
+- [x] Deduplicate shared resources within registry teardown.
+- [ ] Audit single ownership and disposal of every GPU resource/listener.
+
+## H. Measured performance
+- [x] Capture one heavy scene before/after initial runtime changes with FPS meter disabled.
+- [ ] Capture empty and assessment/media scenes before loading changes.
+- [ ] Evaluate capability-based assessment/atmosphere loading.
+- [ ] Profile traversal/diagnostics independently of GPU work; retain only measured improvements.
+
+## Validation
+- [x] Complete test suite, JS/PHP syntax, lint, build-config, generated outputs, diff checks.
+- [ ] Assessment parity; import retry/failure; optimizer replacement/deletion; read-only dashboard.
+- [ ] Editor selection/drag/undo/save/reload/build polling.
+- [ ] Recompile Custom/Adaptive, single-player/networked, desktop/headset scenes.
+- [ ] Browser and real Quest checks: XR entry/exit, Greek text, controllers, lighting/shadows/reflections, disposal.
+
+## Baseline (2026-09-11)
+Build-config passed; lint 0 errors/245 warnings; 19 runtime tests passed. PHP planner/DOM passed; transaction fixture creation was blocked by read-only temporary directory access. No browser or headset timings measured.
+
+## Boundaries
+VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX contracts, migration safeguards, settings globals, rendering constants, navigation math, and vendor patches. Do not remove media based only on literal-reference searches. No commits or pushes by the agent.
+
+## Implementation log
+### Verification and implementation
+
+`scripts/regression-test-catalog.mjs` explicitly owns 47 scripts: 21 runtime and 26 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+
+All **47 tests pass** in the writable fixture environment. Browser-source ESLint: **0 errors, 243 warnings**. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly.
+
+Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
+
+Optimizer domain callers now use `VRodos_Asset_Optimization_Service`. Independent classes own source snapshots, GLB analysis, and dashboard aggregation/sorting. `inspect_source_glb` is read-only; `prepare_source_glb` explicitly normalizes and refreshes identity at existing processing boundaries. Dashboard scans, row inspection, and metabox inspection use the read-only path. Metadata is primed in batches of 200. Tests verify no scan writes, missing/stale source identity, global priority tie-breaking, title sorting, and pagination. Existing stat/hash cache and immutable queue behavior remain.
+
+Staged-session reads are centralized, including ownership checks shared by inspect/prepare/status/consume. Tests cover missing/invalid manifests, owner mismatch, invalid project, and revoked edit permission. Property presentation/category scripts have ordered enqueue dependencies; common changes stay in the original controller. Primitive-plane refresh behavior is shared with undo. These are initial boundaries: import execution and broader change-side-effect consolidation remain unfinished.
+
+### Media results
+
+| Asset | Before bytes | After bytes |
+|---|---:|---:|
+| `assets/models/runtime/speaker.glb` | 36,186,752 | 11,787,684 |
+| `assets/models/runtime/assessment.glb` | 16,723,120 | 4,806,512 |
+| `assets/models/editor/tv.glb` | 200,672 | Removed |
+| `assets/models/editor/tv_rotated.glb` | 219,064 | Removed |
+| `assets/models/editor/tv_flat_scaled_rotated.glb` | 30,943,596 | Removed |
+| `assets/images/hdr/Stonewall_Ref.hdr` | 27,150,890 | Removed |
+
+Total media reduction: **94,829,898 bytes / 90.44 MiB**.
+
+Run `node scripts/optimize-builtin-media.mjs` for a dry run; `--write` explicitly applies resizing using the existing Sharp dependency. Formats/alpha are preserved and no decoder requirement is added. Independent comparison with Git originals verified all four non-image buffer views in each model are byte-identical. Scene/material/accessor JSON is unchanged except buffer layout and JSON normalization of signed zero. Browser comparison with identical cameras/lighting showed consistent appearance at normal viewing size; no close-up pixel-equality claim is made.
+
+The read-only database audit found no references to the small TVs or HDR in posts, postmeta, or options. The flat TV had 52 references, all historical `revision:video:glb_path` fields. Current video loading creates procedural geometry and ignores that field. Plugin/connector and dynamic-path inspection found no live consumer. No database content/revision was deleted.
+
+### Performance evidence
+
+The existing profiler captured published scene 13775 before/after rebuilding the runtime, with FPS meter disabled: RTX 2060, 1280×720 viewport, DPR 1, renderer pixel ratio 1.25, 120 frames, 1.5-second requested trace.
+
+| Measure | Before | After |
+|---|---:|---:|
+| rAF median | 18.0 ms | 18.0 ms |
+| rAF p95 | 197.4 ms | 210.1 ms |
+| rAF mean | 71.34 ms | 78.10 ms |
+| Meshes / geometries / materials / textures | 332 / 312 / 4 / 7 | Same |
+| Resources / transfer | 36 / 51.4 MB | Same |
+| Exceptions / failed requests | 0 / 0 | 0 / 0 |
+| Console warnings/errors | 7 | 7 |
+
+These short, variable captures do **not** establish a performance gain or a stable regression estimate. No speculative capability-loading change was retained. The sun-occluder list already refreshes on a 2.5-second cache.
+
+### Remaining acceptance gate
+
+The local editor redirects to WordPress login. User login has been requested for selection, dragging, properties, undo/redo, save/reload, and build polling. No credentials were changed. Continue this integration check before further editor/runtime ownership work, then finish the E/F boundaries and staged G/H work.
+
+Focused runtime components still delegate into scene-settings state: **the ownership migration is not complete**. No rendering constants, shadow policy, navigation math, library versions, or vendor patches changed. No Custom/Adaptive/networked/headset recompilation matrix or real Quest acceptance is claimed. Validate XR entry/exit, controllers, Greek text, lighting, shadows/reflections, and repeated mount/removal before completing those checkboxes.
+
+No development server was started. No commit or push was performed. Keep media changes distinguishable from behavior refactors during review.

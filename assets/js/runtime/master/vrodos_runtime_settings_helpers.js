@@ -11,6 +11,14 @@ window.VRODOSMaster = window.VRODOSMaster || {};
     const H = Master.RuntimeSettings;
     const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
 
+    H.queryValue = function (queryKey) {
+        return new URLSearchParams(window.location ? window.location.search : '').get(queryKey);
+    };
+
+    H.debugFlag = function (debugKey, queryKey) {
+        return Boolean(window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) || H.queryValue(queryKey) === '1';
+    };
+
     function setting(key) {
         return contract.sceneSettings && contract.sceneSettings[key] ? contract.sceneSettings[key] : {};
     }

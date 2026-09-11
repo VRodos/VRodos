@@ -1,7 +1,22 @@
 (function () {
     "use strict";
 
+    function ensureDomOverlayParent(root) {
+        const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function"
+            ? window.VRODOSMasterUI.ensureOverlayHost()
+            : document.body;
+        if (host && root && root.parentNode !== host) {
+            host.appendChild(root);
+        }
+        if (host && host.style) {
+            host.style.pointerEvents = "auto";
+        }
+        return host;
+    }
+
+
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
+    namespace.ensureDomOverlayParent = ensureDomOverlayParent;
     const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
     const CEFR_ALL_MARKERS = ["ALL", "ALL LEVELS"];
     const ASSESSMENT_RENDERER_KEYS = ["Question", "ImageQuiz", "Pair", "Grid", "Text"];
@@ -547,6 +562,118 @@
         }, extra || {});
     }
 
+
+    // Shared response semantics; completion gating stays in each renderer.
+    function buildQuestionAnswers(state) {
+        return state.items.map((question, index) => {
+            const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
+            const correctIndex = question.correctIndex;
+            const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
+            return {
+                questionId: question.id,
+                questionIndex: index,
+                prompt: question.prompt,
+                options: question.answers.slice(),
+                selectedIndex: responseIndex,
+                selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
+                correctIndex,
+                correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
+                isCorrect
+            };
+        });
+    }
+    namespace.buildQuestionAnswers = buildQuestionAnswers;
+
+    function buildPairPlacements(state) {
+        return state.entries.map((entry) => {
+            const sourceId = state.assignmentsByTarget[entry.id] || "";
+            const sourceEntry = state.entriesById[sourceId];
+            return {
+                targetId: entry.id,
+                target: entry.target,
+                selectedSourceId: sourceId,
+                selectedSource: sourceEntry ? sourceEntry.source : "",
+                expectedSourceId: entry.id,
+                expectedSource: entry.source,
+                isCorrect: sourceId === entry.id
+            };
+        });
+    }
+    namespace.buildPairPlacements = buildPairPlacements;
+
+    function buildPairMatches(state) {
+        return state.entries.map((entry) => {
+            const selectedTargetId = state.matchesBySource[entry.id] || "";
+            const selectedTarget = state.entriesById[selectedTargetId];
+            return {
+                sourceId: entry.id,
+                source: entry.source,
+                expectedTargetId: entry.id,
+                expectedTarget: entry.target,
+                selectedTargetId,
+                selectedTarget: selectedTarget ? selectedTarget.target : "",
+                isCorrect: selectedTargetId === entry.id
+            };
+        });
+    }
+    namespace.buildPairMatches = buildPairMatches;
+
+    function buildBingoPrompts(state) {
+        return state.promptOrder.map((entryId, index) => {
+            const entry = state.entriesById[entryId];
+            return {
+                promptIndex: index,
+                wordId: entry.id,
+                word: entry.text,
+                hint: entry.hint,
+                wasMarked: state.markedIds.has(entry.id)
+            };
+        });
+    }
+    namespace.buildBingoPrompts = buildBingoPrompts;
+
+    function buildWordSearchAnswers(state) {
+        return state.puzzle.entries.map((entry) => ({
+            wordId: entry.id,
+            word: entry.text,
+            hint: entry.hint,
+            found: state.foundIds.has(entry.id)
+        }));
+    }
+    namespace.buildWordSearchAnswers = buildWordSearchAnswers;
+
+    function buildHighlightSelections(state) {
+        return state.annotations.map((annotation) => ({
+            annotationId: annotation.id,
+            text: state.sourceText.slice(annotation.start, annotation.end),
+            selected: state.selectedIds.has(annotation.id),
+            isCorrect: state.selectedIds.has(annotation.id)
+        }));
+    }
+    namespace.buildHighlightSelections = buildHighlightSelections;
+
+    function buildFillGapAnswers(state) {
+        return state.annotations.map((annotation, index) => {
+            const enteredValue = state.values[annotation.id] || "";
+            const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
+            const expectedValue = isPlaceholderText(annotation.correctValue)
+                ? (wordBankAnswer || annotation.text)
+                : annotation.correctValue;
+            const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue);
+            return {
+                annotationId: annotation.id,
+                expectedValue,
+                enteredValue,
+                isCorrect
+            };
+        });
+    }
+    namespace.buildFillGapAnswers = buildFillGapAnswers;
+
+    namespace.gradeResponses = function (responses, key = "isCorrect", ignoreUngraded = false) {
+        const graded = ignoreUngraded ? responses.filter((response) => response[key] !== null) : responses;
+        return ignoreUngraded && !graded.length ? null : graded.every((response) => response[key] === true);
+    };
 
     namespace.CEFR_LEVELS = CEFR_LEVELS;
     namespace.decodeDisplayText = decodeDisplayText;

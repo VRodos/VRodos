@@ -126,6 +126,7 @@ assets/Director/
 assets/objects/
 
 # Modernization Tooling
+/.cache/
 vendor/
 !/assets/vendor/
 !/assets/vendor/**
@@ -136,4 +137,3 @@ build/
 build_dist/
 .idea/
 .vscode/
-

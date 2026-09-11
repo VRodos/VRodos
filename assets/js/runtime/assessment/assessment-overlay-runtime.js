@@ -13,18 +13,7 @@
         height: "min(84vh, 820px)"
     };
 
-    function ensureDomOverlayParent(root) {
-        const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function"
-            ? window.VRODOSMasterUI.ensureOverlayHost()
-            : document.body;
-        if (host && root && root.parentNode !== host) {
-            host.appendChild(root);
-        }
-        if (host && host.style) {
-            host.style.pointerEvents = "auto";
-        }
-        return host;
-    }
+    const ensureDomOverlayParent = namespace.ensureDomOverlayParent;
 
     function getOverlayRuntimeV2() {
         if (window.__vrodosImmerseAssessmentRuntime) {

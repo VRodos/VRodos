@@ -2492,20 +2492,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function hasPmndrsDebugFlag(debugKey, queryKey) {
-        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
-            return true;
-        }
-
-        if (typeof window.location === 'undefined' || !window.location.search) {
-            return false;
-        }
-
-        try {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(queryKey) === '1';
-        } catch (err) {
-            return false;
-        }
+        return window.VRODOSMaster.RuntimeSettings.debugFlag(debugKey, queryKey);
     }
 
     function getPmndrsAAMode(self) {

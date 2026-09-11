@@ -10,24 +10,25 @@ window.VRODOSMaster = window.VRODOSMaster || {};
     }
     const Resources = Master.RuntimeResources;
 
-    function disposeOne(resource) {
-        if (!resource) {
+    function disposeOne(resource, seen = new Set()) {
+        if (!resource || seen.has(resource)) {
             return;
         }
+        seen.add(resource);
 
         if (Array.isArray(resource)) {
-            resource.forEach(disposeOne);
+            resource.forEach((entry) => disposeOne(entry, seen));
             return;
         }
 
         if (resource.geometry) {
-            disposeOne(resource.geometry);
+            disposeOne(resource.geometry, seen);
         }
 
         if (Array.isArray(resource.material)) {
-            resource.material.forEach(disposeOne);
+            resource.material.forEach((entry) => disposeOne(entry, seen));
         } else if (resource.material) {
-            disposeOne(resource.material);
+            disposeOne(resource.material, seen);
         }
 
         if (typeof resource.dispose === 'function') {
@@ -35,7 +36,9 @@ window.VRODOSMaster = window.VRODOSMaster || {};
         }
     }
 
-    Resources.dispose = disposeOne;
+    Resources.dispose = function (resource) {
+        disposeOne(resource);
+    };
 
     Resources.createRegistry = function () {
         const resources = [];
@@ -56,6 +59,7 @@ window.VRODOSMaster = window.VRODOSMaster || {};
                 listeners.push({ target, type, handler, options });
             },
             disposeAll: function () {
+                const disposed = new Set();
                 while (listeners.length) {
                     const listener = listeners.pop();
                     if (listener.target && typeof listener.target.removeEventListener === 'function') {
@@ -64,7 +68,7 @@ window.VRODOSMaster = window.VRODOSMaster || {};
                 }
 
                 while (resources.length) {
-                    disposeOne(resources.pop());
+                    disposeOne(resources.pop(), disposed);
                 }
             }
         };

@@ -25,33 +25,11 @@ function vrodosSceneSettingDefault(key, fallback) {
 }
 
 function vrodosRuntimeDebugFlag(debugKey, queryKey) {
-    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
-        return true;
-    }
-
-    if (typeof window.location === 'undefined' || !window.location.search) {
-        return false;
-    }
-
-    try {
-        const params = new URLSearchParams(window.location.search);
-        return params.get(queryKey) === '1';
-    } catch (err) {
-        return false;
-    }
+    return window.VRODOSMaster.RuntimeSettings.debugFlag(debugKey, queryKey);
 }
 
 function vrodosRuntimeQueryValue(queryKey) {
-    if (typeof window.location === 'undefined' || !window.location.search) {
-        return null;
-    }
-
-    try {
-        const params = new URLSearchParams(window.location.search);
-        return params.get(queryKey);
-    } catch (err) {
-        return null;
-    }
+    return window.VRODOSMaster.RuntimeSettings.queryValue(queryKey);
 }
 
 function vrodosRuntimeProfileOverrideValue() {
@@ -1304,6 +1282,12 @@ AFRAME.registerComponent('scene-settings', {
             'vrodos-reflections'
         ];
         const active = this.getRuntimePipelineComponentNames();
+
+        active.forEach((componentName) => {
+            if (!AFRAME.components[componentName]) {
+                throw new Error(`VRodos required pipeline component is not registered: ${componentName}`);
+            }
+        });
 
         managed.forEach((componentName) => {
             if (active.indexOf(componentName) === -1) {
@@ -3553,78 +3537,5 @@ AFRAME.registerComponent('scene-settings', {
         } else {
             this.disposeHardwareDiagnostics();
         }
-    },
-    tick: function (time, timeDelta) {
-        const expectedPipelineComponents = typeof this.getRuntimePipelineComponentNames === 'function'
-            ? this.getRuntimePipelineComponentNames()
-            : ['vrodos-render-profile', 'vrodos-postfx-router', 'vrodos-atmosphere', 'vrodos-reflections'];
-        const hasFocusedPipeline = this.el.components &&
-            expectedPipelineComponents.every((componentName) => Boolean(this.el.components[componentName]));
-
-        if (hasFocusedPipeline) {
-            return;
-        }
-
-        this.updateHardwarePerformanceDiagnostics(time, timeDelta);
-        this.publishRuntimeFeatureState('scene-settings-tick', { time, throttleMs: 1500 });
-
-        if (this.fpsStats && typeof this.fpsStats.update === 'function') {
-            this.fpsStats.update();
-        }
-
-        this._pmndrsTickTimeMs = typeof time === 'number' ? time : null;
-        this.updatePmndrsHorizonSun();
-        if (typeof this.updatePmndrsDayNightCycleFrame === 'function') {
-            this.updatePmndrsDayNightCycleFrame(time);
-        }
-        this.updateAdaptiveShadowFit(false);
-
-        const effectiveReflectionSource = this.getEffectiveReflectionSource();
-        if (typeof this.updateReflectionEnvironmentIntensity === 'function') {
-            this.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
-        }
-        if (effectiveReflectionSource === 'takram-sky') {
-            if (typeof this.updateTakramSkyEnvironment === 'function') {
-                this.updateTakramSkyEnvironment(time);
-            }
-            return;
-        }
-
-        if (effectiveReflectionSource !== 'scene-probe') {
-            return;
-        }
-
-        const sceneProbeUpdateMode = this.getSceneProbeUpdateMode();
-        if (sceneProbeUpdateMode === 'static' && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
-            return;
-        }
-
-        if (sceneProbeUpdateMode === 'slow-dynamic' && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
-            const anchorObject = this.getSceneProbeAnchorObject();
-            if (anchorObject) {
-                anchorObject.updateMatrixWorld(true);
-                anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
-                if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > (6 * 6) ||
-                    this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 45) {
-                    this._sceneProbeNeedsUpdate = true;
-                }
-            }
-        }
-
-        if (!this._sceneProbeNeedsUpdate) {
-            return;
-        }
-
-        const captureCooldownMs = sceneProbeUpdateMode === 'slow-dynamic' ? 5000 : 500;
-        if ((time - this._sceneProbeLastCaptureMs) < captureCooldownMs) {
-            return;
-        }
-
-        const modelSettleMs = sceneProbeUpdateMode === 'slow-dynamic' ? 750 : 350;
-        if (this._sceneProbeLastModelEventMs && (time - this._sceneProbeLastModelEventMs) < modelSettleMs) {
-            return;
-        }
-
-        this.captureSceneProbe(time);
     }
 });

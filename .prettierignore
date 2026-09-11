@@ -1,0 +1,9 @@
+node_modules/
+vendor/
+assets/vendor/
+assets/js/runtime/master/lib/
+assets/js/**/*.min.js
+assets/css/vrodos_modern_compiled.css
+runtime/
+package-lock.json
+services/**/package-lock.json

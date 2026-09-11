@@ -538,27 +538,7 @@ VRODOS.editor.PropertyCommand = class {
             obj[this.property] = val;
         }
 
-        if (obj.category_slug === 'primitive-plane' && VRODOS.loader) {
-            if (['planeWidth', 'planeDepth'].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneGeometry === 'function') {
-                VRODOS.loader.refreshPrimitivePlaneGeometry(obj);
-            }
-            if ([
-                'planeWidth',
-                'planeDepth',
-                'surfaceColor',
-                'surfaceRoughness',
-                'surfaceMetalness',
-                'surfaceTileSizeMeters',
-                'surfaceNormalScale',
-                'surfaceAoIntensity',
-                'surfaceNormalYSign',
-                'surfaceAntiTilingEnabled',
-                'surfaceAntiTilingPatchTiles',
-                'surfaceAntiTilingBlendSharpness'
-            ].includes(this.property) && typeof VRODOS.loader.refreshPrimitivePlaneMaterial === 'function') {
-                VRODOS.loader.refreshPrimitivePlaneMaterial(obj);
-            }
-        }
+        VRODOS.loader.refreshPrimitivePlaneProperty(obj, this.property);
 
         if (this.property === 'walkableBehavior') {
             obj.userData = obj.userData || {};

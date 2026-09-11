@@ -67,7 +67,7 @@ final class VRodos_Asset_Optimization_Lifecycle_Harness {
 		return $GLOBALS['vrodos_lifecycle_snapshot'];
 	}
 
-	private static function get_source_glb( int $asset_id ): array {
+	private static function prepare_source_glb( int $asset_id ): array {
 		unset( $asset_id );
 		return self::$source;
 	}
