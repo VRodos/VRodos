@@ -94,8 +94,7 @@ for (const required of [
   'if (!astronomicalPosition)',
   'config.astronomicalMoonPosition = true',
   'siderealDriftEnabled: Boolean(config && config.astronomicalMoonPosition)',
-  'state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs)',
-  'state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs)',
+  'VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)',
   'config.moonDirection = vta.getMoonDirectionECEF(moonDate',
   'moonLight.position.copy(moonDirection).normalize().multiplyScalar(28)',
   'config.moonDirection = buildPmndrsMoonDirection(config.sunDirection)',
@@ -106,7 +105,7 @@ for (const required of [
 ]) {
   assert(runtimeSource.includes(required), `Missing textured moon runtime hook: ${required}`);
 }
-assert(runtimeSource.includes('wrappedTimeOfDayMs'), 'Day-night cycle no longer preserves the authored solar day');
+// Solar-day wrapping and advancing lunar dates are exercised in test-celestial-clock.mjs.
 assert(!runtimeSource.includes('moonLight.position.y += 4'), 'Moon light direction is still artificially elevated');
 
 assert(

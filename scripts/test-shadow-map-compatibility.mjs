@@ -104,6 +104,7 @@ function createQualityProfileContext() {
     context.globalThis = context;
     vm.createContext(context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_runtime_settings_helpers.js'), 'utf8'), context);
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_celestial_clock.js'), 'utf8'), context);
     vm.runInContext(
         readFileSync(resolve(root, "assets/js/runtime/master/vrodos_quality_profiles.js"), "utf8"),
         context,

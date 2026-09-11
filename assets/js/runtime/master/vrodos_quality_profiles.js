@@ -42,9 +42,8 @@
     const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
     const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 10000;
     const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
-    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
+    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = VRODOSMaster.CelestialClock.minDurationMinutes;
     const PMNDRS_DAY_NIGHT_CYCLE_MAX_MINUTES = 1440;
-    const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 86400000;
     const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
     const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
     const PMNDRS_SUN_DIRECT_LIGHT_START_Y = 0.0;
@@ -971,64 +970,6 @@
             self.data.postFXEngine === 'pmndrs' &&
             self.data.pmndrsAtmosphereEnabled !== '0' &&
             readPmndrsAtmosphereBool(self, 'pmndrsDayNightCycleEnabled', false));
-    }
-
-    function getPmndrsDayNightCycleRuntimeClock(self) {
-        const tickTime = self && typeof self._pmndrsTickTimeMs === 'number' && isFinite(self._pmndrsTickTimeMs)
-            ? self._pmndrsTickTimeMs
-            : null;
-        if (tickTime !== null) {
-            return {
-                source: 'tick',
-                timeMs: tickTime
-            };
-        }
-
-        return {
-            source: 'perf',
-            timeMs: typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now()
-        };
-    }
-
-    function getPmndrsDayNightCycleEffectiveDate(self, celestialDate, celestialUtcTime, durationMinutes) {
-        const baseDate = getPmndrsDateObject(celestialDate, celestialUtcTime);
-        const baseDateMs = baseDate.getTime();
-        const baseDayStartMs = Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate());
-        const baseTimeOfDayMs = ((baseDateMs - baseDayStartMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-        const durationMs = Math.max(
-            PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES * 60000,
-            durationMinutes * 60000
-        );
-        const clock = getPmndrsDayNightCycleRuntimeClock(self);
-
-        let state = self._pmndrsDayNightCycleState;
-        if (!state ||
-            state.baseDateMs !== baseDateMs ||
-            state.baseDayStartMs !== baseDayStartMs ||
-            state.durationMinutes !== durationMinutes ||
-            state.clockSource !== clock.source) {
-            state = {
-                baseDateMs,
-                baseDayStartMs,
-                baseTimeOfDayMs,
-                durationMinutes,
-                clockSource: clock.source,
-                startRuntimeMs: clock.timeMs,
-                effectiveDate: new Date(baseDateMs),
-                moonEffectiveDate: new Date(baseDateMs)
-            };
-            self._pmndrsDayNightCycleState = state;
-            return state.effectiveDate;
-        }
-
-        const elapsedRuntimeMs = Math.max(0, clock.timeMs - state.startRuntimeMs);
-        const simulatedElapsedMs = (elapsedRuntimeMs / durationMs) * PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-        const wrappedTimeOfDayMs = ((state.baseTimeOfDayMs + simulatedElapsedMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-        // Keep the authored solar/atmosphere day stable while the Moon alone
-        // accumulates its real sidereal drift across accelerated cycles.
-        state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs);
-        state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs);
-        return state.effectiveDate;
     }
 
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
@@ -5501,7 +5442,7 @@
             const frame = getPmndrsResolvedGeospatialFrame(config);
             const observerECEF = frame.position;
             const date = dayNightCycleEnabled
-                ? getPmndrsDayNightCycleEffectiveDate(this, celestialDate, celestialUtcTime, dayNightCycleDurationMinutes)
+                ? VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)
                 : getPmndrsDateObject(celestialDate, celestialUtcTime);
             const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate
                 ? this._pmndrsDayNightCycleState.moonEffectiveDate

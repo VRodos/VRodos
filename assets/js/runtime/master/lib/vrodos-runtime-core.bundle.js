@@ -4161,6 +4161,59 @@ ${STOCHASTIC_GLSL}`).replace(
     VRODOSMaster.RenderPixelBudget = Object.freeze({ apply: applyDesktopRenderPixelBudget });
   })();
   (function() {
+    "use strict";
+    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
+    const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 864e5;
+    function getPmndrsDayNightCycleRuntimeClock(self) {
+      const tickTime = self && typeof self._pmndrsTickTimeMs === "number" && isFinite(self._pmndrsTickTimeMs) ? self._pmndrsTickTimeMs : null;
+      if (tickTime !== null) {
+        return {
+          source: "tick",
+          timeMs: tickTime
+        };
+      }
+      return {
+        source: "perf",
+        timeMs: typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now()
+      };
+    }
+    function getPmndrsDayNightCycleEffectiveDate(self, baseDate, durationMinutes) {
+      const baseDateMs = baseDate.getTime();
+      const baseDayStartMs = Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate());
+      const baseTimeOfDayMs = ((baseDateMs - baseDayStartMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
+      const durationMs = Math.max(
+        PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES * 6e4,
+        durationMinutes * 6e4
+      );
+      const clock = getPmndrsDayNightCycleRuntimeClock(self);
+      let state = self._pmndrsDayNightCycleState;
+      if (!state || state.baseDateMs !== baseDateMs || state.baseDayStartMs !== baseDayStartMs || state.durationMinutes !== durationMinutes || state.clockSource !== clock.source) {
+        state = {
+          baseDateMs,
+          baseDayStartMs,
+          baseTimeOfDayMs,
+          durationMinutes,
+          clockSource: clock.source,
+          startRuntimeMs: clock.timeMs,
+          effectiveDate: new Date(baseDateMs),
+          moonEffectiveDate: new Date(baseDateMs)
+        };
+        self._pmndrsDayNightCycleState = state;
+        return state.effectiveDate;
+      }
+      const elapsedRuntimeMs = Math.max(0, clock.timeMs - state.startRuntimeMs);
+      const simulatedElapsedMs = elapsedRuntimeMs / durationMs * PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
+      const wrappedTimeOfDayMs = ((state.baseTimeOfDayMs + simulatedElapsedMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
+      state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs);
+      state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs);
+      return state.effectiveDate;
+    }
+    VRODOSMaster.CelestialClock = Object.freeze({
+      minDurationMinutes: PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES,
+      effectiveDate: getPmndrsDayNightCycleEffectiveDate
+    });
+  })();
+  (function() {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
@@ -4199,9 +4252,8 @@ ${STOCHASTIC_GLSL}`).replace(
     const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
     const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 1e4;
     const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
-    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
+    const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = VRODOSMaster.CelestialClock.minDurationMinutes;
     const PMNDRS_DAY_NIGHT_CYCLE_MAX_MINUTES = 1440;
-    const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 864e5;
     const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
     const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
     const PMNDRS_SUN_DIRECT_LIGHT_START_Y = 0;
@@ -4997,51 +5049,6 @@ ${STOCHASTIC_GLSL}`).replace(
     }
     function isPmndrsDayNightCycleEnabled(self) {
       return Boolean(self && self.data && self.data.postFXEngine === "pmndrs" && self.data.pmndrsAtmosphereEnabled !== "0" && readPmndrsAtmosphereBool(self, "pmndrsDayNightCycleEnabled", false));
-    }
-    function getPmndrsDayNightCycleRuntimeClock(self) {
-      const tickTime = self && typeof self._pmndrsTickTimeMs === "number" && isFinite(self._pmndrsTickTimeMs) ? self._pmndrsTickTimeMs : null;
-      if (tickTime !== null) {
-        return {
-          source: "tick",
-          timeMs: tickTime
-        };
-      }
-      return {
-        source: "perf",
-        timeMs: typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now()
-      };
-    }
-    function getPmndrsDayNightCycleEffectiveDate(self, celestialDate, celestialUtcTime, durationMinutes) {
-      const baseDate = getPmndrsDateObject(celestialDate, celestialUtcTime);
-      const baseDateMs = baseDate.getTime();
-      const baseDayStartMs = Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate());
-      const baseTimeOfDayMs = ((baseDateMs - baseDayStartMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-      const durationMs = Math.max(
-        PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES * 6e4,
-        durationMinutes * 6e4
-      );
-      const clock = getPmndrsDayNightCycleRuntimeClock(self);
-      let state = self._pmndrsDayNightCycleState;
-      if (!state || state.baseDateMs !== baseDateMs || state.baseDayStartMs !== baseDayStartMs || state.durationMinutes !== durationMinutes || state.clockSource !== clock.source) {
-        state = {
-          baseDateMs,
-          baseDayStartMs,
-          baseTimeOfDayMs,
-          durationMinutes,
-          clockSource: clock.source,
-          startRuntimeMs: clock.timeMs,
-          effectiveDate: new Date(baseDateMs),
-          moonEffectiveDate: new Date(baseDateMs)
-        };
-        self._pmndrsDayNightCycleState = state;
-        return state.effectiveDate;
-      }
-      const elapsedRuntimeMs = Math.max(0, clock.timeMs - state.startRuntimeMs);
-      const simulatedElapsedMs = elapsedRuntimeMs / durationMs * PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-      const wrappedTimeOfDayMs = ((state.baseTimeOfDayMs + simulatedElapsedMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
-      state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs);
-      state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs);
-      return state.effectiveDate;
     }
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
       const source = reflectionSource || (self && typeof self.getEffectiveReflectionSource === "function" ? self.getEffectiveReflectionSource() : "none");
@@ -8661,7 +8668,7 @@ ${STOCHASTIC_GLSL}`).replace(
       if (celestialMode === "datetime" && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const frame = getPmndrsResolvedGeospatialFrame(config);
         const observerECEF = frame.position;
-        const date = dayNightCycleEnabled ? getPmndrsDayNightCycleEffectiveDate(this, celestialDate, celestialUtcTime, dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
+        const date = dayNightCycleEnabled ? VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
         const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate ? this._pmndrsDayNightCycleState.moonEffectiveDate : date;
         const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
         config.effectiveDate = date;

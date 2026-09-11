@@ -48,6 +48,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 
 ## G. Runtime ownership
 - [x] Extract desktop pixel-budget calculation into a focused module without changing formulas or constants.
+- [x] Extract accelerated celestial clock calculations, preserving solar-day wrapping and lunar date progression.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -179,3 +180,11 @@ All 52 regression scripts pass (24 runtime, 28 compiler), with build configurati
 Moved desktop render pixel-budget parsing, CSS-size resolution, and budget calculation into `vrodos_render_pixel_budget.js`. Quality profiles call `VRODOSMaster.RenderPixelBudget.apply`; the core build catalog loads the module first. The three moved function bodies were compared against the prior Git revision and are identical. No rendering constants, shadow policy, navigation, or library versions changed.
 
 New behavioral fixtures cover uncapped Custom rendering, active-profile and query precedence, invalid overrides, performance defaults, ratio limits, immersive XR exclusion, renderer-size fallback, backing-canvas scaling, and viewport fallback. All 53 regression scripts pass (25 runtime, 28 compiler), plus build configuration and diff checks. Runtime artifacts were rebuilt explicitly. Lint has zero errors; the quality helper retains its existing nine warnings. This is an initial boundary extraction; quality/shadows, celestial lighting, sky/cloud ownership, and browser/headset acceptance remain open. No server was started or commit/push performed.
+
+### Celestial clock extraction (2026-09-11)
+
+Moved accelerated day/night clock selection and date progression into `vrodos_celestial_clock.js`, loaded before quality profiles in the core bundle. Date parsing remains at the caller, and state remains on the existing component. Timing formulas and constants are unchanged, including the 15-second minimum, solar-day wrapping, and continuous lunar date progression. This does not complete celestial lighting or lifecycle ownership migration.
+
+Behavior tests execute the extracted module and cover multiple cycles, duration/date resets, backwards clocks, tick/performance source changes, invalid ticks, minimum duration, and independent component state. Replaced the corresponding formula-text assertions in the Moon regression with these tests; retained Moon integration and vendor safeguards. The shadow fixture now loads the required clock module.
+
+All 54 regression scripts pass (26 runtime, 28 compiler). JS syntax, build configuration, and diff checks pass; changed browser source lint has zero errors and the quality helper's nine existing warnings. Explicitly regenerated the core bundle and manifest. Published-scene recompilation and browser/headset acceptance remain outstanding. No server was started and no commit/push was performed.
