@@ -49,6 +49,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 ## G. Runtime ownership
 - [x] Extract desktop pixel-budget calculation into a focused module without changing formulas or constants.
 - [x] Extract accelerated celestial clock calculations, preserving solar-day wrapping and lunar date progression.
+- [x] Extract MoonPhase normalization, illumination, direction, and orientation calculations with behavioral coverage.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -188,3 +189,12 @@ Moved accelerated day/night clock selection and date progression into `vrodos_ce
 Behavior tests execute the extracted module and cover multiple cycles, duration/date resets, backwards clocks, tick/performance source changes, invalid ticks, minimum duration, and independent component state. Replaced the corresponding formula-text assertions in the Moon regression with these tests; retained Moon integration and vendor safeguards. The shadow fixture now loads the required clock module.
 
 All 54 regression scripts pass (26 runtime, 28 compiler). JS syntax, build configuration, and diff checks pass; changed browser source lint has zero errors and the quality helper's nine existing warnings. Explicitly regenerated the core bundle and manifest. Published-scene recompilation and browser/headset acceptance remain outstanding. No server was started and no commit/push was performed.
+
+
+### Moon phase module extraction (2026-09-11)
+
+Moved phase normalization, illumination, anti-sun direction, and lunar orientation into `vrodos_moon_phase.js`. The existing `VRODOSMaster.MoonPhase` API retains its properties and now exposes direction and configuration application. Quality profiles use the module, loaded after settings helpers and before quality profiles. All seven moved function bodies were mechanically compared with the prior Git revision and are unchanged. No lighting constants, astronomical position policy, shaders, resource ownership, or vendor patches changed.
+
+New tests execute the module with the settings contract and real Three vectors/matrices. They cover all eight named phases, manual auto/full behavior, preservation of astronomical positions for authored phases, automatic illumination, stable polar orientation, and lunar date/matrix precedence. Replaced the corresponding source-marker assertions with behavioral coverage while retaining Moon integration and vendor-patch checks.
+
+All 55 regression scripts pass (27 runtime, 28 compiler), along with JS syntax, build configuration, and diff checks. Changed browser source lint has zero errors and nine existing quality-helper warnings. The core bundle and runtime manifest were explicitly rebuilt. Celestial lighting, sky/cloud extraction, component state ownership, published-scene recompilation, and browser/Quest acceptance remain open. No server was started and no commit/push was performed.

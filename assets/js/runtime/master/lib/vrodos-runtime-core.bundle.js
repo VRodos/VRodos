@@ -4214,6 +4214,104 @@ ${STOCHASTIC_GLSL}`).replace(
     });
   })();
   (function() {
+    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
+    const PMNDRS_MOON_PHASE_ANGLES_DEG = Object.freeze({
+      full: 0,
+      "waxing-gibbous": -45,
+      "first-quarter": -90,
+      "waxing-crescent": -135,
+      new: 180,
+      "waning-crescent": 135,
+      "last-quarter": 90,
+      "waning-gibbous": 45
+    });
+    function buildPmndrsMoonDirection(sunDirection) {
+      return sunDirection.clone().multiplyScalar(-1).normalize();
+    }
+    function normalizePmndrsMoonPhase(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsMoonPhase", value, "auto");
+      }
+      return value === "auto" || Object.prototype.hasOwnProperty.call(PMNDRS_MOON_PHASE_ANGLES_DEG, value) ? value : "auto";
+    }
+    function getPmndrsMoonPhaseIlluminationFromAngle(angleDeg) {
+      return Math.max(0, Math.min(1, (1 + Math.cos(THREE.MathUtils.degToRad(angleDeg))) * 0.5));
+    }
+    function getPmndrsAutoMoonIllumination(config) {
+      if (!(config && config.sunDirection && config.moonDirection)) {
+        return 1;
+      }
+      return Math.max(0, Math.min(1, (1 - config.sunDirection.dot(config.moonDirection)) * 0.5));
+    }
+    function getPmndrsStableMoonNorth(moonDirection) {
+      const north = new THREE.Vector3(0, 1, 0);
+      north.addScaledVector(moonDirection, -north.dot(moonDirection));
+      if (north.lengthSq() < 1e-6) {
+        north.set(0, 0, 1).addScaledVector(moonDirection, -moonDirection.z);
+      }
+      return north.normalize();
+    }
+    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection) {
+      const center = moonDirection.clone().normalize();
+      const north = getPmndrsStableMoonNorth(center);
+      const east = north.clone().cross(center).normalize();
+      return new THREE.Matrix4().makeBasis(center, east, north);
+    }
+    function applyPmndrsMoonPhaseConfig(config, vta) {
+      const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
+      const astronomicalPosition = config.celestialMode === "datetime" && config.astronomicalMoonPosition === true;
+      const astronomicalAuto = authoredPhase === "auto" && astronomicalPosition;
+      let phaseAngleDeg = 0;
+      let illumination = 1;
+      if (!astronomicalPosition) {
+        config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+        config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
+      }
+      const lightDirection = config.moonDirection.clone().normalize();
+      let effectivePhase = authoredPhase;
+      if (astronomicalAuto) {
+        illumination = getPmndrsAutoMoonIllumination(config);
+        lightDirection.copy(config.sunDirection).negate().normalize();
+        effectivePhase = "auto";
+      } else {
+        phaseAngleDeg = authoredPhase === "auto" ? 0 : PMNDRS_MOON_PHASE_ANGLES_DEG[authoredPhase];
+        illumination = getPmndrsMoonPhaseIlluminationFromAngle(phaseAngleDeg);
+        lightDirection.applyAxisAngle(
+          getPmndrsStableMoonNorth(config.moonDirection),
+          THREE.MathUtils.degToRad(phaseAngleDeg)
+        ).normalize();
+        effectivePhase = authoredPhase === "auto" ? "full" : authoredPhase;
+      }
+      let orientationMode = "stable-north-up";
+      let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
+      const moonEffectiveDate = config.moonEffectiveDate || config.effectiveDate;
+      const moonInertialToECEFMatrix = config.moonInertialToECEFMatrix || config.inertialToECEFMatrix;
+      if (config.celestialMode === "datetime" && moonEffectiveDate && moonInertialToECEFMatrix && vta && typeof vta.getMoonFixedToECIRotationMatrix === "function") {
+        moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
+          moonInertialToECEFMatrix,
+          vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, new THREE.Matrix4())
+        );
+        orientationMode = "moon-fixed-date-time";
+      }
+      config.moonPhase = authoredPhase;
+      config.effectiveMoonPhase = effectivePhase;
+      config.moonPhaseAngleDeg = phaseAngleDeg;
+      config.moonIllumination = illumination;
+      config.moonLightDirection = lightDirection;
+      config.moonFixedToECEFMatrix = moonFixedToECEFMatrix;
+      config.moonOrientationMode = orientationMode;
+      config.moonPositionMode = astronomicalAuto ? "astronomical-auto-phase" : astronomicalPosition ? "astronomical-fixed-phase" : "author-controlled-night";
+      return config;
+    }
+    VRODOSMaster.MoonPhase = Object.freeze({
+      anglesDeg: PMNDRS_MOON_PHASE_ANGLES_DEG,
+      normalize: normalizePmndrsMoonPhase,
+      illuminationFromAngle: getPmndrsMoonPhaseIlluminationFromAngle,
+      directionFromSun: buildPmndrsMoonDirection,
+      applyConfig: applyPmndrsMoonPhaseConfig
+    });
+  })();
+  (function() {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
@@ -4239,16 +4337,6 @@ ${STOCHASTIC_GLSL}`).replace(
       PMNDRS_MOON_ANGULAR_RADIUS / PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS,
       2
     ) * PMNDRS_MOON_VISIBILITY_BOOST;
-    const PMNDRS_MOON_PHASE_ANGLES_DEG = Object.freeze({
-      full: 0,
-      "waxing-gibbous": -45,
-      "first-quarter": -90,
-      "waxing-crescent": -135,
-      new: 180,
-      "waning-crescent": 135,
-      "last-quarter": 90,
-      "waning-gibbous": 45
-    });
     const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
     const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 1e4;
     const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
@@ -4458,86 +4546,6 @@ ${STOCHASTIC_GLSL}`).replace(
           return "auto";
       }
     }
-    function normalizePmndrsMoonPhase(value) {
-      if (RuntimeSettings.normalizeEnum) {
-        return RuntimeSettings.normalizeEnum("pmndrsMoonPhase", value, "auto");
-      }
-      return value === "auto" || Object.prototype.hasOwnProperty.call(PMNDRS_MOON_PHASE_ANGLES_DEG, value) ? value : "auto";
-    }
-    function getPmndrsMoonPhaseIlluminationFromAngle(angleDeg) {
-      return Math.max(0, Math.min(1, (1 + Math.cos(THREE.MathUtils.degToRad(angleDeg))) * 0.5));
-    }
-    function getPmndrsAutoMoonIllumination(config) {
-      if (!(config && config.sunDirection && config.moonDirection)) {
-        return 1;
-      }
-      return Math.max(0, Math.min(1, (1 - config.sunDirection.dot(config.moonDirection)) * 0.5));
-    }
-    function getPmndrsStableMoonNorth(moonDirection) {
-      const north = new THREE.Vector3(0, 1, 0);
-      north.addScaledVector(moonDirection, -north.dot(moonDirection));
-      if (north.lengthSq() < 1e-6) {
-        north.set(0, 0, 1).addScaledVector(moonDirection, -moonDirection.z);
-      }
-      return north.normalize();
-    }
-    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection) {
-      const center = moonDirection.clone().normalize();
-      const north = getPmndrsStableMoonNorth(center);
-      const east = north.clone().cross(center).normalize();
-      return new THREE.Matrix4().makeBasis(center, east, north);
-    }
-    function applyPmndrsMoonPhaseConfig(config, vta) {
-      const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
-      const astronomicalPosition = config.celestialMode === "datetime" && config.astronomicalMoonPosition === true;
-      const astronomicalAuto = authoredPhase === "auto" && astronomicalPosition;
-      let phaseAngleDeg = 0;
-      let illumination = 1;
-      if (!astronomicalPosition) {
-        config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
-        config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
-      }
-      const lightDirection = config.moonDirection.clone().normalize();
-      let effectivePhase = authoredPhase;
-      if (astronomicalAuto) {
-        illumination = getPmndrsAutoMoonIllumination(config);
-        lightDirection.copy(config.sunDirection).negate().normalize();
-        effectivePhase = "auto";
-      } else {
-        phaseAngleDeg = authoredPhase === "auto" ? 0 : PMNDRS_MOON_PHASE_ANGLES_DEG[authoredPhase];
-        illumination = getPmndrsMoonPhaseIlluminationFromAngle(phaseAngleDeg);
-        lightDirection.applyAxisAngle(
-          getPmndrsStableMoonNorth(config.moonDirection),
-          THREE.MathUtils.degToRad(phaseAngleDeg)
-        ).normalize();
-        effectivePhase = authoredPhase === "auto" ? "full" : authoredPhase;
-      }
-      let orientationMode = "stable-north-up";
-      let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
-      const moonEffectiveDate = config.moonEffectiveDate || config.effectiveDate;
-      const moonInertialToECEFMatrix = config.moonInertialToECEFMatrix || config.inertialToECEFMatrix;
-      if (config.celestialMode === "datetime" && moonEffectiveDate && moonInertialToECEFMatrix && vta && typeof vta.getMoonFixedToECIRotationMatrix === "function") {
-        moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
-          moonInertialToECEFMatrix,
-          vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, new THREE.Matrix4())
-        );
-        orientationMode = "moon-fixed-date-time";
-      }
-      config.moonPhase = authoredPhase;
-      config.effectiveMoonPhase = effectivePhase;
-      config.moonPhaseAngleDeg = phaseAngleDeg;
-      config.moonIllumination = illumination;
-      config.moonLightDirection = lightDirection;
-      config.moonFixedToECEFMatrix = moonFixedToECEFMatrix;
-      config.moonOrientationMode = orientationMode;
-      config.moonPositionMode = astronomicalAuto ? "astronomical-auto-phase" : astronomicalPosition ? "astronomical-fixed-phase" : "author-controlled-night";
-      return config;
-    }
-    VRODOSMaster.MoonPhase = Object.freeze({
-      anglesDeg: PMNDRS_MOON_PHASE_ANGLES_DEG,
-      normalize: normalizePmndrsMoonPhase,
-      illuminationFromAngle: getPmndrsMoonPhaseIlluminationFromAngle
-    });
     function normalizePmndrsDate(value, fallback) {
       if (RuntimeSettings.normalizeDate) {
         return RuntimeSettings.normalizeDate("pmndrsCelestialDate", value, fallback || "2026-06-21");
@@ -6896,9 +6904,6 @@ ${STOCHASTIC_GLSL}`).replace(
         -localSunDirection.z
       ).normalize();
     }
-    function buildPmndrsMoonDirection(sunDirection) {
-      return sunDirection.clone().multiplyScalar(-1).normalize();
-    }
     function ensurePmndrsWorldToEcefMatrix(target, config) {
       if (!target) {
         return null;
@@ -8619,7 +8624,7 @@ ${STOCHASTIC_GLSL}`).replace(
         lowLightAutoExposureEnabled: readPmndrsAtmosphereBool(this, "pmndrsLowLightAutoExposureEnabled", true),
         toneMappingExposureAuthored: readPmndrsAtmosphereBool(this, "pmndrsToneMappingExposureAuthored", false),
         starsEnabled: normalizePmndrsStarsEnabled(this.data.pmndrsStarsEnabled),
-        moonPhase: normalizePmndrsMoonPhase(this.data.pmndrsMoonPhase),
+        moonPhase: VRODOSMaster.MoonPhase.normalize(this.data.pmndrsMoonPhase),
         geospatialEnabled,
         geospatialLatitudeDeg: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialLatitudeDeg", -90, 90, 0),
         geospatialLongitudeDeg: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialLongitudeDeg", -180, 180, 0),
@@ -8662,9 +8667,9 @@ ${STOCHASTIC_GLSL}`).replace(
         applyPmndrsTakramLocalHorizonConstraints(this, config);
       }
       config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
-      config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
+      config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
       config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config);
-      config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+      config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
       if (celestialMode === "datetime" && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const frame = getPmndrsResolvedGeospatialFrame(config);
         const observerECEF = frame.position;
@@ -8683,8 +8688,8 @@ ${STOCHASTIC_GLSL}`).replace(
           config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame);
           config.astronomicalMoonPosition = true;
         } else {
-          config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
-          config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
+          config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
+          config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
           config.astronomicalMoonPosition = false;
         }
         if (typeof vta.getECIToECEFRotationMatrix === "function") {
@@ -8692,7 +8697,7 @@ ${STOCHASTIC_GLSL}`).replace(
           config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, new THREE.Matrix4());
         }
       }
-      applyPmndrsMoonPhaseConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
+      VRODOSMaster.MoonPhase.applyConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
       syncPmndrsTakramHorizonState(this, config);
       return config;
     };
@@ -10215,7 +10220,7 @@ ${shader.fragmentShader}` : withUniform;
       presented.localMoonDirection = config.localMoonDirection || config.moonDirection ? navigation.authoredToRenderedDirection(
         config.localMoonDirection || config.moonDirection,
         new THREE.Vector3()
-      ).clone() : buildPmndrsMoonDirection(presented.localSunDirection);
+      ).clone() : VRODOSMaster.MoonPhase.directionFromSun(presented.localSunDirection);
       presented.sunDirection = buildPmndrsEcefSunDirection(presented.localSunDirection, presented);
       presented.moonDirection = buildPmndrsEcefSunDirection(presented.localMoonDirection, presented);
       applyLocalDirectionAngles(presented);
