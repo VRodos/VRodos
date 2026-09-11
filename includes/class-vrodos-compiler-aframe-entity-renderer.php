@@ -1206,8 +1206,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 
 		$uuid      = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
-		$width     = $this->bounded_number( $obj->planeWidth ?? 20, 0.1, 10000, 20 );
-		$depth     = $this->bounded_number( $obj->planeDepth ?? 20, 0.1, 10000, 20 );
+		$width     = $this->bounded_number( $obj->planeWidth ?? 200, 0.1, 10000, 200 );
+		$depth     = $this->bounded_number( $obj->planeDepth ?? 200, 0.1, 10000, 200 );
 		$tile_size = $this->bounded_number( $obj->surfaceTileSizeMeters ?? 2, 0.01, 10000, 2 );
 		if ( '' === $uuid ) {
 			return;

@@ -1549,11 +1549,16 @@ function ensurePrimitivePlanePropertiesSection() {
     section.className = 'object-property-section';
     section.style.display = 'none';
     const textureRows = Object.entries(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).map(([slot, definition]) => (
-        '<div class="tw-flex tw-items-center tw-gap-2">' +
-        `<label class="tw-w-24 tw-text-[10px] tw-font-semibold tw-text-slate-300" for="planeTexture_${slot}">${definition.label}</label>` +
-        `<input id="planeTexture_${slot}" data-plane-texture-input="${slot}" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="tw-file-input tw-file-input-bordered tw-file-input-xs tw-min-w-0 tw-flex-1">` +
-        `<button type="button" data-plane-texture-remove="${slot}" class="tw-btn tw-btn-ghost tw-btn-xs" title="Remove ${definition.label} map">×</button>` +
-        `<span data-plane-texture-status="${slot}" class="tw-w-14 tw-text-right tw-text-[9px] tw-text-slate-400"></span>` +
+        '<div class="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-rounded-md tw-border tw-border-white/10 tw-bg-slate-900/30 tw-px-2 tw-py-1.5">' +
+        '<div class="tw-min-w-0 tw-flex-1">' +
+        `<div class="tw-truncate tw-text-[10px] tw-font-semibold tw-text-slate-300" title="${definition.label}">${definition.label}</div>` +
+        `<span data-plane-texture-status="${slot}" class="tw-block tw-text-[9px] tw-text-slate-400"></span>` +
+        '</div>' +
+        '<div class="tw-flex tw-flex-shrink-0 tw-items-center tw-gap-1">' +
+        `<input id="planeTexture_${slot}" data-plane-texture-input="${slot}" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="tw-hidden">` +
+        `<button type="button" data-plane-texture-upload="${slot}" class="tw-btn tw-btn-outline tw-btn-xs tw-min-w-[64px]" title="Upload ${definition.label} map">Upload</button>` +
+        `<button type="button" data-plane-texture-remove="${slot}" class="tw-btn tw-btn-ghost tw-btn-xs tw-px-1.5" title="Remove ${definition.label} map">Clear</button>` +
+        '</div>' +
         '</div>'
     )).join('');
     section.innerHTML = `
@@ -1575,8 +1580,8 @@ function ensurePrimitivePlanePropertiesSection() {
     container.appendChild(section);
 
     const numericBindings = [
-        ['planeWidthInput', 'planeWidth', 20, 0.1, 10000],
-        ['planeDepthInput', 'planeDepth', 20, 0.1, 10000],
+        ['planeWidthInput', 'planeWidth', 200, 0.1, 10000],
+        ['planeDepthInput', 'planeDepth', 200, 0.1, 10000],
         ['planeTileSizeInput', 'surfaceTileSizeMeters', 2, 0.01, 10000],
         ['planeRoughnessInput', 'surfaceRoughness', 1, 0, 1],
         ['planeMetalnessInput', 'surfaceMetalness', 0, 0, 1],
@@ -1594,6 +1599,12 @@ function ensurePrimitivePlanePropertiesSection() {
         vrodosCommitObjectControlsProperty('surfaceColor', this.value);
     });
 
+    section.querySelectorAll('[data-plane-texture-upload]').forEach((button) => {
+        button.addEventListener('click', function() {
+            document.getElementById(`planeTexture_${this.dataset.planeTextureUpload}`)?.click();
+        });
+    });
+
     section.querySelectorAll('[data-plane-texture-input]').forEach((input) => {
         input.addEventListener('change', async function() {
             const file = this.files && this.files[0];
@@ -1609,7 +1620,7 @@ function ensurePrimitivePlanePropertiesSection() {
                     attachmentId: uploaded.attachmentId,
                     url: uploaded.url
                 });
-                if (status) status.textContent = 'Assigned';
+                displayPrimitivePlaneProperties(object);
             } catch (error) {
                 if (status) status.textContent = 'Failed';
                 window.alert(error.message || 'Texture upload failed.');
@@ -1654,8 +1665,13 @@ function displayPrimitivePlaneProperties(object) {
         if (input) input.value = value;
     });
     Object.entries(VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES).forEach(([slot, definition]) => {
+        const hasTexture = Number(object[definition.attachment]) > 0;
         const status = section.querySelector(`[data-plane-texture-status="${slot}"]`);
-        if (status) status.textContent = Number(object[definition.attachment]) > 0 ? 'Assigned' : 'None';
+        const upload = section.querySelector(`[data-plane-texture-upload="${slot}"]`);
+        const remove = section.querySelector(`[data-plane-texture-remove="${slot}"]`);
+        if (status) status.textContent = hasTexture ? 'Assigned' : 'No map assigned';
+        if (upload) upload.textContent = hasTexture ? 'Replace' : 'Upload';
+        if (remove) remove.disabled = !hasTexture;
     });
     section.style.display = 'block';
 }

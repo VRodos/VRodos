@@ -373,6 +373,8 @@ const thumbnailScreen = context.VRODOS.editor.objectFactory.added[0].object.chil
 assert(Boolean(thumbnailScreen.material.map), "the existing video thumbnail texture path must target the generated screen mesh");
 
 const planeAddedStart = context.VRODOS.editor.objectFactory.added.length;
+const defaultPlaneObject = context.VRODOS.loader.createPrimitivePlaneObject("default-ground", {});
+assert(defaultPlaneObject.planeWidth === 200 && defaultPlaneObject.planeDepth === 200, "new procedural planes must default to 200 by 200 metres");
 const planeLoadResult = await new context.VRODOS.loader.LoaderMulti().load(null, {
     ground: {
         category_slug: "primitive-plane",
