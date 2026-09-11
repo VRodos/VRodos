@@ -1296,115 +1296,26 @@
         ensurePmndrsWorldToEcefMatrix(target, config);
     };
 
+    function getAtmosphereRuntime(self) {
+        const owner = self && self.el && self.el.components ? self.el.components['vrodos-atmosphere'] : null;
+        if (!owner || owner.removed) return null;
+        owner.bindSettings(self, removePmndrsAtmosphereSky);
+        return owner;
+    }
+
+    function scheduleAtmosphereVisualRefresh(self, callback) {
+        const owner = getAtmosphereRuntime(self);
+        if (owner) owner.scheduleVisualRefresh(callback);
+        else callback();
+    }
+
     H.ensurePmndrsAtmosphereResources = function () {
-        const renderer = this && this.el ? this.el.renderer : null;
-        const scene = this && this.el ? this.el.object3D : null;
-        const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
-        if (!renderer || !scene || !vta) {
-            return null;
-        }
-
-        const profile = getPmndrsAtmosphereResourceProfile(this, renderer);
-
-        if (this._pmndrsAtmosphereState && this._pmndrsAtmosphereState.profileSignature === profile.signature) {
-            return this._pmndrsAtmosphereState;
-        }
-
-        if (this._pmndrsAtmosphereState) {
-            this.disposePmndrsAtmosphere();
-        }
-
-        const state = {
-            generator: null,
-            textures: null,
-            promise: null,
-            skyMesh: null,
-            skyMaterial: null,
-            skyGeometry: null,
-            starsMesh: null,
-            starsMaterial: null,
-            starsGeometry: null,
-            starsFallbackMesh: null,
-            starsFallbackMaterial: null,
-            starsFallbackGeometry: null,
-            starsData: null,
-            starsDataUrl: '',
-            starsDataPromise: null,
-            starsFailed: false,
-            starsIntensity: 0,
-            ready: false,
-            failed: false,
-            profileSignature: profile.signature,
-            precision: profile.useFloat ? 'float' : 'half',
-            higherOrderScattering: profile.higherOrderScattering,
-            combinedScattering: profile.combinedScattering,
-            vrTakramSkyDirectCalibrated: false,
-            vrTakramSkyDirectExposure: null
-        };
-
-        try {
-            state.generator = new vta.PrecomputedTexturesGenerator(renderer, {
-                type: profile.type,
-                combinedScattering: profile.combinedScattering,
-                higherOrderScattering: profile.higherOrderScattering
-            });
-            state.textures = state.generator.textures;
-            state.promise = state.generator.update().then(() => {
-                state.ready = true;
-                return state.textures;
-            }).catch((err) => {
-                state.failed = true;
-                console.warn('[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:', err);
-            });
-        } catch (err) {
-            if (profile.useFloat && typeof THREE.HalfFloatType !== 'undefined') {
-                try {
-                    state.generator = new vta.PrecomputedTexturesGenerator(renderer, {
-                        type: THREE.HalfFloatType,
-                        combinedScattering: profile.combinedScattering,
-                        higherOrderScattering: profile.higherOrderScattering
-                    });
-                    state.textures = state.generator.textures;
-                    state.precision = 'half-fallback';
-                    state.profileSignature = `${profile.quality  }:half:${  profile.higherOrderScattering ? 'higher' : 'basic'  }:${  profile.combinedScattering ? 'combined' : 'split'}`;
-                    state.promise = state.generator.update().then(() => {
-                        state.ready = true;
-                        return state.textures;
-                    }).catch((fallbackErr) => {
-                        state.failed = true;
-                        console.warn('[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:', fallbackErr);
-                    });
-                } catch (fallbackErr) {
-                    state.failed = true;
-                    console.warn('[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:', fallbackErr);
-                }
-            } else {
-                state.failed = true;
-                console.warn('[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:', err);
-            }
-        }
-
-        this._pmndrsAtmosphereState = state;
-        return state;
+        const owner = getAtmosphereRuntime(this);
+        return owner ? owner.ensureResources(getPmndrsAtmosphereResourceProfile(this, this.el.renderer)) : null;
     };
 
     H.disposePmndrsAtmosphere = function () {
-        if (!this || !this._pmndrsAtmosphereState) {
-            return;
-        }
-
-        const state = this._pmndrsAtmosphereState;
-        removePmndrsAtmosphereSky(this);
-
-        if (state.generator && typeof state.generator.dispose === 'function') {
-            try {
-                state.generator.dispose();
-            } catch (err) {
-                console.warn('[VRodos] Takram atmosphere dispose failed:', err);
-            }
-        }
-
-        this._pmndrsAtmosphereState = null;
+        if (this.atmosphereRuntime) this.atmosphereRuntime.disposeResources();
     };
 
     function getLegacyHorizonStageSizeValue(self) {
@@ -2021,6 +1932,7 @@
             applyPmndrsSunOcclusion
         },
         host: {
+            scheduleAtmosphereVisualRefresh,
             createPmndrsSunTexture,
             createPmndrsSunHazeTexture,
             getPmndrsHorizonSunConfig,

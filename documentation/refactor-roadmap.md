@@ -61,7 +61,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract sun sprite texture generation and presentation presets, preserving per-scene caches and haze dithering.
 - [x] Extract lights-only gradient sky creation, preset updates, and removal with mesh reuse/disposal coverage.
 - [x] Extract remaining atmosphere visual assembly from quality profiles: sky, stars, Moon, cloud sun disk, and legacy sky handoff.
-- [ ] Move lifecycle/state ownership to existing focused components.
+- [x] Move atmosphere resource state, generator lifecycle, and deferred visual refresh ownership into `vrodos-atmosphere`.
+- [ ] Move remaining lighting/reflection/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
 - [ ] Audit single ownership and disposal of every GPU resource/listener.
@@ -351,3 +352,16 @@ AST comparison against HEAD verified all 70 moved functions, 22 constants, and 8
 All 66 regression scripts pass (38 runtime, 28 compiler); runtime/generated-core syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint has zero errors and the same 242 warnings; one existing unused visual helper warning moved with its function. Runtime artifacts were explicitly regenerated through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
 
 Rendering formulas, constants, navigation math, dependencies, and vendor patches are unchanged. Published scenes were not recompiled, and browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.
+
+
+### Atmosphere component resource ownership (2026-09-11)
+
+`vrodos-atmosphere` now owns the atmosphere resource state, precomputed generator creation/disposal, and scheduled visual refresh handles. The existing `ensurePmndrsAtmosphereResources()` and `disposePmndrsAtmosphere()` scene-settings methods delegate to that owner. `_pmndrsAtmosphereState` is a read-only view of the component-owned state after binding, preserving existing visual, lighting, reflection, and diagnostic readers without duplicating ownership. Configuration and resource-profile selection remain in quality profiles.
+
+Profile replacement disposes the previous visual resources/generator before allocation. Late precompute completions or failures cannot publish into a removed/replaced generation. A generator allocated before a synchronous update failure is disposed before the existing half-float retry. Duplicate generation code is shared; precision selection, fallback signature, scattering flags, rendering formulas, and shaders are preserved. Active visual refreshes retain their immediate/frame/50ms/200ms sequence; component disposal cancels handles and invalidates callbacks already queued for delivery. Frame/timer handles are tracked separately even when their numeric IDs overlap. Inactive profiles have no deferred atmosphere owner.
+
+Scene-settings teardown removes the atmosphere component after disabling both composer paths, releasing its retained settings reference. Component removal works even if A-Frame has already removed its component-map entry. Repeated disposal/removal is safe; component reattachment binds the existing scene-settings facade to a fresh owner. This package does not migrate all lighting/reflection/sprite scratch state or finish the global GPU/listener audit.
+
+The new lifecycle regression exercises the actual registered component and assembled quality-profile facade with Three textures and controlled generator/timer doubles. It covers reuse, profile replacement, stale resolve/reject, synchronous/asynchronous failure, half-float policy, disposal exceptions, overlapping handle IDs, canceled callbacks, repeated removal, reattachment, tick ordering, and the authored scene-settings teardown order. The atmosphere-visual fixture now uses the real component scheduler. All 67 regression scripts pass (39 runtime, 28 compiler); syntax, generated build configuration, catalog, and diff checks pass. Full browser-source lint reports zero errors and 242 existing warnings. Runtime rebuilding changed only the core and A-Frame components bundles.
+
+Published clients were not recompiled; browser/GPU/physical Quest checks remain outstanding, especially active precompute removal/re-entry and profile switching. No development server was started and no commit or push was performed.

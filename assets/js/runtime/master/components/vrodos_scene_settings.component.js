@@ -3509,7 +3509,7 @@ AFRAME.registerComponent('scene-settings', {
         }
         this.disablePostProcessing();
         this.disablePmndrsPostProcessing();
-        this.disposePmndrsAtmosphere();
+        this.el.removeAttribute('vrodos-atmosphere');
         vrodosDisposeRuntimeResource(this._envMapRenderTarget);
         this._envMapRenderTarget = null;
         this.disposeSceneProbe(false);

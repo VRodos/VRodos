@@ -828,6 +828,153 @@
       }
     });
     AFRAME.registerComponent("vrodos-atmosphere", {
+      init: function() {
+        this.state = null;
+        this.settings = null;
+        this.visualRefreshes = /* @__PURE__ */ new Set();
+        this.visualRefreshEpoch = 0;
+        this.removed = false;
+      },
+      bindSettings: function(settings, removeVisuals) {
+        if (this.settings === settings) return;
+        this.settings = settings;
+        this.removeVisuals = removeVisuals;
+        settings.atmosphereRuntime = this;
+        Object.defineProperty(settings, "_pmndrsAtmosphereState", {
+          configurable: true,
+          get: function() {
+            return this.atmosphereRuntime.state;
+          }
+        });
+      },
+      cancelVisualRefreshes: function() {
+        this.visualRefreshEpoch++;
+        this.visualRefreshes.forEach(({ kind, handle }) => {
+          if (kind === "frame") cancelAnimationFrame(handle);
+          else clearTimeout(handle);
+        });
+        this.visualRefreshes.clear();
+      },
+      scheduleVisualRefresh: function(callback) {
+        if (this.removed) return;
+        callback();
+        if (this.removed) return;
+        const epoch = this.visualRefreshEpoch;
+        const schedule = (kind, delay) => {
+          const pending = { kind, handle: null };
+          const run = () => {
+            this.visualRefreshes.delete(pending);
+            if (!this.removed && this.visualRefreshEpoch === epoch) callback();
+          };
+          pending.handle = kind === "frame" ? requestAnimationFrame(run) : setTimeout(run, delay);
+          this.visualRefreshes.add(pending);
+        };
+        if (typeof requestAnimationFrame === "function") schedule("frame");
+        schedule("timeout", 50);
+        schedule("timeout", 200);
+      },
+      ensureResources: function(profile) {
+        if (this.removed) return null;
+        const settings = this.settings;
+        const renderer = settings && settings.el ? settings.el.renderer : null;
+        const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
+        if (!renderer || !settings.el.object3D || !vta) return null;
+        if (this.state && this.state.profileSignature === profile.signature) return this.state;
+        this.disposeResources();
+        const state = {
+          generator: null,
+          textures: null,
+          promise: null,
+          skyMesh: null,
+          skyMaterial: null,
+          skyGeometry: null,
+          starsMesh: null,
+          starsMaterial: null,
+          starsGeometry: null,
+          starsFallbackMesh: null,
+          starsFallbackMaterial: null,
+          starsFallbackGeometry: null,
+          starsData: null,
+          starsDataUrl: "",
+          starsDataPromise: null,
+          starsFailed: false,
+          starsIntensity: 0,
+          ready: false,
+          failed: false,
+          profileSignature: profile.signature,
+          precision: profile.useFloat ? "float" : "half",
+          higherOrderScattering: profile.higherOrderScattering,
+          combinedScattering: profile.combinedScattering,
+          vrTakramSkyDirectCalibrated: false,
+          vrTakramSkyDirectExposure: null
+        };
+        this.state = state;
+        const generate = (type) => {
+          state.generator = new vta.PrecomputedTexturesGenerator(renderer, {
+            type,
+            combinedScattering: profile.combinedScattering,
+            higherOrderScattering: profile.higherOrderScattering
+          });
+          state.textures = state.generator.textures;
+          state.promise = state.generator.update().then(() => {
+            if (this.state !== state || this.removed) return null;
+            state.ready = true;
+            return state.textures;
+          }).catch((err) => {
+            if (this.state !== state || this.removed) return;
+            state.failed = true;
+            console.warn("[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:", err);
+          });
+        };
+        try {
+          generate(profile.type);
+        } catch (err) {
+          this.disposeGenerator(state);
+          if (profile.useFloat && typeof THREE.HalfFloatType !== "undefined") {
+            try {
+              generate(THREE.HalfFloatType);
+              state.precision = "half-fallback";
+              state.profileSignature = `${profile.quality}:half:${profile.higherOrderScattering ? "higher" : "basic"}:${profile.combinedScattering ? "combined" : "split"}`;
+            } catch (fallbackErr) {
+              this.disposeGenerator(state);
+              state.failed = true;
+              console.warn("[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:", fallbackErr);
+            }
+          } else {
+            state.failed = true;
+            console.warn("[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:", err);
+          }
+        }
+        return state;
+      },
+      disposeGenerator: function(state) {
+        const generator = state.generator;
+        state.generator = null;
+        if (generator && typeof generator.dispose === "function") {
+          try {
+            generator.dispose();
+          } catch (err) {
+            console.warn("[VRodos] Takram atmosphere dispose failed:", err);
+          }
+        }
+      },
+      disposeResources: function() {
+        this.cancelVisualRefreshes();
+        const state = this.state;
+        if (!state) return;
+        try {
+          this.removeVisuals(this.settings);
+        } finally {
+          this.state = null;
+          this.disposeGenerator(state);
+        }
+      },
+      remove: function() {
+        this.removed = true;
+        this.disposeResources();
+        this.settings = null;
+        this.removeVisuals = null;
+      },
       tick: function(time) {
         const settings = sceneSettings(this.el);
         if (!settings) {
@@ -3773,7 +3920,7 @@
       }
       this.disablePostProcessing();
       this.disablePmndrsPostProcessing();
-      this.disposePmndrsAtmosphere();
+      this.el.removeAttribute("vrodos-atmosphere");
       vrodosDisposeRuntimeResource(this._envMapRenderTarget);
       this._envMapRenderTarget = null;
       this.disposeSceneProbe(false);

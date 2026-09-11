@@ -13,7 +13,7 @@ The compiled `scene-settings` attribute remains the compatibility data contract.
 
 - `vrodos-render-profile`: renderer quality, static/dynamic shadows, adaptive shadow fit, and FPS updates.
 - `vrodos-postfx-router`: legacy vs PMNDRS ownership and composer enable/disable routing.
-- `vrodos-atmosphere`: Takram sky, sun/moon state, and day-night cycle updates.
+- `vrodos-atmosphere`: owns atmosphere resource state, precomputed generator lifecycle, and deferred visual refreshes; coordinates Takram sky/sun/moon and day-night ticks through scene-settings.
 - `vrodos-reflections`: HDR environment maps, scene-probe capture, and one-time Takram-sky PMREM capture.
 
 `scene-settings` still owns schema parsing, compatibility helpers, and existing public methods used by those components.
@@ -64,8 +64,8 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/vrodos_spector_debug.js` | Debug-only Spector.js loader for `?vrodos_spector=1` |
 | `assets/js/runtime/master/vrodos_scene_probe.js` | HDR, scene-probe, and one-time Takram-sky PMREM environment support |
 | `assets/js/runtime/master/vrodos_surface_material.js` | Shared deterministic stochastic-tiling patch for editor and compiled standard PBR plane materials |
-| `assets/js/runtime/master/vrodos_quality_profiles.js` | Configuration/policy, background/post-FX and day-night orchestration, precomputed atmosphere resource lifecycle; assembles focused runtime helpers |
-| `assets/js/runtime/master/vrodos_atmosphere_visuals.js` | Sky/stars/Moon visual assembly, cloud sun-disk presentation, sun/haze sprites, shadow-length routing, direct-sky calibration/reveal, and legacy environment handoff; scene state/lifecycle ownership remains unchanged |
+| `assets/js/runtime/master/vrodos_quality_profiles.js` | Configuration/policy, background/post-FX and day-night orchestration; delegates atmosphere resource lifecycle to its component and assembles focused helpers |
+| `assets/js/runtime/master/vrodos_atmosphere_visuals.js` | Sky/stars/Moon visual assembly, cloud sun-disk presentation, sun/haze sprites, shadow-length routing, direct-sky calibration/reveal, and legacy environment handoff; resource state/lifecycle belongs to `vrodos-atmosphere`, exposed through the scene-settings owner view |
 | `assets/js/runtime/master/vrodos_celestial_lighting.js` | Celestial lighting profiles, exposure, indirect fill, sun/moon gates, helper lights, and Takram light synchronization; state remains on the scene component |
 | `assets/js/runtime/master/vrodos_shadow_runtime.js` | Shadow roles, terrain stabilization, adaptive fitting, refresh scheduling, diagnostics, and presented-light transforms; state remains on the scene component |
 | `assets/js/runtime/master/vrodos_shadow_maps.js` | Shadow-map type mapping, sampler compatibility, and render-target disposal |

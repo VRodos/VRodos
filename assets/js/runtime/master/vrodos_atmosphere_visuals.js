@@ -23,6 +23,7 @@
             applyPmndrsSunOcclusion
         } = shadow;
         const {
+            scheduleAtmosphereVisualRefresh,
             createPmndrsSunTexture,
             createPmndrsSunHazeTexture,
             getPmndrsHorizonSunConfig,
@@ -393,12 +394,7 @@
                 hidePmndrsHorizonEnvironmentVisuals(self);
             };
 
-            hideEnvVisuals();
-            if (typeof requestAnimationFrame === 'function') {
-                requestAnimationFrame(hideEnvVisuals);
-            }
-            setTimeout(hideEnvVisuals, 50);
-            setTimeout(hideEnvVisuals, 200);
+            scheduleAtmosphereVisualRefresh(self, hideEnvVisuals);
         }
 
         function hidePmndrsHorizonEnvironmentVisuals(self) {
@@ -693,12 +689,7 @@
             };
 
             self._vrTakramLightsOnlyHorizonVisualsSynced = false;
-            sync();
-            if (typeof requestAnimationFrame === 'function') {
-                requestAnimationFrame(sync);
-            }
-            setTimeout(sync, 50);
-            setTimeout(sync, 200);
+            scheduleAtmosphereVisualRefresh(self, sync);
         }
 
         function removeLegacySunSkyEntitiesForPmndrs(self) {

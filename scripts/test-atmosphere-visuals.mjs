@@ -35,6 +35,10 @@ class StarsMaterial extends Three.ShaderMaterial {
 const context = vm.createContext({ THREE: { ...Three, TextureLoader, FileLoader }, URLSearchParams,
     console: { warn: (...args) => warnings.push(args), info() {} },
     document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] }, setTimeout: (callback, delay) => { scheduled.push({ callback, delay }); return 1; }, requestAnimationFrame: callback => { scheduled.push({ callback, delay: 'frame' }); return 1; } });
+const components = {};
+context.AFRAME = { registerComponent: (name, definition) => { components[name] = definition; }, registerSystem() {} };
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js', import.meta.url), 'utf8'), context);
+const visualScheduler = Object.create(components['vrodos-atmosphere']); visualScheduler.init();
 context.window = context;
 context.location = { search: '' };
 context.VRODOSMaster = {};
@@ -50,7 +54,7 @@ const api = context.VRODOSMaster.AtmosphereVisuals.create({
     cloud: { roundPmndrsCloudSunOcclusionDiagnostic: x => x, getPmndrsCloudSunOcclusionState: () => ({}),
         getPmndrsCloudMoonOcclusionState: () => ({ cloudMoonDiscVisibility: 0.5 }), PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS: 0 },
     shadow: { vectorToRoundedArray: v => v?.toArray(), applyPmndrsSunOcclusion: () => 1 },
-    host: { smoothPmndrsRuntimeLightValue: context.VRODOSMaster.LightSmoothing.value,
+    host: { scheduleAtmosphereVisualRefresh: (_self, callback) => visualScheduler.scheduleVisualRefresh(callback), smoothPmndrsRuntimeLightValue: context.VRODOSMaster.LightSmoothing.value,
         clamp01: x => Math.max(0, Math.min(1, x)), getPmndrsResolvedGeospatialFrame: () => null,
         hasPmndrsDebugFlag: name => flags.has(name), readPmndrsDebugNumber: (_a, _b, fallback) => fallback,
         readPmndrsAtmosphereBool: (_s, _key, fallback) => fallback, getRuntimeNowMs: () => now,
