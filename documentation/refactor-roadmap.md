@@ -30,7 +30,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Separate read-only lookup from explicit normalization/snapshot updates.
 - [x] Bulk-load dashboard metadata, preserve global sorting, avoid page-render writes/hashing.
 - [x] Preserve immutable jobs, leases, source generations, retries, and profile chaining in regression coverage.
-- [ ] Evaluate additional request-local scan reuse and validate live replacement/deletion/status flows.
+- [x] Evaluate repeated scans; remove the full collection scan from single-row dashboard refreshes.
+- [ ] Validate live replacement/deletion/status flows against WordPress.
 
 ## F. Import and editor
 - [x] Extract staged-session access from import HTTP controller.
@@ -76,9 +77,9 @@ VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX
 ## Implementation log
 ### Verification and implementation
 
-`scripts/regression-test-catalog.mjs` explicitly owns 50 scripts: 23 runtime and 27 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+`scripts/regression-test-catalog.mjs` explicitly owns 51 scripts: 23 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
 
-All **50 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
+All **51 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
@@ -158,3 +159,9 @@ A browser reproduction exposed mixed cached editor scripts: new property control
 Browser verification: translation increased by 0.40, rotation by 0.40 degrees, and scale by 0.20 for 40-pixel drags. Undo and redo both kept a closed panel hidden. Relevant runtime suite (23 scripts), changed-file lint, PHP syntax, build configuration, and diff checks passed. Earlier full-suite count remains 50.
 
 Undo/redo popup preference: keep a closed panel closed; explicitly synchronize GUI and property content when restoring selection so an open panel displays the restored values. Regression assertions cover both flags.
+
+### Targeted optimizer row refresh (2026-09-11)
+
+Single-row dashboard refresh previously scanned every GLB and merged buckets only to obtain the requested asset title. It now reads that title directly and retains its existing per-asset source/analysis/derivative reads. Full-list global sorting and pagination are unchanged. No new cache, invalidation layer, or persistent storage was added.
+
+A row assembly fixture rejects collection scans and verifies 20 repeated requests each read only the requested asset, preserving payload keys and reacting to renamed titles, stale analysis, replaced sources, and missing sources. Real temporary-file source fixtures also verify repeated read-only inspection, content-generation advancement, same-content attachment replacement, and deleted files. Existing lifecycle tests cover cancellation and derivative cleanup. These are isolated regressions, not live WordPress replacement/deletion acceptance.

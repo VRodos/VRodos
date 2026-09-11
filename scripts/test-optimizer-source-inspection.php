@@ -68,7 +68,22 @@ try {
 	clearstatcache( true, $source_path );
 	$stale = VRodos_Asset_Optimization_Source::inspect( 1, $resolve );
 	verify( ! isset( $stale['sha256'] ) && 1 === $writes, 'Inspection must not advertise or refresh stale source identity.' );
-} finally {
+	for ( $i = 0; $i < 10; $i++ ) {
+		verify( ! isset( VRodos_Asset_Optimization_Source::inspect( 1, $resolve )['sha256'] ), 'Repeated reads must not repair stale identity.' );
+	}
+	verify( 1 === $writes && 1 === $normalizations, 'Repeated stale status reads must remain read-only.' );
+	$replacement = VRodos_Asset_Optimization_Source::prepare( 1, $resolve );
+	verify( 2 === $replacement['generation'] && $prepared['sha256'] !== $replacement['sha256'], 'Explicit processing must advance generation for changed content.' );
+	$metadata[1]['vrodos_asset3d_glb'] = 8;
+	verify( ! isset( VRodos_Asset_Optimization_Source::inspect( 1, $resolve )['sha256'] ), 'An attachment replacement must not reuse the previous attachment identity.' );
+	$same_content = VRodos_Asset_Optimization_Source::prepare( 1, $resolve );
+	verify( 3 === $same_content['generation'] && $same_content['sha256'] === $replacement['sha256'], 'Same-content attachment replacement must still advance generation.' );
+	$before_reads = [ $writes, $normalizations ];
 	unlink( $source_path );
+	clearstatcache( true, $source_path );
+	verify( is_wp_error( VRodos_Asset_Optimization_Source::inspect( 1, $resolve ) ), 'Deleted source files must immediately fail inspection.' );
+	verify( $before_reads === [ $writes, $normalizations ], 'Missing-source inspection must not write or normalize.' );
+} finally {
+	if ( is_file( $source_path ) ) unlink( $source_path );
 }
 echo "Read-only optimizer source and dashboard scan tests passed.\n";

@@ -178,16 +178,6 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 	}
 
 	private static function dashboard_asset_row_state( int $asset_id ): array {
-		$scan = self::scan_glb_derivatives( 'web-high' );
-		$item = null;
-		foreach ( [ 'analysisMissing', 'analysisStale', 'recommendedGeometry', 'recommendedTexture', 'recommendedLod', 'stale', 'ready', 'unsupported', 'lowBenefit', 'missing' ] as $bucket ) {
-			foreach ( $scan[ $bucket ] ?? [] as $candidate ) {
-				if ( (int) ( $candidate['assetId'] ?? 0 ) === $asset_id ) {
-					$item = array_merge( $item ?? [], $candidate );
-				}
-			}
-		}
-
 		$meta       = self::get_derivative_meta( $asset_id );
 		$source    = self::inspect_source_glb( $asset_id );
 		$source_url = is_wp_error( $source ) ? '' : (string) $source['url'];
@@ -223,7 +213,7 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 			'rowVisible'   => self::dashboard_row_is_actionable( $flags ),
 			'cells'        => self::dashboard_row_cells_html( $asset_id, $meta, $analysis, $flags, $derivative_ready, $derivative_status ),
 			'actionsHtml'  => self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ),
-			'title'        => (string) ( $item['title'] ?? get_the_title( $asset_id ) ?: 'Asset #' . $asset_id ),
+			'title'        => (string) ( get_the_title( $asset_id ) ?: 'Asset #' . $asset_id ),
 		];
 	}
 
