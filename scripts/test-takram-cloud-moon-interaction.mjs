@@ -73,7 +73,7 @@ const recoveredStars = cloud.getPmndrsCloudMoonStarRecovery(starRuntime, nightCo
 assert(recoveredStars > washedStars && recoveredStars <= 1, 'Dense moon cover must restore some globally suppressed stars');
 
 const postprocessing = read('assets/js/runtime/master/vrodos_postprocessing_pmndrs.js');
-const quality = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js') + read('assets/js/runtime/master/vrodos_cloud_occlusion.js');
+const quality = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_atmosphere_visuals.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js') + read('assets/js/runtime/master/vrodos_cloud_occlusion.js');
 const component = read('assets/js/runtime/master/components/vrodos_scene_settings.component.js');
 const vendorPatch = read('scripts/build/vendor-patches.mjs');
 

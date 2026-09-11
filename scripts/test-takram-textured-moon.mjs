@@ -37,17 +37,7 @@ for (const [phase, angle] of Object.entries(phaseAngles)) {
   assert(Math.abs(illumination(angle) - expectedIllumination[phase]) < 1e-12, `${phase} illumination is incorrect`);
 }
 
-const cinematicMoonRadius = 0.015708;
-const starOcclusionFeather = 0.002094;
-const starOcclusionCosine = Math.cos(cinematicMoonRadius + starOcclusionFeather);
-assert(Math.abs(cinematicMoonRadius * 2 * 180 / Math.PI - 1.8) < 0.001, 'Cinematic moon diameter is not 1.8 degrees');
-assert(1 > starOcclusionCosine, 'A star centered on the moon must be occluded');
-assert(
-  Math.cos(cinematicMoonRadius + starOcclusionFeather * 2) < starOcclusionCosine,
-  'A star beyond the moon edge feather must remain visible'
-);
-assert(illumination(0) * 0.012 > illumination(90) * 0.012, 'Full-moon halo must exceed quarter-moon halo');
-assert(illumination(180) * 0.012 === 0, 'New-moon halo must be disabled');
+// Moon shader state, star masking, and texture lifecycle execute in test-atmosphere-visuals.mjs.
 
 const contract = JSON.parse(read('assets/runtime-settings-contract.json'));
 const phaseContract = contract.sceneSettings.pmndrsMoonPhase;
@@ -59,7 +49,7 @@ for (const phase of ['auto', ...Object.keys(phaseAngles)]) {
   assert(phaseContract.allowed.includes(phase), `Moon phase contract is missing ${phase}`);
 }
 
-const runtimeSource = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js');
+const runtimeSource = read('assets/js/runtime/master/vrodos_quality_profiles.js') + read('assets/js/runtime/master/vrodos_atmosphere_visuals.js') + read('assets/js/runtime/master/vrodos_celestial_lighting.js');
 const postprocessingSource = read('assets/js/runtime/master/vrodos_postprocessing_pmndrs.js');
 for (const forbidden of [
   'createPmndrsMoonTexture',
@@ -69,21 +59,8 @@ for (const forbidden of [
   assert(!runtimeSource.includes(forbidden), `Old sprite moon path remains: ${forbidden}`);
 }
 for (const required of [
-  'PMNDRS_MOON_ANGULAR_RADIUS = 0.015708',
-  'PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8',
-  'PMNDRS_MOON_RADIANCE_SCALE = Math.pow',
-  'PMNDRS_MOON_VISIBILITY_BOOST = 8.0',
-  'PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5',
-  'PMNDRS_MOON_HALO_STRENGTH = 0.012',
-  'PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 0.002094',
-  'material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE',
   'angularRadiusInvariant: true',
   'projectedDiscEnabled: Boolean(defines && defines.VRODOS_PROJECTED_MOON_DISC != null)',
-  "material.defines.VRODOS_PROJECTED_MOON_DISC = '1'",
-  "material.defines.VRODOS_CINEMATIC_MOON_HALO = '1'",
-  'syncPmndrsTakramStarMoonOcclusion(state.starsMaterial, config, state)',
-  'installPmndrsFallbackStarMoonOcclusion(state.starsFallbackMaterial)',
-  'const fallbackVisible = state.starsMesh',
   '[VRodos] Moon state:',
   "VRODOSMaster.MoonPhase.normalize(this.data.pmndrsMoonPhase)",
   'VRODOSMaster.MoonPhase.applyConfig(config',

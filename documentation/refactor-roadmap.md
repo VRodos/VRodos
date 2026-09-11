@@ -60,7 +60,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract scene-geometry sun occlusion, target caching, raycast sampling, and sun/haze/lens-flare visibility application.
 - [x] Extract sun sprite texture generation and presentation presets, preserving per-scene caches and haze dithering.
 - [x] Extract lights-only gradient sky creation, preset updates, and removal with mesh reuse/disposal coverage.
-- [ ] Extract remaining sky and cloud rendering modules without behavior changes.
+- [x] Extract remaining atmosphere visual assembly from quality profiles: sky, stars, Moon, cloud sun disk, and legacy sky handoff.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -338,3 +338,16 @@ Mechanical comparison against HEAD verified all moved functions, including GLSL 
 All 65 regression scripts pass (37 runtime, 28 compiler), plus runtime/generated-core syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint has zero errors and 242 existing warnings. Runtime outputs were rebuilt explicitly through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated artifacts.
 
 Remaining sky/cloud extraction, component lifecycle migration, and the full resource-ownership audit remain open. Published scenes were not recompiled; browser/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.
+
+
+### Complete atmosphere-visual subsystem extraction (2026-09-11)
+
+Moved 70 functions and 22 constants (roughly 2,000 lines) from quality profiles into `vrodos_atmosphere_visuals.js`. The required `VRODOSMaster.AtmosphereVisuals.create` factory assembles sky materials, native/fallback stars, Moon textures and shader state, cloud sun-disk presentation, sun/haze sprites, cloud shadow-length routing, direct-sky calibration/reveal gates, and legacy environment suppression/handoff. Explicit lighting, cloud, shadow, and host interfaces replace the previous closure dependencies. Lighting and sun-occlusion callbacks resolve visuals lazily after assembly; all public scene helper signatures and call sites are preserved.
+
+Quality profiles retains configuration and policy, precomputed atmosphere resource creation, scene component state, lifecycle entry points, and background/day-night orchestration. Cloud raymarching and postprocessing passes remain in their existing postprocessing module. This completes the remaining visual-assembly extraction from quality profiles; it does not complete the component ownership migration or resource audit. The next cohesive package is lifecycle/state ownership in `vrodos-atmosphere`, with repeated initialization/removal and resource cleanup validation.
+
+AST comparison against HEAD verified all 70 moved functions, 22 constants, and 81 retained functions/methods are identical apart from source positions, including shader text. The subsystem regression executes real Three objects with loader, DOM, and Takram-material test doubles. It covers sky/material reuse, star catalogue deduplication and binary geometry, fallback/native stars, Moon uniforms/defines and texture settings, load failures/stale callbacks, cloud disk hysteresis and native SUN invalidation, visibility/probe behavior, direct-sky shader patch success/failure and warmup gates, repeated visual disposal, and deferred legacy suppression. Moved Moon formula/implementation-marker assertions were replaced with executed behavior coverage; vendor/provenance checks follow the extracted module. Existing assembled lighting/shadow regressions continue to load and exercise all required modules.
+
+All 66 regression scripts pass (38 runtime, 28 compiler); runtime/generated-core syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint has zero errors and the same 242 warnings; one existing unused visual helper warning moved with its function. Runtime artifacts were explicitly regenerated through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
+
+Rendering formulas, constants, navigation math, dependencies, and vendor patches are unchanged. Published scenes were not recompiled, and browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.
