@@ -118,6 +118,12 @@ The runtime version manifest is also schema 2. It is the strict provenance contr
 
 The canonical light categories are `light-sun`, `light-spot`, `light-lamp`, and `light-ambient`. CamelCase, lowercase, and hyphenated aliases normalize to those values.
 
+Primitive planes are first-class compiler entities rather than generated GLBs. New planes default to 100 x 100 m, resolve to the walkable-surface role unless explicitly authored as decoration, and compile to one collision-aware `<a-plane>` using A-Frame's standard PBR material. The compiler derives texture repeat independently on each axis from plane dimensions divided by `surfaceTileSizeMeters`, so resizing the plane does not stretch its material.
+
+The resource publisher resolves scene-owned albedo, normal, roughness, AO, and metalness attachment IDs to immutable published URLs before entity rendering. DirectX-only normal packages preserve their negative normal-Y sign in the emitted `normalScale`. Imported displacement remains authoring-only and is intentionally excluded from publication and generated material attributes so the rendered and collision planes remain flat.
+
+When albedo and `surfaceAntiTilingEnabled` are present, the renderer emits `vrodos-stochastic-tiling` with UUID-derived seed, patch size, and blend sharpness. The compiled A-Frame component and editor use the same `vrodos_surface_material.js` helper, keeping the deterministic three-sample PBR result consistent across authoring and publication.
+
 ## Security boundary
 
 The compile action is a POST-only editor flow with a localized nonce, per-project/per-scene `edit_post` checks, post-type validation, and project taxonomy membership validation. Failures use coded JSON error payloads.

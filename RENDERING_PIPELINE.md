@@ -14,7 +14,7 @@ The compiled `scene-settings` attribute remains the compatibility data contract.
 - `vrodos-render-profile`: renderer quality, static/dynamic shadows, adaptive shadow fit, and FPS updates.
 - `vrodos-postfx-router`: legacy vs PMNDRS ownership and composer enable/disable routing.
 - `vrodos-atmosphere`: Takram sky, sun/moon state, and day-night cycle updates.
-- `vrodos-reflections`: HDR environment maps, scene probe capture, and Takram sky PMREM updates.
+- `vrodos-reflections`: HDR environment maps, scene-probe capture, and one-time Takram-sky PMREM capture.
 
 `scene-settings` still owns schema parsing, compatibility helpers, and existing public methods used by those components.
 
@@ -41,7 +41,7 @@ Presentation mode is part of the rendering contract:
 - In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
 - VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop`, `VR Headset Full`, or `VR Headset - PC Rendered`. Internally this is stored as `scene-settings.vrRuntimeProfile`: `desktop`, `headset`, or `pc-rendered-vr`. Legacy hidden profile names normalize to `headset` for compatibility only; older compiled scenes should be recompiled into the current pipeline.
 - `headset` applies in browser-tab mode and immersive VR. It preserves native renderer antialiasing, hard-caps shadow maps, keeps PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default, and only keeps authored Takram/HDR paths that are allowed by the current policy.
-- The explicit headset stereo PMNDRS opt-in (`vrHeadsetStereoPostFxEnabled`) is the only standalone-headset path where new realism work should target PMNDRS composer ownership. In that profile, visible sky and Takram sky PMREM must be selected from dynamic Takram runtime state: native `SkyMaterial`, sun/moon vectors, time/date or day-night cycle, `SunDirectionalLight`, `SkyLightProbe`, and PMREM capture. Do not emulate the result with static headset color palettes, A-Frame fallback skies, fixed lower-hemisphere fills, or lower-haze shader colors.
+- The explicit headset stereo PMNDRS opt-in (`vrHeadsetStereoPostFxEnabled`) is the only standalone-headset path where new realism work should target PMNDRS composer ownership. In that profile, visible sky must come from dynamic Takram runtime state: native `SkyMaterial`, sun/moon vectors, time/date or day-night cycle, `SunDirectionalLight`, and `SkyLightProbe`. If Takram-sky reflections are enabled for a future headset policy, their global PMREM must capture that runtime sky once rather than use a static emulation or a periodic recapture. Do not emulate the result with static headset color palettes, A-Frame fallback skies, fixed lower-hemisphere fills, or lower-haze shader colors.
 - `pc-rendered-vr` is a parked parent profile for the PCVR/WebXR path described in `documentation/compiled-headset-roadmap.md`. Treat it as desktop-like until real PCVR hardware/runtime validation changes that policy.
 - The render budget can be overridden per scene with `aframeVrFramebufferScale` / `aframeVrFoveationStrength`, or per test with `vrodos_vr_framebuffer_scale=...` / `vrodos_vr_foveation=...`.
 - Quest-class headset browsers fail closed for PMNDRS composer ownership, including browser-panel inline mode, because real Quest 2 testing showed tiled stereo artifacts and headset UI/compositor instability with the PMNDRS XR composer/cloud path. Use `vrodos_force_headset_pmndrs_composer=1` only for short lab isolation passes.
@@ -62,7 +62,8 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |
 | `assets/js/runtime/master/vrodos_runtime_resources.js` | Runtime resource registry for disposing Three resources, postprocessing objects, and event listeners |
 | `assets/js/runtime/master/vrodos_spector_debug.js` | Debug-only Spector.js loader for `?vrodos_spector=1` |
-| `assets/js/runtime/master/vrodos_scene_probe.js` | HDR and scene-probe environment map support |
+| `assets/js/runtime/master/vrodos_scene_probe.js` | HDR, scene-probe, and one-time Takram-sky PMREM environment support |
+| `assets/js/runtime/master/vrodos_surface_material.js` | Shared deterministic stochastic-tiling patch for editor and compiled standard PBR plane materials |
 | `assets/js/runtime/master/vrodos_quality_profiles.js` | Source for render, shadow, material, background, post-FX, Horizon, and Takram quality profiles |
 | `assets/js/runtime/master/lib/vrodos-runtime-core.bundle.js` | Generated compiled-scene core runtime bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-scene-components.bundle.js` | Generated compiled-scene POI/media/assessment component bundle |
@@ -306,7 +307,47 @@ Performance notes:
 - `scripts/profile-master-client.mjs --nav-profile` reports navmesh and blocker target counts while simulating movement without adding runtime debug UI.
 - Historical collision roadmap findings are summarized in `documentation/archive/rendering-history/README.md`.
 
-## 4. Legacy Pipeline
+## 4. Authored Primitive Planes And PBR Surfaces
+
+The editor can create ground directly instead of requiring every walkable surface to come from a GLB. A new primitive plane starts at `100 x 100 m`, is a precise walkable surface with compiled collision enabled, receives shadows, and uses the `authored-pbr` material role. Width and depth are independent authoring properties and may be changed up to the existing bounded scene limits.
+
+### Physical texture scale
+
+`surfaceTileSizeMeters` describes the real-world width and depth represented by one square texture repeat. It defaults to `2 m`. The editor and compiler calculate repeat as:
+
+```text
+repeatU = planeWidth / tileSizeMeters
+repeatV = planeDepth / tileSizeMeters
+```
+
+Changing plane dimensions therefore adds or removes repeats instead of stretching the material. PBR ZIP files normally do not encode a trustworthy physical dimension, so import preserves the plane's current tile size and reports that scale was not detected. The AmbientCG Ground108 package is recognized well enough to show the specific recommendation `Tile size = 1.5 m`, but the importer still leaves that authoring decision to the user.
+
+### PBR ZIP import
+
+`Import PBR ZIP` classifies conventional texture filenames and replaces the plane's complete previous surface in one undoable editor transaction and one scene save. Albedo/base-color is required. The recognized slots are albedo/color/diffuse, normal, roughness, ambient occlusion, metalness, and displacement/height. OpenGL normals win over DirectX normals; when only a DirectX normal exists, VRodos stores `surfaceNormalYSign = -1` and flips the material's normal Y scale without rewriting the image. Manual Upload/Replace/Clear controls remain available for each slot.
+
+The package boundary is deliberately stricter than the server's general upload configuration:
+
+- ZIP size is at most 128 MiB with at most 64 entries.
+- Selected maps may total at most 60 MiB; each detected image is at most 10 MiB and 2048 pixels on either axis.
+- Accepted image formats are JPEG, PNG, and WebP.
+- Unsafe paths, symbolic links, nested ZIP files, corrupt archives, and ambiguous same-priority map candidates are rejected.
+- Preview images, package metadata, and unrelated asset files are ignored.
+- Accepted maps are stored as scene-owned `surface-textures` attachments. Import failure rolls back newly created attachments and leaves the current plane surface unchanged.
+
+Albedo, normal, roughness, AO, and metalness are active rendering maps. Displacement is imported and retained as authoring metadata with an `Imported - not rendered` status, but it is neither applied to geometry nor published into the compiled material. Keeping the collision and walkable plane flat avoids a visual/collision mismatch until tessellation, displacement bounds, and collision policy are designed together.
+
+### Stochastic anti-tiling
+
+`Break up repetition` is enabled by default when a plane has albedo. Regular Three.js/A-Frame repeat wrapping still establishes physical scale; VRodos then patches the standard material through `onBeforeCompile` with deterministic triangular three-sample stochastic tiling derived from Fabrice Neyret's hexagonal tiling method.
+
+For each fragment, the shader locates a cell in a triangular lattice, derives three UUID-seeded pseudo-random UV offsets, and blends the three texture samples with barycentric weights. `surfaceAntiTilingPatchTiles` controls patch size in texture tiles (`1.25` by default), while `surfaceAntiTilingBlendSharpness` controls transition concentration (`4` by default). Albedo includes mean/variance-style color correction to reduce blend blur and color drift.
+
+The same offsets and blend weights are used coherently for albedo, normal, roughness, AO, and metalness. This preserves PBR-map registration and avoids the directional corridor artifacts produced by the removed low-frequency stripe/macro-variation approach. The seed is derived from the plane UUID, so editor reloads and compiled output are stable. `customProgramCacheKey` keeps Three's shader cache deterministic, and the A-Frame `vrodos-stochastic-tiling` component calls the same shared helper as the editor.
+
+This remains a `MeshStandardMaterial`/A-Frame standard material. Direct and ambient lights, Takram sun/moon lighting, cached shadows, AO, HDR or global Takram PMREM environments, tone mapping, and either compiled post-processing route continue to work normally. The technique keeps one plane mesh and one draw call, but active PBR maps require three texture samples per fragment instead of one. It reduces obvious repetition; it does not make a finite texture mathematically non-repeating.
+
+## 5. Legacy Pipeline
 
 The legacy engine uses a custom `renderer.render` override to render into VRodos-owned targets before the final screen output.
 
@@ -337,7 +378,7 @@ this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
 
 This behavior is retained for the pinned r185 stack.
 
-## 5. Static Shadows And Shadow Roles
+## 6. Static Shadows And Shadow Roles
 
 Compiled desktop scenes default to cached static shadow updates through the `scene-settings.shadowUpdateMode` field:
 
@@ -403,7 +444,7 @@ Terrain shadow debug flags:
 - `vrodos_debug_terrain_soft_shadow_gap_start=VALUE`
 - `vrodos_debug_terrain_soft_shadow_gap_end=VALUE`
 
-## 6. PMNDRS Pipeline
+## 7. PMNDRS Pipeline
 
 The PMNDRS engine uses `POSTPROCESSING.EffectComposer` and builds a scene-specific composer lazily on the first valid render frame.
 
@@ -464,7 +505,7 @@ Composer lifecycle:
 - Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
 - Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.
 
-## 7. PMNDRS Built-In LUT Looks
+## 8. PMNDRS Built-In LUT Looks
 
 PMNDRS LUT v1 uses generated built-in 3D lookup textures. It does not load uploaded `.cube` or `.3dl` assets.
 
@@ -490,7 +531,7 @@ Runtime behavior:
 - Strength is applied through the effect blend opacity.
 - LUT failure logs once and falls back to the rest of the PMNDRS pipeline.
 
-## 8. PMNDRS/Takram Atmosphere and Horizon Lighting
+## 9. PMNDRS/Takram Atmosphere and Horizon Lighting
 
 Takram controls are author-facing artistic presets today, not full geospatial solar simulation. Horizon scenes use Takram `SkyMaterial` for the sky and the default native sun disk; high/ultra desktop clouds let Takram's accurate phase-function path veil that native disk behind cloud composition, while lower/debug fallback paths can temporarily replace only that disk with the VRodos cloud-driven sun sprite when the projected sun-disk sample is actually covered. A-Frame default lights are disabled for Takram Horizon scenes.
 
@@ -520,7 +561,7 @@ Runtime behavior:
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
 - Horizon PMNDRS night uses Takram physical light sources when available, with dim cool moonlight instead of daytime Horizon key-light intensity.
 - Direct sun and moon scene lights are gated by local celestial elevation. The sun fades in only above the horizon, and the moon fades in only after it is visibly above the horizon; when either body is below that threshold, its scene light intensity and shadow casting are zero. Sun and moon intensity can crossfade, but only the dominant source casts directional shadows. The sky, stars, indirect fill, and environment behavior can still contribute separately.
-- HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
+- HDR, scene-probe, and Takram-sky env-map intensity is scaled down at night without changing authored material roughness or metalness.
 - Horizon uses one PMNDRS/Takram light-source path for local PBR scenes. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: `SkyLightProbe` plus a low-cost hemisphere sky/ground fill and a small ambient floor. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
 - Direct celestial lighting stays separate from the indirect bridge: Takram `SunDirectionalLight` owns sun key light, and the VRodos moon directional light owns night shape when visible. Dynamic day-night underside readability is tuned only through indirect diffuse lighting: `SkyLightProbe`, `HemisphereLight`, tiny `AmbientLight`, and ground bounce color follow a continuous sun-elevation curve with slower smoothing than direct celestial lights so the fill does not step during the cycle.
 - The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
@@ -583,7 +624,7 @@ Light shafts are reserved for high/ultra desktop profiles because they are a doc
 
 Cloud style presets are intentionally separate from quality. Quality controls Takram preset, resolution scale, temporal upscaling, turbulence, accurate phase, and shadow far limits. Style controls the layer profile reported through diagnostics as `layerProfile`: `takram-default`, `style-scattered`, `style-broken`, `style-overcast`, or `style-storm`.
 
-## 9. Shadow-Aware Lighting And Reflections
+## 10. Shadow-Aware Lighting And Reflections
 
 Compiled scenes run a lighting-participation pass from `vrodos_quality_profiles.js` and material shader hooks from `vrodos_master_rendering.js`.
 
@@ -591,7 +632,7 @@ Scene settings:
 
 - `reflectionsEnabled`: global reflections switch. When off, runtime environment reflections and direct material specular/glint contribution are suppressed.
 - `reflectionProfile`: intensity shaping for enabled reflections: `soft`, `balanced`, or `enhanced`.
-- `reflectionSource`: `hdr` or `scene-probe`; the effective source becomes `none` when no HDR preset/probe is active or global reflections are disabled.
+- `reflectionSource`: `hdr`, `takram-sky`, or `scene-probe`; the effective source becomes `none` when its required source is unavailable or global reflections are disabled.
 - `sceneProbeUpdateMode`: scene-probe capture cadence. `static` captures after load/settle and does not refresh from player movement; `slow-dynamic` allows rare refreshes after substantial movement or yaw changes.
 - `sceneProbeResolution`: scene-probe cubemap size: `64`, `128`, or `256`. Default is `128`.
 - `reflectionOcclusionMode`: `auto`, `off`, or `strong`; controls shadow-based direct-sun glint/specular attenuation.
@@ -664,7 +705,7 @@ Debug query flags:
 - `vrodos_debug_cast_flat_media_shadows=1`: forces flat media shadow casting for older scenes or scene settings where it was disabled. New compiled scenes cast flat media shadows by default.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
-## 10. Legacy Effect Notes
+## 11. Legacy Effect Notes
 
 ### TAA
 
@@ -678,7 +719,7 @@ Legacy SSR is half-resolution screen-space ray marching using the shared depth t
 
 Legacy SAO is half-resolution, depth-only ambient occlusion with bilateral blur and optional adaptive half-rate updates under low FPS.
 
-## 11. HDR Environment Maps and Scene Probe
+## 12. HDR, Takram Sky, And Scene-Probe Environment Maps
 
 HDR environment presets are loaded through the runtime HDR loader and processed through `PMREMGenerator` for `scene.environment` and PBR material `envMap`.
 
@@ -687,6 +728,8 @@ Current presets:
 - `studio`
 - `quarry`
 - `venice`
+
+`takram-sky` is the dynamic-sky-compatible global environment option. After the Takram sky textures are ready, VRodos captures the active sky once, filters it through PMREM, and reuses that one environment for scene PBR materials. The capture is once per environment-target lifetime: it may run again after the target is explicitly cleared or recreated, but there is no timer, movement threshold, day/night polling, or periodic cube-camera refresh. Takram's visible sky, clouds, celestial lights, shadows, and exposure may continue changing without rebuilding this environment. This global rule avoids recurring six-face cube captures and PMREM filtering spikes during play.
 
 Scene probe capture is an alternate environment source when render quality and presentation mode allow it. It is disabled on mobile and immersive VR, and it still requires high render quality.
 
@@ -698,7 +741,7 @@ Scene-probe capture is intentionally smooth-first by default:
 
 If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`, scene environment maps are cleared, material `envMapIntensity` becomes zero, and direct specular/glint output is suppressed by the material shader hook.
 
-## 12. Version Source of Truth
+## 13. Version Source of Truth
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:vendor` generates `assets/runtime-version-manifest.json`.
@@ -709,7 +752,7 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - The classic compiled A-Frame runtime must not load a second Three instance. VRodos follows A-Frame's `super-three@0.185.0` substrate rather than a VRodos-only Three fork.
 - WebGPU remains an experimental renderer mode after r185, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
 
-## 13. Roadmap Ownership
+## 14. Roadmap Ownership
 
 This file records current rendering behavior. Desktop acceptance and rendering research live only in `documentation/compiled-desktop-roadmap.md`; standalone headset, immersive experiments, and parked PCVR work live only in `documentation/compiled-headset-roadmap.md`.
 

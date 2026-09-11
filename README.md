@@ -32,6 +32,8 @@ Component-specific setup stays beside the component: [`services/vrodos-network-r
 - Scene save/load through JSON-based persistence
 - Client-side Undo/Redo engine (50-action history) for transformations, additions, deletions, and light properties
 - Transform editing, hierarchy management, lighting placement, and scene-level options
+- Editor-created primitive planes with a 100 x 100 m default footprint, editable dimensions, and walkable/collision behavior without requiring an imported ground mesh
+- Physically scaled PBR plane surfaces whose texture repeat follows the authored tile size instead of stretching when the plane dimensions change
 - Background authoring for Horizon, solid color, preset environments, and image skies
 - Fog and environment settings authored in the editor and carried into compiled output
 
@@ -44,6 +46,7 @@ Component-specific setup stays beside the component: [`services/vrodos-network-r
 - Dedicated `Walkable Surfaces` helper category for compiled navigation meshes
 - Optional `Collision Proxy` helper category for hidden/inexpensive compiled-scene blockers
 - Drag/drop placement from the scene-side asset browser
+- One-click PBR ZIP import for albedo, OpenGL/DirectX normal, roughness, ambient-occlusion, metalness, and displacement maps, with individual map controls retained for corrections
 
 ## Scene Editor Architecture
 
@@ -86,6 +89,7 @@ Current compiled scenes are A-Frame-hosted clients with one shared Three.js subs
 - desktop post-FX through either `Legacy` or `Pmndrs`;
 - Takram atmosphere, day-night lighting, lens flare, stars, and desktop-only volumetric clouds;
 - HDR environment maps, optional scene probes, and reflection controls;
+- authored PBR planes with deterministic three-sample stochastic tiling shared by the editor and compiled A-Frame runtime;
 - cached/static shadows with terrain stabilization;
 - static walkable/player collision through `three-mesh-bvh`;
 - immersive PMNDRS/Horizon spatial UI for CEFR, assessment, and image/text POI panels;
@@ -102,6 +106,8 @@ Detailed rendering, collision, performance, diagnostics, and compile-control beh
 - `Pmndrs` is the composer path for desktop AA, AO, bloom, tone mapping, LUTs, color, vignette/noise/chromatic controls, and Takram atmospheric composition.
 - PMNDRS does not provide SSR or TAA; use the legacy engine when a scene depends on those.
 - Takram clouds are desktop/inline only in the current public runtime.
+- `takram-sky` reflections capture the active Takram sky once into one global PMREM environment. The day/night runtime does not poll or periodically rebuild that environment.
+- Primitive planes compile as standard PBR materials, receive the normal lighting/shadow/environment pipeline, and use one mesh and one draw call. Stochastic tiling increases texture-sampling cost but does not add geometry or draw calls.
 - Compiled walkable mode uses native static collisions, not Rapier. Geometry-bearing compiled objects can collide with the player, `Walkable Surfaces` define ground/traversal, and `Collision Proxy` assets provide hidden blockers.
 - Draco/Meshopt/KTX2 derivative substitution must stay explicit and per asset; decoded compressed geometry still renders as normal triangles, so transfer savings are not automatically FPS savings.
 
@@ -134,11 +140,13 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 2. Create one or more scenes.
 3. Upload or edit assets.
 4. Add assets to the scene editor and configure transforms, lights, background, and movement helpers.
-5. Add helper meshes to the `Walkable Surfaces` category if the compiled scene needs guided ground traversal.
-6. Leave default object collision enabled, or turn off `Collides with player` for pass-through visuals.
-7. Add `Collision Proxy` assets when a scene needs hidden walls or cheaper blockers than the visible art.
-8. Open the compile dialog and choose the rendering engine and quality settings.
-9. Build the project to generate compiled A-Frame output.
+5. Create a plane when the experience needs simple ground. Set its dimensions and the material's real-world tile size independently; new planes start at 100 x 100 m with a 2 m tile size.
+6. Import a conventional PBR texture ZIP or assign maps individually. Keep `Break up repetition` enabled for large repeated surfaces.
+7. Add helper meshes to the `Walkable Surfaces` category if the compiled scene needs more complex guided ground traversal.
+8. Leave default object collision enabled, or turn off `Collides with player` for pass-through visuals.
+9. Add `Collision Proxy` assets when a scene needs hidden walls or cheaper blockers than the visible art.
+10. Open the compile dialog and choose the rendering engine and quality settings.
+11. Build the project to generate compiled A-Frame output.
 
 ## Technology Stack
 
@@ -225,7 +233,7 @@ It runs lint, syntax checks, runtime tests, compiler tests, the runtime bundle b
 
 ## Upload Limits
 
-Large GLB uploads depend on both PHP limits and web server limits.
+Large GLB and PBR ZIP uploads depend on both PHP limits and web server limits. PBR ZIP import additionally enforces its own 128 MiB package limit.
 
 If large assets fail to upload, check:
 

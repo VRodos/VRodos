@@ -122,7 +122,7 @@ VRodos uses A-Frame as the orchestration layer:
 - `vrodos-render-profile` updates FPS stats and adaptive shadow fitting during `tick()`;
 - `vrodos-postfx-router` decides whether legacy post-FX or PMNDRS owns composer behavior;
 - `vrodos-atmosphere` updates PMNDRS/Takram sun state and day-night animation;
-- `vrodos-reflections` updates HDR, scene-probe, or Takram-sky environment behavior.
+- `vrodos-reflections` owns HDR and scene-probe environment behavior plus the one-time global Takram-sky PMREM capture. It does not periodically rebuild the Takram environment during day/night changes.
 
 ## 4.1 Immersive Dialog UI Ownership
 
