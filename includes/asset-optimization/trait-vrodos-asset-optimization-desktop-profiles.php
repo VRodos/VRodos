@@ -138,9 +138,13 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					if ( null === $family_state ) {
 						$family_state = self::get_web_optimization_state( (int) $asset_id );
 					}
-					$profile_progress[] = self::desktop_profile_family_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $family_state );
-					$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
-					continue;
+					// A completed category-based family may not contain the scene's collision-safe variant.
+					// Once that variant exists, use its own queue recovery and progress on every poll.
+					if ( 'ready' !== $family_state['familyStatus'] && ! self::desktop_profile_record_matches_request( $record, $source, $options ) ) {
+						$profile_progress[] = self::desktop_profile_family_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, $family_state );
+						$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
+						continue;
+					}
 				}
 
 				$queue_result = self::ensure_derivative( (int) $asset_id, $profile, $source, $options );

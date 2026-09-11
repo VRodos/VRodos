@@ -124,8 +124,8 @@ function wp_strip_all_tags( string $value ): string {
 }
 
 function wp_get_post_terms( int $post_id, string $taxonomy, array $args = [] ): array {
-	unset( $post_id, $taxonomy, $args );
-	return [ 'walkable-surface' ];
+	unset( $taxonomy, $args );
+	return $GLOBALS['vrodos_desktop_test_terms'][ $post_id ] ?? [ 'walkable-surface' ];
 }
 
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-queue.php';
@@ -473,6 +473,41 @@ vrodos_desktop_assert( '' === $family_progress_state['profiles'][0]['message'], 
 vrodos_desktop_assert( 25 === $family_progress_state['percent'], 'overall build progress must advance before Web Low becomes ready' );
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
+// Completed decoration families must not strand collision-enabled scene variants at 99%.
+foreach ( [ false, true ] as $category_protected ) {
+	$variant_asset = $category_protected ? 92 : 91;
+	$GLOBALS['vrodos_desktop_test_terms'][ $variant_asset ] = [ $category_protected ? 'walkable-surface' : 'decoration' ];
+	$family_meta = [ 'schemaVersion' => 2, 'derivatives' => [], 'webVariants' => [], 'webProfileDefaults' => [] ];
+	foreach ( [ 'web-high' => 4096, 'web-medium' => 2048, 'web-low' => 1024 ] as $family_profile => $cap ) {
+		$family_options = array_merge( $options, [ 'recipe' => $family_profile, 'textureMaxSize' => $cap, 'protectGeometry' => 'web-high' === $family_profile || $category_protected, 'familySequence' => true ] );
+		seed_desktop_profile_record( $variant_asset, $family_profile, 'ready', $source, $family_options, gmdate( 'Y-m-d H:i:s' ) );
+		$seeded = $GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ];
+		foreach ( [ 'derivatives', 'webVariants', 'webProfileDefaults' ] as $key ) {
+			$family_meta[ $key ] += $seeded[ $key ];
+		}
+	}
+	$family_meta['derivatives']['editor-preview'] = [ 'status' => 'ready' ];
+	$GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = $family_meta;
+	$variant_plan = clone $ordered_plan;
+	$variant_plan->scenes = [ (object) [ 'scene_id' => 48, 'scene_json' => (object) [ 'asset_id' => $variant_asset, 'compiledCollisionEnabled' => ! $category_protected ], 'desktop_profiles' => [] ] ];
+	$GLOBALS['vrodos_desktop_test_events'] = [];
+	$variant_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $variant_plan );
+	vrodos_desktop_assert( 'pending' === $variant_state['status'] && 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'completed family must enqueue the exact scene variant' );
+	vrodos_desktop_assert( 0 === $variant_state['profiles'][0]['percent'] && $variant_state['profiles'][0]['totalSteps'] > 0, 'missing variant must report real job progress rather than family 99%' );
+	$requested_options = array_merge( $options, [ 'recipe' => 'web-low', 'textureMaxSize' => 1024, 'protectGeometry' => ! $category_protected ] );
+	$variant_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-low', $requested_options ] );
+	$variant_record = invoke_desktop_profile_method( 'desktop_profile_record_by_job_key', [ $variant_asset, $variant_key ] );
+	vrodos_desktop_assert( 'queued' === $variant_record['status'] && 'build' === $variant_record['profileOptions']['queuePriority'], 'queued variant must preserve scene geometry policy and build priority' );
+	$repeat_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $variant_plan );
+	vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ) && $repeat_state['profiles'][0]['totalSteps'] > 0, 'repeat polls must join the same job and retain its progress' );
+	$completed_meta = $GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ];
+	seed_desktop_profile_record( $variant_asset, 'web-low', 'ready', $source, $requested_options, gmdate( 'Y-m-d H:i:s' ) );
+	$completed_meta['webVariants'][ $variant_key ] = $GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $variant_key ];
+	$GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = $completed_meta;
+	$ready_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $variant_plan );
+	vrodos_desktop_assert( 'ready' === $ready_state['status'] && 1 === $ready_state['ready'], 'completed exact variant must release compilation' );
+}
+
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 
 $plan = new VRodos_Project_Compile_Plan();
