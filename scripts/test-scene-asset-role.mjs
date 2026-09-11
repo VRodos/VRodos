@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import vm from "node:vm";
+import { Object3D } from "three";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -160,4 +161,26 @@ assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === "walkable-
 assert(undoObject.userData.sceneAssetRole === "walkable-surface", "redo must keep object metadata in sync");
 assert(presentationRefreshes === 2 && autosaves === 2, "undo and redo must refresh presentation and autosave");
 
-console.log("Scene asset role tests passed.");
+const transformed = new Object3D();
+transformed.name = 'transformed-object';
+transformed.position.x = 1;
+const otherSelection = new Object3D();
+let selection = otherSelection;
+context.VRODOS.editor.sceneRegistry.get = (id) => id === transformed.uuid ? transformed : null;
+context.VRODOS.editor.sceneRegistry.invalidateBounds = () => {};
+context.VRODOS.editor.transforms = { syncProxyToObject() {} };
+context.VRODOS.editor.selection = {
+    select(object, options) {
+        assert(options.setMode === false, 'undo must preserve the active transform mode');
+        selection = object;
+    }
+};
+const transformState = (x) => ({ pos: { x, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, order: 'XYZ' }, scale: { x: 1, y: 1, z: 1 } });
+const transformCommand = new context.VRODOS.editor.TransformCommand(transformed, transformState(0), transformState(1));
+transformCommand.undo();
+assert(selection === transformed && transformed.position.x === 0, 'cross-object undo must synchronize through the selection service');
+selection = otherSelection;
+transformCommand.redo();
+assert(selection === transformed && transformed.position.x === 1, 'cross-object redo must synchronize through the selection service');
+
+console.log("Scene asset role and transform selection tests passed.");

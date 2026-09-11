@@ -1119,6 +1119,17 @@ function _addDragScrub(controller) {
 
     input.style.cursor = 'ew-resize';
 
+    function captureTransformStart() {
+        const target = getSelectedTransformObject();
+        if (target && !input._oldTRS) {
+            input._oldTRS = {
+                pos: target.position.clone(),
+                rot: target.rotation.clone(),
+                scale: target.scale.clone()
+            };
+        }
+    }
+
     // Block lil-gui's internal input handler during keyboard typing.
     // lil-gui listens on 'input' event and calls setValue() on every keystroke,
     // which moves the 3D object in real time. We stop that during keyboard mode.
@@ -1137,15 +1148,7 @@ function _addDragScrub(controller) {
         startX = e.clientX;
         startValue = controller.getValue();
         
-        // [NEW] Capture start TRS for Undo
-        const target = getSelectedTransformObject();
-        if (target) {
-            input._oldTRS = {
-                pos: target.position.clone(),
-                rot: target.rotation.clone(),
-                scale: target.scale.clone()
-            };
-        }
+        captureTransformStart();
         
         input.setPointerCapture(e.pointerId);
         e.preventDefault(); // Prevent focus on pointerdown — we decide on pointerup
@@ -1192,6 +1195,7 @@ function _addDragScrub(controller) {
     });
 
     input.addEventListener('focus', () => {
+        captureTransformStart();
         setKeyboardEditing(true);
         input.style.cursor = 'text';
     });
@@ -1258,258 +1262,43 @@ function syncLiveGuiTransformChange(target) {
 function controllerDatGuiOnChange() {
 
 
-    // onChange fires on every value change (drag scrub + keyboard typing).
-    // We only apply to the 3D object during drag (_isDragScrubbing = true).
-    // Keyboard typing is committed via onFinishChange (Enter/blur).
-
-    // --- Translation ---
-    dg_controller[0].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.x = value;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[0].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_t1 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.x = value;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[1].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.y = value;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[1].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_t2 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.y = value;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[2].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.z = value;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[2].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_t3 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.position.z = value;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    // --- Rotation ---
-    dg_controller[3].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.x = value / 180 * Math.PI;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[3].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_r1 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.x = value / 180 * Math.PI;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[4].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.y = value / 180 * Math.PI;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[4].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_r2 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.y = value / 180 * Math.PI;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[5].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.z = value / 180 * Math.PI;
-            syncLiveGuiTransformChange(target);
-        }
-    }
-    );
-    dg_controller[5].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_r3 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.rotation.z = value / 180 * Math.PI;
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    // --- Scale ---
-    dg_controller[6].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (!target) return;
-        target.scale.x = value;
-        if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-            target.scale.y = value;
-            target.scale.z = value;
-        }
-        syncLiveGuiTransformChange(target);
-    }
-    );
-    dg_controller[6].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_s1 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.scale.x = value;
-            if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                target.scale.y = value;
-                target.scale.z = value;
-            }
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[7].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (!target) return;
-        target.scale.y = value;
-        if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-            target.scale.x = value;
-            target.scale.z = value;
-        }
-        syncLiveGuiTransformChange(target);
-    }
-    );
-    dg_controller[7].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_s2 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.scale.y = value;
-            if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                target.scale.x = value;
-                target.scale.z = value;
-            }
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
-
-    dg_controller[8].onChange((value) => {
-        if (!_isDragScrubbing) return;
-        value = parseFloat(value) || 0;
-        const target = getSelectedTransformObject();
-        if (!target) return;
-        target.scale.z = value;
-        if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-            target.scale.x = value;
-            target.scale.y = value;
-        }
-        syncLiveGuiTransformChange(target);
-    }
-    );
-    dg_controller[8].onFinishChange((value) => {
-        value = parseFloat(value) || 0;
-        gui_controls_funs.dg_s3 = value;
-        const target = getSelectedTransformObject();
-        if (target) {
-            target.scale.z = value;
-            if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                target.scale.x = value;
-                target.scale.y = value;
-            }
-            target.updateMatrix();
-            target.updateMatrixWorld();
-            syncAttachedProxyToObject(target);
-        }
-        VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    }
-    );
+    // Keyboard edits commit on finish; scrubbing applies the same transform live.
+    const groups = [
+        { property: 'position', guiPrefix: 'dg_t' },
+        { property: 'rotation', guiPrefix: 'dg_r' },
+        { property: 'scale', guiPrefix: 'dg_s' }
+    ];
+    groups.forEach(({ property, guiPrefix }, groupIndex) => {
+        ['x', 'y', 'z'].forEach((axis, axisIndex) => {
+            const controller = dg_controller[groupIndex * 3 + axisIndex];
+            const apply = (target, value) => {
+                target[property][axis] = property === 'rotation' ? value / 180 * Math.PI : value;
+                if (property === 'scale' && VRODOS.editor.envir.scene.keepScaleAspectRatio) {
+                    target.scale.set(value, value, value);
+                }
+            };
+            controller.onChange((value) => {
+                if (!_isDragScrubbing) return;
+                const target = getSelectedTransformObject();
+                if (!target) return;
+                apply(target, parseFloat(value) || 0);
+                syncLiveGuiTransformChange(target);
+            });
+            controller.onFinishChange((value) => {
+                value = parseFloat(value) || 0;
+                gui_controls_funs[guiPrefix + (axisIndex + 1)] = value;
+                const target = getSelectedTransformObject();
+                if (target) {
+                    apply(target, value);
+                    target.updateMatrix();
+                    target.updateMatrixWorld();
+                    syncAttachedProxyToObject(target);
+                }
+                VRODOS.editor.animate();
+                VRODOS.api.triggerAutoSave();
+            });
+        });
+    });
 
     // Make slider-text controllers more interactive
     // lil-gui exposes .$input for the input element

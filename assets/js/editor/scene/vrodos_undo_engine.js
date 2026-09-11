@@ -266,9 +266,9 @@ VRODOS.editor.TransformCommand = class {
 
         const isLocked = vrodosUndoReconcileLockState(obj);
 
-        // Update UI
-        if (!isLocked && typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
-            VRODOS.ui.setDatGuiInitialVales(obj);
+        // Restore one selection owner for the gizmo, hierarchy and property panel.
+        if (!isLocked) {
+            VRODOS.editor.selection.select(obj, { source: 'transform-undo-redo', setMode: false });
         }
         
         if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();

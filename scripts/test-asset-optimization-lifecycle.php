@@ -49,10 +49,10 @@ function is_wp_error( $value ): bool {
 	return $value instanceof WP_Error;
 }
 
-require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-admin-actions.php';
+require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-lifecycle.php';
 
 final class VRodos_Asset_Optimization_Lifecycle_Harness {
-	use VRodos_Asset_Optimization_Admin_Actions;
+	use VRodos_Asset_Optimization_Lifecycle;
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const SOURCE_META_KEY = '_vrodos_asset3d_glb_source_snapshot';

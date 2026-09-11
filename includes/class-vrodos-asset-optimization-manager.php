@@ -11,6 +11,7 @@ class VRodos_Asset_Optimization_Manager {
 
 	public function __construct() {
 		$this->controller = new VRodos_Asset_Optimization_Admin_Controller();
+		$service = new VRodos_Asset_Optimization_Service();
 
 		add_action( 'add_meta_boxes', [ $this->controller, 'add_meta_boxes' ] );
 		add_action( 'admin_post_vrodos_optimize_asset_glb', [ $this->controller, 'handle_optimize_asset_glb' ] );
@@ -19,12 +20,12 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'admin_post_vrodos_dashboard_refresh_asset_glb_analysis', [ $this->controller, 'handle_dashboard_refresh_asset_glb_analysis' ] );
 		add_action( 'admin_post_vrodos_dashboard_optimize_asset_glb', [ $this->controller, 'handle_dashboard_optimize_asset_glb' ] );
 		add_action( 'wp_ajax_vrodos_dashboard_refresh_asset_glb_analysis', [ $this->controller, 'ajax_dashboard_refresh_asset_glb_analysis' ] );
-		add_action( 'added_post_meta', [ $this->controller, 'handle_asset_glb_meta_change' ], 10, 4 );
-		add_action( 'updated_post_meta', [ $this->controller, 'handle_asset_glb_meta_change' ], 10, 4 );
-		add_action( 'deleted_post_meta', [ $this->controller, 'handle_asset_glb_meta_delete' ], 10, 4 );
-		add_action( 'before_delete_post', [ $this->controller, 'handle_asset_delete' ], 10, 2 );
-		add_action( VRodos_Asset_Optimization_Admin_Controller::EDITOR_PREVIEW_CRON_HOOK, [ $this->controller, 'process_editor_preview_job' ], 10, 1 );
-		add_action( VRodos_Asset_Optimization_Admin_Controller::DESKTOP_PROFILE_CRON_HOOK, [ $this->controller, 'process_desktop_profile_job' ], 10, 6 );
+		add_action( 'added_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
+		add_action( 'updated_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $service, 'handle_asset_glb_meta_delete' ], 10, 4 );
+		add_action( 'before_delete_post', [ $service, 'handle_asset_delete' ], 10, 2 );
+		add_action( VRodos_Asset_Optimization_Service::EDITOR_PREVIEW_CRON_HOOK, [ $service, 'process_editor_preview_job' ], 10, 1 );
+		add_action( VRodos_Asset_Optimization_Service::DESKTOP_PROFILE_CRON_HOOK, [ $service, 'process_desktop_profile_job' ], 10, 6 );
 		add_filter( 'vrodos_settings_tabs', [ $this->controller, 'register_settings_tab' ] );
 		add_action( 'vrodos_render_settings_tab_' . VRodos_Asset_Optimization_Admin_Controller::SETTINGS_TAB_KEY, [ $this->controller, 'render_asset_optimization_settings' ] );
 	}

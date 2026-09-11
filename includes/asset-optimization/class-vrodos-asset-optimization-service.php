@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/trait-vrodos-asset-optimization-lifecycle.php';
 require_once __DIR__ . '/class-vrodos-asset-optimization-dashboard-read-model.php';
 require_once __DIR__ . '/trait-vrodos-asset-optimization-scanner.php';
 require_once __DIR__ . '/trait-vrodos-asset-optimization-analysis.php';
@@ -14,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Domain orchestration shared by compilation, workers, and admin actions. */
 class VRodos_Asset_Optimization_Service {
+	use VRodos_Asset_Optimization_Lifecycle;
+
 	public static function dashboard_actionable_assets( int $limit = 10 ): array {
 		return array_slice( self::collect_dashboard_actionable_assets(), 0, max( 1, $limit ) );
 	}

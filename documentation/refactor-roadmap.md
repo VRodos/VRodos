@@ -1,6 +1,6 @@
 # VRodos cleanup and refactoring roadmap
 
-Status: **partially implemented; authenticated editor validation pending** (2026-09-11). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
+Status: **partially implemented; authenticated editor baseline validated** (2026-09-11). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
 
 ## A. Verification baseline
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
@@ -26,7 +26,7 @@ Status: **partially implemented; authenticated editor validation pending** (2026
 
 ## E. Optimizer
 - [x] Extract source metadata, GLB analysis, and dashboard aggregation/sorting classes; route manager domain APIs through a service.
-- [ ] Finish worker/source-change hook separation from admin controller; orchestration still composes existing traits.
+- [x] Move worker/source-change hooks from admin controller to the domain service; orchestration still composes existing traits.
 - [x] Separate read-only lookup from explicit normalization/snapshot updates.
 - [x] Bulk-load dashboard metadata, preserve global sorting, avoid page-render writes/hashing.
 - [x] Preserve immutable jobs, leases, source generations, retries, and profile chaining in regression coverage.
@@ -38,6 +38,8 @@ Status: **partially implemented; authenticated editor validation pending** (2026
 - [x] Share session validation with ownership checks.
 - [x] Separate property panel presentation, category controls, and change application.
 - [x] Share primitive-plane material definitions and refresh behavior with undo.
+- [x] Consolidate nine numeric transform handlers; capture undo for keyboard-only focus as well as pointer interaction.
+- [x] Route cross-object transform undo/redo through the selection service to keep hierarchy, gizmo, and property panel aligned.
 - [ ] Finish coordinating all property-change side effects through transform/persistence services.
 
 ## G. Runtime ownership
@@ -56,7 +58,9 @@ Status: **partially implemented; authenticated editor validation pending** (2026
 ## Validation
 - [x] Complete test suite, JS/PHP syntax, lint, build-config, generated outputs, diff checks.
 - [ ] Assessment parity; import retry/failure; optimizer replacement/deletion; read-only dashboard.
-- [ ] Editor selection/drag/undo/save/reload/build polling.
+- [x] Authenticated editor selection, numeric properties, undo/redo, save/reload, and Custom desktop build polling.
+- [ ] Complete scene-gizmo dragging and remaining category-specific interaction checks.
+- [x] Recompile and visually smoke-test Custom single-player desktop scene 13775.
 - [ ] Recompile Custom/Adaptive, single-player/networked, desktop/headset scenes.
 - [ ] Browser and real Quest checks: XR entry/exit, Greek text, controllers, lighting/shadows/reflections, disposal.
 
@@ -69,9 +73,9 @@ VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX
 ## Implementation log
 ### Verification and implementation
 
-`scripts/regression-test-catalog.mjs` explicitly owns 47 scripts: 21 runtime and 26 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+`scripts/regression-test-catalog.mjs` explicitly owns 48 scripts: 22 runtime and 26 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
 
-All **47 tests pass** in the writable fixture environment. Browser-source ESLint: **0 errors, 243 warnings**. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly.
+All **48 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
@@ -112,9 +116,15 @@ The existing profiler captured published scene 13775 before/after rebuilding the
 
 These short, variable captures do **not** establish a performance gain or a stable regression estimate. No speculative capability-loading change was retained. The sun-occluder list already refreshes on a 2.5-second cache.
 
-### Remaining acceptance gate
+### Authenticated editor follow-up (2026-09-11)
 
-The local editor redirects to WordPress login. User login has been requested for selection, dragging, properties, undo/redo, save/reload, and build polling. No credentials were changed. Continue this integration check before further editor/runtime ownership work, then finish the E/F boundaries and staged G/H work.
+Login succeeded on `http://160.40.52.199/wp_vrodos/`. A fresh editor instance loaded the extracted panel/category scripts. Checked model selection, numeric translation, cross-object undo, plane width undo/redo, autosave, and reload. Temporary model-position and plane-width changes were restored exactly. Custom single-player desktop compilation completed all three steps and the published scene rendered its model, textured plane, and atmosphere.
+
+Cross-object undo exposed inconsistent ownership: numeric controls could switch to the command target while the property panel still described the previously selected object. Transform undo/redo now calls the existing selection service, preserving transform mode and synchronizing panel, hierarchy, and gizmo. The browser reproduction and a regression test pass. Keyboard-only focus now captures the initial transform for undo; nine repeated axis handlers share one implementation. Tests cover live-versus-committed changes, rotation conversion, uniform scaling, absent targets, and keyboard-only undo capture.
+
+Optimizer source activation/deletion and worker callbacks now bind the domain service. The lifecycle fixture exercises the extracted domain hook trait. All 26 compiler tests pass. No credentials changed and no server was started.
+
+Remaining work: import execution extraction, broader property-side-effect coordination, remaining editor categories, and the staged runtime ownership/performance work below. The login blocker is resolved.
 
 Focused runtime components still delegate into scene-settings state: **the ownership migration is not complete**. No rendering constants, shadow policy, navigation math, library versions, or vendor patches changed. No Custom/Adaptive/networked/headset recompilation matrix or real Quest acceptance is claimed. Validate XR entry/exit, controllers, Greek text, lighting, shadows/reflections, and repeated mount/removal before completing those checkboxes.
 
