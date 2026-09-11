@@ -11,6 +11,22 @@ window.VRODOSMaster = window.VRODOSMaster || {};
     const H = Master.RuntimeSettings;
     const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
 
+    function clampNumber(value, min, max, fallback) {
+        const n = parseFloat(value);
+        if (isNaN(n)) {
+            return fallback;
+        }
+        if (n < min) {
+            return min;
+        }
+        if (n > max) {
+            return max;
+        }
+        return n;
+    }
+
+    H.clampNumber = clampNumber;
+
     H.queryValue = function (queryKey) {
         return new URLSearchParams(window.location ? window.location.search : '').get(queryKey);
     };

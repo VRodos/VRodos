@@ -321,6 +321,20 @@ ${STOCHASTIC_GLSL}`).replace(
     }
     const H = Master.RuntimeSettings;
     const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+    function clampNumber(value, min, max, fallback) {
+      const n = parseFloat(value);
+      if (isNaN(n)) {
+        return fallback;
+      }
+      if (n < min) {
+        return min;
+      }
+      if (n > max) {
+        return max;
+      }
+      return n;
+    }
+    H.clampNumber = clampNumber;
     H.queryValue = function(queryKey) {
       return new URLSearchParams(window.location ? window.location.search : "").get(queryKey);
     };
@@ -4312,6 +4326,154 @@ ${STOCHASTIC_GLSL}`).replace(
     });
   })();
   (function() {
+    const WGS84_EQUATORIAL_RADIUS = 6378137;
+    const WGS84_POLAR_RADIUS = 6356752314245179e-9;
+    const clampPmndrsNumber = VRODOSMaster.RuntimeSettings.clampNumber;
+    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
+      const elevation = THREE.MathUtils.degToRad(elevationDeg);
+      const azimuth = THREE.MathUtils.degToRad(azimuthDeg);
+      const cosElevation = Math.cos(elevation);
+      return new THREE.Vector3(
+        Math.sin(azimuth) * cosElevation,
+        Math.sin(elevation),
+        -Math.cos(azimuth) * cosElevation
+      ).normalize();
+    }
+    function buildPmndrsGeospatialFrame(latitudeDeg, longitudeDeg, altitudeMeters) {
+      const lat = THREE.MathUtils.degToRad(clampPmndrsNumber(latitudeDeg, -90, 90, 0));
+      const lon = THREE.MathUtils.degToRad(clampPmndrsNumber(longitudeDeg, -180, 180, 0));
+      const height = clampPmndrsNumber(altitudeMeters, -500, 2e4, 0);
+      const sinLat = Math.sin(lat);
+      const cosLat = Math.cos(lat);
+      const sinLon = Math.sin(lon);
+      const cosLon = Math.cos(lon);
+      const a = WGS84_EQUATORIAL_RADIUS;
+      const b = WGS84_POLAR_RADIUS;
+      const e2 = 1 - b * b / (a * a);
+      const n = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+      const position = new THREE.Vector3(
+        (n + height) * cosLat * cosLon,
+        (n + height) * cosLat * sinLon,
+        (n * (1 - e2) + height) * sinLat
+      );
+      const up = new THREE.Vector3(cosLat * cosLon, cosLat * sinLon, sinLat).normalize();
+      const east = new THREE.Vector3(-sinLon, cosLon, 0);
+      if (east.lengthSq() < 1e-6) {
+        east.set(0, 1, 0);
+      }
+      east.normalize();
+      const north = new THREE.Vector3().crossVectors(up, east).normalize();
+      const south = north.clone().multiplyScalar(-1);
+      const matrix = new THREE.Matrix4().makeBasis(east, up, south).setPosition(position);
+      return {
+        latitudeDeg: THREE.MathUtils.radToDeg(lat),
+        longitudeDeg: THREE.MathUtils.radToDeg(lon),
+        altitudeMeters: height,
+        position,
+        east,
+        up,
+        north,
+        south,
+        matrix
+      };
+    }
+    function getPmndrsGeospatialFrame(config) {
+      if (!config || !config.geospatialEnabled) {
+        return null;
+      }
+      if (!config._geospatialFrame) {
+        config._geospatialFrame = buildPmndrsGeospatialFrame(
+          config.geospatialLatitudeDeg,
+          config.geospatialLongitudeDeg,
+          config.geospatialAltitudeMeters
+        );
+      }
+      return config._geospatialFrame;
+    }
+    function getPmndrsResolvedGeospatialFrame(config) {
+      if (!config) {
+        return null;
+      }
+      if (config._resolvedGeospatialFrame) {
+        return config._resolvedGeospatialFrame;
+      }
+      config._resolvedGeospatialFrame = getPmndrsGeospatialFrame(config) || buildPmndrsGeospatialFrame(0, 90, 0);
+      return config._resolvedGeospatialFrame;
+    }
+    function ecefDirectionToPmndrsLocal(direction, frame) {
+      if (!direction || !frame) {
+        return direction ? direction.clone().normalize() : new THREE.Vector3(0, 1, 0);
+      }
+      return new THREE.Vector3(
+        direction.dot(frame.east),
+        direction.dot(frame.up),
+        direction.dot(frame.south)
+      ).normalize();
+    }
+    function localDirectionToPmndrsEcef(localDirection, frame) {
+      if (!localDirection || !frame) {
+        return new THREE.Vector3(0, 1, 0);
+      }
+      return new THREE.Vector3().addScaledVector(frame.east, localDirection.x).addScaledVector(frame.up, localDirection.y).addScaledVector(frame.south, localDirection.z).normalize();
+    }
+    function applyLocalDirectionAngles(config) {
+      const local = config && config.localSunDirection ? config.localSunDirection : null;
+      if (!local) {
+        return;
+      }
+      config.sunElevationDeg = THREE.MathUtils.radToDeg(Math.asin(Math.max(-1, Math.min(1, local.y))));
+      config.sunAzimuthDeg = THREE.MathUtils.radToDeg(Math.atan2(local.x, -local.z));
+    }
+    function buildPmndrsEcefSunDirection(localSunDirection, config) {
+      if (!localSunDirection) {
+        return new THREE.Vector3(0, 1, 0);
+      }
+      const frame = getPmndrsGeospatialFrame(config);
+      if (frame) {
+        return localDirectionToPmndrsEcef(localSunDirection, frame);
+      }
+      return new THREE.Vector3(
+        -localSunDirection.x,
+        localSunDirection.y,
+        -localSunDirection.z
+      ).normalize();
+    }
+    function ensurePmndrsWorldToEcefMatrix(target, config) {
+      if (!target) {
+        return null;
+      }
+      const matrix = target.worldToECEFMatrix;
+      if (!matrix || typeof matrix.makeTranslation !== "function") {
+        return null;
+      }
+      const frame = getPmndrsResolvedGeospatialFrame(config);
+      if (frame) {
+        matrix.copy(frame.matrix);
+        return matrix;
+      }
+      matrix.makeBasis(
+        new THREE.Vector3(-1, 0, 0),
+        // local +X (east) -> ECEF west at +Y anchor
+        new THREE.Vector3(0, 1, 0),
+        // local +Y (up)   -> ECEF up
+        new THREE.Vector3(0, 0, -1)
+        // local +Z (south)-> ECEF south
+      ).setPosition(0, WGS84_EQUATORIAL_RADIUS, 0);
+      return matrix;
+    }
+    VRODOSMaster.CelestialCoordinates = Object.freeze({
+      localSunDirection: buildPmndrsLocalSunDirection,
+      buildFrame: buildPmndrsGeospatialFrame,
+      getFrame: getPmndrsGeospatialFrame,
+      resolveFrame: getPmndrsResolvedGeospatialFrame,
+      toLocal: ecefDirectionToPmndrsLocal,
+      toEcef: localDirectionToPmndrsEcef,
+      applyLocalAngles: applyLocalDirectionAngles,
+      sunDirectionToEcef: buildPmndrsEcefSunDirection,
+      applyWorldMatrix: ensurePmndrsWorldToEcefMatrix
+    });
+  })();
+  (function() {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
@@ -4381,28 +4543,20 @@ ${STOCHASTIC_GLSL}`).replace(
     const PMNDRS_CLOUD_PHASE_NATIVE_SUN_RELEASE_VISIBILITY = 0.24;
     const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
     const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
-    const WGS84_EQUATORIAL_RADIUS = 6378137;
-    const WGS84_POLAR_RADIUS = 6356752314245179e-9;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
     const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
+    const buildPmndrsLocalSunDirection = VRODOSMaster.CelestialCoordinates.localSunDirection;
+    const getPmndrsResolvedGeospatialFrame = VRODOSMaster.CelestialCoordinates.resolveFrame;
+    const ecefDirectionToPmndrsLocal = VRODOSMaster.CelestialCoordinates.toLocal;
+    const applyLocalDirectionAngles = VRODOSMaster.CelestialCoordinates.applyLocalAngles;
+    const buildPmndrsEcefSunDirection = VRODOSMaster.CelestialCoordinates.sunDirectionToEcef;
+    const ensurePmndrsWorldToEcefMatrix = VRODOSMaster.CelestialCoordinates.applyWorldMatrix;
     if (!runtimeSettingsContract.horizonHelperLightPresets || !runtimeSettingsContract.atmosphereLookDefaults) {
       throw new Error("VRodos runtime settings contract is missing required atmosphere presets.");
     }
     const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets;
     const PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = runtimeSettingsContract.atmosphereLookDefaults;
-    function clampPmndrsNumber(value, min, max, fallback) {
-      const n = parseFloat(value);
-      if (isNaN(n)) {
-        return fallback;
-      }
-      if (n < min) {
-        return min;
-      }
-      if (n > max) {
-        return max;
-      }
-      return n;
-    }
+    const clampPmndrsNumber = RuntimeSettings.clampNumber;
     function normalizePmndrsAtmosphereQuality(value) {
       if (RuntimeSettings.normalizeEnum) {
         return RuntimeSettings.normalizeEnum("pmndrsAtmosphereQuality", value, "balanced");
@@ -6786,16 +6940,6 @@ ${STOCHASTIC_GLSL}`).replace(
         `fit: ${state.fittedDirLights} ${state.fitted}`
       ].join("\n");
     }
-    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
-      const elevation = THREE.MathUtils.degToRad(elevationDeg);
-      const azimuth = THREE.MathUtils.degToRad(azimuthDeg);
-      const cosElevation = Math.cos(elevation);
-      return new THREE.Vector3(
-        Math.sin(azimuth) * cosElevation,
-        Math.sin(elevation),
-        -Math.cos(azimuth) * cosElevation
-      ).normalize();
-    }
     function getPmndrsDateObject(dateText, utcTimeText) {
       const date = normalizePmndrsDate(dateText);
       const time = normalizePmndrsUtcTime(utcTimeText);
@@ -6804,128 +6948,6 @@ ${STOCHASTIC_GLSL}`).replace(
         return /* @__PURE__ */ new Date("2026-06-21T12:00:00Z");
       }
       return parsed;
-    }
-    function buildPmndrsGeospatialFrame(latitudeDeg, longitudeDeg, altitudeMeters) {
-      const lat = THREE.MathUtils.degToRad(clampPmndrsNumber(latitudeDeg, -90, 90, 0));
-      const lon = THREE.MathUtils.degToRad(clampPmndrsNumber(longitudeDeg, -180, 180, 0));
-      const height = clampPmndrsNumber(altitudeMeters, -500, 2e4, 0);
-      const sinLat = Math.sin(lat);
-      const cosLat = Math.cos(lat);
-      const sinLon = Math.sin(lon);
-      const cosLon = Math.cos(lon);
-      const a = WGS84_EQUATORIAL_RADIUS;
-      const b = WGS84_POLAR_RADIUS;
-      const e2 = 1 - b * b / (a * a);
-      const n = a / Math.sqrt(1 - e2 * sinLat * sinLat);
-      const position = new THREE.Vector3(
-        (n + height) * cosLat * cosLon,
-        (n + height) * cosLat * sinLon,
-        (n * (1 - e2) + height) * sinLat
-      );
-      const up = new THREE.Vector3(cosLat * cosLon, cosLat * sinLon, sinLat).normalize();
-      const east = new THREE.Vector3(-sinLon, cosLon, 0);
-      if (east.lengthSq() < 1e-6) {
-        east.set(0, 1, 0);
-      }
-      east.normalize();
-      const north = new THREE.Vector3().crossVectors(up, east).normalize();
-      const south = north.clone().multiplyScalar(-1);
-      const matrix = new THREE.Matrix4().makeBasis(east, up, south).setPosition(position);
-      return {
-        latitudeDeg: THREE.MathUtils.radToDeg(lat),
-        longitudeDeg: THREE.MathUtils.radToDeg(lon),
-        altitudeMeters: height,
-        position,
-        east,
-        up,
-        north,
-        south,
-        matrix
-      };
-    }
-    function getPmndrsGeospatialFrame(config) {
-      if (!config || !config.geospatialEnabled) {
-        return null;
-      }
-      if (!config._geospatialFrame) {
-        config._geospatialFrame = buildPmndrsGeospatialFrame(
-          config.geospatialLatitudeDeg,
-          config.geospatialLongitudeDeg,
-          config.geospatialAltitudeMeters
-        );
-      }
-      return config._geospatialFrame;
-    }
-    function getPmndrsResolvedGeospatialFrame(config) {
-      if (!config) {
-        return null;
-      }
-      if (config._resolvedGeospatialFrame) {
-        return config._resolvedGeospatialFrame;
-      }
-      config._resolvedGeospatialFrame = getPmndrsGeospatialFrame(config) || buildPmndrsGeospatialFrame(0, 90, 0);
-      return config._resolvedGeospatialFrame;
-    }
-    function ecefDirectionToPmndrsLocal(direction, frame) {
-      if (!direction || !frame) {
-        return direction ? direction.clone().normalize() : new THREE.Vector3(0, 1, 0);
-      }
-      return new THREE.Vector3(
-        direction.dot(frame.east),
-        direction.dot(frame.up),
-        direction.dot(frame.south)
-      ).normalize();
-    }
-    function localDirectionToPmndrsEcef(localDirection, frame) {
-      if (!localDirection || !frame) {
-        return new THREE.Vector3(0, 1, 0);
-      }
-      return new THREE.Vector3().addScaledVector(frame.east, localDirection.x).addScaledVector(frame.up, localDirection.y).addScaledVector(frame.south, localDirection.z).normalize();
-    }
-    function applyLocalDirectionAngles(config) {
-      const local = config && config.localSunDirection ? config.localSunDirection : null;
-      if (!local) {
-        return;
-      }
-      config.sunElevationDeg = THREE.MathUtils.radToDeg(Math.asin(Math.max(-1, Math.min(1, local.y))));
-      config.sunAzimuthDeg = THREE.MathUtils.radToDeg(Math.atan2(local.x, -local.z));
-    }
-    function buildPmndrsEcefSunDirection(localSunDirection, config) {
-      if (!localSunDirection) {
-        return new THREE.Vector3(0, 1, 0);
-      }
-      const frame = getPmndrsGeospatialFrame(config);
-      if (frame) {
-        return localDirectionToPmndrsEcef(localSunDirection, frame);
-      }
-      return new THREE.Vector3(
-        -localSunDirection.x,
-        localSunDirection.y,
-        -localSunDirection.z
-      ).normalize();
-    }
-    function ensurePmndrsWorldToEcefMatrix(target, config) {
-      if (!target) {
-        return null;
-      }
-      const matrix = target.worldToECEFMatrix;
-      if (!matrix || typeof matrix.makeTranslation !== "function") {
-        return null;
-      }
-      const frame = getPmndrsResolvedGeospatialFrame(config);
-      if (frame) {
-        matrix.copy(frame.matrix);
-        return matrix;
-      }
-      matrix.makeBasis(
-        new THREE.Vector3(-1, 0, 0),
-        // local +X (east) -> ECEF west at +Y anchor
-        new THREE.Vector3(0, 1, 0),
-        // local +Y (up)   -> ECEF up
-        new THREE.Vector3(0, 0, -1)
-        // local +Z (south)-> ECEF south
-      ).setPosition(0, WGS84_EQUATORIAL_RADIUS, 0);
-      return matrix;
     }
     function copyPmndrsAtmosphereParameters(target, params) {
       if (!target || !params) {

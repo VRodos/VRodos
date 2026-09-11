@@ -50,6 +50,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract desktop pixel-budget calculation into a focused module without changing formulas or constants.
 - [x] Extract accelerated celestial clock calculations, preserving solar-day wrapping and lunar date progression.
 - [x] Extract MoonPhase normalization, illumination, direction, and orientation calculations with behavioral coverage.
+- [x] Extract celestial coordinate frames and local/ECEF transforms, preserving WGS84 constants and config-owned caches.
 - [ ] Extract quality/shadows, celestial lighting, sky, and cloud modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -198,3 +199,11 @@ Moved phase normalization, illumination, anti-sun direction, and lunar orientati
 New tests execute the module with the settings contract and real Three vectors/matrices. They cover all eight named phases, manual auto/full behavior, preservation of astronomical positions for authored phases, automatic illumination, stable polar orientation, and lunar date/matrix precedence. Replaced the corresponding source-marker assertions with behavioral coverage while retaining Moon integration and vendor-patch checks.
 
 All 55 regression scripts pass (27 runtime, 28 compiler), along with JS syntax, build configuration, and diff checks. Changed browser source lint has zero errors and nine existing quality-helper warnings. The core bundle and runtime manifest were explicitly rebuilt. Celestial lighting, sky/cloud extraction, component state ownership, published-scene recompilation, and browser/Quest acceptance remain open. No server was started and no commit/push was performed.
+
+### Celestial coordinate frame extraction (2026-09-11)
+
+Moved local sun direction, WGS84 frame construction, local/ECEF conversion, direction angles, and world-to-ECEF matrix application into `vrodos_celestial_coordinates.js`. The core build catalog loads the required module before quality profiles. The numeric clamp now lives in the existing runtime settings helpers so both callers share its exact parsing and boundary behavior. All nine moved coordinate function bodies and the clamp were mechanically compared against the prior Git revision and are unchanged. Config-owned frame caching, the authored-world axis mapping, rendering constants, and navigation math are preserved.
+
+Behavioral tests use real Three vectors/matrices and cover equatorial and polar anchors, orthonormal bases, round-trip direction conversion, coordinate bounds, independent config caches, authored azimuth/elevation, missing-input behavior, and matrix application. The shadow fixture loads the required module. All 56 regression scripts pass (28 runtime, 28 compiler), with runtime syntax, catalog coverage, build configuration, and diff checks passing. Full browser-source lint has zero errors and 242 warnings; the new module and shared helper have no warnings, while quality profiles retain nine existing warnings. Runtime artifacts were explicitly rebuilt with the direct Node entrypoint; only the core bundle and runtime manifest changed.
+
+This is a coordinate-math boundary extraction, not completion of celestial lighting, sky/cloud modules, or component lifecycle ownership. Published-scene recompilation and browser/Quest rendering acceptance remain outstanding. No server was started and no commit or push was performed.
