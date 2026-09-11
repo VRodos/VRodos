@@ -25,6 +25,7 @@ export const testGroups = Object.freeze({
     "scripts/test-profile-feature-state-check.mjs"
   ],
   "compiler": [
+    "scripts/test-import-execution.php",
     "scripts/test-import-session.php",
     "scripts/test-optimizer-source-inspection.php",
     "scripts/test-cefr-levels.php",

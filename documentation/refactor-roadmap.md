@@ -34,7 +34,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 
 ## F. Import and editor
 - [x] Extract staged-session access from import HTTP controller.
-- [ ] Extract import execution from the HTTP/settings manager.
+- [x] Extract import execution from the HTTP/settings manager.
 - [x] Share session validation with ownership checks.
 - [x] Separate property panel presentation, category controls, and change application.
 - [x] Share primitive-plane material definitions and refresh behavior with undo.
@@ -73,15 +73,15 @@ VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX
 ## Implementation log
 ### Verification and implementation
 
-`scripts/regression-test-catalog.mjs` explicitly owns 48 scripts: 22 runtime and 26 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
+`scripts/regression-test-catalog.mjs` explicitly owns 49 scripts: 22 runtime and 27 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.
 
-All **48 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
+All **49 tests pass** in the writable fixture environment. Browser-source ESLint at the initial cleanup pass: **0 errors, 243 warnings**; subsequent changed editor files pass lint without warnings. Edited/new PHP/JS syntax, runtime syntax, generated manifest/build configuration, and diff whitespace checks pass. Runtime bundles were regenerated explicitly for runtime changes.
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
 Optimizer domain callers now use `VRodos_Asset_Optimization_Service`. Independent classes own source snapshots, GLB analysis, and dashboard aggregation/sorting. `inspect_source_glb` is read-only; `prepare_source_glb` explicitly normalizes and refreshes identity at existing processing boundaries. Dashboard scans, row inspection, and metabox inspection use the read-only path. Metadata is primed in batches of 200. Tests verify no scan writes, missing/stale source identity, global priority tie-breaking, title sorting, and pagination. Existing stat/hash cache and immutable queue behavior remain.
 
-Staged-session reads are centralized, including ownership checks shared by inspect/prepare/status/consume. Tests cover missing/invalid manifests, owner mismatch, invalid project, and revoked edit permission. Property presentation/category scripts have ordered enqueue dependencies; common changes stay in the original controller. Primitive-plane refresh behavior is shared with undo. These are initial boundaries: import execution and broader change-side-effect consolidation remain unfinished.
+Staged-session reads are centralized, including ownership checks shared by inspect/prepare/status/consume. Tests cover missing/invalid manifests, owner mismatch, invalid project, and revoked edit permission. Property presentation/category scripts have ordered enqueue dependencies; common changes stay in the original controller. Primitive-plane refresh behavior is shared with undo. Import execution now has its own service; broader change-side-effect consolidation remains unfinished.
 
 ### Media results
 
@@ -124,8 +124,14 @@ Cross-object undo exposed inconsistent ownership: numeric controls could switch 
 
 Optimizer source activation/deletion and worker callbacks now bind the domain service. The lifecycle fixture exercises the extracted domain hook trait. All 26 compiler tests pass. No credentials changed and no server was started.
 
-Remaining work: import execution extraction, broader property-side-effect coordination, remaining editor categories, and the staged runtime ownership/performance work below. The login blocker is resolved.
+Remaining work: broader property-side-effect coordination, remaining editor categories, and the staged runtime ownership/performance work below. The login blocker is resolved.
 
 Focused runtime components still delegate into scene-settings state: **the ownership migration is not complete**. No rendering constants, shadow policy, navigation math, library versions, or vendor patches changed. No Custom/Adaptive/networked/headset recompilation matrix or real Quest acceptance is claimed. Validate XR entry/exit, controllers, Greek text, lighting, shadows/reflections, and repeated mount/removal before completing those checkboxes.
 
 No development server was started. No commit or push was performed. Keep media changes distinguishable from behavior refactors during review.
+
+### Import execution extraction (2026-09-11)
+
+`VRodos_Asset_Import_Execution` now owns staged inspection/preparation, conversion, activation, job scheduling, retry, status, and cleanup. The manager retains WordPress hooks, settings, HTTP authentication and responses, with its existing public methods forwarding to the service. All 29 moved method bodies and all manager public signatures were mechanically compared with the previous revision and preserved.
+
+The new HTTP retry fixture verifies success/error envelopes, queue deduplication, expired-source failure, cleanup metadata, and rejection without mutation for unauthorized users. All 49 regression scripts pass (27 compiler, 22 runtime), plus PHP syntax, catalog coverage, build configuration, and diff checks. This package did not run a live Blender conversion or change generated runtime bundles.

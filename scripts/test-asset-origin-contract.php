@@ -143,15 +143,15 @@ $no_model = VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( 45, 5, 7
 vrodos_asset_origin_assert( 'none' === $no_model['status'], 'a submission without a model must be ignored' );
 vrodos_asset_origin_assert( '' === VRodos_Asset_Origin::mode_for_asset( 45 ), 'a non-model submission must remain unmarked' );
 
-$mark_ready = new ReflectionMethod( VRodos_Asset_Import_Manager::class, 'mark_ready' );
+$mark_ready = new ReflectionMethod( VRodos_Asset_Import_Execution::class, 'mark_ready' );
 $mark_ready->invoke( null, 46, 103, 'Converted model ready.', 'package.zip' );
 vrodos_asset_origin_assert( 'bounds-center' === VRodos_Asset_Origin::mode_for_asset( 46 ), 'successful ZIP and Blender import finalization must be marked' );
 
-$mark_failed = new ReflectionMethod( VRodos_Asset_Import_Manager::class, 'mark_failed' );
+$mark_failed = new ReflectionMethod( VRodos_Asset_Import_Execution::class, 'mark_failed' );
 $mark_failed->invoke( null, 47, 'Conversion failed.' );
 vrodos_asset_origin_assert( '' === VRodos_Asset_Origin::mode_for_asset( 47 ), 'failed ZIP and Blender imports must remain unmarked' );
 
-$import_source = file_get_contents( dirname( __DIR__ ) . '/includes/asset-import/class-vrodos-asset-import-manager.php' );
+$import_source = file_get_contents( dirname( __DIR__ ) . '/includes/asset-import/class-vrodos-asset-import-execution.php' );
 $upload_source = file_get_contents( dirname( __DIR__ ) . '/includes/class-vrodos-upload-manager.php' );
 vrodos_asset_origin_assert( is_string( $import_source ) && str_contains( $import_source, 'VRodos_Asset_Origin::mark_bounds_centered( $asset_id );' ), 'staged and converted imports must mark their finalized GLB' );
 vrodos_asset_origin_assert( is_string( $upload_source ) && str_contains( $upload_source, 'VRodos_Asset_Origin::mark_bounds_centered( $asset_id );' ), 'direct GLB uploads must mark their finalized GLB' );
