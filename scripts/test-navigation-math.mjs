@@ -610,4 +610,42 @@ function createVerticalControllerHarness() {
     assert(transformCalls === 1, "immersive jump should transform the authored world exactly once per update");
 }
 
+// Desktop walking must use the Camera's -Z view direction, not its Group's +Z axis.
+for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    for (const pitch of [-Math.PI / 4, 0, Math.PI / 4]) {
+        const rig = new THREE.Group();
+        const cameraGroup = new THREE.Group();
+        const camera = new THREE.PerspectiveCamera();
+        rig.rotation.y = yaw;
+        cameraGroup.rotation.set(pitch, 0.2, 0, 'YXZ');
+        rig.add(cameraGroup);
+        cameraGroup.add(camera);
+        const nav = Object.create(movementDefinition);
+        Object.assign(nav, {
+            cameraEl: { object3D: cameraGroup, components: { camera: { camera } } },
+            sceneEl: { camera }, cameraRig: { object3D: rig },
+            forwardVector: new THREE.Vector3(), rightVector: new THREE.Vector3(), upVector: new THREE.Vector3(0, 1, 0),
+            keyboardInput: { x: 0, y: 0 }, isImmersiveXrPresenting: () => false,
+            getSceneSettings: () => ({ pr_type: 'virtualproduction_games', navigationMode: 'walkable' }),
+            hasAuthoredNavigationMode: () => true
+        });
+        assert(nav.getNavigationMode() === "walkable", "Virtual production supports the shared walkable navigation path");
+        const expectedForward = camera.getWorldDirection(new THREE.Vector3());
+        expectedForward.y = 0;
+        expectedForward.normalize();
+        const expectedRight = new THREE.Vector3().crossVectors(expectedForward, nav.upVector).normalize();
+        for (const [key, expected] of [
+            ['KeyW', expectedForward], ['KeyS', expectedForward.clone().negate()],
+            ['KeyD', expectedRight], ['KeyA', expectedRight.clone().negate()],
+            ['ArrowUp', expectedForward], ['ArrowDown', expectedForward.clone().negate()]
+        ]) {
+            nav.updateKeyboardAxis(key, true);
+            const delta = nav.getMovementDeltaFromInput(nav.keyboardInput.x, nav.keyboardInput.y, 2);
+            assertNear(delta.x, expected.x * 2, key + ' desktop X follows camera');
+            assertNear(delta.z, expected.z * 2, key + ' desktop Z follows camera');
+            assertNear(Math.hypot(delta.x, delta.z), 2, 'Pitch must not change walking speed');
+            nav.updateKeyboardAxis(key, false);
+        }
+    }
+}
 console.log("navigation math tests passed");

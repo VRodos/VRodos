@@ -305,3 +305,12 @@ AST comparison against HEAD verified all five moved functions and all 159 retain
 All 63 regression scripts pass (35 runtime, 28 compiler), plus runtime/generated-core syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint has zero errors and 242 existing warnings; the new module has none and quality profiles retains nine. Runtime artifacts were rebuilt explicitly using the direct Node entrypoint; only the core bundle and runtime manifest changed among generated artifacts.
 
 Rendering constants, navigation math, dependencies, and vendor patches are unchanged. Remaining sky/cloud rendering extraction, component lifecycle migration, and resource auditing are still open. Published scenes were not recompiled, and browser/physical Quest visual acceptance was not performed. No server was started and no commit or push was performed.
+
+
+### Desktop walking direction fix (2026-09-11)
+
+The published virtual-production project 9406 / scene 9407 was running walkable navigation. Its runtime used the A-Frame camera entity Group's +Z direction for desktop walking while the actual Three camera looked along -Z. W therefore moved backward and S forward. Desktop walking now uses the actual camera through the existing camera resolver, renamed `getNavigationCameraObject` for its shared walking/flying use. Removed the desktop-only right-vector negation so A/D remain correct with the camera basis. Immersive movement transforms, collision handling, and flight calculations are unchanged.
+
+The new regression fails against the previous implementation and passes with the fix. It uses real nested Three Groups and a PerspectiveCamera, exercising keyboard/arrow input across four yaw angles and three pitch angles, forward/backward/strafe direction, and pitch-independent walking speed. All 63 runtime/compiler scripts pass, along with runtime/generated-bundle syntax, build configuration, and diff checks. Changed-source lint has zero errors and five existing warnings. Explicit runtime rebuilding changed only the A-Frame components bundle.
+
+Deploy the updated source/bundle and recompile the published scene for a fresh cache-busting URL; the live server has not been patched by this task. Browser/physical Quest acceptance of the deployed fix remains outstanding. No development server was started and no commit or push was performed.

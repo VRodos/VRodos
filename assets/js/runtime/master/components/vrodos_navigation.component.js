@@ -1737,7 +1737,7 @@ AFRAME.registerComponent('custom-movement', {
         return this.immersivePhysicalAnchorPosition;
     },
     getCameraDirectionObject: function () {
-        const cameraObject = this.getFlyCameraObject ? this.getFlyCameraObject() : null;
+        const cameraObject = this.getNavigationCameraObject ? this.getNavigationCameraObject() : null;
         if (cameraObject && typeof cameraObject.getWorldDirection === 'function') {
             return cameraObject;
         }
@@ -3328,12 +3328,13 @@ AFRAME.registerComponent('custom-movement', {
             this.getImmersivePhysicalForwardDirection(this.forwardVector);
             this.immersiveMovementBasisSource = 'hmd-horizontal';
         } else {
-            const referenceEl = this.cameraEl || this.cameraRig;
-            if (!referenceEl || !referenceEl.object3D) {
+            const camera = this.getNavigationCameraObject();
+            if (!camera) {
                 return null;
             }
 
-            referenceEl.object3D.getWorldDirection(this.forwardVector);
+            // Camera forward is -Z; the enclosing A-Frame Group reports the opposite +Z axis.
+            camera.getWorldDirection(this.forwardVector);
             this.forwardVector.y = 0;
             if (this.forwardVector.lengthSq() < 0.000001) {
                 this.forwardVector.set(0, 0, -1);
@@ -3344,9 +3345,6 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.rightVector.crossVectors(this.forwardVector, this.upVector).normalize();
-        if (!immersivePresenting) {
-            this.rightVector.negate();
-        }
 
         const movementDelta = {
             x: (-this.forwardVector.x * inputY + this.rightVector.x * inputX) * distance,
@@ -3413,7 +3411,7 @@ AFRAME.registerComponent('custom-movement', {
 
         return this.cameraEl || null;
     },
-    getFlyCameraObject: function () {
+    getNavigationCameraObject: function () {
         const cameraEl = this.getFlyCameraElement();
         if (cameraEl && cameraEl.components && cameraEl.components.camera && cameraEl.components.camera.camera) {
             return cameraEl.components.camera.camera;
@@ -3487,7 +3485,7 @@ AFRAME.registerComponent('custom-movement', {
         this.refreshLookControlsOrientation();
 
         const cameraEl = this.getFlyCameraElement();
-        const camera = this.getFlyCameraObject();
+        const camera = this.getNavigationCameraObject();
         if (!camera || typeof this.centerRaycaster.setFromCamera !== 'function') {
             return false;
         }
@@ -3513,7 +3511,7 @@ AFRAME.registerComponent('custom-movement', {
         return true;
     },
     getFlyDirectionObject: function () {
-        const cameraObject = this.getFlyCameraObject();
+        const cameraObject = this.getNavigationCameraObject();
         if (cameraObject && typeof cameraObject.getWorldDirection === 'function') {
             return cameraObject;
         }
