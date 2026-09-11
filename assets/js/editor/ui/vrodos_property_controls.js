@@ -1656,8 +1656,8 @@ function ensurePrimitivePlanePropertiesSection() {
     container.appendChild(section);
 
     const numericBindings = [
-        ['planeWidthInput', 'planeWidth', 200, 0.1, 10000],
-        ['planeDepthInput', 'planeDepth', 200, 0.1, 10000],
+        ['planeWidthInput', 'planeWidth', 100, 0.1, 10000],
+        ['planeDepthInput', 'planeDepth', 100, 0.1, 10000],
         ['planeTileSizeInput', 'surfaceTileSizeMeters', 2, 0.01, 10000],
         ['planeRoughnessInput', 'surfaceRoughness', 1, 0, 1],
         ['planeMetalnessInput', 'surfaceMetalness', 0, 0, 1],

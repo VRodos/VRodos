@@ -375,7 +375,7 @@ assert(Boolean(thumbnailScreen.material.map), "the existing video thumbnail text
 
 const planeAddedStart = context.VRODOS.editor.objectFactory.added.length;
 const defaultPlaneObject = context.VRODOS.loader.createPrimitivePlaneObject("default-ground", {});
-assert(defaultPlaneObject.planeWidth === 200 && defaultPlaneObject.planeDepth === 200, "new procedural planes must default to 200 by 200 metres");
+assert(defaultPlaneObject.planeWidth === 100 && defaultPlaneObject.planeDepth === 100, "new procedural planes must default to 100 by 100 metres");
 const planeLoadResult = await new context.VRODOS.loader.LoaderMulti().load(null, {
     ground: {
         category_slug: "primitive-plane",

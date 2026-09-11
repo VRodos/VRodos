@@ -123,8 +123,8 @@ VRODOS.loader.loadImageAsset = function(manager, name, resource, resources3D) {
 };
 
 const VRODOS_PRIMITIVE_PLANE_DEFAULTS = Object.freeze({
-    planeWidth: 200,
-    planeDepth: 200,
+    planeWidth: 100,
+    planeDepth: 100,
     surfaceColor: '#ffffff',
     surfaceRoughness: 1,
     surfaceMetalness: 0,
