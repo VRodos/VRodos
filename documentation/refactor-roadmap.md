@@ -56,7 +56,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract the shadow subsystem: roles, terrain depth materials, adaptive fitting, refresh scheduling, diagnostics, and presented-light transforms.
 - [x] Extract celestial lighting profiles, exposure, indirect fill, sun/moon gates, helper lights, and Takram light synchronization.
 - [x] Extract renderer quality, material enhancement traversal, and reflection-intensity updates without behavior changes.
-- [ ] Extract remaining sky and cloud modules without behavior changes.
+- [x] Extract cloud sun/moon attenuation, shadow factors, smoothing, diagnostics, and star recovery without behavior changes.
+- [ ] Extract remaining sky and cloud rendering modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -281,3 +282,14 @@ AST comparison against HEAD verified all three moved methods and all 175 retaine
 All 62 regression scripts pass (34 runtime, 28 compiler). Runtime and generated-core syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint has zero errors and 242 existing warnings; the new module has no warnings. Runtime artifacts were explicitly rebuilt using the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
 
 No rendering constants, navigation math, library versions, vendor patches, or texture filtering policies changed. Sky/cloud extraction, component lifecycle migration, and resource-ownership auditing remain open. Published scenes were not recompiled, and browser/physical Quest visual acceptance was not performed. No server was started and no commit or push was performed.
+
+
+### Cloud light occlusion extraction (2026-09-11)
+
+Moved 11 functions and 24 constants (roughly 400 lines) into `vrodos_cloud_occlusion.js`. The required `VRODOSMaster.CloudOcclusion` module owns sun/moon coverage and disk attenuation, shadow factors, smoothing policy, shared diagnostics, and Moon-related star recovery. Quality profiles supplies explicit math, debug, logging, and celestial visibility callbacks; visibility callbacks resolve after celestial-lighting assembly. Existing public helpers, diagnostic object identity, component smoothing state, and reset ownership are preserved. Cloud rendering, disk sampling, sky composition, and lifecycle ownership remain at their existing boundaries.
+
+AST comparison against HEAD verified all 11 moved functions and all 164 retained functions/methods are unchanged apart from source positions. All 24 moved constant declarations match. The cloud/Moon regression now executes the authored module with the real light-smoothing module instead of copied Moon attenuation/star-recovery formulas. Coverage includes clear/partial/opaque samples, authored/effective coverage precedence, neutral and disabled states, horizon/illumination gates, diagnostic identity and logging, first samples, static/day-night smoothing durations, independent component state, shadow factors, and star recovery. Existing assembled lighting/shadow fixtures load the required module and pass; shader/vendor provenance checks remain intact.
+
+All 62 regression scripts pass (34 runtime, 28 compiler), together with runtime/generated-core syntax, catalog coverage, build configuration, and diff checks. Full browser-source lint has zero errors and 242 existing warnings; the new module has no warnings and quality profiles retains nine. Runtime artifacts were explicitly rebuilt through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
+
+This completes the cloud-light occlusion boundary, not the remaining sky/cloud rendering extraction or resource/lifecycle migration. Rendering constants, navigation math, dependencies, and vendor patches are unchanged. Published scenes were not recompiled; browser and physical Quest visual acceptance remain outstanding. No server was started and no commit or push was performed.
