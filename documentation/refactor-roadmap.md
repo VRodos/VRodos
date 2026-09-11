@@ -57,6 +57,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract celestial lighting profiles, exposure, indirect fill, sun/moon gates, helper lights, and Takram light synchronization.
 - [x] Extract renderer quality, material enhancement traversal, and reflection-intensity updates without behavior changes.
 - [x] Extract cloud sun/moon attenuation, shadow factors, smoothing, diagnostics, and star recovery without behavior changes.
+- [x] Extract scene-geometry sun occlusion, target caching, raycast sampling, and sun/haze/lens-flare visibility application.
 - [ ] Extract remaining sky and cloud rendering modules without behavior changes.
 - [ ] Move lifecycle/state ownership to existing focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
@@ -293,3 +294,14 @@ AST comparison against HEAD verified all 11 moved functions and all 164 retained
 All 62 regression scripts pass (34 runtime, 28 compiler), together with runtime/generated-core syntax, catalog coverage, build configuration, and diff checks. Full browser-source lint has zero errors and 242 existing warnings; the new module has no warnings and quality profiles retains nine. Runtime artifacts were explicitly rebuilt through the direct Node entrypoint; only the core bundle and runtime manifest changed among generated outputs.
 
 This completes the cloud-light occlusion boundary, not the remaining sky/cloud rendering extraction or resource/lifecycle migration. Rendering constants, navigation math, dependencies, and vendor patches are unchanged. Published scenes were not recompiled; browser and physical Quest visual acceptance remain outstanding. No server was started and no commit or push was performed.
+
+
+### Scene sun occlusion extraction (2026-09-11)
+
+Moved five functions (roughly 175 lines) into `vrodos_sun_occlusion.js`. The required `VRODOSMaster.SunOcclusion` module owns scene blocker selection, target caching, triangle-count eligibility, raycast sampling, and application to native sun, sprite/haze visibility, and lens flare. Quality profiles supplies the existing shadow classification interface and native-sun setter. All call sites, component-owned caches, and cleanup ownership remain unchanged.
+
+AST comparison against HEAD verified all five moved functions and all 159 retained functions/methods are unchanged apart from source positions. The 2500ms target cache, 300ms result cache, 60000-triangle eligibility limit, ray origin/near/far rules, and cloud ownership gates are preserved. Behavioral tests execute real Three scenes, geometry, cameras, raycasts, and the actual shadow helpers. They cover blockers and exclusions, hidden ancestors, alpha-tested materials, indexed/non-indexed geometry, cache refresh and object movement, camera position, distance limits, independent state, cloud disk ownership, and restoration of base flare intensity. A raycast double tests dense-geometry/BVH eligibility; it does not claim validation of the BVH implementation. Existing lighting/shadow integration fixtures load the required module.
+
+All 63 regression scripts pass (35 runtime, 28 compiler), plus runtime/generated-core syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint has zero errors and 242 existing warnings; the new module has none and quality profiles retains nine. Runtime artifacts were rebuilt explicitly using the direct Node entrypoint; only the core bundle and runtime manifest changed among generated artifacts.
+
+Rendering constants, navigation math, dependencies, and vendor patches are unchanged. Remaining sky/cloud rendering extraction, component lifecycle migration, and resource auditing are still open. Published scenes were not recompiled, and browser/physical Quest visual acceptance was not performed. No server was started and no commit or push was performed.
