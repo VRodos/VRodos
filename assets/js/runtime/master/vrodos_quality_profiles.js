@@ -1299,7 +1299,7 @@
     function getAtmosphereRuntime(self) {
         const owner = self && self.el && self.el.components ? self.el.components['vrodos-atmosphere'] : null;
         if (!owner || owner.removed) return null;
-        owner.bindSettings(self, removePmndrsAtmosphereSky);
+        owner.bindSettings(self, removePmndrsAtmosphereSky, disposePmndrsAtmosphereAuxiliaryVisuals);
         return owner;
     }
 
@@ -1917,6 +1917,7 @@
         showPmndrsAtmosphereSkyForSceneProbe,
         hidePmndrsAtmosphereSky,
         clearPmndrsHorizonSun,
+        disposePmndrsAtmosphereAuxiliaryVisuals,
         shouldUsePmndrsXrAtmosphereSunFallback,
         ensurePmndrsHorizonSun
     } = VRODOSMaster.AtmosphereVisuals.create({
@@ -1932,6 +1933,7 @@
             applyPmndrsSunOcclusion
         },
         host: {
+            bindAtmosphereVisualOwner: getAtmosphereRuntime,
             scheduleAtmosphereVisualRefresh,
             createPmndrsSunTexture,
             createPmndrsSunHazeTexture,

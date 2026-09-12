@@ -84,10 +84,11 @@
             this.visualRefreshEpoch = 0;
             this.removed = false;
         },
-        bindSettings: function (settings, removeVisuals) {
+        bindSettings: function (settings, removeVisuals, disposeAuxiliaryVisuals) {
             if (this.settings === settings) return;
             this.settings = settings;
             this.removeVisuals = removeVisuals;
+            this.disposeAuxiliaryVisuals = disposeAuxiliaryVisuals;
             settings.atmosphereRuntime = this;
             Object.defineProperty(settings, '_pmndrsAtmosphereState', {
                 configurable: true,
@@ -214,9 +215,17 @@
         },
         remove: function () {
             this.removed = true;
-            this.disposeResources();
-            this.settings = null;
-            this.removeVisuals = null;
+            try {
+                this.disposeResources();
+            } finally {
+                try {
+                    if (this.settings) this.disposeAuxiliaryVisuals(this.settings);
+                } finally {
+                    this.settings = null;
+                    this.removeVisuals = null;
+                    this.disposeAuxiliaryVisuals = null;
+                }
+            }
         },
 
         tick: function (time) {

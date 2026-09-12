@@ -8,6 +8,7 @@ export const testGroups = Object.freeze({
     "scripts/test-gradient-sky.mjs",
     "scripts/test-atmosphere-visuals.mjs",
     "scripts/test-atmosphere-lifecycle.mjs",
+    "scripts/test-atmosphere-auxiliary-cleanup.mjs",
     "scripts/test-render-pixel-budget.mjs",
     "scripts/test-celestial-clock.mjs",
     "scripts/test-moon-phase.mjs",

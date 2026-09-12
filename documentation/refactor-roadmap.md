@@ -65,6 +65,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [ ] Move remaining lighting/reflection/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
+- [x] Audit and fix sun/haze material and cached-texture disposal, lights-only gradient cleanup, and cloud sun overlay teardown.
 - [ ] Audit single ownership and disposal of every GPU resource/listener.
 
 ## H. Measured performance
@@ -81,6 +82,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [ ] Complete remaining category-specific interaction checks.
 - [x] Recompile and visually smoke-test Custom single-player desktop scene 13775.
 - [ ] Recompile Custom/Adaptive, single-player/networked, desktop/headset scenes.
+- [x] User-reported Quest visual smoke test after atmosphere ownership migration (2026-09-12).
 - [ ] Browser and real Quest checks: XR entry/exit, Greek text, controllers, lighting/shadows/reflections, disposal.
 
 ## Baseline (2026-09-11)
@@ -365,3 +367,24 @@ Scene-settings teardown removes the atmosphere component after disabling both co
 The new lifecycle regression exercises the actual registered component and assembled quality-profile facade with Three textures and controlled generator/timer doubles. It covers reuse, profile replacement, stale resolve/reject, synchronous/asynchronous failure, half-float policy, disposal exceptions, overlapping handle IDs, canceled callbacks, repeated removal, reattachment, tick ordering, and the authored scene-settings teardown order. The atmosphere-visual fixture now uses the real component scheduler. All 67 regression scripts pass (39 runtime, 28 compiler); syntax, generated build configuration, catalog, and diff checks pass. Full browser-source lint reports zero errors and 242 existing warnings. Runtime rebuilding changed only the core and A-Frame components bundles.
 
 Published clients were not recompiled; browser/GPU/physical Quest checks remain outstanding, especially active precompute removal/re-entry and profile switching. No development server was started and no commit or push was performed.
+
+
+### Quest report and atmosphere auxiliary resource audit (2026-09-12)
+
+The user reported testing on Quest and that everything looked fine after the atmosphere ownership migration. This records user-reported visual acceptance of that build; it does not claim a measured memory test, the complete device/profile matrix, or validation of the cleanup changes below.
+
+The follow-up source audit found that removing the generated sun/haze entities left their manually created SpriteMaterials undisposed, while component teardown omitted cached sun/haze textures and the lights-only gradient sky. The vendored A-Frame `removeObject3D` detaches objects without disposing their resources. Three Sprite geometry is shared globally, so disposing the entire sprite through the general resource helper would incorrectly release shared geometry.
+
+Sun clearing now detaches each generated sprite and disposes only its owned material through RuntimeResources. Active presentation toggles retain the canvas textures for reuse. A separate auxiliary teardown callback runs on atmosphere component removal, even without precomputed atmosphere state: it clears sprites, disposes/nulls cached sun/haze textures, removes/disposes the gradient mesh, and removes the cloud sun overlay. Sprite creation binds the component owner before allocation. Scene-settings no longer duplicates generated sun/haze cleanup. Rendering formulas, shaders, texture generation, profile replacement policy, and navigation are unchanged.
+
+| Resource | Release boundary | Preservation rule |
+| --- | --- | --- |
+| Sun/haze SpriteMaterials | Generated sprite removal | Detach first; never dispose shared Sprite geometry |
+| Sun/haze cached CanvasTextures | Atmosphere component removal | Keep across active sun/cloud presentation toggles |
+| Lights-only gradient geometry/material | Existing gradient removal and component removal | Clear cached mesh reference; repeated removal is safe |
+| Cloud sun DOM overlay | Atmosphere component removal | Active presentation still hides/reuses it |
+| Sky/stars/Moon and precompute generator | Existing resource-generation disposal | Retains previously tested async guards and replacement semantics |
+
+The regression uses real Three sprites, materials, textures, gradient geometry, disposal events, and the registered atmosphere component with a small DOM/canvas double. It verifies sprite-only ownership, material release, active texture reuse, removal without precomputed state, repeated teardown, reattachment with fresh textures, overlay removal, and preservation of another sprite's material and globally shared geometry. All 68 scripts pass (40 runtime, 28 compiler), plus runtime/generated-bundle syntax, build configuration, catalog, and diff checks. Full browser-source lint has zero errors and 242 existing warnings. Explicit rebuilding through the direct Node entrypoint changed only the core and A-Frame components bundles.
+
+The broader listener/GPU audit and integrated browser/profile-switching matrix remain open. Reflection lifecycle ownership is the next cohesive refactor package. No published clients were recompiled in this task; the new cleanup has not been retested on Quest. No server was started and no commit or push was performed.

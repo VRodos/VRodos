@@ -3522,14 +3522,6 @@ AFRAME.registerComponent('scene-settings', {
         if (manualSun && manualSun.parentNode) {
             manualSun.parentNode.removeChild(manualSun);
         }
-        const pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
-        if (pmndrsSun && pmndrsSun.parentNode) {
-            pmndrsSun.parentNode.removeChild(pmndrsSun);
-        }
-        const pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
-        if (pmndrsSunHaze && pmndrsSunHaze.parentNode) {
-            pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
-        }
         if (this.runtimeResources) {
             this.disposeHardwareDiagnostics();
             this.runtimeResources.disposeAll();

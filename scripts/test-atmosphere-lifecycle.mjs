@@ -40,7 +40,7 @@ function fixture() {
         assert.equal(current._pmndrsAtmosphereState, owner.state, 'compatibility state remains readable during cleanup');
         visualDisposals++;
     };
-    owner.bindSettings(settings, removeVisuals);
+    owner.bindSettings(settings, removeVisuals, () => {});
     return { owner, settings, el, visualDisposals: () => visualDisposals };
 }
 const profile = (signature = 'balanced:float:higher:combined') => ({ signature, quality: 'balanced', type: THREE.FloatType,
@@ -92,7 +92,7 @@ f.owner.remove(); assert.equal(fourthGenerator.disposals, 1);
 // A fresh component can own the same scene-settings facade after removal.
 const replacement = Object.assign(Object.create(definition), { el: f.el }); replacement.init();
 f.el.components['vrodos-atmosphere'] = replacement;
-replacement.bindSettings(f.settings, () => {});
+replacement.bindSettings(f.settings, () => {}, () => {});
 assert.equal(f.settings.atmosphereRuntime, replacement);
 const restored = replacement.ensureResources(profile());
 assert.equal(f.settings._pmndrsAtmosphereState, restored); replacement.remove();
@@ -123,8 +123,9 @@ assert.ok(warnings.length >= 3);
 context.VRODOSMaster = {};
 context.URLSearchParams = URLSearchParams;
 context.location = { search: '' };
+context.document = { getElementById: () => null };
 context.VRODOS_RUNTIME_SETTINGS_CONTRACT = JSON.parse(readFileSync(new URL('../assets/runtime-settings-contract.json', import.meta.url), 'utf8'));
-for (const name of ['vrodos_runtime_settings_helpers.js', 'vrodos_celestial_clock.js', 'vrodos_moon_phase.js', 'vrodos_celestial_coordinates.js', 'vrodos_light_smoothing.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js', 'vrodos_celestial_lighting.js', 'vrodos_render_quality.js', 'vrodos_cloud_occlusion.js', 'vrodos_sun_occlusion.js', 'vrodos_sun_sprite.js', 'vrodos_gradient_sky.js', 'vrodos_atmosphere_visuals.js', 'vrodos_quality_profiles.js']) {
+for (const name of ['vrodos_runtime_resources.js', 'vrodos_runtime_settings_helpers.js', 'vrodos_celestial_clock.js', 'vrodos_moon_phase.js', 'vrodos_celestial_coordinates.js', 'vrodos_light_smoothing.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js', 'vrodos_celestial_lighting.js', 'vrodos_render_quality.js', 'vrodos_cloud_occlusion.js', 'vrodos_sun_occlusion.js', 'vrodos_sun_sprite.js', 'vrodos_gradient_sky.js', 'vrodos_atmosphere_visuals.js', 'vrodos_quality_profiles.js']) {
     vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/' + name, import.meta.url), 'utf8'), context);
 }
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;

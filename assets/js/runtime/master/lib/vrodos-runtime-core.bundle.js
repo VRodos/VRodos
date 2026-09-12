@@ -8371,6 +8371,7 @@ ${STOCHASTIC_GLSL}`).replace(
         applyPmndrsSunOcclusion
       } = shadow;
       const {
+        bindAtmosphereVisualOwner,
         scheduleAtmosphereVisualRefresh,
         createPmndrsSunTexture,
         createPmndrsSunHazeTexture,
@@ -9993,17 +9994,15 @@ ${shader.fragmentShader}` : withUniform;
         if (!self) {
           return;
         }
-        const oldSun = document.getElementById("vrodos-pmndrs-sun");
-        if (oldSun && oldSun.parentNode) {
-          oldSun.parentNode.removeChild(oldSun);
-        }
-        const oldSunHaze = document.getElementById("vrodos-pmndrs-sun-haze");
-        if (oldSunHaze && oldSunHaze.parentNode) {
-          oldSunHaze.parentNode.removeChild(oldSunHaze);
-        }
-        const visibleTakramSun = document.getElementById("vrodos-takram-visible-sun");
-        if (visibleTakramSun && visibleTakramSun.parentNode) {
-          visibleTakramSun.parentNode.removeChild(visibleTakramSun);
+        for (const id of ["vrodos-pmndrs-sun", "vrodos-pmndrs-sun-haze", "vrodos-takram-visible-sun"]) {
+          const element = document.getElementById(id);
+          if (!element) continue;
+          const sprite = element.getObject3D("mesh");
+          if (sprite) {
+            element.removeObject3D("mesh");
+            VRODOSMaster.RuntimeResources.dispose(sprite.material);
+          }
+          if (element.parentNode) element.parentNode.removeChild(element);
         }
         clearPmndrsCloudSunDiskScreenOverlay(self);
         self._pmndrsSunDirection = null;
@@ -10014,6 +10013,16 @@ ${shader.fragmentShader}` : withUniform;
         self._pmndrsCloudSunDiskSpriteActive = false;
         self._pmndrsCloudSunDiskSpriteVisibility = 1;
         self._pmndrsCloudSunDiskSpriteOpacity = 1;
+      }
+      function disposePmndrsAtmosphereAuxiliaryVisuals(self) {
+        if (!self) return;
+        clearPmndrsHorizonSun(self);
+        const overlay = document.getElementById("vrodos-pmndrs-cloud-sun-disk-overlay");
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        removeVrTakramLightsOnlyGradientSky(self);
+        VRODOSMaster.RuntimeResources.dispose([self._pmndrsSunTexture, self._pmndrsSunHazeTexture]);
+        self._pmndrsSunTexture = null;
+        self._pmndrsSunHazeTexture = null;
       }
       function shouldDisablePmndrsVisibleSunDebug() {
         if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disablePmndrsSunSprite === true) {
@@ -10051,6 +10060,7 @@ ${shader.fragmentShader}` : withUniform;
         if (!self || !self.el || typeof document === "undefined") {
           return;
         }
+        bindAtmosphereVisualOwner(self);
         const opts = options || {};
         if (shouldDisablePmndrsVisibleSunDebug()) {
           clearPmndrsHorizonSun(self);
@@ -10169,6 +10179,7 @@ ${shader.fragmentShader}` : withUniform;
         showPmndrsAtmosphereSkyForSceneProbe,
         hidePmndrsAtmosphereSky,
         clearPmndrsHorizonSun,
+        disposePmndrsAtmosphereAuxiliaryVisuals,
         shouldUsePmndrsXrAtmosphereSunFallback,
         ensurePmndrsHorizonSun
       };
@@ -11219,7 +11230,7 @@ ${shader.fragmentShader}` : withUniform;
     function getAtmosphereRuntime(self) {
       const owner = self && self.el && self.el.components ? self.el.components["vrodos-atmosphere"] : null;
       if (!owner || owner.removed) return null;
-      owner.bindSettings(self, removePmndrsAtmosphereSky);
+      owner.bindSettings(self, removePmndrsAtmosphereSky, disposePmndrsAtmosphereAuxiliaryVisuals);
       return owner;
     }
     function scheduleAtmosphereVisualRefresh(self, callback) {
@@ -11736,6 +11747,7 @@ ${shader.fragmentShader}` : withUniform;
       showPmndrsAtmosphereSkyForSceneProbe,
       hidePmndrsAtmosphereSky,
       clearPmndrsHorizonSun,
+      disposePmndrsAtmosphereAuxiliaryVisuals,
       shouldUsePmndrsXrAtmosphereSunFallback,
       ensurePmndrsHorizonSun
     } = VRODOSMaster.AtmosphereVisuals.create({
@@ -11751,6 +11763,7 @@ ${shader.fragmentShader}` : withUniform;
         applyPmndrsSunOcclusion
       },
       host: {
+        bindAtmosphereVisualOwner: getAtmosphereRuntime,
         scheduleAtmosphereVisualRefresh,
         createPmndrsSunTexture,
         createPmndrsSunHazeTexture,

@@ -13,7 +13,7 @@ The compiled `scene-settings` attribute remains the compatibility data contract.
 
 - `vrodos-render-profile`: renderer quality, static/dynamic shadows, adaptive shadow fit, and FPS updates.
 - `vrodos-postfx-router`: legacy vs PMNDRS ownership and composer enable/disable routing.
-- `vrodos-atmosphere`: owns atmosphere resource state, precomputed generator lifecycle, and deferred visual refreshes; coordinates Takram sky/sun/moon and day-night ticks through scene-settings.
+- `vrodos-atmosphere`: owns atmosphere resource state, precomputed generator lifecycle, deferred visual refreshes, and auxiliary sun/haze/gradient/overlay teardown; coordinates Takram sky/sun/moon and day-night ticks through scene-settings.
 - `vrodos-reflections`: HDR environment maps, scene-probe capture, and one-time Takram-sky PMREM capture.
 
 `scene-settings` still owns schema parsing, compatibility helpers, and existing public methods used by those components.
