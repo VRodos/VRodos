@@ -21,6 +21,7 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 - PMNDRS/Legacy composer ownership, Takram clouds, scene probes, Takram sky PMREM capture, native WebXR layers, old movement HUDs, and old movement emitter scaffolding remain disabled by default.
 - New headset realism work belongs only behind `vrHeadsetStereoPostFxEnabled` and must use dynamic Takram sky/time/light state. Do not substitute static headset palettes, A-Frame fallback environments, or fixed lower-hemisphere fills.
 - Keep `vrodos-postprocessing.bundle.js` available when headset Takram atmosphere needs the full PMNDRS/Takram vendor classes; disabling composer ownership does not make the vendor library itself invalid.
+- Headset atmosphere capability must remain independent of `postFXEnabled`: with PMNDRS atmosphere enabled and post-FX off, compile the Takram atmosphere and PMNDRS vendor dependencies, but omit the post-FX adapter/composer and clouds. Otherwise the generated scene requests a sky whose implementation is missing.
 - Do not restore the retired source-only headset bundle split. It passed static scans but produced a black sky/no-sun regression on device.
 - The older no-composer visible-sky path may retain its direct-sky reveal calibration; the stereo PMNDRS opt-in must use native Takram sky output.
 - Keep native renderer antialiasing and hard shadow caps: directional `1024`, point/spot `512`.

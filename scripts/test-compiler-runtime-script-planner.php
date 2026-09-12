@@ -384,6 +384,21 @@ vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-postprocessing.bund
 vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-takram-atmosphere.bundle.js', 'headset no post-FX script tags' );
 vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset no post-FX script tags' );
 
+$headset_direct_sky_metadata = (object) [ 'aframePostFXEnabled' => false, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => false ];
+vrodos_assert_true( $feature_flags->is_pmndrs_atmosphere_enabled( $headset_direct_sky_metadata ), 'headset atmosphere survives disabling post-FX' );
+vrodos_assert_true( 'pmndrs' === $feature_flags->post_fx_engine( $headset_direct_sky_metadata ), 'headset direct sky retains its atmosphere engine' );
+vrodos_assert_false( $feature_flags->is_post_fx_enabled( $headset_direct_sky_metadata ), 'headset direct sky does not enable the composer' );
+$headset_direct_sky_ids = [ 'scene-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'aframe-components' ];
+vrodos_assert_same( $headset_direct_sky_ids, $planner->script_ids_for_scene( vrodos_test_scene( (array) $headset_direct_sky_metadata ), 'single-player' ), 'headset direct sky loads vendor dependencies without composer or clouds' );
+vrodos_assert_same(
+	$headset_direct_sky_ids,
+	$planner->script_ids_for_capabilities( $planner->capabilities_for_resolved_scene( vrodos_test_scene( [] ), [
+		'runtimeMode' => 'single-player', 'vrRuntimeProfile' => 'headset', 'postFXEngine' => 'pmndrs',
+		'postFXEnabled' => '0', 'pmndrsAtmosphereEnabled' => 'true', 'vrHeadsetStereoPostFxEnabled' => '0',
+	] ) ),
+	'resolved headset settings preserve direct sky without post-FX'
+);
+
 $headset_stereo_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) );
 vrodos_assert_contains( $headset_stereo_html, 'vrodos-postprocessing.bundle.js', 'headset stereo PMNDRS script tags' );
 vrodos_assert_contains( $headset_stereo_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset stereo PMNDRS script tags' );

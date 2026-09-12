@@ -172,7 +172,8 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_pmndrs_atmosphere_enabled( $metadata ): bool {
-		return $this->is_authored_post_fx_enabled( $metadata )
+		// Headset sky/light rendering is independent of the optional stereo composer.
+		return ( 'headset' === $this->vr_runtime_profile( $metadata ) || $this->is_authored_post_fx_enabled( $metadata ) )
 			&& self::POST_FX_ENGINE_PMNDRS === $this->authored_post_fx_engine( $metadata )
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled', true );
 	}
