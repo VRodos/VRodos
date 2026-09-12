@@ -131,6 +131,8 @@ class VRodos_Asset_AJAX {
 		$output->glbIDs = $glbID;
 		$output->glbURL = $url_normalizer->normalize( $glbURL );
 		$output->vrodosAssetOriginMode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+		$bounds = VRodos_Asset_Optimization_Manager::collision_bounds_for_asset( $asset_id );
+		$output->vrodosCollisionBounds = is_wp_error( $bounds ) ? null : $bounds;
 		$output->editorLoad = [];
 
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glbURL ) {

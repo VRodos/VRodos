@@ -1,6 +1,11 @@
 <?php
-
 declare(strict_types=1);
+
+class VRodos_Asset_Collision_Bounds {
+	public const META_KEY = '_vrodos_asset_collision_bounds';
+	public static function ensure( int $asset_id, array $source ): array { return []; }
+}
+
 
 define( 'ABSPATH', __DIR__ . DIRECTORY_SEPARATOR );
 

@@ -95,6 +95,48 @@ AFRAME.registerComponent('vrodos-collider-helper', {
 });
 
 
+AFRAME.registerComponent('vrodos-box-collider', {
+    schema: {
+        center: { type: 'vec3' },
+        size: { type: 'vec3', default: { x: 1, y: 1, z: 1 } }
+    },
+    update: function () {
+        this.releaseBox();
+        const { center, size } = this.data;
+        if (![center.x, center.y, center.z, size.x, size.y, size.z].every(Number.isFinite) ||
+            Math.min(size.x, size.y, size.z) <= 0) return;
+        this.resources = VRODOSMaster.RuntimeResources.createRegistry();
+        const geometry = this.resources.track(new THREE.BoxGeometry(size.x, size.y, size.z));
+        const material = this.resources.track(new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+        this.box = new THREE.Mesh(geometry, material);
+        this.box.position.copy(center);
+        this.box.visible = false;
+        this.box.castShadow = false;
+        this.box.receiveShadow = false;
+        this.el.setObject3D('mesh', this.box);
+        this.invalidate();
+    },
+    invalidate: function () {
+        const player = this.el.sceneEl && this.el.sceneEl.querySelector('[custom-movement]');
+        const movement = player && player.components['custom-movement'];
+        if (movement) movement.markCollisionWorldDirty();
+    },
+    releaseBox: function () {
+        if (!this.box) return;
+        const player = this.el.sceneEl && this.el.sceneEl.querySelector('[custom-movement]');
+        const movement = player && player.components['custom-movement'];
+        if (movement) movement.bvhTargets.delete(this.box.uuid);
+        if (this.box.geometry.disposeBoundsTree) this.box.geometry.disposeBoundsTree();
+        this.el.removeObject3D('mesh');
+        this.resources.disposeAll();
+        this.box = null;
+        this.invalidate();
+    },
+    remove: function () {
+        this.releaseBox();
+    }
+});
+
 AFRAME.registerComponent('custom-movement', {
     schema: {
         movementSpeed: { type: 'number', default: 3.2 },

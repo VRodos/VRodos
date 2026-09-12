@@ -139,6 +139,7 @@ function updateObjectControlsMeta(object) {
 }
 
 function hideAllPropertyPanels() {
+    if (VRODOS.ui.clearCollisionPreview) VRODOS.ui.clearCollisionPreview();
     const container = getObjectControlsElement('propertiesContainer');
     if (!container) return;
     container.style.display = 'none';

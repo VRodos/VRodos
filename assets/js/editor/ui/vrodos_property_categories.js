@@ -354,6 +354,32 @@ function displayWalkableSurfaceProperties(object) {
     section.style.display = 'block';
 }
 
+let vrodosCollisionPreview = null;
+
+VRODOS.ui.clearCollisionPreview = function () {
+    if (!vrodosCollisionPreview) return;
+    vrodosCollisionPreview.removeFromParent();
+    vrodosCollisionPreview.geometry.dispose();
+    vrodosCollisionPreview.material.dispose();
+    vrodosCollisionPreview = null;
+};
+
+function showCollisionPreview(object) {
+    VRODOS.ui.clearCollisionPreview();
+    const bounds = object && object.vrodosCollisionBounds;
+    if (!bounds || !VRODOS.utils.normalizeCompiledCollisionEnabled(object.compiledCollisionEnabled, object)) return;
+    const center = object.vrodosAssetOriginMode === 'bounds-center' ? [0, 0, 0] : bounds.center;
+    const geometry = new THREE.BoxGeometry(...bounds.min.map((min, i) => Math.max(0.001, bounds.max[i] - min)));
+    const edges = new THREE.EdgesGeometry(geometry);
+    geometry.dispose();
+    vrodosCollisionPreview = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x22d3ee, depthTest: false }));
+    vrodosCollisionPreview.position.fromArray(center);
+    vrodosCollisionPreview.raycast = () => undefined;
+    vrodosCollisionPreview.renderOrder = 1000;
+    vrodosCollisionPreview.userData.editorOnly = true;
+    object.add(vrodosCollisionPreview);
+}
+
 function ensureCollisionPropertiesSection() {
     const container = getObjectControlsElement('propertiesContainer');
     if (!container) return null;
@@ -372,9 +398,11 @@ function ensureCollisionPropertiesSection() {
         '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
         '<label class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-text-slate-200">' +
         '<input type="checkbox" id="compiledCollisionEnabledCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
-        '<span>Collides with player</span>' +
+        '<span id="compiledCollisionLabel">Collides with player</span>' +
         '</label>' +
         '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Only enabled objects are compiled into the player collision world.</div>' +
+        '<div id="decorationCollisionDetails"><button type="button" id="inspectDecorationCollider" class="tw-btn tw-btn-xs">Inspect box</button>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">The box blocks empty space inside the asset bounds, including arch openings and concave recesses.</div></div>' +
         '</div>';
 
     container.appendChild(section);
@@ -382,19 +410,30 @@ function ensureCollisionPropertiesSection() {
     const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
     if (checkbox) {
         checkbox.addEventListener('change', function () {
+            VRODOS.ui.clearCollisionPreview();
             vrodosCommitObjectControlsProperty('compiledCollisionEnabled', Boolean(this.checked));
         });
     }
+
+    document.getElementById('inspectDecorationCollider').addEventListener('click', () => {
+        if (vrodosCollisionPreview) VRODOS.ui.clearCollisionPreview();
+        else showCollisionPreview(getObjectControlsTargetObject());
+    });
 
     return section;
 }
 
 function displayCollisionProperties(object) {
+    VRODOS.ui.clearCollisionPreview();
     const section = ensureCollisionPropertiesSection();
     if (!section || !object) return;
 
     const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
     const enabled = VRODOS.utils.normalizeCompiledCollisionEnabled(object.compiledCollisionEnabled, object);
+    const decoration = VRODOS.utils.resolveSceneAssetCategory(object) === 'decoration' && object.category_slug !== 'primitive-plane';
+    document.getElementById('compiledCollisionLabel').textContent = decoration ? 'Automatic box collision' : 'Collides with player';
+    document.getElementById('decorationCollisionDetails').style.display = decoration ? 'block' : 'none';
+    document.getElementById('inspectDecorationCollider').disabled = !enabled || !object.vrodosCollisionBounds;
     object.compiledCollisionEnabled = enabled;
     if (!object.userData) {
         object.userData = {};

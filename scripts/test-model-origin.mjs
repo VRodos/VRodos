@@ -95,6 +95,7 @@ const runtimeEntityRoot = new THREE.Group();
 runtimeEntityRoot.add(runtimeModel);
 const listeners = new Map();
 const runtimeElement = {
+  getAttribute() { return null; },
   id: 'centered-runtime-model',
   object3D: runtimeEntityRoot,
   object3DMap: { mesh: runtimeModel },

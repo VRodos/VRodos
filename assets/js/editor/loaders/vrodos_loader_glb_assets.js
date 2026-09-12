@@ -14,7 +14,8 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
     }
 	[
 		'editorLoad',
-		'vrodosAssetOriginMode'
+		'vrodosAssetOriginMode',
+		'vrodosCollisionBounds'
 	].forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(resourcesGLB, key)) {
             resource[key] = resourcesGLB[key];
@@ -91,7 +92,9 @@ function vrodosLoaderCreateGlbSceneRoot(object, resource) {
         return contentRoot;
     }
 
-    const centered = origin.createOffsetRoot(contentRoot, requestedMode);
+    const sourceCenter = VRODOS.utils.resolveSceneAssetCategory(resource) === 'decoration' && resource.vrodosCollisionBounds
+        ? resource.vrodosCollisionBounds.center : undefined;
+    const centered = origin.createOffsetRoot(contentRoot, requestedMode, sourceCenter);
     if (!centered.applied || !centered.root) {
         console.warn('VRodos: could not center GLB asset bounds; the authored origin will be preserved.', {
             asset_id: resource.asset_id || '',

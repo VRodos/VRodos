@@ -203,6 +203,13 @@ final class VRodos_Compiler_Resource_Publisher {
 	}
 
 	private function hydrate_asset_object( object $object, int $asset_id ): void {
+		if ( 'decoration' === ( new VRodos_Compiler_Entity_Policy() )->effective_category( $object ) ) {
+			$bounds = VRodos_Asset_Optimization_Manager::collision_bounds_for_asset( $asset_id );
+			if ( is_wp_error( $bounds ) ) {
+				throw new RuntimeException( sprintf( '[VRodos] Decoration asset #%d: %s', $asset_id, $bounds->get_error_message() ) );
+			}
+			$object->vrodosCollisionBounds = $bounds;
+		}
 		$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
 		if ( '' !== $origin_mode ) {
 			$object->vrodosAssetOriginMode = $origin_mode;
@@ -311,9 +318,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	}
 
 	private function asset_requires_protected_geometry( object $object ): bool {
-		$category = sanitize_title( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
-		return in_array( $category, [ 'walkable-surface', 'collision-proxy' ], true )
-			|| VRodos_Runtime_Settings_Contract::normalize_bool( $object->compiledCollisionEnabled ?? false, false );
+		return ( new VRodos_Compiler_Entity_Policy() )->requires_protected_geometry( $object );
 	}
 
 	private function runtime_profile_texture_cap( string $profile ): int {

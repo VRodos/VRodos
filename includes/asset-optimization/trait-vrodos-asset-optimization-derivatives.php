@@ -5,8 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-asset-optimization-source.php';
+require_once __DIR__ . '/class-vrodos-asset-collision-bounds.php';
 
 trait VRodos_Asset_Optimization_Derivative_Service {
+	public static function collision_bounds_for_asset( int $asset_id ) {
+		$source = self::prepare_source_glb( $asset_id );
+		return is_wp_error( $source ) ? $source : VRodos_Asset_Collision_Bounds::ensure( $asset_id, $source );
+	}
+
 	protected static function supported_profiles(): array {
 		return [
 			'safe-draco'    => 'Safe Draco',

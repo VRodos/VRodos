@@ -236,6 +236,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'scale' => [ 1, 1, 1 ],
 			],
 			'convertedDecoration' => (object) [
+				'vrodosCollisionBounds' => [ 'schemaVersion' => 1, 'min' => [ -1, -2, -3 ], 'max' => [ 1, 2, 3 ], 'center' => [ 0, 0, 0 ] ],
 				'category_slug' => 'walkable-surface',
 				'sceneAssetRole' => 'decoration',
 				'asset_id' => 702,
@@ -247,6 +248,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'scale' => [ 1, 1, 1 ],
 			],
 			'defaultCollidableDecoration' => (object) [
+				'vrodosCollisionBounds' => [ 'schemaVersion' => 1, 'min' => [ -1, -2, -3 ], 'max' => [ 1, 2, 3 ], 'center' => [ 0, 0, 0 ] ],
 				'category_slug' => 'decoration',
 				'asset_id' => 703,
 				'glb_path' => '/default-collidable-decoration.glb',
@@ -310,8 +312,9 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'vrodos-model-origin' ), 'unmarked legacy GLBs preserve their authored origin' );
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-navmesh' ), 'converted decoration omits navmesh attributes' );
 	vrodos_foundation_assert( 'lazy' === $converted_decoration->getAttribute( 'data-vrodos-load-phase' ), 'converted decoration uses normal deferred loading' );
-	vrodos_foundation_assert( 'solid' === $converted_decoration->getAttribute( 'data-vrodos-collision-role' ), 'converted decoration preserves explicitly enabled solid collision' );
-	vrodos_foundation_assert( 'solid' === $default_collidable_decoration->getAttribute( 'data-vrodos-collision-role' ), 'decoration collision defaults to enabled when no value is persisted' );
+	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-collider' ), 'decoration visual does not enter collision world' );
+	vrodos_foundation_assert( 1 === $role_xpath->query( './a-entity[@vrodos-box-collider]', $converted_decoration )->length, 'converted decoration has one box collider' );
+	vrodos_foundation_assert( 1 === $role_xpath->query( './a-entity[@vrodos-box-collider]', $default_collidable_decoration )->length, 'default decoration has one box collider' );
 	vrodos_foundation_assert( ! $disabled_collision_decoration->hasAttribute( 'data-vrodos-collider' ), 'explicitly disabled decoration collision remains disabled' );
 	$procedural_ground = $dom->getElementsByTagName( 'a-plane' )->item( 0 );
 	vrodos_foundation_assert( $procedural_ground instanceof DOMElement, 'primitive plane emits an A-Frame plane' );
@@ -367,6 +370,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 		'category_slug' => 'decoration',
 		'vrodosAssetOriginMode' => 'bounds-center',
 		'asset_id' => 77,
+		'vrodosCollisionBounds' => [ 'schemaVersion' => 1, 'min' => [ -1, -2, -3 ], 'max' => [ 1, 2, 3 ], 'center' => [ 0, 0, 0 ] ],
 		'glb_path' => '/published/low.glb',
 		'desktop_profile_glb_urls' => (object) [
 			'low' => '/published/low.glb',

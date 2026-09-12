@@ -295,6 +295,10 @@ class VRodos_Scene_CPT_Manager {
 			'is_shared'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 		];
 		$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+		if ( '' !== $glb_url ) {
+			$bounds = VRodos_Asset_Optimization_Manager::collision_bounds_for_asset( $asset_id );
+			$metadata['vrodosCollisionBounds'] = is_wp_error( $bounds ) ? null : $bounds;
+		}
 		if ( '' !== $origin_mode ) {
 			$metadata['vrodosAssetOriginMode'] = $origin_mode;
 		}

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-dispatcher.php';
+require_once __DIR__ . '/asset-optimization/class-vrodos-asset-collision-bounds.php';
 
 class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
@@ -759,6 +760,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function apply_model_origin( DOMElement $entity, $content_object ): void {
+		if ( isset( $content_object->vrodosCollisionBounds['center'] ) ) {
+			$entity->setAttribute( 'data-vrodos-source-center', implode( ' ', $content_object->vrodosCollisionBounds['center'] ) );
+		}
 		if ( 'bounds-center' === (string) ( $content_object->vrodosAssetOriginMode ?? '' ) ) {
 			$entity->setAttribute( 'vrodos-model-origin', 'bounds-center' );
 		}
@@ -959,6 +963,23 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 
 		$category = $this->semantic_entity_category( $obj );
+		if ( 'box' === $this->entity_policy->collision_shape( $obj ) ) {
+			$bounds = $obj->vrodosCollisionBounds ?? null;
+			if ( ! VRodos_Asset_Collision_Bounds::valid( $bounds ) ) {
+				throw new RuntimeException( '[VRodos] Decoration ' . ( $obj->name ?? '' ) . ' has no valid source collision bounds.' );
+			}
+			$center = $bounds['center'];
+			if ( 'bounds-center' === ( $obj->vrodosAssetOriginMode ?? '' ) ) {
+				$center = [ 0, 0, 0 ];
+			}
+			$size = array_map( static fn( $min, $max ) => max( 0.001, $max - $min ), $bounds['min'], $bounds['max'] );
+			$collider = $entity->ownerDocument->createElement( 'a-entity' );
+			VRodos_Compiler_AFrame_DOM_Helper::apply_collision_attributes( $collider, 'box', 'solid', $category, (string) ( $obj->uuid ?? '' ) );
+			$collider->setAttribute( 'vrodos-box-collider', 'center: ' . implode( ' ', $center ) . '; size: ' . implode( ' ', $size ) );
+			$entity->appendChild( $collider );
+			$this->diagnostic_collider_count++;
+			return;
+		}
 		$uuid     = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
 		$role     = 'walkable-surface' === $category ? 'navmesh' : 'solid';
 		$hidden_collision = 'collision-proxy' === $category;

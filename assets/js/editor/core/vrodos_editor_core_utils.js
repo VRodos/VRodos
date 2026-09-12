@@ -206,7 +206,7 @@ VRODOS.importer = VRODOS.importer || {};
 
     function normalizeCompiledCollisionEnabled(value, resource) {
         if (value === undefined || value === null || value === '') {
-            return ['decoration', 'primitive-plane'].includes(getSceneAssetSourceCategory(resource));
+            return resolveSceneAssetCategory(resource) === 'decoration' || ['decoration', 'primitive-plane'].includes(getSceneAssetSourceCategory(resource));
         }
 
         const normalized = String(value).trim().toLowerCase();

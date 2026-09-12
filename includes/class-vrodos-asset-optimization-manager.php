@@ -50,6 +50,10 @@ class VRodos_Asset_Optimization_Manager {
 		return VRodos_Asset_Optimization_Service::resolve_editor_glb_load( $asset_id, $force_source );
 	}
 
+	public static function collision_bounds_for_asset( int $asset_id ) {
+		return VRodos_Asset_Optimization_Service::collision_bounds_for_asset( $asset_id );
+	}
+
 	public static function retry_editor_preview( int $asset_id ): array {
 		return VRodos_Asset_Optimization_Service::retry_editor_preview( $asset_id );
 	}

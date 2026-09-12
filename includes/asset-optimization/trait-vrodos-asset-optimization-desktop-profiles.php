@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** Queued immutable GLB families selected automatically for compiled runtimes. */
+require_once dirname( __DIR__ ) . '/class-vrodos-compiler-entity-policy.php';
+
 trait VRodos_Asset_Optimization_Desktop_Profiles {
 	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 4;
 	protected const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
@@ -30,13 +32,14 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$scene_slots[ $scene->scene_id ] = $current_slots;
 			foreach ( $current_scene_assets as $asset_id => $asset ) {
 				$assets[ $asset_id ] = [
+					'protections' => array_values( array_unique( array_merge( $asset['protections'], $assets[ $asset_id ]['protections'] ?? [] ), SORT_REGULAR ) ),
 					'protectGeometry' => ! empty( $asset['protectGeometry'] ) || ! empty( $assets[ $asset_id ]['protectGeometry'] ),
 					'slots' => array_values( array_unique( array_merge( (array) ( $assets[ $asset_id ]['slots'] ?? [] ), $current_slots ) ) ),
 				];
 			}
 		}
 		ksort( $assets, SORT_NUMERIC );
-		$total = array_sum( array_map( static fn( array $asset ): int => count( $asset['slots'] ), $assets ) );
+		$total = array_sum( array_map( static fn( array $asset ): int => count( $asset['slots'] ) * count( $asset['protections'] ), $assets ) );
 		$ready = 0;
 		$pending = [];
 		$errors = [];
@@ -75,6 +78,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			);
 			$family_state = null;
 
+			foreach ( $asset['protections'] as $protection ) {
 			foreach ( (array) $asset['slots'] as $slot ) {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
 					continue;
@@ -84,7 +88,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				$texture_max_size = absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) );
 				$is_standard_profile = $texture_max_size === self::runtime_derivative_texture_cap( $profile );
 				$options = [
-					'protectGeometry' => 'web-high' === $profile || ! empty( $asset['protectGeometry'] ),
+					'protectGeometry' => 'web-high' === $profile || $protection,
 					'textureMaxSize'  => $texture_max_size,
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => $profile,
@@ -173,6 +177,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					(string) ( $record['message'] ?? 'Web derivative is queued.' )
 				);
 				$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
+			}
 			}
 		}
 		$percent = self::desktop_profile_overall_percent( $profile_progress, $total );
@@ -443,14 +448,6 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$record = $options
 			? self::desktop_profile_record( $asset_id, $profile, $source, $options )
 			: self::desktop_profile_record( $asset_id, $profile );
-		if ( $options && empty( $options['protectGeometry'] ) && ! self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
-			$protected_options = array_merge( $options, [ 'protectGeometry' => true ] );
-			$protected_record = self::desktop_profile_record( $asset_id, $profile, $source, $protected_options );
-			if ( self::desktop_profile_record_is_ready( $protected_record, $source, $profile, $protected_options ) ) {
-				$record = $protected_record;
-				$options = $protected_options;
-			}
-		}
 		if ( ! $options ) {
 			$options = is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [];
 		}
@@ -482,9 +479,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 		$asset_id = absint( $value->asset_id ?? 0 );
 		if ( $asset_id && get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
-			$category = sanitize_title( (string) ( $value->category_slug ?? $value->category_name ?? '' ) );
-			$protect = in_array( $category, [ 'walkable-surface', 'collision-proxy' ], true ) || VRodos_Runtime_Settings_Contract::normalize_bool( $value->compiledCollisionEnabled ?? false, false );
+			$protect = ( new VRodos_Compiler_Entity_Policy() )->requires_protected_geometry( $value );
 			$assets[ $asset_id ] = [
+				'protections' => array_values( array_unique( array_merge( [ $protect ], $assets[ $asset_id ]['protections'] ?? [] ), SORT_REGULAR ) ),
 				'protectGeometry' => $protect || ! empty( $assets[ $asset_id ]['protectGeometry'] ),
 			];
 		}

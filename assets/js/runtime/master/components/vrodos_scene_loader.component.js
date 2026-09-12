@@ -55,7 +55,9 @@ AFRAME.registerComponent('vrodos-model-origin', {
             return;
         }
 
-        const centered = origin.createOffsetRoot(modelRoot, this.data);
+        const sourceCenter = this.el.getAttribute('data-vrodos-source-center');
+        const centered = origin.createOffsetRoot(modelRoot, this.data,
+            sourceCenter ? sourceCenter.trim().split(/\s+/).map(Number) : undefined);
         if (!centered.applied || !centered.root) {
             if (!this.warnedFailure) {
                 console.warn('VRodos: compiled GLB bounds could not be centered; the authored origin is unchanged.', {

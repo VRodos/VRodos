@@ -16,6 +16,7 @@ trait VRodos_Asset_Optimization_Lifecycle {
 		}
 		$content_changed = '' !== (string) ( $previous_snapshot['sha256'] ?? '' )
 			&& (string) $previous_snapshot['sha256'] !== (string) ( $source['sha256'] ?? '' );
+		VRodos_Asset_Collision_Bounds::ensure( $asset_id, $source );
 		$attachment_changed = absint( $previous_snapshot['attachmentId'] ?? 0 ) > 0
 			&& absint( $previous_snapshot['attachmentId'] ?? 0 ) !== absint( $source['attachmentId'] ?? 0 );
 		$legacy_records = is_array( $previous_meta ) && 2 !== absint( $previous_meta['schemaVersion'] ?? 0 );
@@ -47,6 +48,7 @@ trait VRodos_Asset_Optimization_Lifecycle {
 		self::cancel_asset_optimization_jobs( $asset_id );
 		self::delete_asset_derivative_cache( $asset_id );
 		delete_post_meta( $asset_id, self::SOURCE_META_KEY );
+		delete_post_meta( $asset_id, VRodos_Asset_Collision_Bounds::META_KEY );
 	}
 
 
@@ -58,6 +60,7 @@ trait VRodos_Asset_Optimization_Lifecycle {
 		self::cancel_asset_optimization_jobs( $post_id );
 		self::delete_asset_derivative_cache( $post_id );
 		delete_post_meta( $post_id, self::SOURCE_META_KEY );
+		delete_post_meta( $post_id, VRodos_Asset_Collision_Bounds::META_KEY );
 	}
 
 }

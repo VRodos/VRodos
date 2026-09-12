@@ -25,7 +25,7 @@
             : null;
     }
 
-    function createOffsetRoot(contentRoot, requestedMode) {
+    function createOffsetRoot(contentRoot, requestedMode, sourceCenter) {
         const three = getThree();
         const mode = normalizeMode(requestedMode);
 
@@ -62,7 +62,9 @@
             return { root: contentRoot, applied: false, mode, reason: 'empty-bounds' };
         }
 
-        const center = bounds.getCenter(new three.Vector3());
+        const center = Array.isArray(sourceCenter) && sourceCenter.length === 3
+            ? new three.Vector3(...sourceCenter)
+            : bounds.getCenter(new three.Vector3());
         if (!finiteCenter(center)) {
             offsetRoot.remove(contentRoot);
             if (originalParent) originalParent.add(contentRoot);
