@@ -335,6 +335,34 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 
+	foreach ( [ 'headset', 'desktop', 'pc-rendered-vr' ] as $plane_profile ) {
+		$plane_dom = new DOMDocument( '1.0', 'UTF-8' );
+		$plane_scene = $plane_dom->appendChild( $plane_dom->createElement( 'a-scene' ) );
+		$plane_assets = $plane_scene->appendChild( $plane_dom->createElement( 'a-assets' ) );
+		$renderer->render_scene_objects(
+			$plane_dom, $plane_scene, $plane_assets,
+			[ 'profileGround' => (object) [
+				'category_slug' => 'primitive-plane',
+				'planeWidth' => 130,
+				'planeDepth' => 190,
+				'surfaceTileSizeMeters' => 4,
+				'surfaceAlbedoUrl' => '/published/ground-albedo.jpg',
+				'surfaceNormalUrl' => '/published/ground-normal.jpg',
+				'surfaceNormalYSign' => 1,
+				'surfaceAntiTilingEnabled' => true,
+				'position' => [ 0, 0, 0 ],
+				'rotation' => [ -pi() / 2, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			] ],
+			1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => $plane_profile ], 'container' => $plane_scene ]
+		);
+		$profile_ground = $plane_dom->getElementsByTagName( 'a-plane' )->item( 0 );
+		vrodos_foundation_assert( ( 'headset' !== $plane_profile ) === $profile_ground->hasAttribute( 'vrodos-stochastic-tiling' ), $plane_profile . ' applies plane texture variation policy' );
+		$profile_material = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $profile_ground->getAttribute( 'material' ) );
+		vrodos_foundation_assert( isset( $profile_material['src'], $profile_material['normalMap'] ) && '32.5 47.5' === $profile_material['repeat'] && '32.5 47.5' === $profile_material['normalTextureRepeat'], $plane_profile . ' preserves plane PBR maps and authored tiling' );
+		vrodos_foundation_assert( 'navmesh' === $profile_ground->getAttribute( 'data-vrodos-collision-role' ), $plane_profile . ' preserves walkable plane collision' );
+	}
+
 	$profile_object = (object) [
 		'category_slug' => 'decoration',
 		'vrodosAssetOriginMode' => 'bounds-center',

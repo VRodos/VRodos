@@ -1261,7 +1261,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'class', 'override-materials hideable' );
 		$entity->setAttribute( 'data-vrodos-surface-tile-size', $this->number_attribute( $tile_size ) );
 		$anti_tiling_enabled = ! property_exists( $obj, 'surfaceAntiTilingEnabled' ) || ! in_array( $obj->surfaceAntiTilingEnabled, [ false, 0, '0', 'false' ], true );
-		if ( $has_albedo && $anti_tiling_enabled ) {
+		// Multi-sample stochastic PBR tiling overloads large ground surfaces on Quest.
+		// Headset builds retain the authored maps and repeats using standard sampling.
+		if ( $has_albedo && $anti_tiling_enabled && 'headset' !== $this->runtime_profile ) {
 			$seed = hexdec( hash( 'fnv1a32', $uuid ) ) / 4294967295;
 			$entity->setAttribute(
 				'vrodos-stochastic-tiling',

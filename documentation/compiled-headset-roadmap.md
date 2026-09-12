@@ -26,6 +26,7 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 - Keep native renderer antialiasing and hard shadow caps: directional `1024`, point/spot `512`.
 - Headset walkable collision requires BVH and uses the reduced blocker-ray budget.
 - Keep Takram procedural ground disabled for local Horizon scenes; authored terrain owns the ground surface.
+- Compile primitive planes with standard PBR texture tiling on `headset`; omit stochastic texture variation while preserving maps, repeats, shadows, and navigation/collision. In the 2026-09-12 Quest 2 test of scene 1099, disabling only stochastic variation removed right-eye flicker and restored control. Remaining low frame rate is unresolved; this is not full scene performance acceptance. Desktop and PC-rendered VR retain authored variation.
 - Add headset features back one at a time and validate them on Quest-class hardware before changing public defaults.
 
 ## Interaction Contract
