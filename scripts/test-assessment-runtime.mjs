@@ -706,10 +706,10 @@ function runCefrIdentityHarness() {
     assert(cefrRuntime.canStart() === true, "CEFR runtime should start with name and level");
 }
 
-// A headset user can page through a nine-word bank, revise answers, and submit
+// A headset user can page through the word bank, revise answers, and submit
 // only after every gap has a response. Authored answers must be masked in context.
 {
-    const answers = ["temple", "marble", "column", "the", "goddess", "statue", "steps", "pediment", "democracy"];
+    const answers = ["temple", "marble", "column", "the", "goddess", "statue", "steps", "pediment", "democracy", "Athens"];
     const text = answers.map((answer) => "Place " + answer + " here.").join(" ");
     let cursor = 0;
     const annotations = answers.map((answer, index) => {
@@ -717,7 +717,7 @@ function runCefrIdentityHarness() {
         cursor = start + answer.length;
         return { id: "gap-" + index, start, end: cursor, type: "blank", correctValue: answer };
     });
-    runtime.open(makePayload("Nine gaps", "Text", "Fill in the gaps", { text, annotations }));
+    runtime.open(makePayload("Ten gaps", "Text", "Fill in the gaps", { text, annotations }));
     const button = (label) => {
         const frame = activePanel.api.frames.at(-1);
         const pending = [frame.content, frame.footer];
@@ -763,10 +763,99 @@ function runCefrIdentityHarness() {
     assert(runtime.state.values["gap-7"] === answers[7], "Fill gaps: navigation lost response");
     click("Submit");
     assert(windowStub.__vrodosLastAssessmentResult.isCorrect === true, "Fill gaps: completed response graded incorrectly");
+
+    const phraseText = () => {
+        const pending = [activePanel.api.frames.at(-1).content];
+        while (pending.length) {
+            const node = pending.pop();
+            if (node.kind === "text" && node.options.color === "#0c4a6e") {
+                return node.options.text;
+            }
+            pending.push(...node.children);
+        }
+        throw new Error("Fill gaps: missing phrase text");
+    };
+    const numberedText = "1.The Parthenon is an ancient temple in Athens. Visit it today.\n2.The building is made of marble. Each column supports the roof.\n3.Η δημοκρατία ξεκίνησε εδώ.";
+    const numberedAnswers = ["temple", "marble", "column", "δημοκρατία"];
+    const numberedAnnotations = numberedAnswers.map((answer, index) => {
+        const start = numberedText.indexOf(answer);
+        return { id: "numbered-" + index, start, end: start + answer.length, type: "blank", correctValue: answer };
+    });
+    runtime.open(makePayload("Numbered phrases", "Text", "Fill in the gaps", { text: numberedText, annotations: numberedAnnotations }));
+    assert(runtime.state.phrases.length === 3, "Fill gaps: numbered questions split at internal punctuation");
+    assert(phraseText() === "1.The Parthenon is an ancient [1: ____] in Athens. Visit it today.", "Fill gaps: first question included neighboring text or lost its ending");
+    click("Next");
+    assert(phraseText() === "2.The building is made of [2: ____]. Each [3: ____] supports the roof.", "Fill gaps: second question was not isolated and masked");
+    click("Gap 3");
+    click("column");
+    assert(runtime.state.values["numbered-2"] === "column" && !runtime.state.values["numbered-1"], "Fill gaps: selected gap received the wrong response");
+    click("Gap 2");
+    click("marble");
+    assert(phraseText().includes("[2: marble]") && phraseText().includes("[3: column]"), "Fill gaps: multiple responses in a phrase were not retained");
+    click("Next");
+    assert(phraseText() === "3.Η [4: ____] ξεκίνησε εδώ.", "Fill gaps: Greek numbered phrase was not isolated");
+    click("Previous");
+    assert(runtime.state.values["numbered-2"] === "column", "Fill gaps: phrase navigation lost responses");
+
+    const longText = "The " + "very ancient ".repeat(30) + "temple stands in Athens.";
+    const start = longText.indexOf("temple");
+    runtime.open(makePayload("Long phrase", "Text", "Fill in the gaps", {
+        text: longText, annotations: [{ start, end: start + 6, type: "blank", correctValue: "temple" }]
+    }));
+    assert(phraseText() === longText.replace("temple", "[1: ____]"), "Fill gaps: long phrase was truncated");
+    for (const prefix of ["1.\t", "1.", "1.t"]) {
+        const tabText = prefix + "The temple stands in Athens.";
+        const tabStart = tabText.indexOf("temple");
+        runtime.open(makePayload("Tab formatting", "Text", "Fill in the gaps", {
+            text: tabText, annotations: [{ start: tabStart, end: tabStart + 6, type: "blank", correctValue: "temple" }]
+        }));
+        assert(!phraseText().includes("tThe") && !phraseText().includes("\\t"), "Fill gaps: tab artifact retained in numbered phrase");
+        assert(phraseText().includes("The [1: ____] stands in Athens."), "Fill gaps: tab cleanup shifted the annotation");
+    }
+    const legitimateText = "1.temple architecture matters.";
+    runtime.open(makePayload("Legitimate t", "Text", "Fill in the gaps", {
+        text: legitimateText, annotations: [{ start: 9, end: 21, type: "blank", correctValue: "architecture" }]
+    }));
+    assert(phraseText().startsWith("1.temple"), "Fill gaps: legitimate leading t was removed");
+    runtime.close("test");
+}
+
+// Both intact and damaged imports separate desktop bullet definitions and VR
+// phrases while preserving the authored answer spans in both renderers.
+{
+    const words = ["Athena", "Caryatids", "Poseidon", "Ionic style"];
+    const text = "•\tAthena – The goddess of wisdom and the city's protector.\n•\tCaryatids – Sculpted figures supporting columns.\n•\tPoseidon – The god of the sea.\n•\tIonic style – An order with scroll-shaped capitals.";
+    const annotations = words.map((word, index) => {
+        const start = text.indexOf(word);
+        return { id: "bullet-" + index, start, end: start + word.length, type: "blank", correctValue: word };
+    });
+    const damagedText = text.replace(/\n/g, "n").replace(/\t/g, "t");
+    for (const sourceText of [text, damagedText, damagedText.replace(/•/g, "*")]) {
+        const payload = makePayload("Bullet definitions", "Text", "Fill in the gaps", { text: sourceText, annotations });
+        const renderer = namespace.resolveRenderer(payload);
+        const desktop = {
+            payload, state: renderer.createState(payload),
+            body: { innerHTML: "", querySelectorAll: () => [] },
+            setStatus(status) { this.status = status; },
+            configurePrimaryAction(options) { this.primary = options; }
+        };
+        renderer.render(desktop);
+        assert((desktop.body.innerHTML.match(/<br \/>[•*]\t/g) || []).length === 3, "Desktop fill gaps: bullet definitions did not start on separate lines");
+        assert(!desktop.body.innerHTML.includes("n•t"), "Desktop fill gaps: control character residue rendered");
+        assert(desktop.primary.disabled && desktop.status === "Filled 0 of 4 blanks", "Desktop fill gaps: incorrect initial completion state");
+        runtime.open(payload);
+        assert(runtime.state.phrases.length === 4, "VR fill gaps: bullet definitions did not form separate phrases");
+        [desktop.state, runtime.state].forEach((state) => state.annotations.forEach((annotation, index) => {
+            assert(state.sourceText.slice(annotation.start, annotation.end) === words[index], "Fill gaps: control characters shifted answer offsets");
+        }));
+        runtime.close("test");
+    }
+    const ordinaryText = "1.temple architecture matters.\n•temple\n•tRNA is a molecule.";
+    assert(namespace.normalizeAssessmentLineBreaks(ordinaryText) === ordinaryText, "Fill gaps: list repair changed legitimate leading t characters");
 }
 
 runCefrIdentityHarness();
 await runSessionRuntimeHarness();
 await runSessionIdentityChangeHarness();
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 6} cases.`);
+console.log(`Assessment runtime harness passed ${fixtures.length + 16} cases.`);

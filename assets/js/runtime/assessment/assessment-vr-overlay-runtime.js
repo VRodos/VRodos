@@ -28,6 +28,7 @@
     const INFO_TEXT_FONT_SIZE = 26;
     const BINGO_PROMPT_FONT_SIZE = 28;
     const UNSUPPORTED_MESSAGE_FONT_SIZE = 30;
+    const FILL_GAP_WORDS_PER_PAGE = 9;
 
     function value(value, fallback) {
         const text = decodeDisplayText ? decodeDisplayText(value || "") : String(value || "");
@@ -1121,9 +1122,11 @@
                     mode,
                     sourceText,
                     annotations: blanks,
+                    phrases: createFillGapPhrases(sourceText, blanks),
                     values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
                     wordBank: shuffleArray(createFillGapWordBank(sourceText, blanks)),
                     activeBlankIndex: 0,
+                    activePhraseIndex: 0,
                     wordPage: 0,
                     assignmentsByBlank: {},
                     selectedWordId: ""
@@ -1171,29 +1174,46 @@
         state.selectedWordId = "";
     }
 
-    // Mask annotations before extracting context: authored text may contain answers.
-    function fillGapContext(state) {
-        let before = "";
-        let after = "";
-        let cursor = 0;
-        state.annotations.forEach((annotation, index) => {
-            const preceding = state.sourceText.slice(cursor, annotation.start);
-            const replacement = "[" + (index + 1) + ": " + (state.values[annotation.id] || "____") + "]";
-            if (index < state.activeBlankIndex) {
-                before += preceding + replacement;
-            } else if (index === state.activeBlankIndex) {
-                before += preceding;
-            } else {
-                after += preceding + replacement;
+    function createFillGapPhrases(sourceText, annotations) {
+        const boundaries = new Set([0, sourceText.length]);
+        // Numbered items own their entire phrase, including punctuation inside it.
+        const numbered = Array.from(sourceText.matchAll(/(?:^|\s)(\d+[.)])(?=\s*\p{L})/gu));
+        if (numbered.length) {
+            numbered.forEach((match) => boundaries.add(match.index + match[0].length - match[1].length));
+        } else {
+            for (const match of sourceText.matchAll(/\n+|[.!?;](?=\s|$)/g)) {
+                boundaries.add(match.index + match[0].length);
             }
+        }
+        const offsets = Array.from(boundaries)
+            .filter((offset) => !annotations.some((annotation) => offset > annotation.start && offset < annotation.end))
+            .sort((left, right) => left - right);
+        return offsets.slice(0, -1).map((start, index) => {
+            const end = offsets[index + 1];
+            const blankIndices = annotations.reduce((indices, annotation, blankIndex) => {
+                if (annotation.start >= start && annotation.end <= end) {
+                    indices.push(blankIndex);
+                }
+                return indices;
+            }, []);
+            return { start, end, blankIndices };
+        }).filter((phrase) => phrase.blankIndices.length);
+    }
+
+    // Only show this phrase, masking every authored answer within it.
+    function fillGapContext(state) {
+        const phrase = state.phrases[state.activePhraseIndex];
+        let text = "";
+        let cursor = phrase.start;
+        phrase.blankIndices.forEach((index) => {
+            const annotation = state.annotations[index];
+            text += state.sourceText.slice(cursor, annotation.start);
+            text += "[" + (index + 1) + ": " + (state.values[annotation.id] || "____") + "]";
             cursor = annotation.end;
         });
-        after += state.sourceText.slice(cursor);
-        before = before.replace(/^correct\s+word\s*:[\s\S]*?\n\s*\n/i, "");
-        const prefix = before.length > 100 ? "… " + before.slice(-100).replace(/^\S*\s/, "") : before;
-        const suffix = after.length > 100 ? after.slice(0, 100).replace(/\s\S*$/, "") + " …" : after;
-        const active = state.annotations[state.activeBlankIndex];
-        return prefix + "[" + (state.activeBlankIndex + 1) + ": " + (state.values[active.id] || "____") + "]" + suffix;
+        // Tabs are layout whitespace; source offsets remain unchanged.
+        return (text + state.sourceText.slice(cursor, phrase.end)).trim()
+            .replace(/\t/g, " ");
     }
 
     function renderFillGaps(runtime) {
@@ -1203,6 +1223,7 @@
             return;
         }
         const api = runtime.api;
+        const phrase = state.phrases[state.activePhraseIndex];
         const active = state.annotations[state.activeBlankIndex];
         const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
         const frame = createFrame(runtime, "Filled " + filledCount + " of " + state.annotations.length + " blanks", {
@@ -1222,21 +1243,22 @@
 
         const navigation = api.row(frame.content, { width: "100%", gapColumn: 16, height: 64, flexShrink: 0 });
         function navigate(delta) {
-            state.activeBlankIndex += delta;
+            state.activePhraseIndex += delta;
+            state.activeBlankIndex = state.phrases[state.activePhraseIndex].blankIndices[0];
             state.wordPage = 0;
             runtime.rerender();
         }
         api.button(navigation, {
             label: "Previous", width: 200, height: 64, textSize: 26,
-            disabled: state.activeBlankIndex === 0, onClick: () => navigate(-1)
+            disabled: state.activePhraseIndex === 0, onClick: () => navigate(-1)
         });
         api.text(navigation, {
-            text: "Gap " + (state.activeBlankIndex + 1) + " of " + state.annotations.length,
+            text: "Phrase " + (state.activePhraseIndex + 1) + " of " + state.phrases.length,
             fontSize: 30, fontWeight: 600, flexGrow: 1, textAlign: "center"
         });
         api.button(navigation, {
             label: "Next", width: 200, height: 64, textSize: 26,
-            disabled: state.activeBlankIndex === state.annotations.length - 1, onClick: () => navigate(1)
+            disabled: state.activePhraseIndex === state.phrases.length - 1, onClick: () => navigate(1)
         });
         const passage = api.container(frame.content, {
             width: "100%", height: 166, flexShrink: 0, overflow: "scroll", pointerEvents: "listener",
@@ -1246,9 +1268,24 @@
             text: fillGapContext(state), fontSize: 32, lineHeight: "130%", color: "#0c4a6e",
             width: "100%", flexShrink: 0
         });
+        if (phrase.blankIndices.length > 1) {
+            const gaps = api.row(frame.content, {
+                width: "100%", height: 64, flexShrink: 0, gapColumn: 16,
+                overflow: "scroll", pointerEvents: "listener"
+            });
+            phrase.blankIndices.forEach((index) => api.button(gaps, {
+                label: "Gap " + (index + 1), width: 160, height: 64, flexShrink: 0, textSize: 28,
+                variant: index === state.activeBlankIndex ? "primary" : (state.values[state.annotations[index].id] ? "positive" : "secondary"),
+                onClick: function () {
+                    state.activeBlankIndex = index;
+                    state.wordPage = 0;
+                    runtime.rerender();
+                }
+            }));
+        }
         const prompt = api.row(frame.content, { width: "100%", height: 56, flexShrink: 0 });
         api.text(prompt, {
-            text: state.values[active.id] ? "Answer placed. Change it or select Next." : "Choose a word for gap " + (state.activeBlankIndex + 1) + ".",
+            text: state.values[active.id] ? "Gap " + (state.activeBlankIndex + 1) + " filled. You can change the word." : "Choose a word for gap " + (state.activeBlankIndex + 1) + ".",
             fontSize: 26, flexGrow: 1
         });
         api.button(prompt, {
@@ -1262,15 +1299,16 @@
         });
         const assignedWordIds = new Set(Object.values(state.assignmentsByBlank));
         const availableWords = state.wordBank.filter((word) => !assignedWordIds.has(word.id) || state.assignmentsByBlank[active.id] === word.id);
-        const pageCount = Math.max(1, Math.ceil(availableWords.length / 4));
+        const pageCount = Math.max(1, Math.ceil(availableWords.length / FILL_GAP_WORDS_PER_PAGE));
         state.wordPage = Math.min(state.wordPage, pageCount - 1);
-        const choices = api.column(frame.content, { width: "100%", height: 172, flexShrink: 0, gapRow: 12 });
-        const words = availableWords.slice(state.wordPage * 4, state.wordPage * 4 + 4);
+        const choices = api.column(frame.content, { width: "100%", height: 264, flexShrink: 0, gapRow: 12 });
+        const pageStart = state.wordPage * FILL_GAP_WORDS_PER_PAGE;
+        const words = availableWords.slice(pageStart, pageStart + FILL_GAP_WORDS_PER_PAGE);
         // Fixed rows prevent the flex layout from collapsing controller targets.
-        for (let index = 0; index < words.length; index += 2) {
+        for (let index = 0; index < words.length; index += 3) {
             const row = api.row(choices, { width: "100%", height: 80, flexShrink: 0, gapColumn: 16 });
-            words.slice(index, index + 2).forEach((word) => api.button(row, {
-                label: word.text, width: "48%", height: 80, minHeight: 80, flexShrink: 0, textSize: 30,
+            words.slice(index, index + 3).forEach((word) => api.button(row, {
+                label: word.text, width: "31%", height: 80, minHeight: 80, flexShrink: 0, textSize: 30,
                 variant: state.assignmentsByBlank[active.id] === word.id ? "primary" : "secondary",
                 onClick: function () {
                     assignFillGapWord(state, word.id, active.id);
@@ -1502,7 +1540,7 @@
             const panelOptions = {
                 id: "vrodos-immerse-assessment-vr-overlay",
                 width: PANEL_WIDTH,
-                height: runtime.rendererKey === "Text" && runtime.state.mode === "fill-gaps" ? 1.58 : PANEL_HEIGHT,
+                height: runtime.rendererKey === "Text" && runtime.state.mode === "fill-gaps" ? 1.9 : PANEL_HEIGHT,
                 distance: 2.15,
                 verticalOffset: 0,
                 centerAtEyeLevel: true,

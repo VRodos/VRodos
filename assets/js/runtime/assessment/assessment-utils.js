@@ -61,6 +61,10 @@
     function normalizeAssessmentLineBreaks(value) {
         return String(value || "")
             .replace(/\r\n?/g, "\n")
+            // Restore identifiable imported list separators one character for
+            // one character so existing answer offsets remain valid.
+            .replace(/(^|[\s.!?;:])n(?=\s*(?:[•*]t|\d+[.)]t)(?:\p{Lu}\p{Ll}|_))/gu, "$1\n")
+            .replace(/(^|\n)(\s*(?:[•*]|\d+[.)]))t(?=\p{Lu}\p{Ll}|_)/gu, "$1$2\t")
             .replace(/([.!?;:])nn(?=\S)/g, "$1\n\n")
             .replace(/(:)n(?=\S)/g, "$1\n")
             .replace(/([.!?;:])n(?=\s*[Α-ΩΆΈΉΊΌΎΏ])/g, "$1\n")
