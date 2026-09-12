@@ -38,7 +38,7 @@ const context = vm.createContext({ THREE: { ...Three, TextureLoader, FileLoader 
 const components = {};
 context.AFRAME = { registerComponent: (name, definition) => { components[name] = definition; }, registerSystem() {} };
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js', import.meta.url), 'utf8'), context);
-const visualScheduler = Object.create(components['vrodos-atmosphere']); visualScheduler.init();
+const visualScheduler = Object.assign(Object.create(components['vrodos-atmosphere']), { el: new EventTarget() }); visualScheduler.init();
 context.window = context;
 context.location = { search: '' };
 context.VRODOSMaster = {};

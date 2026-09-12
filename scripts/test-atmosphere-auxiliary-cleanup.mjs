@@ -6,7 +6,7 @@ import * as THREE from 'three';
 const elements = new Map(), components = {};
 function entity() {
     const meshes = {};
-    return {
+    return Object.assign(new EventTarget(), {
         object3D: new THREE.Group(), style: {}, parentNode: null,
         setAttribute(key, value) { if (key === 'id') { this.id = value; elements.set(value, this); } },
         getObject3D: key => meshes[key],
@@ -14,7 +14,7 @@ function entity() {
         removeObject3D(key) { this.object3D.remove(meshes[key]); delete meshes[key]; },
         appendChild(child) { child.parentNode = this; this.object3D.add(child.object3D); },
         removeChild(child) { child.object3D.removeFromParent(); child.parentNode = null; elements.delete(child.id); }
-    };
+    });
 }
 const context = vm.createContext({ THREE, URLSearchParams, console,
     AFRAME: { registerComponent: (name, def) => { components[name] = def; }, registerSystem() {} },

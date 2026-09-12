@@ -11384,7 +11384,8 @@ ${shader.fragmentShader}` : withUniform;
         clearPmndrsHorizonSun(this);
         return;
       }
-      removeLegacySunSkyEntitiesForPmndrs(this);
+      const atmosphereRuntime = getAtmosphereRuntime(this);
+      if (atmosphereRuntime) atmosphereRuntime.cleanupLegacySky(removeLegacySunSkyEntitiesForPmndrs);
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
       if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const presentedAtmosphereConfig = getPresentedPmndrsAtmosphereConfig(this, atmosphereConfig);

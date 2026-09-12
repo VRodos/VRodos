@@ -83,10 +83,23 @@
             this.visualRefreshes = new Set();
             this.visualRefreshEpoch = 0;
             this.removed = false;
+            this.legacySkyCleanupDirty = true;
+            this.handleLegacySkyObjectSet = this.invalidateLegacySkyCleanup.bind(this);
+            this.handleLegacySkySettingsChange = (event) => {
+                if (event.target === this.el &&
+                    (event.detail.name === 'environment' || event.detail.name === 'scene-settings')) {
+                    this.invalidateLegacySkyCleanup();
+                }
+            };
+            // A-Frame object replacement events need capture for nested entities.
+            this.el.addEventListener('object3dset', this.handleLegacySkyObjectSet, true);
+            this.el.addEventListener('componentchanged', this.handleLegacySkySettingsChange, true);
+            this.el.addEventListener('componentinitialized', this.handleLegacySkySettingsChange, true);
         },
         bindSettings: function (settings, removeVisuals, disposeAuxiliaryVisuals) {
             if (this.settings === settings) return;
             this.settings = settings;
+            this.invalidateLegacySkyCleanup();
             this.removeVisuals = removeVisuals;
             this.disposeAuxiliaryVisuals = disposeAuxiliaryVisuals;
             settings.atmosphereRuntime = this;
@@ -94,6 +107,19 @@
                 configurable: true,
                 get: function () { return this.atmosphereRuntime.state; }
             });
+        },
+        invalidateLegacySkyCleanup: function () {
+            if (!this.removed) this.legacySkyCleanupDirty = true;
+        },
+        cleanupLegacySky: function (cleanup) {
+            if (this.removed || !this.legacySkyCleanupDirty) return;
+            this.legacySkyCleanupDirty = false;
+            try {
+                cleanup(this.settings);
+            } catch (err) {
+                this.legacySkyCleanupDirty = true;
+                throw err;
+            }
         },
         cancelVisualRefreshes: function () {
             this.visualRefreshEpoch++;
@@ -215,6 +241,10 @@
         },
         remove: function () {
             this.removed = true;
+            this.legacySkyCleanupDirty = false;
+            this.el.removeEventListener('object3dset', this.handleLegacySkyObjectSet, true);
+            this.el.removeEventListener('componentchanged', this.handleLegacySkySettingsChange, true);
+            this.el.removeEventListener('componentinitialized', this.handleLegacySkySettingsChange, true);
             try {
                 this.disposeResources();
             } finally {

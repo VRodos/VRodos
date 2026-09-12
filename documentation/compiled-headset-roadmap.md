@@ -56,6 +56,19 @@ Diagnostic smoke pass on 2026-07-02:
 
 ## Active Standalone Validation
 
+### Quest 2 sky cleanup optimization (2026-09-12)
+
+- `vrodos-atmosphere` owns legacy-sky cleanup invalidation. Stable PMNDRS frames skip the legacy DOM search and full-scene traversal; scene/model additions, object replacement, environment initialization/changes, and scene-settings changes invalidate cleanup. Initial and deferred sky handoff suppression remain in place. Removal detaches invalidation listeners.
+- Project `8979` / scene `8980` was recompiled with headset stereo PMNDRS, balanced sky, SMAA Medium, static shadows, fixed midday, and the existing resolution/reflection settings unchanged.
+- The original Quest 2 build produced a 900-frame baseline with mean frame interval `38.046 ms`, p50 `37.5 ms`, p95 `45.7 ms`, and a requested refresh rate of `90 Hz`. These are application frame intervals, not isolated GPU timings.
+- A separate live sky-order experiment changed only the sky mesh order from `-1000` to `1000`, gated during the trial by headset stereo eligibility and `VRODOS_DEBUG.headsetSkyAfterOpaque`. The XR session became hidden and stopped producing fresh frames, invalidating the comparison. Original ordering was restored; no sky-order flag or rendering change is retained in shipped code.
+- Follow-up capture of the rebuilt scene stayed visible for all 80 samples over 40 seconds. Its final 900 frames averaged `36.923 ms`, p50 `34.5 ms`, p95 `54.8 ms`, maximum `96.1 ms`, at the same requested `90 Hz` and `2880x1584` drawing buffer. It included 240 movement/yaw frames and ended with 49 geometries versus the baseline's 37, so these runs do not establish a causal performance improvement.
+- A separate five-second live check observed 127 cleanup eligibility checks, zero cleanup executions, and zero legacy-sky selector queries while XR remained visible and frame time advanced by `5005.6 ms`. Temporary instrumentation was restored immediately afterward.
+- No Quest performance gain or both-eye visual acceptance is claimed yet. Repeat before/after captures with matched viewpoint, loaded geometry, and movement, then validate controllers, media, spatial panels, and XR exit/re-entry before accepting the device result.
+- Verification: all 40 runtime tests and 27/28 compiler tests passed; the optimizer-progress compiler test requires the unavailable `toktx` executable. Lint had zero errors, runtime syntax/build configuration passed, and the rebuilt client rendered in the normal desktop browser without captured console errors. An isolated desktop-profile day/night smoke run could not initialize a renderer; day/night visual validation remains outstanding.
+
+### Remaining device checks
+
 - Retest HMD/controller tracking, locomotion, yaw, collision, video, POI, CEFR, assessment, modal ray clamp/restore, endpoint feedback, and immersive exit after relevant runtime changes.
 - Keep yaw-only authored-world rotation from clearing authored-space ground caches.
 - Investigate the remaining caveat where immersive right-stick yaw can make directional shadows appear player-relative. Treat it as shadow/light fitting, not a reason to change locomotion ownership.

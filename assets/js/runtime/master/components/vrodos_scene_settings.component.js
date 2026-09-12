@@ -3153,11 +3153,15 @@ AFRAME.registerComponent('scene-settings', {
             ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry()
             : null;
         this.handleQualityModelLoad = function () {
+            const atmosphere = this.el.components['vrodos-atmosphere'];
+            if (atmosphere) atmosphere.invalidateLegacySkyCleanup();
             this.markSceneCollectionsDirty();
             this.markShadowDirty('model-loaded');
             this.queueQualityRefresh(true);
         }.bind(this);
         this.handleSceneMutation = function () {
+            const atmosphere = this.el.components['vrodos-atmosphere'];
+            if (atmosphere) atmosphere.invalidateLegacySkyCleanup();
             this.markSceneCollectionsDirty();
             this.markShadowDirty('scene-mutation');
         }.bind(this);

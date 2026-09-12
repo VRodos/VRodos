@@ -31,7 +31,21 @@ context.VRODOS_TAKRAM_ATMOSPHERE = { PrecomputedTexturesGenerator: class {
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js', import.meta.url), 'utf8'), context);
 const definition = definitions['vrodos-atmosphere'];
 function fixture() {
-    const el = { object3D: new THREE.Scene(), renderer: {}, components: {} };
+    const listeners = new Map();
+    const el = { object3D: new THREE.Scene(), renderer: {}, components: {},
+        addEventListener(type, callback, capture = false) {
+            if (!listeners.has(type)) listeners.set(type, []);
+            listeners.get(type).push({ callback, capture });
+        },
+        removeEventListener(type, callback, capture = false) {
+            listeners.set(type, (listeners.get(type) || []).filter(item => item.callback !== callback || item.capture !== capture));
+        },
+        dispatch(type, { target = this, detail = {}, bubbles = false } = {}) {
+            for (const { callback, capture } of [...(listeners.get(type) || [])]) {
+                if (target === this || bubbles || capture) callback({ type, target, detail });
+            }
+        }
+    };
     const owner = Object.assign(Object.create(definition), { el }); owner.init();
     const settings = { el };
     el.components['scene-settings'] = settings; el.components['vrodos-atmosphere'] = owner;
@@ -41,7 +55,8 @@ function fixture() {
         visualDisposals++;
     };
     owner.bindSettings(settings, removeVisuals, () => {});
-    return { owner, settings, el, visualDisposals: () => visualDisposals };
+    return { owner, settings, el, visualDisposals: () => visualDisposals,
+        activeListeners: () => [...listeners.values()].reduce((count, items) => count + items.length, 0) };
 }
 const profile = (signature = 'balanced:float:higher:combined') => ({ signature, quality: 'balanced', type: THREE.FloatType,
     useFloat: true, combinedScattering: true, higherOrderScattering: true });
@@ -129,6 +144,75 @@ for (const name of ['vrodos_runtime_resources.js', 'vrodos_runtime_settings_help
     vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/' + name, import.meta.url), 'utf8'), context);
 }
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;
+// Use the real legacy-sky classification and removal against the owner's dirty policy.
+const visuals = context.VRODOSMaster.AtmosphereVisuals.create({ lighting: {}, cloud: {}, shadow: {}, host: {} });
+const cleanup = fixture();
+let queries = 0, traversals = 0;
+const legacyElements = [];
+cleanup.el.querySelectorAll = () => { queries++; return [...legacyElements]; };
+const traverse = cleanup.el.object3D.traverse.bind(cleanup.el.object3D);
+cleanup.el.object3D.traverse = callback => { traversals++; traverse(callback); };
+const authored = new THREE.Object3D(); authored.name = 'authored-building';
+const sky = new THREE.Object3D(); sky.name = 'default-sky'; sky.userData.vrodosPmndrsAtmosphereSky = true;
+const stars = new THREE.Object3D(); stars.name = 'default-sky'; stars.userData.vrodosPmndrsAtmosphereStars = true;
+cleanup.el.object3D.add(authored, sky, stars);
+function addLegacySky() {
+    const object = new THREE.Object3D(); object.el = { tagName: 'a-sun-sky' };
+    cleanup.el.object3D.add(object);
+    const element = { parentNode: { removeChild(child) { legacyElements.splice(legacyElements.indexOf(child), 1); } } };
+    legacyElements.push(element);
+    return object;
+}
+const cleanFrame = () => cleanup.owner.cleanupLegacySky(visuals.removeLegacySunSkyEntitiesForPmndrs);
+const initialLegacy = addLegacySky();
+cleanFrame();
+assert.equal(initialLegacy.visible, false); assert.equal(legacyElements.length, 0);
+for (let frame = 0; frame < 120; frame++) cleanFrame();
+assert.equal(queries, 1, 'unchanged XR frames must not scan the DOM');
+assert.equal(traversals, 1, 'unchanged XR frames must not traverse the scene');
+assert.ok(authored.visible && sky.visible && stars.visible, 'cleanup preserves authored objects and PMNDRS sky/stars');
+const lateLegacy = addLegacySky();
+cleanup.el.dispatch('object3dset', { target: lateLegacy.el });
+cleanFrame();
+assert.equal(lateLegacy.visible, false, 'capture observes non-bubbling late object additions');
+assert.equal(queries, 2); assert.equal(traversals, 2);
+for (const type of ['componentchanged', 'componentinitialized']) {
+    for (const name of ['environment', 'scene-settings']) {
+        initialLegacy.visible = true;
+        cleanup.el.dispatch(type, { detail: { name } });
+        cleanFrame();
+        assert.equal(initialLegacy.visible, false, `${name} ${type} must reapply legacy suppression`);
+    }
+}
+assert.equal(queries, 6);
+cleanup.el.dispatch('componentchanged', { target: authored, detail: { name: 'environment' } });
+cleanup.el.dispatch('componentchanged', { detail: { name: 'position' } });
+cleanup.el.dispatch('componentinitialized', { target: authored, detail: { name: 'environment' } });
+cleanup.el.dispatch('componentinitialized', { detail: { name: 'position' } });
+cleanFrame(); assert.equal(queries, 6, 'unrelated component changes must not reintroduce per-frame scans');
+cleanup.owner.invalidateLegacySkyCleanup();
+assert.throws(() => cleanup.owner.cleanupLegacySky(() => { throw new Error('cleanup interrupted'); }), /cleanup interrupted/);
+cleanFrame(); assert.equal(queries, 7, 'interrupted cleanup remains eligible for retry');
+cleanup.owner.invalidateLegacySkyCleanup();
+cleanup.owner.cleanupLegacySky(settings => {
+    visuals.removeLegacySunSkyEntitiesForPmndrs(settings);
+    cleanup.el.dispatch('object3dset', { target: authored });
+});
+cleanFrame(); assert.equal(queries, 9, 'mutations during cleanup remain dirty for the next frame');
+const reboundSettings = { el: cleanup.el };
+cleanup.owner.bindSettings(reboundSettings, () => {}, () => {});
+cleanFrame(); assert.equal(queries, 10, 'a replacement settings facade receives initial cleanup');
+const invalidate = cleanup.owner.invalidateLegacySkyCleanup.bind(cleanup.owner);
+let invalidationsAfterRemoval = 0;
+cleanup.owner.invalidateLegacySkyCleanup = () => { invalidationsAfterRemoval++; invalidate(); };
+cleanup.owner.remove();
+assert.equal(cleanup.activeListeners(), 0, 'removed atmosphere owners release their scene event subscriptions');
+cleanup.el.dispatch('object3dset', { target: authored });
+cleanup.el.dispatch('componentchanged', { detail: { name: 'environment' } });
+cleanup.el.dispatch('componentinitialized', { detail: { name: 'environment' } });
+cleanFrame();
+assert.equal(invalidationsAfterRemoval, 0, 'removed owners detach invalidation listeners');
+assert.equal(queries, 10, 'removed owners never scan or suppress newly added visuals');
 const integrated = fixture(); integrated.settings.data = { pmndrsAtmosphereQuality: 'performance' };
 // Bind through the facade rather than the fixture's cleanup double.
 integrated.owner.settings = null;
@@ -165,4 +249,4 @@ teardown.settings.disablePmndrsPostProcessing = () => sequence.push('pmndrs');
 removal.call(teardown.settings);
 assert.deepEqual(sequence, ['legacy', 'pmndrs', 'atmosphere']);
 assert.equal(teardownGenerator.disposals, 1); assert.equal(teardown.owner.settings, null);
-console.log('Atmosphere component ownership, replacement, async guards, precision fallback, scheduler cancellation, and teardown passed.');
+console.log('Atmosphere component ownership, legacy-sky invalidation, replacement, async guards, precision fallback, scheduler cancellation, and teardown passed.');
