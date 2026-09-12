@@ -4797,7 +4797,7 @@ AFRAME.registerComponent('custom-movement', {
             if (hasMovementInput) {
                 let movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
                 if (immersivePresenting && !flyMode) {
-                    movementSpeed *= 1.25;
+                    movementSpeed *= 1.875;
                 }
                 if (!flyMode && this.isAirborne()) {
                     movementSpeed *= this.airControl;

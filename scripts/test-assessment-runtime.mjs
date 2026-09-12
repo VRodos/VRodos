@@ -706,8 +706,67 @@ function runCefrIdentityHarness() {
     assert(cefrRuntime.canStart() === true, "CEFR runtime should start with name and level");
 }
 
+// A headset user can page through a nine-word bank, revise answers, and submit
+// only after every gap has a response. Authored answers must be masked in context.
+{
+    const answers = ["temple", "marble", "column", "the", "goddess", "statue", "steps", "pediment", "democracy"];
+    const text = answers.map((answer) => "Place " + answer + " here.").join(" ");
+    let cursor = 0;
+    const annotations = answers.map((answer, index) => {
+        const start = text.indexOf(answer, cursor);
+        cursor = start + answer.length;
+        return { id: "gap-" + index, start, end: cursor, type: "blank", correctValue: answer };
+    });
+    runtime.open(makePayload("Nine gaps", "Text", "Fill in the gaps", { text, annotations }));
+    const button = (label) => {
+        const frame = activePanel.api.frames.at(-1);
+        const pending = [frame.content, frame.footer];
+        while (pending.length) {
+            const node = pending.pop();
+            if (node.kind === "button" && node.options.label === label) {
+                return node.options;
+            }
+            pending.push(...node.children);
+        }
+        return null;
+    };
+    const click = (label) => {
+        const target = button(label);
+        assert(target && !target.disabled, "Fill gaps: unavailable action " + label);
+        target.onClick();
+    };
+    const choose = (answer) => {
+        while (!button("Back words").disabled) {
+            click("Back words");
+        }
+        while (!button(answer)) {
+            click("More words");
+        }
+        click(answer);
+    };
+    const contextText = activePanel.api.texts.find((entry) => entry.color === "#0c4a6e").text;
+    assert(contextText.includes("Place [1: ____] here."), "Fill gaps: missing masked passage context");
+    assert(!contextText.includes("temple"), "Fill gaps: authored answer leaked in passage");
+    assert(button("Submit").disabled, "Fill gaps: incomplete submission enabled");
+    choose(answers[0]);
+    click("Clear");
+    assert(runtime.state.values["gap-0"] === "", "Fill gaps: clear retained a response");
+    choose(answers[1]);
+    choose(answers[0]);
+    assert(runtime.state.values["gap-0"] === answers[0], "Fill gaps: replacement failed");
+    for (let index = 1; index < answers.length; index += 1) {
+        click("Next");
+        assert(!button(answers[0]), "Fill gaps: assigned word offered for reuse");
+        choose(answers[index]);
+    }
+    click("Previous");
+    assert(runtime.state.values["gap-7"] === answers[7], "Fill gaps: navigation lost response");
+    click("Submit");
+    assert(windowStub.__vrodosLastAssessmentResult.isCorrect === true, "Fill gaps: completed response graded incorrectly");
+}
+
 runCefrIdentityHarness();
 await runSessionRuntimeHarness();
 await runSessionIdentityChangeHarness();
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 5} cases.`);
+console.log(`Assessment runtime harness passed ${fixtures.length + 6} cases.`);

@@ -6703,7 +6703,9 @@
             sourceText,
             annotations: blanks,
             values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
-            wordBank: createFillGapWordBank(sourceText, blanks),
+            wordBank: shuffleArray(createFillGapWordBank(sourceText, blanks)),
+            activeBlankIndex: 0,
+            wordPage: 0,
             assignmentsByBlank: {},
             selectedWordId: ""
           };
@@ -6738,11 +6740,35 @@
       Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
         if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
           delete state.assignmentsByBlank[existingBlankId];
+          state.values[existingBlankId] = "";
         }
       });
       state.assignmentsByBlank[blankId] = wordId;
       state.values[blankId] = word.text;
       state.selectedWordId = "";
+    }
+    function fillGapContext(state) {
+      let before = "";
+      let after = "";
+      let cursor = 0;
+      state.annotations.forEach((annotation, index) => {
+        const preceding = state.sourceText.slice(cursor, annotation.start);
+        const replacement = "[" + (index + 1) + ": " + (state.values[annotation.id] || "____") + "]";
+        if (index < state.activeBlankIndex) {
+          before += preceding + replacement;
+        } else if (index === state.activeBlankIndex) {
+          before += preceding;
+        } else {
+          after += preceding + replacement;
+        }
+        cursor = annotation.end;
+      });
+      after += state.sourceText.slice(cursor);
+      before = before.replace(/^correct\s+word\s*:[\s\S]*?\n\s*\n/i, "");
+      const prefix = before.length > 100 ? "\u2026 " + before.slice(-100).replace(/^\S*\s/, "") : before;
+      const suffix = after.length > 100 ? after.slice(0, 100).replace(/\s\S*$/, "") + " \u2026" : after;
+      const active = state.annotations[state.activeBlankIndex];
+      return prefix + "[" + (state.activeBlankIndex + 1) + ": " + (state.values[active.id] || "____") + "]" + suffix;
     }
     function renderFillGaps(runtime) {
       const state = runtime.state;
@@ -6750,65 +6776,134 @@
         renderUnsupported(runtime, "This fill-in-the-gaps assessment is empty.");
         return;
       }
+      const api = runtime.api;
+      const active = state.annotations[state.activeBlankIndex];
       const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
       const frame = createFrame(runtime, "Filled " + filledCount + " of " + state.annotations.length + " blanks", {
         label: "Submit",
         disabled: filledCount !== state.annotations.length,
         onClick: function() {
+          if (state.annotations.some((annotation) => !normalizeFreeText(state.values[annotation.id] || ""))) {
+            return;
+          }
           const blanks = namespace.buildFillGapAnswers(state);
           runtime.finish(
             { blanks, variant: "fill-in-the-gaps" },
             { isCorrect: namespace.gradeResponses(blanks) }
           );
         }
+      }, { scrollContent: false, headerHeight: 96, footerHeight: 80, paddingX: 36, paddingY: 16, gapY: 12 });
+      const navigation = api.row(frame.content, { width: "100%", gapColumn: 16, height: 64, flexShrink: 0 });
+      function navigate(delta) {
+        state.activeBlankIndex += delta;
+        state.wordPage = 0;
+        runtime.rerender();
+      }
+      api.button(navigation, {
+        label: "Previous",
+        width: 200,
+        height: 64,
+        textSize: 26,
+        disabled: state.activeBlankIndex === 0,
+        onClick: () => navigate(-1)
       });
-      addInfo(runtime.api, frame, "Tap a word, then tap the blank where it belongs.");
-      const assignedWordIds = new Set(Object.values(state.assignmentsByBlank || {}));
-      const availableWords = state.wordBank.filter((word) => !assignedWordIds.has(word.id));
-      runtime.api.text(frame.content, {
-        text: "Word bank",
-        color: "#475569",
-        fontSize: 24,
-        fontWeight: 600
+      api.text(navigation, {
+        text: "Gap " + (state.activeBlankIndex + 1) + " of " + state.annotations.length,
+        fontSize: 30,
+        fontWeight: 600,
+        flexGrow: 1,
+        textAlign: "center"
       });
-      addButtonGrid(runtime.api, frame.content, availableWords.map((word) => ({
-        label: word.text,
-        variant: state.selectedWordId === word.id ? "primary" : "secondary",
+      api.button(navigation, {
+        label: "Next",
+        width: 200,
+        height: 64,
+        textSize: 26,
+        disabled: state.activeBlankIndex === state.annotations.length - 1,
+        onClick: () => navigate(1)
+      });
+      const passage = api.container(frame.content, {
+        width: "100%",
+        height: 166,
+        flexShrink: 0,
+        overflow: "scroll",
+        pointerEvents: "listener",
+        backgroundColor: "#e0f2fe",
+        borderRadius: 16,
+        padding: 18
+      });
+      api.text(passage, {
+        text: fillGapContext(state),
+        fontSize: 32,
+        lineHeight: "130%",
+        color: "#0c4a6e",
+        width: "100%",
+        flexShrink: 0
+      });
+      const prompt = api.row(frame.content, { width: "100%", height: 56, flexShrink: 0 });
+      api.text(prompt, {
+        text: state.values[active.id] ? "Answer placed. Change it or select Next." : "Choose a word for gap " + (state.activeBlankIndex + 1) + ".",
+        fontSize: 26,
+        flexGrow: 1
+      });
+      api.button(prompt, {
+        label: "Clear",
+        width: 140,
+        height: 56,
+        textSize: 26,
+        disabled: !state.values[active.id],
         onClick: function() {
-          state.selectedWordId = state.selectedWordId === word.id ? "" : word.id;
+          delete state.assignmentsByBlank[active.id];
+          state.values[active.id] = "";
+          state.wordPage = 0;
           runtime.rerender();
         }
-      })), {
-        columns: 4,
-        itemHeight: 58,
-        textSize: 20
       });
-      runtime.api.text(frame.content, {
-        text: "Blanks",
-        color: "#475569",
-        fontSize: 24,
-        fontWeight: 600
-      });
-      addButtonGrid(runtime.api, frame.content, state.annotations.map((annotation, index) => {
-        const assignedWordId = state.assignmentsByBlank[annotation.id] || "";
-        const assigned = state.wordBank.find((word) => word.id === assignedWordId);
-        return {
-          label: assigned ? assigned.text : "Blank " + (index + 1),
-          variant: assigned ? "positive" : "secondary",
+      const assignedWordIds = new Set(Object.values(state.assignmentsByBlank));
+      const availableWords = state.wordBank.filter((word) => !assignedWordIds.has(word.id) || state.assignmentsByBlank[active.id] === word.id);
+      const pageCount = Math.max(1, Math.ceil(availableWords.length / 4));
+      state.wordPage = Math.min(state.wordPage, pageCount - 1);
+      const choices = api.column(frame.content, { width: "100%", height: 172, flexShrink: 0, gapRow: 12 });
+      const words = availableWords.slice(state.wordPage * 4, state.wordPage * 4 + 4);
+      for (let index = 0; index < words.length; index += 2) {
+        const row = api.row(choices, { width: "100%", height: 80, flexShrink: 0, gapColumn: 16 });
+        words.slice(index, index + 2).forEach((word) => api.button(row, {
+          label: word.text,
+          width: "48%",
+          height: 80,
+          minHeight: 80,
+          flexShrink: 0,
+          textSize: 30,
+          variant: state.assignmentsByBlank[active.id] === word.id ? "primary" : "secondary",
           onClick: function() {
-            if (!state.selectedWordId) {
-              delete state.assignmentsByBlank[annotation.id];
-              state.values[annotation.id] = "";
-            } else {
-              assignFillGapWord(state, state.selectedWordId, annotation.id);
-            }
+            assignFillGapWord(state, word.id, active.id);
             runtime.rerender();
           }
-        };
-      }), {
-        columns: 2,
-        itemHeight: 64,
-        textSize: 22
+        }));
+      }
+      const pages = api.row(frame.content, { width: "100%", height: 60, flexShrink: 0, gapColumn: 16 });
+      api.button(pages, {
+        label: "Back words",
+        width: 220,
+        height: 60,
+        textSize: 26,
+        disabled: state.wordPage === 0,
+        onClick: function() {
+          state.wordPage -= 1;
+          runtime.rerender();
+        }
+      });
+      api.text(pages, { text: "Words " + (state.wordPage + 1) + " / " + pageCount, fontSize: 26, flexGrow: 1, textAlign: "center" });
+      api.button(pages, {
+        label: "More words",
+        width: 220,
+        height: 60,
+        textSize: 26,
+        disabled: state.wordPage === pageCount - 1,
+        onClick: function() {
+          state.wordPage += 1;
+          runtime.rerender();
+        }
       });
     }
     function renderHighlight(runtime) {
@@ -6995,7 +7090,7 @@
         const panelOptions = {
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
-          height: PANEL_HEIGHT,
+          height: runtime.rendererKey === "Text" && runtime.state.mode === "fill-gaps" ? 1.58 : PANEL_HEIGHT,
           distance: 2.15,
           verticalOffset: 0,
           centerAtEyeLevel: true,
