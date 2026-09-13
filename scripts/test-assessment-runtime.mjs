@@ -706,6 +706,88 @@ function runCefrIdentityHarness() {
     assert(cefrRuntime.canStart() === true, "CEFR runtime should start with name and level");
 }
 
+async function runAssessmentFreeSceneHarness() {
+    const savedSession = JSON.stringify({
+        attemptUuid: "existing-attempt",
+        displayName: "Ada",
+        cefrLevel: "B1",
+        pendingWrites: [{ id: "saved-result", path: "assessment-results", payload: {} }]
+    });
+    const store = new Map([["vrodos:immerse-results:7", savedSession]]);
+    let storageReads = 0;
+    const writes = [];
+    const sceneWindow = {
+        console,
+        location: { search: "?vrodos_new_attempt=1" },
+        sessionStorage: {
+            getItem(key) { storageReads += 1; return store.get(key) || null; },
+            setItem(key, value) { store.set(key, value); },
+            removeItem(key) { store.delete(key); }
+        },
+        VRODOS_IMMERSE_RESULTS_CONFIG: {
+            enabled: false,
+            restUrl: "https://example.test/wp-json/vrodos-immerse/v1/results",
+            token: "scene-token",
+            projectId: 7,
+            sceneId: 12,
+            expectedAssessments: []
+        },
+        atob(value) { return Buffer.from(value, "base64").toString("binary"); },
+        fetch(url) { writes.push(url); return Promise.resolve({ ok: true }); }
+    };
+    sceneWindow.window = sceneWindow;
+    const sceneContext = vm.createContext({ window: sceneWindow, console, URLSearchParams, TextDecoder, Uint8Array });
+    ["assessment-utils.js", "assessment-session-runtime.js", "assessment-cefr-runtime.js"].forEach((file) => {
+        vm.runInContext(readFileSync(resolve(root, "assets/js/runtime/assessment", file), "utf8"), sceneContext, { filename: file });
+    });
+    const session = sceneWindow.VRodosImmerseAssessment.getAssessmentSessionRuntime();
+    const cefr = sceneWindow.VRodosImmerseAssessment.getCefrRuntime();
+    assert(!session.isEnabled() && !session.hasIdentity(), "Assessment-free scene restored a participant identity");
+    assert(storageReads === 0, "Assessment-free scene read a stored results session");
+    assert(!cefr.applyStoredIdentityIfAvailable(), "Assessment-free scene applied a stored participant identity");
+    cefr.showStoredSessionPrompt({ displayName: "Ada", cefrLevel: "B1" });
+    assert(!cefr.sessionPromptShown && !cefr.promptScheduled, "Assessment-free scene without attachments opened a dialog");
+    assert(!session.setIdentity("Ada", "B1"), "Disabled results session accepted participant identity");
+    session.enqueue("test", "attempts/start", {});
+    session.recordAssessmentResult({ assetId: 1 }, { isCorrect: true });
+    await session.ensureAttemptStarted();
+    await session.flushPending();
+    session.clearSession();
+    session.save();
+    assert(writes.length === 0 && session.state.pendingWrites.length === 0, "Assessment-free scene submitted or queued results");
+    assert(store.size === 1 && store.get("vrodos:immerse-results:7") === savedSession, "Assessment-free scene changed the project's stored results session");
+
+    const attachment = (levels) => {
+        const attributes = { "data-immerse-cefr-levels": Buffer.from(JSON.stringify(levels)).toString("base64") };
+        const classes = new Set(["raycastable"]);
+        return {
+            dataset: {},
+            classList: { contains: (name) => classes.has(name), add: (name) => classes.add(name), remove: (name) => classes.delete(name) },
+            getAttribute: (name) => attributes[name] || null,
+            setAttribute: (name, value) => { attributes[name] = value; },
+            removeAttribute: (name) => { delete attributes[name]; }
+        };
+    };
+    let prompts = 0;
+    cefr.schedulePrompt = () => { prompts += 1; };
+    const a1 = attachment(["A1"]), b1 = attachment(["B1"]);
+    cefr.register(a1);
+    cefr.register(b1);
+    assert(prompts > 0 && !cefr.requiresParticipantName(), "CEFR attachments did not retain a level-only prompt");
+    const api = createSpatialApi();
+    let nameInputs = 0;
+    api.inputField = () => { nameInputs += 1; };
+    cefr.renderVrPrompt(api);
+    assert(nameInputs === 0 && ["A1", "A2", "B1", "B2"].every((level) => api.buttons.some((button) => button.label === level)), "Immersive CEFR-only prompt requested a name or lost its levels");
+    cefr.selectLevel("A1");
+    assert(cefr.canStart(), "CEFR-only selection required a participant name");
+    cefr.hidePrompt = () => {};
+    cefr.startExperience();
+    assert(a1.getAttribute("visible") === "true" && a1.classList.contains("raycastable"), "Matching CEFR attachment stayed hidden");
+    assert(b1.getAttribute("visible") === "false" && !b1.classList.contains("raycastable"), "Nonmatching CEFR attachment remained selectable");
+    assert(writes.length === 0 && !session.hasIdentity(), "CEFR-only start created a results session");
+}
+
 // A headset user can page through the word bank, revise answers, and submit
 // only after every gap has a response. Authored answers must be masked in context.
 {
@@ -855,6 +937,7 @@ function runCefrIdentityHarness() {
 }
 
 runCefrIdentityHarness();
+await runAssessmentFreeSceneHarness();
 await runSessionRuntimeHarness();
 await runSessionIdentityChangeHarness();
 

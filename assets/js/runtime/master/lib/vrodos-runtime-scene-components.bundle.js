@@ -3403,7 +3403,7 @@
       }
       const config = getConfig();
       const runtime = {
-        state: loadState(config),
+        state: isEnabled() ? loadState(config) : defaultState(config),
         flushing: false,
         bootstrapped: false
       };
@@ -3411,6 +3411,9 @@
         return isEnabled();
       };
       runtime.save = function() {
+        if (!isEnabled()) {
+          return;
+        }
         runtime.state.updatedAt = nowIso();
         const store = storage();
         if (!store) {
@@ -3438,7 +3441,7 @@
         return Boolean(normalizeDisplayName(displayName) && normalizeLevel(cefrLevel));
       };
       runtime.hasIdentity = function() {
-        return runtime.validateIdentity(runtime.state.displayName, runtime.state.cefrLevel);
+        return isEnabled() && runtime.validateIdentity(runtime.state.displayName, runtime.state.cefrLevel);
       };
       runtime.getIdentity = function() {
         return {
@@ -3447,6 +3450,9 @@
         };
       };
       runtime.clearSession = function() {
+        if (!isEnabled()) {
+          return runtime.getIdentity();
+        }
         const cfg = getConfig();
         const store = storage();
         if (store) {
@@ -3461,6 +3467,9 @@
         return runtime.getIdentity();
       };
       runtime.setIdentity = function(displayName, cefrLevel) {
+        if (!isEnabled()) {
+          return false;
+        }
         const normalizedName = normalizeDisplayName(displayName);
         const normalizedLevel = normalizeLevel(cefrLevel);
         if (!normalizedName || !normalizedLevel) {
@@ -3509,6 +3518,9 @@
         };
       };
       runtime.enqueue = function(id, path, payload) {
+        if (!isEnabled()) {
+          return;
+        }
         const pending = runtime.state.pendingWrites || [];
         const existingIndex = pending.findIndex((item2) => item2 && item2.id === id);
         const item = {
@@ -3663,7 +3675,7 @@
         }
       };
       runtime.bootstrap = function() {
-        if (runtime.bootstrapped) {
+        if (runtime.bootstrapped || !isEnabled()) {
           return;
         }
         runtime.bootstrapped = true;
@@ -3815,7 +3827,7 @@
       };
       runtime.applyStoredIdentityIfAvailable = function() {
         const session = getAssessmentSessionRuntime();
-        if (!session || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
+        if (!session || !session.isEnabled() || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
           return false;
         }
         const identity = typeof session.getIdentity === "function" ? session.getIdentity() : {};
@@ -4117,7 +4129,7 @@
         return root;
       };
       runtime.showStoredSessionPrompt = function(identity) {
-        if (runtime.sessionPromptResolved || runtime.sessionPromptShown || runtime.isImmersiveVrActive()) {
+        if (!runtime.requiresParticipantName() || runtime.sessionPromptResolved || runtime.sessionPromptShown || runtime.isImmersiveVrActive()) {
           return;
         }
         const normalizedLevel = normalizeLevel(identity && identity.cefrLevel || "");

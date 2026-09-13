@@ -154,7 +154,7 @@
 
         runtime.applyStoredIdentityIfAvailable = function () {
             const session = getAssessmentSessionRuntime();
-            if (!session || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
+            if (!session || !session.isEnabled() || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
                 return false;
             }
             const identity = typeof session.getIdentity === "function" ? session.getIdentity() : {};
@@ -497,7 +497,7 @@
         };
 
         runtime.showStoredSessionPrompt = function (identity) {
-            if (runtime.sessionPromptResolved || runtime.sessionPromptShown || runtime.isImmersiveVrActive()) {
+            if (!runtime.requiresParticipantName() || runtime.sessionPromptResolved || runtime.sessionPromptShown || runtime.isImmersiveVrActive()) {
                 return;
             }
             const normalizedLevel = normalizeLevel(identity && identity.cefrLevel || "");

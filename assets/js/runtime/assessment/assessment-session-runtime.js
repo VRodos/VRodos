@@ -238,7 +238,7 @@
 
         const config = getConfig();
         const runtime = {
-            state: loadState(config),
+            state: isEnabled() ? loadState(config) : defaultState(config),
             flushing: false,
             bootstrapped: false
         };
@@ -248,6 +248,9 @@
         };
 
         runtime.save = function () {
+            if (!isEnabled()) {
+                return;
+            }
             runtime.state.updatedAt = nowIso();
             const store = storage();
             if (!store) {
@@ -279,7 +282,7 @@
         };
 
         runtime.hasIdentity = function () {
-            return runtime.validateIdentity(runtime.state.displayName, runtime.state.cefrLevel);
+            return isEnabled() && runtime.validateIdentity(runtime.state.displayName, runtime.state.cefrLevel);
         };
 
         runtime.getIdentity = function () {
@@ -290,6 +293,9 @@
         };
 
         runtime.clearSession = function () {
+            if (!isEnabled()) {
+                return runtime.getIdentity();
+            }
             const cfg = getConfig();
             const store = storage();
             if (store) {
@@ -306,6 +312,9 @@
         };
 
         runtime.setIdentity = function (displayName, cefrLevel) {
+            if (!isEnabled()) {
+                return false;
+            }
             const normalizedName = normalizeDisplayName(displayName);
             const normalizedLevel = normalizeLevel(cefrLevel);
             if (!normalizedName || !normalizedLevel) {
@@ -358,6 +367,9 @@
         };
 
         runtime.enqueue = function (id, path, payload) {
+            if (!isEnabled()) {
+                return;
+            }
             const pending = runtime.state.pendingWrites || [];
             const existingIndex = pending.findIndex((item) => item && item.id === id);
             const item = {
@@ -523,7 +535,7 @@
         };
 
         runtime.bootstrap = function () {
-            if (runtime.bootstrapped) {
+            if (runtime.bootstrapped || !isEnabled()) {
                 return;
             }
             runtime.bootstrapped = true;
