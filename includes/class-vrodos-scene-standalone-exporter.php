@@ -121,6 +121,11 @@ final class VRodos_Scene_Standalone_Exporter {
 			}
 
 			$files[ $resolved['archive'] ] = $resolved['source'];
+			// Spatial UI assembles these URLs from a shared base, so literal URL scanning misses them.
+			if ( 'vrodos-runtime-spatial-ui.bundle.js' === basename( $resolved['source'] ) ) {
+				$pending[] = VRodos_Path_Manager::plugin_url() . 'assets/vendor/fonts/noto-sans/';
+				$pending[] = VRodos_Path_Manager::plugin_url() . 'assets/vendor/zappar-msdf-generator/';
+			}
 			$extension = strtolower( (string) pathinfo( $resolved['source'], PATHINFO_EXTENSION ) );
 			if ( ! in_array( $extension, [ 'css', 'js', 'mjs' ], true ) || isset( $scanned_files[ $resolved['source'] ] ) ) {
 				continue;
@@ -249,11 +254,15 @@ final class VRodos_Scene_Standalone_Exporter {
 		$upload_base_url = trailingslashit( (string) $upload_dir['baseurl'] );
 		$upload_url_path = trailingslashit( (string) wp_parse_url( $upload_base_url, PHP_URL_PATH ) );
 
-		$html = str_replace(
-			[ $plugin_url, $plugin_url_path, $upload_base_url, $upload_url_path, '../../assets/' ],
-			[ self::PLUGIN_ARCHIVE_ROOT, self::PLUGIN_ARCHIVE_ROOT, 'wp-content/uploads/', 'wp-content/uploads/', self::PLUGIN_ARCHIVE_ROOT . 'assets/' ],
-			$html
-		);
+		// Module imports require an explicit relative URL, including on subdirectory hosts.
+		// Replace each original URL once so matching path prefixes cannot rewrite the result.
+		$html = strtr( $html, [
+			$plugin_url       => './' . self::PLUGIN_ARCHIVE_ROOT,
+			$plugin_url_path  => './' . self::PLUGIN_ARCHIVE_ROOT,
+			$upload_base_url  => './wp-content/uploads/',
+			$upload_url_path  => './wp-content/uploads/',
+			'../../assets/'   => './' . self::PLUGIN_ARCHIVE_ROOT . 'assets/',
+		] );
 
 		$html = preg_replace_callback(
 			'/var context = (\{.*?\});/s',
