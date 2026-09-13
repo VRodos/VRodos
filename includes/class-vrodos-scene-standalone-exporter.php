@@ -71,7 +71,7 @@ final class VRodos_Scene_Standalone_Exporter {
 
 			$zip->addFromString( self::README_FILENAME, $this->readme( $scene_id ) );
 			$zip->addFromString( self::SERVER_FILENAME, $this->server_script() );
-			$zip->addFromString( 'start.cmd', "@echo off\r\nnode server.mjs\r\npause\r\n" );
+			$zip->addFromString( 'start.cmd', "@echo off\r\ncd /d \"%~dp0\"\r\nnode server.mjs\r\npause\r\n" );
 		} catch ( Throwable $error ) {
 			$zip->close();
 			wp_delete_file( $temp_path );
@@ -289,7 +289,8 @@ final class VRodos_Scene_Standalone_Exporter {
 			. "Run locally on Windows:\r\n"
 			. "1. Install Node.js if it is not already installed.\r\n"
 			. "2. Double-click start.cmd.\r\n"
-			. "3. Open http://localhost:8080/ if the browser does not open automatically.\r\n\r\n"
+			. "3. Open http://localhost:8080/ if the browser does not open automatically.\r\n"
+			. "4. Close the terminal window or press Ctrl+C to stop the server.\r\n\r\n"
 			. "Run locally on macOS/Linux:\r\n"
 			. "1. In a terminal, run: node server.mjs\r\n"
 			. "2. Open http://localhost:8080/\r\n\r\n"
@@ -311,6 +312,19 @@ import { spawn } from 'node:child_process';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const port = Number.parseInt(process.env.VRODOS_STANDALONE_PORT || '8080', 10);
+
+// Windows terminals can leave Node running after their shell exits.
+if (process.platform === 'win32') {
+  const parentPid = process.ppid;
+  setInterval(() => {
+    try {
+      process.kill(parentPid, 0);
+    } catch (error) {
+      if (error.code === 'ESRCH') process.exit(0);
+    }
+  }, 1000).unref();
+}
+
 const mimeTypes = {
   '.bin': 'application/octet-stream', '.css': 'text/css; charset=utf-8',
   '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.hdr': 'application/octet-stream',
