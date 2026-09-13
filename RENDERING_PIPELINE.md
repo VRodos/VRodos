@@ -460,10 +460,12 @@ Current PMNDRS ordering:
 RenderPass
   -> optional NormalPass for native SSAO
   -> optional standalone Takram sun LensFlareEffect pass
-  -> primary EffectPass:
+  -> optional atmosphere EffectPass:
        optional Takram CloudsEffect before AerialPerspectiveEffect
        optional Takram AerialPerspectiveEffect for non-Horizon or Horizon aerial-haze path
+  -> primary EffectPass:
        SSAOEffect
+       optional moon cloud light shafts
        BloomEffect
        selectable ToneMappingEffect
        BrightnessContrastEffect
@@ -506,6 +508,7 @@ Composer lifecycle:
 
 - `RenderPass` stays first.
 - Compatible fullscreen effects are merged into the fewest practical `EffectPass` instances; convolution effects stay isolated when PMNDRS cannot merge them safely.
+- Clouds and aerial perspective share a separate atmosphere pass before SSAO, moon shafts, bloom, tone mapping, and color grading. Aerial lookup textures plus cloud shadow, lighting-mask, and light-shaft buffers can otherwise push the fused shader beyond the WebGL2 fragment limit of 16 texture units as those buffers become ready. Keep CloudsEffect and AerialPerspectiveEffect together so cloud buffers update before aerial composition.
 - Lighting-mask and Horizon foliage selections wait for the critical scene-loader batch to finish, then refresh once. Later scene mutations are coalesced for 120 ms before refreshing. Production builds keep selection-count messages silent unless Horizon diagnostics are enabled.
 - Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
 - Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.

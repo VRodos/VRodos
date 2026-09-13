@@ -2406,6 +2406,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
       if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== "undefined") {
         self.pmndrsEffectPass.mainCamera = camera;
       }
+      if (self.pmndrsAtmospherePass && typeof self.pmndrsAtmospherePass.mainCamera !== "undefined") {
+        self.pmndrsAtmospherePass.mainCamera = camera;
+      }
       if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== "undefined") {
         self.pmndrsChromaticAberrationPass.mainCamera = camera;
       }
@@ -3353,6 +3356,7 @@ ${selectedSummaries.join("\n")}`);
       self.pmndrsComposer = null;
       self.pmndrsRenderPass = null;
       self.pmndrsEffectPass = null;
+      self.pmndrsAtmospherePass = null;
       self.pmndrsChromaticAberrationPass = null;
       self.pmndrsSmaaPass = null;
       self.pmndrsLensFlarePass = null;
@@ -3701,6 +3705,7 @@ ${selectedSummaries.join("\n")}`);
       }
       const renderPass = new PP.RenderPass(scene, camera);
       composer.addPass(renderPass);
+      const atmosphereEffects = [];
       const effects = [];
       this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
       this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
@@ -3821,7 +3826,7 @@ ${selectedSummaries.join("\n")}`);
               this.pmndrsCloudsEffect.events.addEventListener("change", this._pmndrsCloudsEffectChangeHandler);
             }
             syncPmndrsCloudsEffect(this, camera, atmosphereConfig);
-            effects.push(this.pmndrsCloudsEffect);
+            atmosphereEffects.push(this.pmndrsCloudsEffect);
           } catch (err) {
             console.warn("[VRodos] pmndrs Takram CloudsEffect construction failed, skipping:", err);
             disposePmndrsCloudEffect(this);
@@ -3887,7 +3892,7 @@ ${selectedSummaries.join("\n")}`);
               restoreAllPmndrsHorizonFoliageMaterials(this);
             }
             routePmndrsCloudsIntoAerial(this, atmosphereConfig);
-            effects.push(this.pmndrsAerialPerspectiveEffect);
+            atmosphereEffects.push(this.pmndrsAerialPerspectiveEffect);
           } catch (err) {
             console.warn("[VRodos] pmndrs Takram AerialPerspectiveEffect construction failed, skipping:", err);
             this.pmndrsAerialPerspectiveEffect = null;
@@ -4152,6 +4157,20 @@ ${selectedSummaries.join("\n")}`);
           this.pmndrsLensFlarePass = null;
         }
       }
+      this.pmndrsAtmospherePass = null;
+      if (atmosphereEffects.length > 0) {
+        try {
+          this.pmndrsAtmospherePass = new PP.EffectPass(camera, ...atmosphereEffects);
+          composer.addPass(this.pmndrsAtmospherePass);
+        } catch (err) {
+          console.error("[VRodos] pmndrs atmosphere EffectPass construction failed:", err);
+          try {
+            composer.dispose();
+          } catch (e) {
+          }
+          return false;
+        }
+      }
       if (effects.length === 0) {
         this.pmndrsEffectPass = null;
       } else {
@@ -4252,6 +4271,9 @@ ${selectedSummaries.join("\n")}`);
           self.pmndrsRenderPass.mainCamera = camera;
           if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== "undefined") {
             self.pmndrsEffectPass.mainCamera = camera;
+          }
+          if (self.pmndrsAtmospherePass && typeof self.pmndrsAtmospherePass.mainCamera !== "undefined") {
+            self.pmndrsAtmospherePass.mainCamera = camera;
           }
           if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== "undefined") {
             self.pmndrsChromaticAberrationPass.mainCamera = camera;

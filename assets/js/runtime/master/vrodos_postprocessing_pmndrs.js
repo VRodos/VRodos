@@ -17,6 +17,7 @@
  *   - ToneMappingEffect    (always, selectable; AGX by default)
  *
  * Effects inserted as standalone pmndrs-compatible passes:
+ *   - Clouds/AerialPerspective (shared atmosphere pass, separate texture budget)
  *   - NormalPass           (ambientOcclusionPreset !== 'off', native SSAO support pass)
  *   - LensFlareEffect      (pmndrsLensFlareEnabled; convolution effects cannot be merged)
  *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled; late convolution pass)
@@ -2868,6 +2869,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
             self.pmndrsEffectPass.mainCamera = camera;
         }
+        if (self.pmndrsAtmospherePass && typeof self.pmndrsAtmospherePass.mainCamera !== 'undefined') {
+            self.pmndrsAtmospherePass.mainCamera = camera;
+        }
         if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== 'undefined') {
             self.pmndrsChromaticAberrationPass.mainCamera = camera;
         }
@@ -4005,6 +4009,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         self.pmndrsComposer = null;
         self.pmndrsRenderPass = null;
         self.pmndrsEffectPass = null;
+        self.pmndrsAtmospherePass = null;
         self.pmndrsChromaticAberrationPass = null;
         self.pmndrsSmaaPass = null;
         self.pmndrsLensFlarePass = null;
@@ -4411,6 +4416,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         const renderPass = new PP.RenderPass(scene, camera);
         composer.addPass(renderPass);
 
+        const atmosphereEffects = [];
         const effects = [];
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
         this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
@@ -4546,7 +4552,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                         this.pmndrsCloudsEffect.events.addEventListener('change', this._pmndrsCloudsEffectChangeHandler);
                     }
                     syncPmndrsCloudsEffect(this, camera, atmosphereConfig);
-                    effects.push(this.pmndrsCloudsEffect);
+                    atmosphereEffects.push(this.pmndrsCloudsEffect);
                 } catch (err) {
                     console.warn('[VRodos] pmndrs Takram CloudsEffect construction failed, skipping:', err);
                     disposePmndrsCloudEffect(this);
@@ -4614,7 +4620,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                         restoreAllPmndrsHorizonFoliageMaterials(this);
                     }
                     routePmndrsCloudsIntoAerial(this, atmosphereConfig);
-                    effects.push(this.pmndrsAerialPerspectiveEffect);
+                    atmosphereEffects.push(this.pmndrsAerialPerspectiveEffect);
                 } catch (err) {
                     console.warn('[VRodos] pmndrs Takram AerialPerspectiveEffect construction failed, skipping:', err);
                     this.pmndrsAerialPerspectiveEffect = null;
@@ -4928,6 +4934,22 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             }
         }
 
+        // Aerial lookup, shadow, mask, and shaft buffers can exceed the WebGL2
+        // 16-texture limit when fused with SSAO, moon shafts, bloom, and LUTs.
+        // Keep CloudsEffect before AerialPerspectiveEffect in the same pass so
+        // its internal buffers update before aerial composition each frame.
+        this.pmndrsAtmospherePass = null;
+        if (atmosphereEffects.length > 0) {
+            try {
+                this.pmndrsAtmospherePass = new PP.EffectPass(camera, ...atmosphereEffects);
+                composer.addPass(this.pmndrsAtmospherePass);
+            } catch (err) {
+                console.error('[VRodos] pmndrs atmosphere EffectPass construction failed:', err);
+                try { composer.dispose(); } catch (e) { /* swallow */ }
+                return false;
+            }
+        }
+
         if (effects.length === 0) {
             // Nothing to merge — just feed the scene through with no post-FX.
             // Composer is still useful because it handles the final blit, but we
@@ -5050,6 +5072,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 self.pmndrsRenderPass.mainCamera = camera;
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
+                }
+                if (self.pmndrsAtmospherePass && typeof self.pmndrsAtmospherePass.mainCamera !== 'undefined') {
+                    self.pmndrsAtmospherePass.mainCamera = camera;
                 }
                 if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== 'undefined') {
                     self.pmndrsChromaticAberrationPass.mainCamera = camera;
