@@ -4,10 +4,12 @@ import vm from 'node:vm';
 import * as THREE from 'three';
 import { runtimeBuildChunks } from './build/runtime-chunks.mjs';
 
+const definitions = {};
 const calls = [];
 const smoothing = [];
 const context = vm.createContext({
     window: { devicePixelRatio: 2 }, THREE,
+    AFRAME: { registerComponent: (name, def) => { definitions[name] = def; }, registerSystem() {} },
     VRODOSMaster: {
         LightSmoothing: { value: (...args) => { smoothing.push(args); return args[2]; } },
         RenderPixelBudget: { apply: (_self, _renderer, ratio) => ratio }
@@ -15,6 +17,9 @@ const context = vm.createContext({
     vrodosEnhanceMeshMaterial: (material, overrides, options) => calls.push({ material, overrides, options }),
     vrodosGetExplicitMaterialOverrides: () => ({ roughness: 0.25 })
 });
+for (const file of ['vrodos_scene_probe.js', 'components/vrodos_runtime_pipeline.component.js']) {
+    vm.runInContext(readFileSync(new URL(`../assets/js/runtime/master/${file}`, import.meta.url), 'utf8'), context);
+}
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_render_quality.js', import.meta.url), 'utf8'), context);
 let smoothingMs = 100;
 let sunFactor = 0.8;
@@ -57,6 +62,10 @@ const self = {
     getPmndrsAtmosphereConfig: () => ({}), getCachedSceneQuery: () => [],
     markShadowDirty: reason => dirty.push(reason)
 };
+const reflectionOwner = Object.assign(Object.create(definitions['vrodos-reflections']), { el: self.el });
+reflectionOwner.init();
+self.el.components = { 'scene-settings': self, 'vrodos-reflections': reflectionOwner };
+context.VRODOSMaster.Reflections.bind(reflectionOwner, self);
 self.applyRenderQualityProfile();
 assert.deepEqual(ratios, [2]);
 assert.equal(renderer.toneMappingExposure, 1.06);
@@ -95,7 +104,7 @@ root.add(new THREE.Mesh(geometry, [shared, hidden]), new THREE.Mesh(geometry, sh
 const media = { media: true, getObject3D: () => root };
 scene.add(root, new THREE.Mesh(geometry, [shared, other]));
 self.getCachedSceneQuery = () => [media, null, { getObject3D: () => null }];
-self._vrodosReflectionEnvironmentIntensityScale = 0.9;
+reflectionOwner._vrodosReflectionEnvironmentIntensityScale = 0.9;
 self.applyMaterialProfiles();
 assert.equal(calls.length, 2, 'shared materials are enhanced once and hidden navmesh materials skipped');
 assert.equal(calls[0].material, shared);

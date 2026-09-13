@@ -1292,7 +1292,7 @@
                     state.moonTextureLoading = false;
                     state.moonTextureFailed = false;
                     applyPmndrsMoonShaderState(self, config, state, material);
-                    self._takramSkyEnvironmentNeedsUpdate = true;
+                    self.requestTakramSkyEnvironmentRefresh();
                     if (typeof self.publishRuntimeFeatureState === 'function') {
                         self.publishRuntimeFeatureState('moon-texture-ready');
                     }

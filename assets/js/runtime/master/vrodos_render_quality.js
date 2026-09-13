@@ -261,14 +261,9 @@
                 : 1;
             const cloudReflectionFactor = Math.min(cloudSunReflectionFactor, cloudMoonReflectionFactor);
             const targetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, source) * cloudReflectionFactor;
-            const smoothedScale = smoothPmndrsRuntimeLightValue(
-                this,
-                `reflectionEnvironmentIntensity:${source}`,
-                targetScale,
-                smoothingMs,
-                this._vrodosReflectionEnvironmentIntensityScale
-            );
-            this._vrodosReflectionEnvironmentIntensityScale = smoothedScale;
+            const owner = VRODOSMaster.Reflections.getOwner(this);
+            if (!owner) return;
+            const smoothedScale = owner.smoothEnvironmentIntensity(targetScale, smoothingMs, source);
 
             if (typeof sceneObj.environmentIntensity !== 'undefined') {
                 sceneObj.environmentIntensity = smoothedScale;
@@ -299,7 +294,7 @@
                 material.envMapIntensity = getTargetEnvMapIntensity(material, options);
             });
 
-            this._vrodosReflectionEnvironmentLastUpdateMs = typeof time === 'number' ? time : null;
+            owner.recordIntensityUpdate(time);
         };
 
         return H;

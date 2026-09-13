@@ -238,11 +238,13 @@ const removeNode = registration.expression.arguments[1].properties.find(property
 const removal = vm.runInContext('(' + sceneSource.slice(removeNode.start, removeNode.end) + ')', context);
 context.removeEventListener = () => {};
 context.document = { removeEventListener() {}, getElementById: () => null };
-context.vrodosDisposeRuntimeResource = () => {};
 const teardown = fixture(); const teardownState = teardown.owner.ensureResources(profile()); const teardownGenerator = teardownState.generator;
 const sequence = [];
 teardown.el.removeEventListener = () => {};
-teardown.el.removeAttribute = name => { assert.equal(name, 'vrodos-atmosphere'); sequence.push('atmosphere'); teardown.owner.remove(); };
+teardown.el.removeAttribute = name => {
+    if (name === 'vrodos-reflections') return; // Reflection teardown is exercised by its own lifecycle fixture.
+    assert.equal(name, 'vrodos-atmosphere'); sequence.push('atmosphere'); teardown.owner.remove();
+};
 for (const name of ['clearXrExitRestoreTimers', 'clearXrExitSessionAttachTimers', 'detachXrExitSessionEndListener', 'disposeSceneProbe', 'disableFPSMeter', 'removePhotorealHelperLights', 'disposeHardwareDiagnostics']) teardown.settings[name] = () => {};
 teardown.settings.disablePostProcessing = () => sequence.push('legacy');
 teardown.settings.disablePmndrsPostProcessing = () => sequence.push('pmndrs');

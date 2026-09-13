@@ -43,7 +43,7 @@ context.window = context;
 context.location = { search: '' };
 context.VRODOSMaster = {};
 context.VRODOS_TAKRAM_ATMOSPHERE = { SkyMaterial };
-for (const name of ['vrodos_light_smoothing.js', 'vrodos_atmosphere_visuals.js']) {
+for (const name of ['vrodos_scene_probe.js', 'vrodos_light_smoothing.js', 'vrodos_atmosphere_visuals.js']) {
     vm.runInContext(readFileSync(new URL(`../assets/js/runtime/master/${name}`, import.meta.url), 'utf8'), context);
 }
 let now = 1000;
@@ -68,10 +68,14 @@ function fixture(overrides = {}) {
         moonDirection: new Three.Vector3(0, 1, 0), localMoonDirection: new Three.Vector3(0, 1, 0),
         sunDirection: new Three.Vector3(0, -1, 0), inertialToECEFMatrix: new Three.Matrix4(), ...overrides };
     const state = { textures: { irradianceTexture: new Three.Texture() }, ready: true };
-    const self = { _pmndrsAtmosphereState: state, el: { object3D: new Three.Scene(), renderer: { xr: { isPresenting: false } } },
+    const self = { requestTakramSkyEnvironmentRefresh: context.VRODOSMaster.SceneSettingsHelpers.requestTakramSkyEnvironmentRefresh, _pmndrsAtmosphereState: state, el: { object3D: new Three.Scene(), renderer: { xr: { isPresenting: false } } },
         getPmndrsAtmosphereConfig: () => config, ensurePmndrsAtmosphereResources: () => state,
         applyPmndrsAtmosphereConfigToTarget: (m, c) => { m.sun = c.takramSunEnabled; m.moon = c.moonEnabled; },
         publishRuntimeFeatureState: event => { self.lastEvent = event; } };
+    const owner = Object.assign(Object.create(components['vrodos-reflections']), { el: self.el });
+    owner.init();
+    self.el.components = { 'scene-settings': self, 'vrodos-reflections': owner };
+    context.VRODOSMaster.Reflections.bind(owner, self);
     return { self, state, config, ensure: () => api.ensurePmndrsAtmosphereSky(self, config) };
 }
 // Small binary star catalogue: bright red +X and faint green +Y.
