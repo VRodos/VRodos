@@ -640,13 +640,7 @@ assertPath(spatialUi.spatialUi.bundleLoaded, true, "spatial UI bundle diagnostic
 assertPath(spatialUi.spatialUi.activePanel, false, "spatial UI panel diagnostic");
 
 const pmndrsPostFxSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"), "utf8");
-const sceneProbeSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_scene_probe.js"), "utf8");
-assert(
-    sceneProbeSource.includes("const needsCapture = !hasSkyTarget") &&
-        !sceneProbeSource.includes("const skyChanged = dayNightCycleActive") &&
-        !sceneProbeSource.includes("(timeMs - this._takramSkyEnvironmentLastCaptureMs) < 5000"),
-    "Takram sky should use one global PMREM without periodic day/night recaptures"
-);
+// Takram single-PMREM behavior is exercised by test-reflection-lifecycle.mjs.
 assert(
     pmndrsPostFxSource.includes("function constrainPmndrsHorizonAerialToVanillaLightSourceMode"),
     "Horizon aerial compositor constraint should remain present"

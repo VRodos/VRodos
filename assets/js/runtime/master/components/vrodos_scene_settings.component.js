@@ -187,16 +187,6 @@ function vrodosRuntimeFalse() {
     return false;
 }
 
-function vrodosDisposeRuntimeResource(resource) {
-    if (VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.dispose) {
-        VRODOSSceneSettingsMaster.RuntimeResources.dispose(resource);
-        return;
-    }
-    if (resource && typeof resource.dispose === 'function') {
-        resource.dispose();
-    }
-}
-
 function vrodosRuntimeSettingsDefaultsForPrefix(prefix) {
     const defaults = {};
     const generatedDefaults = window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS || {};
@@ -3198,28 +3188,6 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingRendering = false;
         this.fpsStats = null;
         this.fpsStatsRoot = null;
-        this._currentReflectionSource = null;
-        this._currentEnvMapPreset = null;
-        this._envMapRenderTarget = null;
-        this._pendingHdrEnvMapPreset = null;
-        this._pendingHdrEnvMapUrl = '';
-        this._hdrEnvMapLoadId = 0;
-        this._hdrEnvMapLoading = false;
-        this._hdrEnvMapFailed = false;
-        this._hdrEnvMapError = '';
-        this._sceneProbeCubeRenderTarget = null;
-        this._sceneProbeCubeCamera = null;
-        this._sceneProbePmremGenerator = null;
-        this._sceneProbePmremTarget = null;
-        this._sceneProbeResolution = null;
-        this._sceneProbeNeedsUpdate = false;
-        this._sceneProbeLastCaptureMs = 0;
-        this._sceneProbeLastModelEventMs = 0;
-        this._sceneProbeLastYaw = null;
-        this._sceneProbeLastPosition = new THREE.Vector3();
-        this._sceneProbeCurrentPosition = new THREE.Vector3();
-        this._sceneProbeTempDirection = new THREE.Vector3();
-        this.sceneProbeCapturing = false;
         this.bloomTargetA = null;
         this.bloomTargetB = null;
         this.bloomBrightPassMaterial = null;
@@ -3265,15 +3233,6 @@ AFRAME.registerComponent('scene-settings', {
         this._pmndrsRuntimeLightSmoothColors = {};
         this._pmndrsRuntimeLightSmoothTimes = {};
         this._vrodosReflectionIntensityMaterials = [];
-        this._takramSkyPmremTarget = null;
-        this._takramSkyEnvironmentNeedsUpdate = false;
-        this._takramSkyEnvironmentLastCaptureMs = 0;
-        this._takramSkyEnvironmentNextRetryMs = 0;
-        this._takramSkyEnvironmentLastMaterialScale = 0;
-        this._takramSkyEnvironmentLastSmoothMs = 0;
-        this._takramSkyEnvironmentSmoothedScale = null;
-        this._takramSkyEnvironmentLastProfileScale = 1;
-        this._takramSkyEnvironmentSignature = '';
         this._runtimeFeatureState = null;
         this._runtimeFeatureStateLastPublishMs = 0;
         this._runtimeFeatureStateLogSignature = '';
@@ -3514,12 +3473,7 @@ AFRAME.registerComponent('scene-settings', {
         this.disablePostProcessing();
         this.disablePmndrsPostProcessing();
         this.el.removeAttribute('vrodos-atmosphere');
-        vrodosDisposeRuntimeResource(this._envMapRenderTarget);
-        this._envMapRenderTarget = null;
-        this.disposeSceneProbe(false);
-        if (this.el && this.el.object3D) {
-            this.el.object3D.environment = null;
-        }
+        this.el.removeAttribute('vrodos-reflections');
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
         const manualSun = document.getElementById('default-sun');

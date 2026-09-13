@@ -1030,18 +1030,56 @@
       }
     });
     AFRAME.registerComponent("vrodos-reflections", {
+      init: function() {
+        VRODOSMaster.Reflections.initialize(this);
+      },
+      smoothEnvironmentIntensity: function(target, smoothingMs, source) {
+        this._pmndrsTickTimeMs = this.settings._pmndrsTickTimeMs;
+        const value = VRODOSMaster.LightSmoothing.value(
+          this,
+          `reflectionEnvironmentIntensity:${source}`,
+          target,
+          smoothingMs,
+          this._vrodosReflectionEnvironmentIntensityScale
+        );
+        this._vrodosReflectionEnvironmentIntensityScale = value;
+        return value;
+      },
+      recordIntensityUpdate: function(time) {
+        this._vrodosReflectionEnvironmentLastUpdateMs = typeof time === "number" ? time : null;
+      },
+      remove: function() {
+        if (this.removed) return;
+        this.removed = true;
+        const environment = this.el.object3D && this.el.object3D.environment;
+        const ownsEnvironment = [this._envMapRenderTarget, this._sceneProbePmremTarget, this._takramSkyPmremTarget].some((target) => target && target.texture === environment);
+        if (ownsEnvironment) this.el.object3D.environment = null;
+        try {
+          this.clearHdrEnvironmentMap(false);
+        } finally {
+          try {
+            this.disposeSceneProbe(false);
+          } finally {
+            if (this.settings && this.settings.reflectionRuntime === this) this.settings.reflectionRuntime = null;
+            this.settings = null;
+            this._pmndrsRuntimeLightSmoothTimes = {};
+            this._pmndrsRuntimeLightSmoothValues = {};
+          }
+        }
+      },
       tick: function(time) {
         const settings = sceneSettings(this.el);
-        if (!settings) {
+        if (!settings || this.removed) {
           return;
         }
+        VRODOSMaster.Reflections.bind(this, settings);
         const effectiveReflectionSource = settings.getEffectiveReflectionSource();
         if (typeof settings.updateReflectionEnvironmentIntensity === "function") {
           settings.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
         }
         if (effectiveReflectionSource === "takram-sky") {
           if (typeof settings.updateTakramSkyEnvironment === "function") {
-            settings.updateTakramSkyEnvironment(time);
+            this.updateTakramSkyEnvironment(time);
           }
           return;
         }
@@ -1049,31 +1087,31 @@
           return;
         }
         const sceneProbeUpdateMode = settings.getSceneProbeUpdateMode();
-        if (sceneProbeUpdateMode === "static" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
+        if (sceneProbeUpdateMode === "static" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
           return;
         }
-        if (sceneProbeUpdateMode === "slow-dynamic" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
-          const anchorObject = settings.getSceneProbeAnchorObject();
+        if (sceneProbeUpdateMode === "slow-dynamic" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
+          const anchorObject = this.getSceneProbeAnchorObject();
           if (anchorObject) {
             anchorObject.updateMatrixWorld(true);
-            anchorObject.getWorldPosition(settings._sceneProbeCurrentPosition);
-            if (settings._sceneProbeCurrentPosition.distanceToSquared(settings._sceneProbeLastPosition) > 6 * 6 || settings.getSceneProbeYawDeltaDegrees(settings.getSceneProbeAnchorYaw(anchorObject), settings._sceneProbeLastYaw) > 45) {
-              settings._sceneProbeNeedsUpdate = true;
+            anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
+            if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > 6 * 6 || this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 45) {
+              this._sceneProbeNeedsUpdate = true;
             }
           }
         }
-        if (!settings._sceneProbeNeedsUpdate) {
+        if (!this._sceneProbeNeedsUpdate) {
           return;
         }
         const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
-        if (time - settings._sceneProbeLastCaptureMs < captureCooldownMs) {
+        if (time - this._sceneProbeLastCaptureMs < captureCooldownMs) {
           return;
         }
         const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
-        if (settings._sceneProbeLastModelEventMs && time - settings._sceneProbeLastModelEventMs < modelSettleMs) {
+        if (this._sceneProbeLastModelEventMs && time - this._sceneProbeLastModelEventMs < modelSettleMs) {
           return;
         }
-        settings.captureSceneProbe(time);
+        this.captureSceneProbe(time);
       }
     });
   })();
@@ -1224,15 +1262,6 @@
   }
   function vrodosRuntimeFalse() {
     return false;
-  }
-  function vrodosDisposeRuntimeResource(resource) {
-    if (VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.dispose) {
-      VRODOSSceneSettingsMaster.RuntimeResources.dispose(resource);
-      return;
-    }
-    if (resource && typeof resource.dispose === "function") {
-      resource.dispose();
-    }
   }
   function vrodosRuntimeSettingsDefaultsForPrefix(prefix) {
     const defaults = {};
@@ -3666,28 +3695,6 @@
       this.postProcessingRendering = false;
       this.fpsStats = null;
       this.fpsStatsRoot = null;
-      this._currentReflectionSource = null;
-      this._currentEnvMapPreset = null;
-      this._envMapRenderTarget = null;
-      this._pendingHdrEnvMapPreset = null;
-      this._pendingHdrEnvMapUrl = "";
-      this._hdrEnvMapLoadId = 0;
-      this._hdrEnvMapLoading = false;
-      this._hdrEnvMapFailed = false;
-      this._hdrEnvMapError = "";
-      this._sceneProbeCubeRenderTarget = null;
-      this._sceneProbeCubeCamera = null;
-      this._sceneProbePmremGenerator = null;
-      this._sceneProbePmremTarget = null;
-      this._sceneProbeResolution = null;
-      this._sceneProbeNeedsUpdate = false;
-      this._sceneProbeLastCaptureMs = 0;
-      this._sceneProbeLastModelEventMs = 0;
-      this._sceneProbeLastYaw = null;
-      this._sceneProbeLastPosition = new THREE.Vector3();
-      this._sceneProbeCurrentPosition = new THREE.Vector3();
-      this._sceneProbeTempDirection = new THREE.Vector3();
-      this.sceneProbeCapturing = false;
       this.bloomTargetA = null;
       this.bloomTargetB = null;
       this.bloomBrightPassMaterial = null;
@@ -3733,15 +3740,6 @@
       this._pmndrsRuntimeLightSmoothColors = {};
       this._pmndrsRuntimeLightSmoothTimes = {};
       this._vrodosReflectionIntensityMaterials = [];
-      this._takramSkyPmremTarget = null;
-      this._takramSkyEnvironmentNeedsUpdate = false;
-      this._takramSkyEnvironmentLastCaptureMs = 0;
-      this._takramSkyEnvironmentNextRetryMs = 0;
-      this._takramSkyEnvironmentLastMaterialScale = 0;
-      this._takramSkyEnvironmentLastSmoothMs = 0;
-      this._takramSkyEnvironmentSmoothedScale = null;
-      this._takramSkyEnvironmentLastProfileScale = 1;
-      this._takramSkyEnvironmentSignature = "";
       this._runtimeFeatureState = null;
       this._runtimeFeatureStateLastPublishMs = 0;
       this._runtimeFeatureStateLogSignature = "";
@@ -3967,12 +3965,7 @@
       this.disablePostProcessing();
       this.disablePmndrsPostProcessing();
       this.el.removeAttribute("vrodos-atmosphere");
-      vrodosDisposeRuntimeResource(this._envMapRenderTarget);
-      this._envMapRenderTarget = null;
-      this.disposeSceneProbe(false);
-      if (this.el && this.el.object3D) {
-        this.el.object3D.environment = null;
-      }
+      this.el.removeAttribute("vrodos-reflections");
       this.disableFPSMeter();
       this.removePhotorealHelperLights();
       const manualSun = document.getElementById("default-sun");
