@@ -10,6 +10,7 @@ export const testGroups = Object.freeze({
     "scripts/test-atmosphere-visuals.mjs",
     "scripts/test-atmosphere-lifecycle.mjs",
     "scripts/test-reflection-lifecycle.mjs",
+    "scripts/test-fps-meter-lifecycle.mjs",
     "scripts/test-atmosphere-auxiliary-cleanup.mjs",
     "scripts/test-render-pixel-budget.mjs",
     "scripts/test-celestial-clock.mjs",

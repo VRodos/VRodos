@@ -779,9 +779,143 @@
       }
     });
     AFRAME.registerComponent("vrodos-render-profile", {
+      init: function() {
+        this.settings = null;
+        this.fpsStats = null;
+        this.fpsStatsRoot = null;
+        this.fpsStatsPending = false;
+        this.fpsStatsEpoch = 0;
+        this.removed = false;
+      },
+      bindSettings: function(settings) {
+        if (this.settings === settings || this.removed) return;
+        this.settings = settings;
+        settings.renderProfileRuntime = this;
+        ["fpsStats", "fpsStatsRoot", "fpsStatsPending"].forEach((field) => {
+          Object.defineProperty(settings, field, {
+            configurable: true,
+            get: function() {
+              return this.renderProfileRuntime ? this.renderProfileRuntime[field] : null;
+            }
+          });
+        });
+      },
+      remove: function() {
+        if (this.removed) return;
+        this.removed = true;
+        this.disableFPSMeter();
+        if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
+        this.settings = null;
+      },
+      queueFPSMeterEnable: function() {
+        if (this.removed || this.fpsStatsPending || !this.settings.isFPSMeterRequested()) {
+          return;
+        }
+        const statsReady = window.VRODOS_STATS_READY;
+        if (!statsReady || typeof statsReady.then !== "function") {
+          return;
+        }
+        this.fpsStatsPending = true;
+        const epoch = this.fpsStatsEpoch;
+        statsReady.then(() => {
+          if (this.removed || epoch !== this.fpsStatsEpoch) return;
+          this.fpsStatsPending = false;
+          if (this.settings.isFPSMeterRequested()) {
+            this.enableFPSMeter();
+          }
+        }, () => {
+          if (!this.removed && epoch === this.fpsStatsEpoch) this.fpsStatsPending = false;
+        });
+      },
+      enableFPSMeter: function() {
+        if (this.removed || this.fpsStats) {
+          return;
+        }
+        if (!this.settings.shouldShowFPSMeter()) {
+          this.queueFPSMeterEnable();
+          return;
+        }
+        try {
+          this.fpsStats = new Stats({ minimal: true });
+          if (typeof this.fpsStats.init === "function" && this.el.renderer) {
+            const renderer = this.el.renderer;
+            const originalRender = renderer.render;
+            const meter = this.fpsStats;
+            let initialized;
+            try {
+              initialized = meter.init(renderer);
+            } finally {
+              let statsRender = renderer.render;
+              const render = function() {
+                return (statsRender || originalRender).apply(this, arguments);
+              };
+              renderer.render = render;
+              this.releaseStatsRender = () => {
+                statsRender = null;
+                if (renderer.render === render) renderer.render = originalRender;
+              };
+            }
+            if (initialized && typeof initialized.catch === "function") {
+              initialized.catch((error) => {
+                if (this.fpsStats !== meter) return;
+                console.warn("VRodos Error: stats-gl failed to initialize. Scene will continue.", error);
+                this.disableFPSMeter();
+              });
+            }
+          }
+          if (typeof this.fpsStats.showPanel === "function") {
+            this.fpsStats.showPanel(0);
+          }
+          this.fpsStatsRoot = this.fpsStats.dom || this.fpsStats.domElement || null;
+          if (!this.fpsStatsRoot) {
+            this.disableFPSMeter();
+            return;
+          }
+          this.fpsStatsRoot.id = "vrodos-stats-meter";
+          this.fpsStatsRoot.style.position = "fixed";
+          this.fpsStatsRoot.style.top = "16px";
+          this.fpsStatsRoot.style.left = "16px";
+          this.fpsStatsRoot.style.right = "auto";
+          this.fpsStatsRoot.style.zIndex = "9999";
+          this.fpsStatsRoot.style.opacity = "0.92";
+          document.body.appendChild(this.fpsStatsRoot);
+        } catch (e) {
+          console.warn("VRodos Error: Stats.js/stats-gl failed to initialize. Scene will continue.", e);
+          this.disableFPSMeter();
+        }
+      },
+      disableFPSMeter: function() {
+        this.fpsStatsEpoch++;
+        this.fpsStatsPending = false;
+        const meter = this.fpsStats;
+        this.fpsStats = null;
+        if (this.releaseStatsRender) this.releaseStatsRender();
+        this.releaseStatsRender = null;
+        if (this.fpsStatsRoot && this.fpsStatsRoot.parentNode) {
+          this.fpsStatsRoot.parentNode.removeChild(this.fpsStatsRoot);
+        }
+        this.fpsStatsRoot = null;
+        try {
+          window.VRODOSMaster.RuntimeResources.dispose(meter);
+        } catch (error) {
+          console.warn("VRodos Error: stats-gl cleanup failed.", error);
+        }
+      },
+      syncFPSMeterState: function() {
+        if (this.removed) return;
+        if (this.settings.shouldShowFPSMeter()) {
+          this.enableFPSMeter();
+          return;
+        }
+        if (this.settings.isFPSMeterRequested()) {
+          this.queueFPSMeterEnable();
+          return;
+        }
+        this.disableFPSMeter();
+      },
       tick: function(time, timeDelta) {
         const settings = sceneSettings(this.el);
-        if (!settings) {
+        if (this.removed || !settings) {
           return;
         }
         if (typeof settings.updateHardwarePerformanceDiagnostics === "function") {
@@ -790,8 +924,8 @@
         if (typeof settings.publishRuntimeFeatureState === "function") {
           settings.publishRuntimeFeatureState("render-profile-tick", { time, throttleMs: 1500 });
         }
-        if (settings.fpsStats && typeof settings.fpsStats.update === "function") {
-          settings.fpsStats.update();
+        if (this.fpsStats && typeof this.fpsStats.update === "function") {
+          this.fpsStats.update();
         }
         settings.updateAdaptiveShadowFit(false);
       }
@@ -1934,77 +2068,26 @@
     shouldShowFPSMeter: function() {
       return this.isFPSMeterRequested() && typeof Stats !== "undefined";
     },
+    getFPSMeterOwner: function() {
+      const owner = this.el.components["vrodos-render-profile"];
+      if (!owner || owner.removed) return null;
+      owner.bindSettings(this);
+      return owner;
+    },
     queueFPSMeterEnable: function() {
-      if (this.fpsStatsPending || !this.isFPSMeterRequested()) {
-        return;
-      }
-      const statsReady = window.VRODOS_STATS_READY;
-      if (!statsReady || typeof statsReady.then !== "function") {
-        return;
-      }
-      this.fpsStatsPending = true;
-      statsReady.then(() => {
-        this.fpsStatsPending = false;
-        if (this.isFPSMeterRequested()) {
-          this.enableFPSMeter();
-        }
-      });
+      const owner = this.getFPSMeterOwner();
+      if (owner) owner.queueFPSMeterEnable();
     },
     enableFPSMeter: function() {
-      if (this.fpsStats) {
-        return;
-      }
-      if (!this.shouldShowFPSMeter()) {
-        this.queueFPSMeterEnable();
-        return;
-      }
-      try {
-        this.fpsStats = new Stats({ minimal: true });
-        if (typeof this.fpsStats.init === "function" && this.el.renderer) {
-          this.fpsStats.init(this.el.renderer);
-        }
-        if (typeof this.fpsStats.showPanel === "function") {
-          this.fpsStats.showPanel(0);
-        }
-        this.fpsStatsRoot = this.fpsStats.dom || this.fpsStats.domElement || null;
-        if (!this.fpsStatsRoot) {
-          this.fpsStats = null;
-          return;
-        }
-        this.fpsStatsRoot.id = "vrodos-stats-meter";
-        this.fpsStatsRoot.style.position = "fixed";
-        this.fpsStatsRoot.style.top = "16px";
-        this.fpsStatsRoot.style.left = "16px";
-        this.fpsStatsRoot.style.right = "auto";
-        this.fpsStatsRoot.style.zIndex = "9999";
-        this.fpsStatsRoot.style.opacity = "0.92";
-        document.body.appendChild(this.fpsStatsRoot);
-      } catch (e) {
-        console.warn("VRodos Error: Stats.js/stats-gl failed to initialize. Scene will continue.", e);
-        this.fpsStats = null;
-      }
-    },
-    disableFPSMeter: function() {
-      if (!this.fpsStats) {
-        return;
-      }
-      if (this.fpsStatsRoot && this.fpsStatsRoot.parentNode) {
-        this.fpsStatsRoot.parentNode.removeChild(this.fpsStatsRoot);
-      }
-      this.fpsStats = null;
-      this.fpsStatsRoot = null;
-      this.fpsStatsPending = false;
+      const owner = this.getFPSMeterOwner();
+      if (owner) owner.enableFPSMeter();
     },
     syncFPSMeterState: function() {
-      if (this.shouldShowFPSMeter()) {
-        this.enableFPSMeter();
-        return;
-      }
-      if (this.isFPSMeterRequested()) {
-        this.queueFPSMeterEnable();
-        return;
-      }
-      this.disableFPSMeter();
+      const owner = this.getFPSMeterOwner();
+      if (owner) owner.syncFPSMeterState();
+    },
+    disableFPSMeter: function() {
+      if (this.renderProfileRuntime) this.renderProfileRuntime.disableFPSMeter();
     },
     getExposureValue: function() {
       switch (this.data.exposurePreset) {
@@ -3694,8 +3777,6 @@
       this.postProcessingOriginalRender = null;
       this.postProcessingActive = false;
       this.postProcessingRendering = false;
-      this.fpsStats = null;
-      this.fpsStatsRoot = null;
       this.bloomTargetA = null;
       this.bloomTargetB = null;
       this.bloomBrightPassMaterial = null;
@@ -3967,7 +4048,7 @@
       this.disablePmndrsPostProcessing();
       this.el.removeAttribute("vrodos-atmosphere");
       this.el.removeAttribute("vrodos-reflections");
-      this.disableFPSMeter();
+      this.el.removeAttribute("vrodos-render-profile");
       this.removePhotorealHelperLights();
       const manualSun = document.getElementById("default-sun");
       if (manualSun && manualSun.parentNode) {

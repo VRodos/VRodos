@@ -6,6 +6,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
 - [x] Separate verification from generated builds; scope formatting to authored source.
 - [x] Replace affected brittle assertions when refactoring their logic; retain vendor/provenance checks.
+- [ ] Audit regression value and overlap: consolidate duplicate fixtures and replace implementation-text checks where they do not protect a distinct contract; prioritize behavior and meaningful failure detection over script count.
 
 ## B. Built-in media
 - [x] Reproducibly resize speaker and assessment textures to 1024px without changing formats, geometry, materials, or public paths.
@@ -63,6 +64,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Extract remaining atmosphere visual assembly from quality profiles: sky, stars, Moon, cloud sun disk, and legacy sky handoff.
 - [x] Move atmosphere resource state, generator lifecycle, and deferred visual refresh ownership into `vrodos-atmosphere`.
 - [x] Move HDR, scene-probe, and Takram sky PMREM resource lifecycle and reflection scratch/smoothing state into `vrodos-reflections`.
+- [x] Move FPS meter state, deferred enablement, renderer instrumentation, and disposal into `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -404,3 +406,18 @@ All 71 regression scripts pass (42 runtime, 29 compiler). Tests exercise the act
 The authenticated development editor recompiled project 13774 / scene 13775 as its existing Custom single-player desktop build. A fresh editor session recovered from a stale-tab save failure. Chrome rendered the model, textured plane, and Takram atmosphere. Live diagnostics verified the bound reflection owner, read-only settings view, and installed Takram PMREM. Temporary in-memory switches through the existing settings/profile API successfully loaded HDR and captured scene-probe PMREM. Removing the actual A-Frame reflection component released cube/PMREM targets exactly once, detached the camera, cleared its environment/settings reference, and reattachment captured a fresh environment. No JavaScript errors were observed; the compile-performance warning remained. The validation tab was reloaded to restore authored settings, then closed. These checks do not establish performance or full visual parity across devices; physical Quest and the wider build/profile matrix were not tested.
 
 Remaining lighting/render ownership, the complete GPU/listener audit, and the full Custom/Adaptive/networked/headset and physical Quest matrix remain open. No development server was started and no commit or push was performed.
+
+
+### FPS meter render-profile ownership (2026-09-14)
+
+The working tree was clean before this package. After inspecting the remaining render ownership work, FPS lifecycle was selected as a bounded subsystem: scene-settings still owned its instance and DOM node, and pending stats-module callbacks could recreate a meter after removal. The render-profile component now owns the meter, pending request epoch, and cleanup. Scene-settings retains the existing enable/disable/sync methods and request/debug policy; profiler readers use read-only state views. Teardown removes the render-profile component after composer shutdown. Repeated removal and reattachment release the settings reference and start with fresh meter state.
+
+Inspection of the locked stats-gl 4.2.3 WebGL implementation found that initialization wraps renderer.render, while disposal does not undo that wrapper. The owner installs a releasable forwarding function: active profiling still uses the upstream wrapper, removal restores the original render when it is still the active function, and references retained by a composer become pass-through calls. Removal never overwrites a newer composer render function. Meter disposal uses RuntimeResources and releases the upstream resources/listeners; failed initialization also cleans partial state. Rejected or invalidated lazy-load callbacks cannot revive a removed owner. No vendor patch, dependency, rendering formula, navigation behavior, panel setting, placement, or lazy-chunk policy changed.
+
+One focused lifecycle regression executes the actual registered component and authored scene-settings delegates with the locked stats-gl StatsCore renderer patch/profiling/disposal code. A small DOM/panel double covers mounting, policy toggles, repeated enablement/removal, independent owners, reattachment, deferred-load cancellation/rejection, partial and asynchronous initialization failures, cleanup exceptions, retained composer render references, tick order, and authored teardown. Existing atmosphere/reflection teardown fixtures were updated for the additional component removal. This does not validate browser canvas drawing, WebGL driver resources, or headset display.
+
+All 77 regression scripts pass (45 runtime, 32 compiler), including catalog coverage. Runtime/generated-bundle syntax, build configuration, and diff checks pass. Full browser-source lint reports zero errors and 248 warnings; the render-profile source has no warnings and scene-settings retains its ten pre-existing warnings. npm run build:runtime succeeded; only the A-Frame components bundle changed among generated artifacts.
+
+The user questioned the growing test count. Count alone is not evidence of value; a focused audit of duplicate fixtures and implementation-text assertions is recorded above. Keep the FPS regression because it covers observed lifecycle defects and the real upstream render wrapper, rather than adding more assertion-only scripts.
+
+Remaining lighting/render ownership, the complete GPU/listener audit, and integrated browser/Quest/profile coverage remain open. Published scenes were not recompiled and no browser/GPU/physical Quest acceptance is claimed for this package. No development server was started and no commit or push was performed.

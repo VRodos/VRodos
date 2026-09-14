@@ -238,7 +238,7 @@ for (const name of ['clearXrExitRestoreTimers', 'clearXrExitSessionAttachTimers'
 teardown.settings.disablePostProcessing = () => order.push('legacy');
 teardown.settings.disablePmndrsPostProcessing = () => order.push('pmndrs');
 removeSettings.call(teardown.settings);
-assert.deepEqual(order, ['legacy', 'pmndrs', 'vrodos-atmosphere', 'vrodos-reflections']);
+assert.deepEqual(order, ['legacy', 'pmndrs', 'vrodos-atmosphere', 'vrodos-reflections', 'vrodos-render-profile']);
 completeLoad(teardownLoad); assert.equal(teardown.scene.environment, null);
 assert.equal(teardown.owner.settings, null);
 console.log('Reflection ownership, HDR races, probe timing, Takram policy, smoothing and teardown tests passed.');

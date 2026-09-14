@@ -242,7 +242,7 @@ const teardown = fixture(); const teardownState = teardown.owner.ensureResources
 const sequence = [];
 teardown.el.removeEventListener = () => {};
 teardown.el.removeAttribute = name => {
-    if (name === 'vrodos-reflections') return; // Reflection teardown is exercised by its own lifecycle fixture.
+    if (name === 'vrodos-reflections' || name === 'vrodos-render-profile') return; // Each owner has its own lifecycle fixture.
     assert.equal(name, 'vrodos-atmosphere'); sequence.push('atmosphere'); teardown.owner.remove();
 };
 for (const name of ['clearXrExitRestoreTimers', 'clearXrExitSessionAttachTimers', 'detachXrExitSessionEndListener', 'disposeSceneProbe', 'disableFPSMeter', 'removePhotorealHelperLights', 'disposeHardwareDiagnostics']) teardown.settings[name] = () => {};

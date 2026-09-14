@@ -114,6 +114,8 @@ Compiled scenes keep `scene-settings` as the compatibility data contract, but fo
 - `vrodos-atmosphere`: Takram sky, sun/moon, day-night cycle
 - `vrodos-reflections`: HDR env maps, scene probe, Takram sky PMREM
 
+`vrodos-render-profile` owns FPS meter state, deferred stats-module enablement, and meter disposal. Scene-settings keeps request/debug policy and delegate methods; `fpsStats`, `fpsStatsRoot`, and `fpsStatsPending` are read-only owner views after binding. Keep the releasable stats-gl render wrapper: removal must stop profiling through retained composer references without overwriting a newer render owner. Scene-settings removes the component after composer shutdown.
+
 `vrodos-reflections` owns HDR request identity/status, reflection render targets and generators, the cube camera, capture timing/vectors, and reflection-specific smoothing state. `vrodos_scene_probe.js` supplies owner methods and scene-settings delegates; compatibility fields are read-only views. Route refreshes through those methods instead of assigning settings scratch fields. Component removal invalidates HDR callbacks, releases reflection resources and its settings reference, and clears its installed scene environment; stale callbacks must not publish into a replacement owner. Material traversal, shared scene-query caches, and quality-refresh listeners remain on scene-settings.
 
 Runtime defaults for PMNDRS/Takram settings come from `assets/runtime-settings-contract.json` through the generated browser contract script. GPU resources and event listeners created by runtime helpers should be tracked through `window.VRODOSMaster.RuntimeResources` and disposed from A-Frame lifecycle cleanup.
