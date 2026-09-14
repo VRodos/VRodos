@@ -14,6 +14,7 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 
 ## Standalone Headset Policy
 
+- “VR Headset Full” exposes project-build GLB object quality through `vrHeadsetAssetQuality`: Low (default, `web-low`, 1024px), Medium (`web-medium`, 2048px), or High (`web-high`, 4096px, preserved geometry). The selected scene remembers the choice; the compile request applies it to every scene in the project. Low/Medium retain eligible decoration simplification and all collision/protected-geometry rules. High is optimized quality, not original-source quality, and requires headset GPU/memory and visual validation. This choice does not change headset renderer, lighting, or post-FX policy.
 - A-Frame/WebXR owns the XR session, HMD and controller poses, controller raycasters, and stereo render loop.
 - `#player` remains an unpositioned tracking rig. Authored camera placement remains on `#cameraA`.
 - `custom-movement` owns only virtual navigation and moves/rotates `#vrodos-authored-world` in immersive XR.

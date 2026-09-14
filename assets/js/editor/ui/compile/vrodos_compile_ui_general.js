@@ -328,6 +328,9 @@ VRodosCompileUI.General = (function () {
         if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
         VRODOS.editor.envir.scene.aframeVrRuntimeProfile = runtimeTargetToVrRuntimeProfile(controls.runtimeTarget ? controls.runtimeTarget.value : 'vr-headset');
+        if (controls.vrHeadsetAssetQuality) {
+            VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality = controls.vrHeadsetAssetQuality.value;
+        }
         VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled = isHeadsetStereoPostFxAuthored(controls);
 
         VRODOS.editor.envir.scene.aframeRenderQuality = normalizeRenderQuality(controls.renderQuality.value);

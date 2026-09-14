@@ -537,6 +537,7 @@ $scene_one = (object) [
 		'aframeRuntimeMode' => 'single-player',
 		'aframeVrRuntimeProfile' => 'desktop',
 		'aframeRenderQuality' => 'high',
+		'aframeVrHeadsetAssetQuality' => 'medium',
 		'aframeHoveringInteractables' => true,
 	],
 	'objects' => (object) [
@@ -556,12 +557,13 @@ $scene_two = (object) [
 		'aframeRuntimeMode' => 'single-player',
 		'aframeVrRuntimeProfile' => 'pc-rendered-vr',
 		'aframeRenderQuality' => 'performance',
+		'aframeVrHeadsetAssetQuality' => 'low',
 		'aframeHoveringInteractables' => false,
 	],
 	'objects' => (object) [],
 ];
 $project_plan = $plan_resolver->resolve(
-	new VRodos_Compile_Request( 9, 102, [ 101, 102 ], 'networked', 'headset', true ),
+	new VRodos_Compile_Request( 9, 102, [ 101, 102 ], 'networked', 'headset', true, '', 'high' ),
 	[
 		'project_title' => 'Fixture',
 		'project_type_slug' => 'vrexpo_games',
@@ -573,6 +575,18 @@ $project_plan = $plan_resolver->resolve(
 vrodos_foundation_assert( 'networked' === $project_plan->scenes[0]->settings['runtimeMode'], 'project runtime mode overrides first scene metadata' );
 vrodos_foundation_assert( 'networked' === $project_plan->scenes[1]->settings['runtimeMode'], 'project runtime mode overrides every scene metadata' );
 vrodos_foundation_assert( 'headset' === $project_plan->scenes[0]->settings['vrRuntimeProfile'], 'project VR target overrides every scene' );
+foreach ( $project_plan->scenes as $scene_plan ) {
+	vrodos_foundation_assert( 'high' === $scene_plan->settings['vrHeadsetAssetQuality'], 'project quality overrides every scene setting' );
+	vrodos_foundation_assert( 'high' === $scene_plan->scene_json->metadata->aframeVrHeadsetAssetQuality, 'project quality overrides normalized metadata' );
+}
+vrodos_foundation_assert( 'medium' === $scene_one->metadata->aframeVrHeadsetAssetQuality, 'compile does not mutate authored quality' );
+vrodos_foundation_assert( 'low' === ( new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'headset', false ) )->vr_headset_asset_quality, 'absent quality defaults to Low' );
+try {
+	new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'headset', false, '', 'ultra' );
+	vrodos_foundation_assert( false, 'invalid supplied quality must be rejected' );
+} catch ( InvalidArgumentException $error ) {
+	vrodos_foundation_assert( str_contains( $error->getMessage(), 'quality' ), 'invalid quality produces explicit error' );
+}
 vrodos_foundation_assert( 'high' === $project_plan->scenes[0]->settings['renderQuality'], 'first scene artistic settings remain local' );
 vrodos_foundation_assert( 'performance' === $project_plan->scenes[1]->settings['renderQuality'], 'second scene artistic settings remain local' );
 vrodos_foundation_assert( $project_plan->scenes[0]->hover_enabled && ! $project_plan->scenes[1]->hover_enabled, 'hover remains scene-specific' );

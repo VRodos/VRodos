@@ -68,6 +68,7 @@ $canonical_objects = json_encode( $canonical->objects );
 
 $incoming = (object) [
 	'aframeVrRuntimeProfile'        => 'desktop',
+	'aframeVrHeadsetAssetQuality'    => 'high',
 	'aframeVrFramebufferScale'      => 99,
 	'fogtype'                       => 'INVALID',
 	'aframePostFXVignetteEnabled'   => 'yes',
@@ -91,6 +92,7 @@ vrodos_scene_settings_assert( 19 === $merged->metadata->objects, 'object count m
 vrodos_scene_settings_assert( 'd4fac2e0-6e13-4b40-b562-c8f27fdda85a' === $merged->objects->Plane->uuid, 'the original Plane UUID must survive' );
 vrodos_scene_settings_assert( [ 14.173954339359625, 0, -69.61660493702948 ] === $merged->objects->Plane->position, 'the original Plane transform must survive' );
 vrodos_scene_settings_assert( 'desktop' === $merged->metadata->aframeVrRuntimeProfile, 'the Desktop runtime target must remain selected' );
+vrodos_scene_settings_assert( 'high' === $merged->metadata->aframeVrHeadsetAssetQuality, 'headset quality is saved in canonical scene metadata' );
 vrodos_scene_settings_assert( 1.5 === $merged->metadata->aframeVrFramebufferScale, 'runtime settings must be normalized by the shared contract' );
 vrodos_scene_settings_assert( 'none' === $merged->metadata->fogtype, 'fog metadata must be normalized' );
 vrodos_scene_settings_assert( true === $merged->metadata->aframePostFXVignetteEnabled, 'vignette metadata must be normalized' );

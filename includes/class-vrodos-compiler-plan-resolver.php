@@ -48,6 +48,8 @@ final class VRodos_Compiler_Plan_Resolver {
 			$metadata->aframeRuntimeMode = $request->runtime_mode;
 			$profile_key                  = VRodos_Runtime_Settings_Contract::metadata_key( 'vrRuntimeProfile' );
 			$metadata->{$profile_key}     = $request->vr_runtime_profile;
+			$quality_key = VRodos_Runtime_Settings_Contract::metadata_key( 'vrHeadsetAssetQuality' );
+			$metadata->{$quality_key} = $request->vr_headset_asset_quality;
 
 			$diagnostics = [];
 			$settings    = $this->scene_settings->build_settings(
@@ -58,6 +60,7 @@ final class VRodos_Compiler_Plan_Resolver {
 			);
 			$settings['runtimeMode']     = $request->runtime_mode;
 			$settings['vrRuntimeProfile'] = $request->vr_runtime_profile;
+			$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
 
 			$desktop_profiles = [];
 			if ( 'desktop' === $request->vr_runtime_profile ) {

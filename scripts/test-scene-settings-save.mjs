@@ -13,6 +13,7 @@ const ajaxSource = readFileSync(resolve(root, 'includes/ajax/class-vrodos-scene-
 const requests = [];
 const scene = {
     aframeVrRuntimeProfile: 'desktop',
+    aframeVrHeadsetAssetQuality: 'high',
     fogCategory: 1,
     aframePostFXVignetteEnabled: true,
     desktopPerformanceProfiles: {
@@ -38,6 +39,7 @@ const VRODOS = {
             ClearColor: { type: 'string', default: '#000000', envirKey: 'ClearColor' },
             fogtype: { type: 'string', default: 'none', envirKey: 'fogtype' },
             aframeVrRuntimeProfile: { type: 'string', default: 'desktop', envirKey: 'aframeVrRuntimeProfile' },
+            aframeVrHeadsetAssetQuality: { type: 'string', default: 'low', envirKey: 'aframeVrHeadsetAssetQuality' },
             aframePostFXVignetteEnabled: { type: 'boolean', default: false, envirKey: 'aframePostFXVignetteEnabled' },
             desktopPerformanceProfiles: { type: 'object', default: null, envirKey: 'desktopPerformanceProfiles' }
         }
@@ -88,6 +90,34 @@ VRODOS.utils.getAjaxUrl = () => '/wp-admin/admin-ajax.php';
 vm.runInContext(persistenceSource, context, { filename: 'vrodos_scene_persistence.js' });
 const exportedMetadata = JSON.parse(VRODOS.api.exportCurrentSceneMetadata());
 assert.equal(exportedMetadata.aframeVrRuntimeProfile, 'desktop');
+assert.equal(exportedMetadata.aframeVrHeadsetAssetQuality, 'high', 'quality persists in scene metadata');
+const generalSource = readFileSync(resolve(root, 'assets/js/editor/ui/compile/vrodos_compile_ui_general.js'), 'utf8');
+windowObject.VRodosCompileUI = { Shared: {} };
+context.VRodosCompileUI = windowObject.VRodosCompileUI;
+vm.runInContext(generalSource, context);
+const qualityControls = {
+    runtimeTarget: { value: 'vr-headset' },
+    vrHeadsetPolicyPanel: { style: {} },
+    vrHeadsetAssetQuality: { value: 'high' },
+    renderQuality: { value: 'standard' },
+    shadowQuality: { value: 'medium' },
+    aaQuality: { value: 'balanced' },
+    fpsMeter: { checked: false },
+    ambientOcclusionPreset: { value: 'off' },
+    contactShadowPreset: { value: 'off' }
+};
+for (const control of Object.values(qualityControls)) {
+    control.dataset = {};
+    control.setAttribute = () => {};
+}
+for (const target of ['vr-headset', 'desktop', 'pc-rendered-vr', 'vr-headset']) {
+    qualityControls.runtimeTarget.value = target;
+    windowObject.VRodosCompileUI.General.applyRuntimeTargetUI(qualityControls);
+    windowObject.VRodosCompileUI.General.syncToScene(qualityControls);
+    assert.equal(qualityControls.vrHeadsetPolicyPanel.style.display, target === 'vr-headset' ? '' : 'none');
+    assert.equal(scene.aframeVrHeadsetAssetQuality, 'high', 'switching targets retains authored quality');
+}
+scene.aframeVrRuntimeProfile = 'desktop';
 assert.equal(exportedMetadata.fogtype, 'linear');
 assert.equal(exportedMetadata.ClearColor, '#102030');
 assert.equal(exportedMetadata.objects, undefined, 'settings metadata contains no scene object payload or object count');
@@ -98,6 +128,7 @@ await VRODOS.api.saveSceneSettings();
 assert.equal(requests.length, 1, 'one settings save issues exactly one request');
 assert.equal(requests[0].params.get('action'), 'vrodos_save_scene_settings_action');
 assert.equal(requests[0].params.get('scene_id'), '1099');
+assert.equal(JSON.parse(requests[0].params.get('scene_metadata')).aframeVrHeadsetAssetQuality, 'high');
 assert.equal(requests[0].params.has('scene_json'), false, 'settings saves never send full scene JSON');
 assert.equal(requests[0].params.has('scene_title'), false, 'settings saves do not mutate the scene title');
 assert.equal(requests[0].params.has('retained_surface_texture_ids'), false, 'settings saves do not run object-owned texture cleanup');

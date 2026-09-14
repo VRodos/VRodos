@@ -205,6 +205,7 @@ assert.equal(requests[0].action, 'vrodos_compile_action', 'the first request sta
 assert.match(requests[0].params.get('buildId'), /^[a-f0-9]{32}$/);
 assert.equal(requests[0].params.get('runtimeMode'), 'single-player');
 assert.equal(requests[0].params.get('vrRuntimeProfile'), 'desktop');
+assert.equal(requests[0].params.get('vrHeadsetAssetQuality'), 'low', 'absent authored quality defaults to Low');
 assert.equal(servedStatuses[0], 202, 'expected background work uses HTTP 202');
 assert.equal(progress.at(-1).ready, 1);
 assert.equal(progress.at(-1).percent, 48);
@@ -215,11 +216,13 @@ assert.equal(timers.length, 1, 'pending work schedules one retry');
 
 VRODOS.editor.envir.scene.aframeRuntimeMode = 'networked';
 VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'headset';
+VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality = 'high';
 timers.shift()();
 await flushPromises();
 assert.equal(servedStatuses[1], 200, 'the retry can complete with HTTP 200');
 assert.equal(requests[1].params.get('runtimeMode'), 'single-player', 'a retry keeps the runtime mode captured when the build started');
 assert.equal(requests[1].params.get('vrRuntimeProfile'), 'desktop', 'a retry keeps the target captured when the build started');
+assert.equal(requests[1].params.get('vrHeadsetAssetQuality'), 'low', 'a retry keeps its captured quality');
 assert.equal(VRODOS.api.isCompileRunning(), false, 'successful compile clears the active build');
 assert.equal(finished, 1, 'successful compile releases the build controls');
 assert.equal(hidden, 1, 'successful compile hides the progress panel');
@@ -253,6 +256,7 @@ responses.push(response(202, pendingPayload));
 VRODOS.api.compileScene(false, { skipSave: true });
 await flushPromises();
 assert.equal(VRODOS.api.isCompileRunning(), true, 'a new build starts normally before stall tracking');
+assert.equal(requests.filter((request) => request.action === 'vrodos_compile_action').at(-1).params.get('vrHeadsetAssetQuality'), 'high', 'new builds capture the authored High choice');
 
 fakeNow += 2 * 60 * 1000;
 responses.push(response(202, pendingPayload));

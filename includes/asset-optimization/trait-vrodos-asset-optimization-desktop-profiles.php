@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Queued immutable GLB families selected automatically for compiled runtimes. */
 require_once dirname( __DIR__ ) . '/class-vrodos-compiler-entity-policy.php';
+require_once dirname( __DIR__ ) . '/class-vrodos-compiler-asset-policy.php';
 
 trait VRodos_Asset_Optimization_Desktop_Profiles {
 	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 4;
@@ -52,7 +53,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			if ( is_wp_error( $source ) ) {
 				$errors[] = sprintf( 'Asset #%d: %s', $asset_id, $source->get_error_message() );
 				foreach ( (array) $asset['slots'] as $slot ) {
-					$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [] );
+					$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [], $plan->request->vr_headset_asset_quality );
 					$profile_progress[] = self::desktop_profile_progress_item(
 						(int) $asset_id,
 						(string) $slot,
@@ -83,8 +84,10 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
 					continue;
 				}
-				$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [] );
-				$definition = self::runtime_derivative_definition_for_slot( (string) $slot, $plan->scenes[0]->desktop_profiles ?? [] );
+				$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [], $plan->request->vr_headset_asset_quality );
+				$definition = 'desktop' === $plan->request->vr_runtime_profile
+					? self::runtime_derivative_definition_for_slot( (string) $slot, $plan->scenes[0]->desktop_profiles ?? [] )
+					: [ 'textureMaxSize' => self::runtime_derivative_texture_cap( $profile ) ];
 				$texture_max_size = absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) );
 				$is_standard_profile = $texture_max_size === self::runtime_derivative_texture_cap( $profile );
 				$options = [
@@ -228,11 +231,11 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		];
 	}
 
-	protected static function runtime_derivative_profile_for_slot( string $slot, string $runtime_profile, array $desktop_profiles ): string {
+	protected static function runtime_derivative_profile_for_slot( string $slot, string $runtime_profile, array $desktop_profiles, string $headset_quality = 'low' ): string {
 		if ( 'desktop' === $runtime_profile ) {
 			return sanitize_key( (string) ( $desktop_profiles['profiles'][ $slot ]['assets']['profile'] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot ) ) );
 		}
-		return 'headset' === $runtime_profile ? 'web-low' : 'web-high';
+		return VRodos_Compiler_Asset_Policy::vr_profile( $runtime_profile, $headset_quality );
 	}
 
 	protected static function runtime_derivative_definition_for_slot( string $slot, array $desktop_profiles ): array {
@@ -243,11 +246,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	protected static function runtime_derivative_texture_cap( string $profile ): int {
-		return match ( $profile ) {
-			'web-low' => 1024,
-			'web-medium' => 2048,
-			default => 4096,
-		};
+		return VRodos_Compiler_Asset_Policy::texture_cap( $profile );
 	}
 
 	public static function maybe_queue_web_high( int $asset_id, array $source, array $analysis, string $queue_priority = 'normal' ) {

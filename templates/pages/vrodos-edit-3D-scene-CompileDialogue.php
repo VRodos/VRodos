@@ -123,6 +123,15 @@
 					</div>
 					<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 						<label class="tw-form-control">
+							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Object quality</span>
+							<select id="compileVrHeadsetAssetQualitySelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+								<option value="low">Low — 1024px textures</option>
+								<option value="medium">Medium — 2048px textures</option>
+								<option value="high">High — 4096px, preserved geometry</option>
+							</select>
+							<span class="tw-text-xs tw-leading-relaxed tw-text-emerald-700/80 tw-mt-1">Applies to all GLB objects in this project build. Low/Medium may simplify eligible decorations. High is optimized quality, not original-source quality, and may increase headset GPU/memory load.</span>
+						</label>
+						<label class="tw-form-control">
 							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Headset sky time</span>
 							<select id="compileVrHeadsetSkyTimeSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
 								<option value="off">Use authored default</option>

@@ -228,6 +228,13 @@
       "step": 0.05,
       "wireKey": "vrFoveationStrength"
     },
+    "vrHeadsetAssetQuality": {
+      "metadataKey": "aframeVrHeadsetAssetQuality",
+      "type": "enum",
+      "default": "low",
+      "allowed": ["low", "medium", "high"],
+      "wireKey": "vrHeadsetAssetQuality"
+    },
     "vrHeadsetStereoPostFxEnabled": {
       "metadataKey": "aframeVrHeadsetStereoPostFxEnabled",
       "type": "boolean",

@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-asset-origin.php';
+require_once __DIR__ . '/class-vrodos-compiler-asset-policy.php';
 
 require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
 
@@ -25,6 +26,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	private array $created_files = [];
 	private string $runtime_mode = '';
 	private string $runtime_profile = 'desktop';
+	private string $vr_asset_profile = 'web-low';
 	private bool $desktop_profiles_enabled = false;
 	private array $desktop_profile_slots = [];
 	private array $desktop_profile_recipes = [];
@@ -44,6 +46,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
 		$this->runtime_profile = $plan->request->vr_runtime_profile;
+		$this->vr_asset_profile = VRodos_Compiler_Asset_Policy::vr_profile( $this->runtime_profile, $plan->request->vr_headset_asset_quality );
 		$this->desktop_profiles_enabled = 'desktop' === $plan->request->vr_runtime_profile;
 		$this->warnings = [];
 		$cache_policy = VRodos_Storage_Manager::ensure_published_cache_policy();
@@ -263,7 +266,7 @@ final class VRodos_Compiler_Resource_Publisher {
 						continue;
 					}
 				}
-				$profile = 'headset' === $this->runtime_profile ? 'web-low' : 'web-high';
+				$profile = $this->vr_asset_profile;
 				$derivative = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path(
 					$asset_id,
 					$profile,
@@ -322,11 +325,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	}
 
 	private function runtime_profile_texture_cap( string $profile ): int {
-		return match ( $profile ) {
-			'web-low'    => 1024,
-			'web-medium' => 2048,
-			default      => 4096,
-		};
+		return VRodos_Compiler_Asset_Policy::texture_cap( $profile );
 	}
 
 	private function ensure_source_fallback_allowed( int $asset_id, $source_attachment_id, string $profile ): void {

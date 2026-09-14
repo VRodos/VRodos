@@ -32,7 +32,8 @@ VRODOS.utils = VRODOS.utils || {};
 		const scene = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene : {};
 		return Object.freeze({
 			runtimeMode: scene.aframeRuntimeMode === 'networked' ? 'networked' : 'single-player',
-			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop'
+			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop',
+			vrHeadsetAssetQuality: scene.aframeVrHeadsetAssetQuality || 'low'
 		});
 	}
 
@@ -44,6 +45,7 @@ VRODOS.utils = VRODOS.utils || {};
 			vrodos_scene: build.sceneId,
 			runtimeMode: build.compileSettings.runtimeMode,
 			vrRuntimeProfile: build.compileSettings.vrRuntimeProfile,
+			vrHeadsetAssetQuality: build.compileSettings.vrHeadsetAssetQuality,
 			buildId: build.id,
 			nonce: VRODOS.config.compileNonce || VRODOS.data.compile_nonce || (window.vrodos_api_config && window.vrodos_api_config.compileNonce) || ''
 		});

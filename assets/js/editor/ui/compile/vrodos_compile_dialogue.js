@@ -29,6 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
             runtimeTargetHint: document.getElementById('compileRuntimeTargetHint'),
             vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
             vrHeadsetSkyTime: document.getElementById('compileVrHeadsetSkyTimeSelect'),
+            vrHeadsetAssetQuality: document.getElementById('compileVrHeadsetAssetQualitySelect'),
             vrHeadsetStereoPostFx: document.getElementById('compileVrHeadsetStereoPostFxToggle'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
@@ -565,6 +566,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.runtimeTarget) {
             controls.runtimeTarget.value = VRodosCompileUI.General.runtimeTargetFromVrRuntimeProfile(VRODOS.editor.envir.scene.aframeVrRuntimeProfile);
         }
+        if (controls.vrHeadsetAssetQuality) {
+            controls.vrHeadsetAssetQuality.value = VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality;
+        }
         controls.renderQuality.value = VRODOS.editor.envir.scene.aframeRenderQuality || 'standard';
         controls.shadowQuality.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeShadowQuality
             ? VRODOS.editor.envir.scene.aframeShadowQuality
@@ -971,6 +975,11 @@ window.addEventListener('DOMContentLoaded', () => {
             syncCompilePostFxState();
             VRodosCompileUI.PostFX.syncToScene(controls);
             VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
+    if (controls.vrHeadsetAssetQuality) {
+        controls.vrHeadsetAssetQuality.addEventListener('change', () => {
+            VRodosCompileUI.General.syncToScene(controls);
         });
     }
     if (controls.vrHeadsetStereoPostFx) {

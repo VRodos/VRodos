@@ -39,7 +39,13 @@ for (const identityField of ['sourceSha256', 'recipe', 'textureMaxSize', 'protec
 assert.match(pipeline, /continue_web_family/, 'automatic profiles must continue High, Medium, then Low');
 assert.match(derivativeService, /'preparedBaseline', 'preparedAnalysis'/, 'obsolete worker results must remove reusable staging data');
 assert.match(derivativeService, /vrodos_optimizer_identity_mismatch/, 'PHP must reject worker manifests from a different immutable job');
-assert.match(pipeline, /'headset' === \$runtime_profile \? 'web-low' : 'web-high'/);
+assert.match(pipeline, /VRodos_Compiler_Asset_Policy::vr_profile\( \$runtime_profile, \$headset_quality \)/);
+assert.match(pipeline, /\$plan->request->vr_headset_asset_quality/);
+const assetPolicy = readFileSync(resolve(root, 'includes/class-vrodos-compiler-asset-policy.php'), 'utf8');
+assert.match(assetPolicy, /'headset' === \$runtime_profile \? 'web-' \./);
+assert.match(publisher, /\$this->vr_asset_profile = VRodos_Compiler_Asset_Policy::vr_profile\( \$this->runtime_profile, \$plan->request->vr_headset_asset_quality \)/);
+assert.match(publisher, /\$profile = \$this->vr_asset_profile;/, 'published URLs use the selected VR recipe');
+assert.match(publisher, /VRodos_Compiler_Asset_Policy::texture_cap\( \$profile \)/, 'publication uses the shared texture cap');
 assert.match(compiler, /'status'\s*=> 202/);
 assert.match(publisher, /ensure_source_fallback_allowed/);
 assert.match(publisher, /source_bytes > self::LARGE_SOURCE_PUBLISH_GATE_BYTES/);

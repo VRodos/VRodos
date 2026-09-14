@@ -23,6 +23,10 @@ final class VRodos_Project_Compile_Plan {
 }
 
 final class VRodos_Runtime_Settings_Contract {
+	public static function setting( string $key ): array {
+		$contract = json_decode( file_get_contents( dirname( __DIR__ ) . '/assets/runtime-settings-contract.json' ), true );
+		return $contract['sceneSettings'][ $key ];
+	}
 	public static function normalize_bool( $value, bool $default = false ): bool {
 		return is_bool( $value ) ? $value : $default;
 	}
@@ -347,6 +351,12 @@ vrodos_desktop_assert( is_wp_error( $failed_repeat ), 'a failed immutable job mu
 vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'Build and status checks must not silently retry a failed job' );
 
 vrodos_desktop_assert( 'web-low' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'headset', 'headset', [] ] ), 'standalone headset must select Web Low' );
+foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $cap ) {
+	$selected = invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'headset', 'headset', [], $quality ] );
+	vrodos_desktop_assert( 'web-' . $quality === $selected, 'headset selects requested quality' );
+	vrodos_desktop_assert( $cap === invoke_desktop_profile_method( 'runtime_derivative_texture_cap', [ $selected ] ), 'headset cap matches recipe' );
+	vrodos_desktop_assert( $selected === VRodos_Compiler_Asset_Policy::vr_profile( 'headset', $quality ), 'preparation and publisher policy agree' );
+}
 vrodos_desktop_assert( 'web-high' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'pc-rendered-vr', 'pc-rendered-vr', [] ] ), 'PC-rendered VR must select Web High' );
 vrodos_desktop_assert( 'web-medium' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'medium', 'desktop', [ 'profiles' => [ 'medium' => [ 'assets' => [ 'profile' => 'web-medium' ] ] ] ] ] ), 'desktop Medium must select Web Medium' );
 
@@ -434,7 +444,7 @@ vrodos_desktop_assert( 'queued' === $regenerated['status'] && 2 === $regenerated
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $ordered_plan = new VRodos_Project_Compile_Plan();
-$ordered_plan->request = (object) [ 'vr_runtime_profile' => 'headset' ];
+$ordered_plan->request = (object) [ 'vr_runtime_profile' => 'headset', 'vr_headset_asset_quality' => 'low' ];
 $ordered_plan->scenes = [
 	(object) [
 		'scene_id' => 46,
@@ -459,7 +469,7 @@ $GLOBALS['vrodos_desktop_test_meta'][ $family_progress_asset_id ][ VRodos_Deskto
 	'queuePriority'     => 'build',
 ];
 $family_progress_plan = new VRodos_Project_Compile_Plan();
-$family_progress_plan->request = (object) [ 'vr_runtime_profile' => 'headset' ];
+$family_progress_plan->request = (object) [ 'vr_runtime_profile' => 'headset', 'vr_headset_asset_quality' => 'low' ];
 $family_progress_plan->scenes = [
 	(object) [
 		'scene_id' => 47,
@@ -508,10 +518,26 @@ foreach ( [ false, true ] as $category_protected ) {
 	vrodos_desktop_assert( 'ready' === $ready_state['status'] && 1 === $ready_state['ready'], 'completed exact variant must release compilation' );
 }
 
+foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $cap ) {
+	$quality_plan = clone $ordered_plan;
+	$quality_plan->request = (object) [ 'vr_runtime_profile' => 'headset', 'vr_headset_asset_quality' => $quality ];
+	$quality_asset_id = 100 + $cap;
+	$quality_plan->scenes = [ (object) [ 'scene_id' => 50, 'scene_json' => (object) [ 'asset_id' => $quality_asset_id ], 'desktop_profiles' => [] ] ];
+	$GLOBALS['vrodos_desktop_test_events'] = [];
+	$quality_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $quality_plan );
+	vrodos_desktop_assert( 'pending' === $quality_state['status'], 'new headset assets wait for preparation at every quality' );
+	vrodos_desktop_assert( 'web-' . $quality === $quality_state['profiles'][0]['profile'], 'pending progress identifies requested headset derivative' );
+	vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'each quality joins one ordered family job' );
+	$quality_options = array_merge( $options, [ 'recipe' => 'web-' . $quality, 'textureMaxSize' => $cap, 'protectGeometry' => 'high' === $quality ] );
+	$quality_record = invoke_desktop_profile_method( 'desktop_profile_record', [ $quality_asset_id, 'web-' . $quality, $source, $quality_options ] );
+	if ( 'high' === $quality ) {
+		vrodos_desktop_assert( 4096 === $quality_record['profileOptions']['textureMaxSize'] && true === $quality_record['profileOptions']['protectGeometry'], 'High queues preserved geometry with the standard 4096px cap' );
+	}
+}
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 
 $plan = new VRodos_Project_Compile_Plan();
-$plan->request = (object) [ 'vr_runtime_profile' => 'desktop' ];
+$plan->request = (object) [ 'vr_runtime_profile' => 'desktop', 'vr_headset_asset_quality' => 'low' ];
 $plan->scenes = [
 	(object) [
 		'scene_id'        => 45,

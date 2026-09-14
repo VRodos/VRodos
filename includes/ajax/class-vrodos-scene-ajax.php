@@ -434,6 +434,12 @@ class VRodos_Scene_AJAX {
 			wp_send_json_error( [ 'code' => 'invalid_vr_runtime_profile', 'message' => 'Invalid compile VR target.' ], 400 );
 		}
 
+		$headset_quality = wp_unslash( $_POST['vrHeadsetAssetQuality'] ?? 'low' );
+		$quality_setting = VRodos_Runtime_Settings_Contract::setting( 'vrHeadsetAssetQuality' );
+		if ( ! is_string( $headset_quality ) || ! in_array( $headset_quality, $quality_setting['allowed'], true ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_headset_asset_quality', 'message' => 'Invalid headset object quality.' ], 400 );
+		}
+
 		$request = new VRodos_Compile_Request(
 			$project_id,
 			$scene_id,
@@ -441,7 +447,8 @@ class VRodos_Scene_AJAX {
 			$runtime_mode,
 			$vr_runtime_profile,
 			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false ),
-			VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) )
+			VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) ),
+			$headset_quality
 		);
 		try {
 			$result = ( new VRodos_Compiler_Manager() )->compile( $request );
