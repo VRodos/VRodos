@@ -174,7 +174,7 @@ final class VRodos_Legacy_Metadata_Migration {
 			}
 			$wire_to_setting[ VRodos_Runtime_Settings_Contract::wire_key( (string) $setting_key ) ] = (string) $setting_key;
 		}
-		$blocked = [ 'runtimeMode', 'vrRuntimeProfile', 'pr_type', 'cam_position', 'cam_rotation_y', 'rootShadowType' ];
+		$blocked = [ 'runtimeMode', 'vrRuntimeProfile', 'pr_type', 'cam_position', 'cam_rotation_x', 'cam_rotation_y', 'rootShadowType' ];
 		foreach ( explode( ';', trim( (string) $metadata->composite_params ) ) as $part ) {
 			$part = trim( $part );
 			if ( '' === $part ) {

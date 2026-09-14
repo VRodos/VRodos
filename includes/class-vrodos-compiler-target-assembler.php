@@ -120,17 +120,6 @@ final class VRodos_Compiler_Target_Assembler {
 		return VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode;
 	}
 
-	private function avatar_camera_position( object $scene_json ): string {
-		$position = $scene_json->objects->avatarCamera->position ?? [ 0, 1.6, 0 ];
-		$position = array_values( is_array( $position ) ? $position : (array) $position );
-		$values   = [];
-		for ( $i = 0; $i < 3; $i++ ) {
-			$value    = $position[ $i ] ?? ( 1 === $i ? 1.6 : 0 );
-			$values[] = is_numeric( $value ) ? (string) (float) $value : (string) ( 1 === $i ? 1.6 : 0 );
-		}
-		return implode( ' ', $values );
-	}
-
 	private function create_master_dom( string $content, object $scene_json, int $project_id, int $scene_id, array $scene_ids ): array {
 		$elements      = $this->runtime_page_builder->create_dom_structure( $content, $scene_json, 'master-client-body' );
 		$dom           = $elements['dom'];
@@ -241,7 +230,7 @@ final class VRodos_Compiler_Target_Assembler {
 			$scene->removeAttribute( 'networked-scene' );
 		}
 
-		$this->target_renderer->apply_player_rig( $dom, $player, $project_type, $this->avatar_camera_position( $scene_json ), $this->is_networked( $runtime_mode ), $lean_headset );
+		$this->target_renderer->apply_player_rig( $dom, $player, $project_type, VRodos_Compiler_Camera_Pose::resolve( $scene_json ), $this->is_networked( $runtime_mode ), $lean_headset );
 		$this->runtime_page_builder->apply_scene_core(
 			$dom,
 			$scene,
@@ -375,8 +364,12 @@ final class VRodos_Compiler_Target_Assembler {
 				'VRODOS_PLUGIN_URL_PLACEHOLDER'      => $this->plugin_path_url,
 			]
 		);
-		$elements = $this->runtime_page_builder->create_dom_structure( $content, $scene_json, 'simple-client-body' );
-		$dom      = $elements['dom'];
+		$elements    = $this->runtime_page_builder->create_dom_structure( $content, $scene_json, 'simple-client-body' );
+		$dom         = $elements['dom'];
+		$camera_pose = VRodos_Compiler_Camera_Pose::resolve( $scene_json );
+		$player      = $dom->getElementById( 'player' );
+		$player->setAttribute( 'position', $camera_pose['cam_position'] );
+		$this->target_renderer->apply_camera_orientation( $player, $camera_pose );
 		$this->runtime_page_builder->apply_scene_core(
 			$dom,
 			$elements['ascene'],

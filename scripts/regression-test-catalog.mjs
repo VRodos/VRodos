@@ -23,6 +23,7 @@ export const testGroups = Object.freeze({
     "scripts/test-editor-asset-preparation.mjs",
     "scripts/test-shared-behavior.mjs",
     "scripts/test-navigation-math.mjs",
+    "scripts/test-camera-spawn.mjs",
     "scripts/test-assessment-runtime.mjs",
     "scripts/test-xr-exit-handoff.mjs",
     "scripts/test-runtime-feature-state.mjs",

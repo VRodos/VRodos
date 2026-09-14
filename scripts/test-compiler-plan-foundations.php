@@ -418,11 +418,14 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$vrexpo_player->setAttribute( 'id', 'player' );
 	$vrexpo_dom->appendChild( $vrexpo_scene );
 	$vrexpo_scene->appendChild( $vrexpo_player );
-	$rig_builder->apply_player_rig( $vrexpo_dom, $vrexpo_player, 'vrexpo_games', '1 2 3', true, false );
+	$rig_builder->apply_player_rig( $vrexpo_dom, $vrexpo_player, 'vrexpo_games', [ 'cam_position' => '1 2 3', 'cam_rotation_x' => 25, 'cam_rotation_y' => 180 ], true, false );
 	vrodos_foundation_assert( ! $vrexpo_player->hasAttribute( 'position' ), 'VRExpo tracking rig stays unpositioned' );
 	$vrexpo_camera = vrodos_foundation_element_by_id( $vrexpo_dom, 'cameraA' );
 	$vrexpo_right_controller = vrodos_foundation_element_by_id( $vrexpo_dom, 'oculusRight' );
 	vrodos_foundation_assert( $vrexpo_camera instanceof DOMElement && '1 2 3' === $vrexpo_camera->getAttribute( 'position' ), 'VRExpo camera keeps authored position' );
+	vrodos_foundation_assert( '25 180 0' === $vrexpo_camera->getAttribute( 'rotation' ), 'VRExpo camera receives direct Director pitch and yaw' );
+	vrodos_foundation_assert( 'pitch: 25; yaw: 180' === $vrexpo_camera->getAttribute( 'vrodos-camera-start' ), 'VRExpo seeds the camera look-controls state' );
+	vrodos_foundation_assert( ! $vrexpo_player->hasAttribute( 'rotation' ), 'VRExpo tracking rig stays unrotated' );
 	vrodos_foundation_assert( $vrexpo_right_controller instanceof DOMElement && $vrexpo_right_controller->parentNode === $vrexpo_player, 'VRExpo controller stays under player rig' );
 
 	$standard_dom  = new DOMDocument( '1.0', 'UTF-8' );
@@ -431,10 +434,13 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$standard_player->setAttribute( 'id', 'player' );
 	$standard_dom->appendChild( $standard_scene );
 	$standard_scene->appendChild( $standard_player );
-	$rig_builder->apply_player_rig( $standard_dom, $standard_player, 'virtualproduction_games', '4 5 6', false, true );
+	$rig_builder->apply_player_rig( $standard_dom, $standard_player, 'virtualproduction_games', [ 'cam_position' => '4 5 6', 'cam_rotation_x' => -15, 'cam_rotation_y' => 45 ], false, true );
 	vrodos_foundation_assert( '4 5 6' === $standard_player->getAttribute( 'position' ), 'standard rig keeps authored position on player' );
 	$standard_camera = vrodos_foundation_element_by_id( $standard_dom, 'cameraA' );
 	vrodos_foundation_assert( $standard_camera instanceof DOMElement && '0 0 0' === $standard_camera->getAttribute( 'position' ), 'standard camera remains local to player' );
+	vrodos_foundation_assert( '-15 45 0' === $standard_player->getAttribute( 'rotation' ), 'standard look-controls host receives Director orientation' );
+	vrodos_foundation_assert( 'pitch: -15; yaw: 45' === $standard_player->getAttribute( 'vrodos-camera-start' ), 'standard rig seeds look-controls without rotating the camera twice' );
+	vrodos_foundation_assert( ! $standard_camera->hasAttribute( 'rotation' ), 'standard child camera remains unrotated' );
 	vrodos_foundation_assert( ! $standard_player->hasAttribute( 'show-position' ), 'lean headset omits position UI component' );
 
 	$fragment_dom = new DOMDocument( '1.0', 'UTF-8' );
@@ -490,6 +496,28 @@ $plan_manifest = new VRodos_Compiler_Runtime_Manifest(
 $plan_repository = new VRodos_Test_Plan_Scene_Repository();
 $plan_flags      = new VRodos_Compiler_Runtime_Feature_Flags();
 $plan_settings   = new VRodos_Compiler_Scene_Settings( $plan_repository, $plan_flags );
+$director_scene = (object) [ 'objects' => (object) [ 'avatarCamera' => (object) [
+	'position' => [ 0, 2.7669967459107, -12.87772082322 ],
+	'rotation' => [ pi() / 6, pi(), 0 ],
+	// Historical exporter quaternions must not override the current camera convention.
+	'quaternion_player' => [ 0, 0, 0, 1 ],
+] ] ];
+$director_pose = VRodos_Compiler_Camera_Pose::resolve( $director_scene );
+$director_settings = $plan_settings->build_settings( (object) [], $director_scene, 9 );
+foreach ( $director_pose as $key => $value ) {
+	vrodos_foundation_assert( $director_settings[ $key ] === $value, 'compiler settings share Director pose: ' . $key );
+}
+vrodos_foundation_assert( '0 2.7669967459107 -12.87772082322' === $director_pose['cam_position'], 'Director position retains all authored coordinates' );
+vrodos_foundation_assert( abs( $director_pose['cam_rotation_x'] - 30 ) < 1e-6 && 180.0 === $director_pose['cam_rotation_y'], 'Director rotations convert radians directly to degrees' );
+vrodos_foundation_assert( [ 'cam_position' => '0 1.6 0', 'cam_rotation_x' => 0.0, 'cam_rotation_y' => 0.0 ] === VRodos_Compiler_Camera_Pose::resolve( (object) [] ), 'unconfigured scenes retain default camera pose' );
+$orientation_dom = new DOMDocument( '1.0', 'UTF-8' );
+@$orientation_dom->loadHTML( file_get_contents( __DIR__ . '/../templates/runtime/aframe/Simple_Client_prototype.html' ), LIBXML_HTML_NOIMPLIED | LIBXML_NOERROR );
+$simple_player = vrodos_foundation_element_by_id( $orientation_dom, 'player' );
+$simple_player->setAttribute( 'position', $director_pose['cam_position'] );
+( new VRodos_Compiler_Target_Renderer() )->apply_camera_orientation( $simple_player, $director_pose );
+vrodos_foundation_assert( '0 2.7669967459107 -12.87772082322' === $simple_player->getAttribute( 'position' ), 'Simple client receives Director position' );
+vrodos_foundation_assert( str_contains( $simple_player->getAttribute( 'vrodos-camera-start' ), 'yaw: 180' ), 'Simple client seeds Director orientation' );
+vrodos_foundation_assert( 'fly:true' === $simple_player->getAttribute( 'wasd-controls' ) && $simple_player->hasAttribute( 'networked' ), 'Simple camera pose preserves its movement and networking flow' );
 $plan_planner    = new VRodos_Compiler_Runtime_Script_Planner( $plan_manifest, $plan_flags );
 $plan_resolver   = new VRodos_Compiler_Plan_Resolver( $plan_settings, $plan_planner );
 $light_shaft_defaults = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( (object) [] );

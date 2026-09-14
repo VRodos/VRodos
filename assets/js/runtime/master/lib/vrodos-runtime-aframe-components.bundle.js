@@ -1342,6 +1342,7 @@
       horizonSkyPreset: { type: "string", default: "natural" },
       envMapPreset: { type: "string", default: "none" },
       cam_position: { type: "string", default: "0 1.6 0" },
+      cam_rotation_x: { type: "string", default: "0" },
       cam_rotation_y: { type: "string", default: "0" },
       avatar_enabled: { type: "string", default: "0" },
       public_chat: { type: "string", default: "0" },
@@ -5716,11 +5717,12 @@
       return Math.atan2(crossY, dot);
     },
     getInitialImmersiveRenderYaw: function() {
-      const authoredForward = this.hasLastNonImmersiveViewForward ? this.lastNonImmersiveViewForward : this.immersiveAuthoredDirection.set(0, 0, -1);
+      const authoredYaw = THREE.MathUtils.degToRad(Number(this.getSceneSettings().cam_rotation_y));
+      const authoredForward = this.hasLastNonImmersiveViewForward ? this.lastNonImmersiveViewForward : this.immersiveAuthoredDirection.set(-Math.sin(authoredYaw), 0, -Math.cos(authoredYaw));
       const physicalForward = this.getImmersivePhysicalForwardDirection(this.immersivePhysicalForwardDirection);
       const yaw = this.getYawBetweenHorizontalDirections(authoredForward, physicalForward);
       this.immersiveInitialRenderYaw = Number.isFinite(yaw) ? yaw : 0;
-      this.immersiveInitialYawSource = this.hasLastNonImmersiveViewForward ? "desktop-view" : "default-forward";
+      this.immersiveInitialYawSource = this.hasLastNonImmersiveViewForward ? "desktop-view" : "director-camera";
       return this.immersiveInitialRenderYaw;
     },
     getRuntimeNow: function() {
@@ -5878,11 +5880,7 @@
       if (this.hasLastNonImmersiveNavigationPosition) {
         return target.copy(this.lastNonImmersiveNavigationPosition);
       }
-      if (this.cameraEl && this.cameraEl.object3D && typeof this.cameraEl.object3D.getWorldPosition === "function") {
-        this.cameraEl.object3D.updateMatrixWorld(true);
-        return this.cameraEl.object3D.getWorldPosition(target);
-      }
-      return target.copy(this.immersivePhysicalAnchorPosition);
+      return target.fromArray(this.getSceneSettings().cam_position.trim().split(/\s+/).map(Number));
     },
     clearImmersiveWorldBaseTransforms: function() {
       this.immersiveWorldBaseTransforms.clear();
@@ -8043,6 +8041,9 @@
         } else {
           this.rememberNonImmersiveNavigationPosition();
         }
+        this.measureImmersiveSmoothness(smoothnessFrame, "primeNavigationMs", () => {
+          this.ensureNavigationStatePrimed();
+        });
         const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === "true" || settings.movement_disabled === "1";
         if (movementDisabled) {
           if (this.isAirborne()) {
@@ -8053,9 +8054,6 @@
           });
           return;
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "primeNavigationMs", () => {
-          this.ensureNavigationStatePrimed();
-        });
         const navigationMode = this.getNavigationMode(settings);
         const flyMode = navigationMode === "fly";
         if (!immersivePresenting && flyMode && this.desktopFullscreenPoseRestoreActiveUntil > Date.now()) {

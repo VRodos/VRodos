@@ -27,6 +27,7 @@ export const runtimeBuildChunks = Object.freeze([
       'components/audio_component.js',
       'components/video_component.js',
       'components/vrodos_hypnotic_hover.component.js',
+      'components/vrodos_camera_start.component.js',
       'assessment/assessment-utils.js',
       'assessment/assessment-session-runtime.js',
       'assessment/assessment-cefr-runtime.js',

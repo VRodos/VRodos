@@ -20,16 +20,23 @@ final class VRodos_Compiler_Target_Renderer {
 		'screen-btn-sendscreen',
 	];
 
-	public function apply_player_rig( DOMDocument $dom, DOMElement $player, string $project_type, string $camera_position, bool $networked, bool $lean_headset ): void {
+	public function apply_player_rig( DOMDocument $dom, DOMElement $player, string $project_type, array $camera_pose, bool $networked, bool $lean_headset ): void {
 		$player->setAttribute( 'custom-movement', '' );
 		if ( ! $lean_headset ) {
 			$player->setAttribute( 'show-position', '' );
 		}
 		if ( 'vrexpo_games' === $project_type ) {
-			$this->apply_vrexpo_rig( $dom, $player, $camera_position, $networked, $lean_headset );
+			$this->apply_vrexpo_rig( $dom, $player, $camera_pose, $networked, $lean_headset );
 			return;
 		}
-		$this->apply_standard_rig( $dom, $player, $camera_position, $networked );
+		$this->apply_standard_rig( $dom, $player, $camera_pose, $networked );
+	}
+
+	public function apply_camera_orientation( DOMElement $look_host, array $camera_pose ): void {
+		$pitch = $camera_pose['cam_rotation_x'];
+		$yaw   = $camera_pose['cam_rotation_y'];
+		$look_host->setAttribute( 'rotation', $pitch . ' ' . $yaw . ' 0' );
+		$look_host->setAttribute( 'vrodos-camera-start', 'pitch: ' . $pitch . '; yaw: ' . $yaw );
 	}
 
 	public function apply_networking( DOMDocument $dom ): void {
@@ -89,11 +96,12 @@ final class VRodos_Compiler_Target_Renderer {
 		return false;
 	}
 
-	private function apply_vrexpo_rig( DOMDocument $dom, DOMElement $player, string $camera_position, bool $networked, bool $lean_headset ): void {
+	private function apply_vrexpo_rig( DOMDocument $dom, DOMElement $player, array $camera_pose, bool $networked, bool $lean_headset ): void {
 		$camera = $dom->createElement( 'a-camera' );
 		$camera->setAttribute( 'camera', 'active: true; near: 0.1; far: 7000; fov: 60' );
 		$camera->setAttribute( 'id', 'cameraA' );
-		$camera->setAttribute( 'position', $camera_position );
+		$camera->setAttribute( 'position', $camera_pose['cam_position'] );
+		$this->apply_camera_orientation( $camera, $camera_pose );
 		if ( $networked ) $camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 		$camera->setAttribute( 'player-info', '' );
 		$camera->setAttribute( 'avatar-movement-info', '' );
@@ -105,8 +113,9 @@ final class VRodos_Compiler_Target_Renderer {
 		$player->appendChild( $this->create_controller( $dom, 'oculusLeft', 'left' ) );
 	}
 
-	private function apply_standard_rig( DOMDocument $dom, DOMElement $player, string $camera_position, bool $networked ): void {
-		$player->setAttribute( 'position', $camera_position );
+	private function apply_standard_rig( DOMDocument $dom, DOMElement $player, array $camera_pose, bool $networked ): void {
+		$player->setAttribute( 'position', $camera_pose['cam_position'] );
+		$this->apply_camera_orientation( $player, $camera_pose );
 		if ( $networked ) $player->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
 		$player->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
 		$player->setAttribute( 'look-controls', 'pointerLockEnabled: false' );

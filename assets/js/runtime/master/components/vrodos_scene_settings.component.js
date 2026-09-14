@@ -276,6 +276,7 @@ AFRAME.registerComponent('scene-settings', {
         horizonSkyPreset: { type: "string", default: "natural" },
         envMapPreset: { type: "string", default: "none" },
         cam_position: { type: "string", default: "0 1.6 0" },
+        cam_rotation_x: { type: "string", default: "0" },
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
         public_chat: { type: "string", default: "0" },

@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
 require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
+require_once __DIR__ . '/class-vrodos-compiler-camera-pose.php';
 
 class VRodos_Compiler_Scene_Settings {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
@@ -86,12 +87,7 @@ class VRodos_Compiler_Scene_Settings {
 			: ( 'preset-time' === $celestial_mode && 'night' === $celestial_time );
 		$moon_phase           = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMoonPhase' );
 
-		$camera_position = isset( $scene_json->objects->avatarCamera )
-			? implode( ' ', (array) $scene_json->objects->avatarCamera->position )
-			: '0 1.6 0';
-		$camera_rotation_y = isset( $scene_json->objects->avatarCamera )
-			? ( 180 / pi() * $scene_json->objects->avatarCamera->rotation[1] )
-			: '0';
+		$camera_pose = VRodos_Compiler_Camera_Pose::resolve( $scene_json );
 		$navigation_mode = $this->feature_flags->navigation_mode( $metadata );
 
 		// The contract owns every ordinary wire value. Only values whose meaning
@@ -110,8 +106,9 @@ class VRodos_Compiler_Scene_Settings {
 				'fpsMeterEnabled'                   => $this->feature_flags->fps_meter_attr( $metadata ),
 				'postFXEnabled'                     => $post_fx_enabled_bool ? '1' : '0',
 				'postFXEngine'                      => $post_fx_engine,
-				'cam_position'                      => $camera_position,
-				'cam_rotation_y'                    => $camera_rotation_y,
+				'cam_position'                      => $camera_pose['cam_position'],
+				'cam_rotation_x'                    => $camera_pose['cam_rotation_x'],
+				'cam_rotation_y'                    => $camera_pose['cam_rotation_y'],
 				'pmndrsToneMappingExposureAuthored' => $tone_mapping_exposure_authored ? 'true' : 'false',
 				'pmndrsAtmosphereEnabled'           => $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ? 'true' : 'false',
 				'pmndrsCloudsEnabled'               => $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ? 'true' : 'false',
@@ -149,7 +146,7 @@ class VRodos_Compiler_Scene_Settings {
 			return $settings;
 		}
 
-		$blocked = [ 'runtimeMode', 'vrRuntimeProfile', 'pr_type', 'cam_position', 'cam_rotation_y', 'rootShadowType' ];
+		$blocked = [ 'runtimeMode', 'vrRuntimeProfile', 'pr_type', 'cam_position', 'cam_rotation_x', 'cam_rotation_y', 'rootShadowType' ];
 		$allowed = array_fill_keys( array_keys( $settings ), true );
 		foreach ( explode( ';', $raw ) as $part ) {
 			$part = trim( $part );

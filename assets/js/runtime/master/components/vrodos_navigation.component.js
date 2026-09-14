@@ -1912,13 +1912,14 @@ AFRAME.registerComponent('custom-movement', {
         return Math.atan2(crossY, dot);
     },
     getInitialImmersiveRenderYaw: function () {
+        const authoredYaw = THREE.MathUtils.degToRad(Number(this.getSceneSettings().cam_rotation_y));
         const authoredForward = this.hasLastNonImmersiveViewForward
             ? this.lastNonImmersiveViewForward
-            : this.immersiveAuthoredDirection.set(0, 0, -1);
+            : this.immersiveAuthoredDirection.set(-Math.sin(authoredYaw), 0, -Math.cos(authoredYaw));
         const physicalForward = this.getImmersivePhysicalForwardDirection(this.immersivePhysicalForwardDirection);
         const yaw = this.getYawBetweenHorizontalDirections(authoredForward, physicalForward);
         this.immersiveInitialRenderYaw = Number.isFinite(yaw) ? yaw : 0;
-        this.immersiveInitialYawSource = this.hasLastNonImmersiveViewForward ? 'desktop-view' : 'default-forward';
+        this.immersiveInitialYawSource = this.hasLastNonImmersiveViewForward ? 'desktop-view' : 'director-camera';
         return this.immersiveInitialRenderYaw;
     },
     getRuntimeNow: function () {
@@ -2112,12 +2113,9 @@ AFRAME.registerComponent('custom-movement', {
             return target.copy(this.lastNonImmersiveNavigationPosition);
         }
 
-        if (this.cameraEl && this.cameraEl.object3D && typeof this.cameraEl.object3D.getWorldPosition === 'function') {
-            this.cameraEl.object3D.updateMatrixWorld(true);
-            return this.cameraEl.object3D.getWorldPosition(target);
-        }
-
-        return target.copy(this.immersivePhysicalAnchorPosition);
+        // The XR camera may already contain a physical tracking pose on direct entry.
+        // The compile contract remains in authored coordinates throughout the session.
+        return target.fromArray(this.getSceneSettings().cam_position.trim().split(/\s+/).map(Number));
     },
     clearImmersiveWorldBaseTransforms: function () {
         this.immersiveWorldBaseTransforms.clear();
@@ -4742,6 +4740,10 @@ AFRAME.registerComponent('custom-movement', {
                 this.rememberNonImmersiveNavigationPosition();
             }
 
+            this.measureImmersiveSmoothness(smoothnessFrame, 'primeNavigationMs', () => {
+                this.ensureNavigationStatePrimed();
+            });
+
             const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {
                 if (this.isAirborne()) {
@@ -4752,10 +4754,6 @@ AFRAME.registerComponent('custom-movement', {
                 });
                 return;
             }
-
-            this.measureImmersiveSmoothness(smoothnessFrame, 'primeNavigationMs', () => {
-                this.ensureNavigationStatePrimed();
-            });
 
             const navigationMode = this.getNavigationMode(settings);
             const flyMode = navigationMode === 'fly';
