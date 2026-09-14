@@ -187,6 +187,15 @@ assertEqual(editor.scene.aframePmndrsCloudsEnabled, true, 'Custom inherits the a
 assertEqual(editor.scene.aframeAmbientOcclusionPreset, 'off', 'Custom inherits the active tier SSAO setting');
 assertEqual(editor.scene.aframePmndrsToneMappingExposure, 2.4, 'Custom conversion preserves authored exposure');
 
+const cloudDefaults = editorHarness();
+cloudDefaults.scene.aframePmndrsCloudsEnabled = true;
+cloudDefaults.scene.aframePmndrsAtmosphereEnabled = true;
+const cloudDefaultProfiles = cloudDefaults.api.ensureProfiles();
+assertEqual(cloudDefaultProfiles.profiles.low.settings.pmndrsCloudsEnabled, false, 'Low defaults to no clouds');
+assertEqual(cloudDefaultProfiles.profiles.medium.settings.pmndrsCloudsEnabled, true, 'Medium retains authored clouds');
+assertEqual(cloudDefaultProfiles.profiles.medium.settings.pmndrsCloudsQuality, 'low', 'Medium defaults to Low clouds');
+assertEqual(cloudDefaultProfiles.profiles.low.settings.pmndrsAtmosphereEnabled, true, 'Low retains the sky without clouds');
+
 const refreshed = editorHarness();
 refreshed.scene.aframePostFXEnabled = true;
 refreshed.scene.aframePmndrsCloudsEnabled = false;
@@ -198,7 +207,7 @@ refreshed.scene.desktopPerformanceProfiles = {
     } }
 };
 const refreshedProfiles = refreshed.api.ensureProfiles();
-assertEqual(refreshedProfiles.profiles.high.settings.pmndrsCloudsQuality, 'ultra', 'saved default cloud quality follows the new preset');
+assertEqual(refreshedProfiles.profiles.high.settings.pmndrsCloudsQuality, 'high', 'saved default cloud quality follows the new preset');
 assertEqual(refreshedProfiles.profiles.high.settings.pmndrsAtmosphereQuality, 'cinematic', 'saved default atmosphere quality follows the new preset');
 assertEqual(refreshedProfiles.profiles.high.settings.shadowQuality, 'off', 'saved deliberate shadow override is preserved');
 assertEqual(refreshedProfiles.profiles.low.settings.postFXEnabled, true, 'Low keeps post-FX available for SMAA without clouds');

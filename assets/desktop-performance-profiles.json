@@ -113,7 +113,8 @@
         "pmndrsChromaticAberrationEnabled": "false",
         "pmndrsAtmosphereQuality": "balanced",
         "pmndrsCloudsLightShaftsEnabled": "false",
-        "pmndrsCloudsQuality": "medium"
+        "pmndrsCloudsEnabled": "false",
+        "pmndrsCloudsQuality": "low"
       }
     },
     "medium": {
@@ -183,7 +184,7 @@
         "pmndrsChromaticAberrationEnabled": "false",
         "pmndrsAtmosphereQuality": "quality",
         "pmndrsCloudsLightShaftsEnabled": "false",
-        "pmndrsCloudsQuality": "high"
+        "pmndrsCloudsQuality": "low"
       }
     },
     "high": {
@@ -195,7 +196,7 @@
       "textureMaxSize": 4096,
       "textureMemoryBudgetMiB": null,
       "geometryRatio": 1,
-      "summary": "Maximum quality: DPR up to 2, exact geometry, 4096px textures, cinematic atmosphere, Ultra clouds and SMAA, and high dynamic shadows.",
+      "summary": "DPR up to 2, exact geometry, 4096px textures, cinematic atmosphere, High clouds, Ultra SMAA, and high dynamic shadows.",
       "editableSettings": [
         "shadowQuality",
         "shadowUpdateMode",
@@ -242,7 +243,7 @@
         "pmndrsAAMode": "smaa",
         "pmndrsAAPreset": "ultra",
         "pmndrsAtmosphereQuality": "cinematic",
-        "pmndrsCloudsQuality": "ultra"
+        "pmndrsCloudsQuality": "high"
       }
     }
   },

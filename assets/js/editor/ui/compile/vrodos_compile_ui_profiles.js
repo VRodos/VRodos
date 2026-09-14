@@ -21,9 +21,9 @@ VRODOS.ui = VRODOS.ui || {};
         reflectionsEnabled: 'Reflections'
     };
     const FIXED_SUMMARIES = {
-        low: '2048px textures, static shadows, SMAA, and up to Medium clouds. Cloud shafts, bloom, SSR, TAA, flare, and scene probes are fixed off.',
-        medium: 'Shadow updates are static. Shafts, bloom, SSR, TAA, flare, noise, chromatic aberration, and scene probes are fixed off.',
-        high: 'Maximum quality defaults: high dynamic shadows, Ultra SMAA and clouds, cinematic atmosphere, and enhanced reflections. The authored look and effect toggles stay shared.'
+        low: '2048px textures, static shadows, SMAA, and no clouds by default. Cloud shafts, bloom, SSR, TAA, flare, and scene probes are fixed off.',
+        medium: 'Low-quality clouds by default; shadow updates are static. Shafts, bloom, SSR, TAA, flare, noise, chromatic aberration, and scene probes are fixed off.',
+        high: 'High dynamic shadows and clouds, Ultra SMAA, cinematic atmosphere, and enhanced reflections. Ultra clouds remain selectable; the authored look and effect toggles stay shared.'
     };
     const ORDERED_SETTINGS = {
         renderQuality: ['performance', 'standard', 'high'],
@@ -163,10 +163,10 @@ VRODOS.ui = VRODOS.ui || {};
             : envMapDefinition.default;
         const highHasHdr = String(authoredEnvMap || 'none') !== 'none';
         preset.pmndrsAtmosphereEnabled = highAtmosphere;
-        preset.pmndrsCloudsEnabled = highClouds;
+        preset.pmndrsCloudsEnabled = highClouds && bool(preset.pmndrsCloudsEnabled);
         preset.reflectionsEnabled = highReflections && (String(highSettings.reflectionSource || 'hdr') === 'hdr' || highHasHdr);
 
-        if (highClouds) {
+        if (bool(preset.pmndrsCloudsEnabled)) {
             preset.postFXEnabled = true;
             preset.postFXEngine = 'pmndrs';
         }

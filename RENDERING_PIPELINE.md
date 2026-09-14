@@ -20,14 +20,14 @@ The compiled `scene-settings` attribute remains the compatibility data contract.
 
 ### Desktop Custom and adaptive performance slots
 
-The Custom tab owns canonical shared artistic intent and the exact fixed-build quality. Adaptive desktop Master clients have three reusable runtime slots: Low, Medium, and High. High applies maximum-quality defaults over the authored look. Low and Medium are caps, so they never enable an effect that Custom/High disables. Clouds remain available at lower technical quality when authored on: Low uses Medium clouds without shafts, Medium uses High clouds without shafts, and both stay off when authored clouds are off. Cloud and compositor requests share adaptive quality eligibility; the compositor must not reject an enabled adaptive effect because its render quality is below High.
+The Custom tab owns canonical shared artistic intent and the exact fixed-build quality. Adaptive desktop Master clients have three reusable runtime slots: Low, Medium, and High. High applies maximum-quality defaults over the authored look. Low and Medium are caps, so they never enable an effect that Custom/High disables. Low defaults to no clouds; Medium defaults to Low-quality clouds without shafts when authored on. Both stay off when authored clouds are off. Cloud and compositor requests share adaptive quality eligibility; the compositor must not reject an enabled adaptive effect because its render quality is below High.
 
 | Slot | Render/assets | Expensive rendering |
 | --- | --- | --- |
 | Custom | Authored render settings, DPR ≤1.5, Web High 4096px KTX2 and exact geometry | Exact authored fixed-build quality; no hardware selection |
-| Low | `standard`, 3.7 MP / DPR ≤1, Web Medium 2048px KTX2, 192 MiB target, 80% visual geometry | Previous Medium preset: static Medium shadows, Medium SMAA, Soft AO/contact, Balanced atmosphere and Medium clouds; no shafts or heavy post-effects |
-| Medium | `high`, 5 MP / DPR ≤1.25, Web High 4096px KTX2, 256 MiB target, exact geometry | Static Medium shadows, High SMAA, Soft AO/contact, Quality atmosphere and High clouds; no bloom/SSR/TAA/flare/noise/chromatic aberration or shafts |
-| High | `high`, DPR ≤2, Web High 4096px KTX2, no texture-memory target, exact geometry | High dynamic shadows, Ultra SMAA/clouds, Cinematic atmosphere, enhanced reflections and 256px slow-dynamic probes when authored; shared effect toggles remain authoritative |
+| Low | `standard`, 3.7 MP / DPR ≤1, Web Medium 2048px KTX2, 192 MiB target, 80% visual geometry | Previous Medium preset: static Medium shadows, Medium SMAA, Soft AO/contact, Balanced atmosphere and no clouds by default; no shafts or heavy post-effects |
+| Medium | `high`, 5 MP / DPR ≤1.25, Web High 4096px KTX2, 256 MiB target, exact geometry | Static Medium shadows, High SMAA, Soft AO/contact, Quality atmosphere and Low-quality clouds; no bloom/SSR/TAA/flare/noise/chromatic aberration or shafts |
+| High | `high`, DPR ≤2, Web High 4096px KTX2, no texture-memory target, exact geometry | High dynamic shadows, Ultra SMAA and High clouds (Ultra selectable), Cinematic atmosphere, enhanced reflections and 256px slow-dynamic probes when authored; shared effect toggles remain authoritative |
 
 Editing a tier-controlled field changes only that slot from `Default` to `Modified`; artistic/shared fields do not. Saved values matching their preset baseline follow updated defaults at compile time; actual modifications are retained. Publication validates Low ≤ Medium ≤ High for performance-sensitive settings. Collision/navigation assets and skinned or morph-target GLBs are never simplified. Standalone headset derivative quality is unchanged: Web Low/Medium/High remain 1024/2048/4096px recipes.
 

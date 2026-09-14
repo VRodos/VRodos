@@ -784,10 +784,11 @@ vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsA
 vrodos_foundation_assert( 'balanced' === $cloud_profiles['low']['settings']['pmndrsAtmosphereQuality'], 'Low caps atmosphere at Balanced quality' );
 vrodos_foundation_assert( 'true' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereEnabled'], 'Medium keeps authored atmosphere enabled' );
 vrodos_foundation_assert( 'quality' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereQuality'], 'Medium caps atmosphere at Quality' );
-vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsCloudsEnabled'], 'Low keeps authored clouds enabled' );
-vrodos_foundation_assert( 'medium' === $cloud_profiles['low']['settings']['pmndrsCloudsQuality'], 'Low caps clouds at Medium quality' );
+vrodos_foundation_assert( 'false' === $cloud_profiles['low']['settings']['pmndrsCloudsEnabled'], 'Low defaults to no clouds even when authored on' );
+vrodos_foundation_assert( 'low' === $cloud_profiles['low']['settings']['pmndrsCloudsQuality'], 'Low stores inexpensive cloud quality' );
 vrodos_foundation_assert( 'false' === $cloud_profiles['low']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Low disables cloud light shafts' );
-vrodos_foundation_assert( 'high' === $cloud_profiles['medium']['settings']['pmndrsCloudsQuality'], 'Medium caps clouds at High quality' );
+vrodos_foundation_assert( 'true' === $cloud_profiles['medium']['settings']['pmndrsCloudsEnabled'], 'Medium retains authored clouds' );
+vrodos_foundation_assert( 'low' === $cloud_profiles['medium']['settings']['pmndrsCloudsQuality'], 'Medium defaults to Low cloud quality' );
 vrodos_foundation_assert( 'false' === $cloud_profiles['medium']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Medium disables cloud light shafts' );
 vrodos_foundation_assert( 'true' === $cloud_profiles['high']['settings']['pmndrsCloudsLightShaftsEnabled'], 'High preserves authored cloud light shafts' );
 vrodos_foundation_assert( 'web-medium' === $cloud_profiles['low']['assets']['profile'] && 2048 === $cloud_profiles['low']['assets']['textureMaxSize'], 'Low prepares and publishes existing Web Medium textures' );
@@ -811,7 +812,7 @@ $saved_defaults = (object) [ 'desktopPerformanceProfiles' => (object) [
 	],
 ] ];
 $refreshed = VRodos_Desktop_Performance_Profiles::resolve( $saved_defaults, $cloud_plan->scenes[0]->settings );
-vrodos_foundation_assert( 'ultra' === $refreshed['profiles']['high']['settings']['pmndrsCloudsQuality'], 'saved default cloud quality follows the current preset' );
+vrodos_foundation_assert( 'high' === $refreshed['profiles']['high']['settings']['pmndrsCloudsQuality'], 'saved default cloud quality follows the current preset' );
 vrodos_foundation_assert( 'cinematic' === $refreshed['profiles']['high']['settings']['pmndrsAtmosphereQuality'], 'saved default atmosphere follows the current preset' );
 vrodos_foundation_assert( 'off' === $refreshed['profiles']['high']['settings']['shadowQuality'], 'author modifications survive a preset refresh' );
 
