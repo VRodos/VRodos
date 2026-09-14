@@ -20,6 +20,7 @@ export const runtimeBuildChunks = Object.freeze([
     features: ['scene-components', 'poi', 'media', 'audio', 'assessment'],
     sourceFiles: [
       'vrodos_runtime_overlay.js',
+      'components/vrodos_controls_hint.component.js',
       'highlight_img.js',
       'components/poi-image_component.js',
       'components/poi-link_component.js',

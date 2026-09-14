@@ -16040,6 +16040,7 @@
       "[id^='video-playhint_']"
     ];
     let activePanel = null;
+    let controlsHint = null;
     let hostComponentRegistered = false;
     let hostComponentScene = null;
     let hostComponentAttachAttempts = 0;
@@ -17583,18 +17584,18 @@
       }
       return changed;
     }
+    function configureRenderer(scene) {
+      scene.renderer.sortObjects = true;
+      scene.renderer.setTransparentSort(reversePainterSortStable);
+      scene.renderer.localClippingEnabled = true;
+    }
     function attachInput(panelState) {
       const scene = panelState.scene;
       const target = panelState.root;
       if (!scene || !target) {
         return;
       }
-      if (scene.renderer && typeof scene.renderer.setTransparentSort === "function") {
-        scene.renderer.setTransparentSort(reversePainterSortStable);
-      }
-      if (scene.renderer) {
-        scene.renderer.localClippingEnabled = true;
-      }
+      configureRenderer(scene);
       if (scene.canvas && scene.camera && typeof forwardHtmlEvents === "function") {
         try {
           panelState.htmlEventForwarder = forwardHtmlEvents(scene.canvas, () => scene.camera, target, {
@@ -18601,7 +18602,7 @@
         backgroundColor: config.background || "#f2f2f2",
         borderColor: config.borderColor || "transparent",
         color: "#272727",
-        pointerEvents: "listener",
+        pointerEvents: config.pointerEvents || "listener",
         depthTest: false,
         depthWrite: false,
         renderOrder: PANEL_RENDER_ORDER,
@@ -18700,7 +18701,72 @@
         window.setTimeout(ensureAFrameHostComponent, 100);
       }
     }
+    function hideControlsHint() {
+      if (!controlsHint) return;
+      const hint = controlsHint;
+      controlsHint = null;
+      disposeComponentTree(hint.root);
+      disposeObject3D(hint.group);
+    }
+    function showControlsHint(items) {
+      hideControlsHint();
+      if (!isAvailable() || activePanel || getPresentationMode() !== "immersive-xr") return false;
+      ensureAFrameHostComponent();
+      configureRenderer(getScene());
+      try {
+        controlsHint = createPanelState({
+          id: "controls-hint",
+          width: 1.45,
+          height: 0.26,
+          designWidthPx: 760,
+          distance: 1.95,
+          verticalOffset: -0.48,
+          centerAtEyeLevel: true,
+          anchorRefreshFrames: 0,
+          background: "rgba(18,18,17,0.64)",
+          borderColor: "rgba(255,255,255,0.22)",
+          borderWidth: 1,
+          borderRadius: 24,
+          pointerEvents: "none"
+        });
+        controlsHint.root.setProperties(baseContainerProps({
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 14,
+          padding: 20,
+          panelMaterialClass: getThreeRuntime().MeshBasicMaterial
+        }));
+        const hintApi = createPanelApi(controlsHint);
+        items.forEach(({ icon, action }) => {
+          const column = hintApi.column(controlsHint.root, {
+            width: 150,
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            gapRow: 8
+          });
+          append(column, new Svg(baseContainerProps({
+            content: icon.content,
+            width: 48,
+            height: 48,
+            flexShrink: 0,
+            color: "#ffffff",
+            fill: "#ffffff",
+            zIndex: 20
+          })));
+          hintApi.text(column, { text: action, fontSize: 22, fontWeight: 500, color: "#e3e3df" });
+        });
+        controlsHint.root.update(0);
+        return true;
+      } catch (error2) {
+        hideControlsHint();
+        recordDiagnostic("warn", "Could not create spatial controls hint.", { error: String(error2) });
+        return false;
+      }
+    }
     function openPanel(config) {
+      hideControlsHint();
       if (!isAvailable()) {
         recordDiagnostic("warn", "Spatial UI unavailable; no A-Frame fallback will be opened.", {
           hasAFrame: Boolean(window.AFRAME),
@@ -18803,12 +18869,15 @@
     function refreshInteractionTargets() {
     }
     function dispose() {
+      hideControlsHint();
       closePanel("spatial-ui-dispose");
     }
     const api = {
       vendor,
       isAvailable,
       openPanel,
+      showControlsHint,
+      hideControlsHint,
       closePanel,
       refreshInteractionTargets,
       dispose,
@@ -18824,6 +18893,10 @@
       },
       recordDiagnostic,
       __tick: function(deltaMs) {
+        if (controlsHint) {
+          if (getPresentationMode() !== "immersive-xr") hideControlsHint();
+          else controlsHint.root.update(Math.max(0, Number(deltaMs) || 0));
+        }
         if (!activePanel || !activePanel.root) {
           return;
         }

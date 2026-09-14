@@ -19,6 +19,7 @@ export const testGroups = Object.freeze({
     "scripts/test-celestial-lighting.mjs",
     "scripts/test-light-smoothing.mjs",
     "scripts/test-overlay-interaction.mjs",
+    "scripts/test-controls-hint.mjs",
     "scripts/test-two-faced-media.mjs",
     "scripts/test-editor-property-inputs.mjs",
     "scripts/test-editor-transform-inputs.mjs",

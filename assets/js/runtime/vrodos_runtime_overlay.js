@@ -579,7 +579,9 @@
         });
         if (runtimeScript && runtimeScript.src) {
             try {
-                return new URL(SPATIAL_UI_BUNDLE_FILE, runtimeScript.src).toString();
+                const url = new URL(SPATIAL_UI_BUNDLE_FILE, runtimeScript.src);
+                url.search = new URL(runtimeScript.src).search;
+                return url.toString();
             } catch (_error) {}
         }
 

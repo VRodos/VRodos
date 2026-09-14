@@ -4205,7 +4205,7 @@
   });
   AFRAME.registerComponent("custom-movement", {
     schema: {
-      movementSpeed: { type: "number", default: 3.2 },
+      movementSpeed: { type: "number", default: 2 },
       flyMovementSpeed: { type: "number", default: 16 },
       flyPitchVerticalMultiplier: { type: "number", default: 1.75 },
       flyVerticalSpeedMultiplier: { type: "number", default: 1.5 },
@@ -8221,7 +8221,7 @@
         if (hasMovementInput) {
           let movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
           if (immersivePresenting && !flyMode) {
-            movementSpeed *= 1.875;
+            movementSpeed *= 3;
           }
           if (!flyMode && this.isAirborne()) {
             movementSpeed *= this.airControl;

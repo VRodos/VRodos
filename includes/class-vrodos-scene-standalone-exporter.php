@@ -100,6 +100,8 @@ final class VRodos_Scene_Standalone_Exporter {
 	private function collect_dependencies( string $html ): array {
 		$files   = [];
 		$pending = $this->extract_local_url_paths( $html );
+		// Every scene can display its controls hint in immersive VR.
+		$pending[] = VRodos_Path_Manager::plugin_url() . 'assets/js/runtime/master/lib/vrodos-runtime-spatial-ui.bundle.js';
 
 		// These template-relative models are always present in Master clients.
 		$pending[] = '/wp-content/plugins/VRodos/assets/models/editor/checkmark.glb';

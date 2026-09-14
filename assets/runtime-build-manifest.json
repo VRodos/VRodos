@@ -20,6 +20,7 @@
       ],
       "sourceFiles": [
         "assets/js/runtime/vrodos_runtime_overlay.js",
+        "assets/js/runtime/components/vrodos_controls_hint.component.js",
         "assets/js/runtime/highlight_img.js",
         "assets/js/runtime/components/poi-image_component.js",
         "assets/js/runtime/components/poi-link_component.js",
