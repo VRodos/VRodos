@@ -14,6 +14,7 @@ class VRodos_Asset_AJAX {
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', [ $this, 'vrodos_fetch_game_assets_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_retry_editor_preview_action', [ $this, 'vrodos_retry_editor_preview_callback' ] );
+		add_action( 'wp_ajax_vrodos_asset_readiness_action', [ $this, 'vrodos_asset_readiness_callback' ] );
 	}
 
 	/**
@@ -94,6 +95,10 @@ class VRodos_Asset_AJAX {
 
 		$url_normalizer = new VRodos_URL_Normalizer();
 		for ( $i = 0; $i < count( $response ); $i++ ) {
+			$asset_id = absint( $response[ $i ]['asset_id'] ?? 0 );
+			if ( ! empty( $response[ $i ]['glb_path'] ) && $this->can_read_asset( $asset_id ) ) {
+				$response[ $i ]['editorReadiness'] = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id )['readiness'];
+			}
 			if ( isset( $response[ $i ]['assetName'] ) ) {
 				$response[ $i ]['name'] = $response[ $i ]['assetName'];
 				$response[ $i ]['type'] = 'file';
@@ -186,6 +191,25 @@ class VRodos_Asset_AJAX {
 
 		VRodos_Asset_Optimization_Manager::retry_editor_preview( $asset_id );
 		wp_send_json_success( VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id ) );
+	}
+
+	public function vrodos_asset_readiness_callback(): void {
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$ids = $_POST['asset_ids'] ?? [];
+		if ( ! is_array( $ids ) || count( $ids ) > 100 ) {
+			wp_send_json_error( 'Provide at most 100 asset IDs.', 400 );
+		}
+		$items = [];
+		foreach ( array_unique( array_map( 'absint', $ids ) ) as $asset_id ) {
+			if ( 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! $this->can_read_asset( $asset_id ) ) {
+				$items[ $asset_id ] = [ 'status' => 'forbidden', 'label' => 'Access unavailable', 'message' => 'This asset is unavailable.' ];
+				continue;
+			}
+			$items[ $asset_id ] = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id )['readiness'];
+		}
+		wp_send_json_success( [ 'items' => $items ] );
 	}
 
 	private function can_read_asset( int $asset_id ): bool {

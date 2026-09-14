@@ -25,6 +25,9 @@ class MockVector {
     clone() {
         return new MockVector(this.x, this.y, this.z);
     }
+
+    copy(other) { return this.set(other.x, other.y, other.z); }
+    fromArray(values) { return this.set(...values); }
 }
 
 class MockBox3 {
@@ -86,9 +89,8 @@ class MockObject3D {
         this.userData = {};
     }
 
-    add(child) {
-        this.children.push(child);
-        child.parent = this;
+    add(...children) {
+        children.forEach((child) => { this.children.push(child); child.parent = this; });
     }
 
     remove(child) {
@@ -146,6 +148,7 @@ class MockMaterial {
     constructor(options = {}) {
         Object.assign(this, options);
         this.disposeCount = 0;
+        if (typeof this.color === 'number') this.color = { setHex() {} };
     }
 
     clone() {
@@ -241,6 +244,9 @@ const context = {
         AnimationMixer: MockAnimationMixer,
         Box3: MockBox3,
         BoxGeometry: MockGeometry,
+        EdgesGeometry: MockGeometry,
+        LineSegments: MockMesh,
+        LineBasicMaterial: MockMaterial,
         DoubleSide: 2,
         FrontSide: 0,
         GLTFLoader: MockGltfLoader,
@@ -267,6 +273,14 @@ const context = {
         config: { SCENE_SETTINGS_SCHEMA: {} },
         data: { pluginPath: "/plugin" },
         editor: {
+            requestRender() {},
+            selection: { get() { return null; } },
+            sceneRegistry: {
+                objects: new Map(),
+                get(name) { return this.objects.get(name); },
+                invalidateBounds() {},
+                getSelectableRoots() { return Array.from(this.objects.values()); }
+            },
             diagnostics: {
                 updateCurrentLoad(details) {
                     this.lastUpdate = details;
@@ -290,6 +304,7 @@ const context = {
                 added: [],
                 addSceneObject(object, options) {
                     this.added.push({ object, options });
+                    context.VRODOS.editor.sceneRegistry.objects.set(object.name, object);
                     return object;
                 }
             },
@@ -432,6 +447,7 @@ let metadataRequests = 0;
 context.fetch = async () => {
     metadataRequests++;
     return {
+        ok: true,
         text: async () => JSON.stringify({
             category_slug: "decoration",
 			glbURL: "/dynamic.glb",
@@ -511,7 +527,7 @@ const removedPendingResources = { removedPending: removedPendingResource };
 let pendingMetadataRequests = 0;
 context.fetch = async () => {
 	pendingMetadataRequests++;
-	return { text: async () => "{}" };
+	return { ok: true, text: async () => "{}" };
 };
 const removedPendingResult = await context.VRODOS.loader.loadGlbAsset(
 	null,
@@ -520,7 +536,7 @@ const removedPendingResult = await context.VRODOS.loader.loadGlbAsset(
 	removedPendingResource,
 	removedPendingResources
 );
-assert(removedPendingResult === null, "a qualifying pending preview must not fall back to its source GLB");
+assert(removedPendingResult.userData.vrodosEditorPlaceholder === true, "a qualifying pending preview must display a placeholder without loading its source GLB");
 assert(scheduledTimers.length === 1, "a pending preview must schedule one status poll");
 delete removedPendingResources.removedPending;
 await scheduledTimers.shift().callback();
@@ -568,6 +584,7 @@ const readyPendingResource = {
 };
 const readyPendingResources = { readyPending: readyPendingResource };
 context.fetch = async () => ({
+	ok: true,
 	text: async () => JSON.stringify({
 		glbURL: "/second-large-source.glb",
 		editorLoad: {
@@ -764,6 +781,7 @@ let cacheHitLoaderCalls = 0;
 context.fetch = async () => {
     metadataRequests++;
     return {
+        ok: true,
         text: async () => JSON.stringify({
             category_slug: "decoration",
 			glbURL: "/tree.glb",
@@ -970,9 +988,9 @@ assert(editorInitializerSource.indexOf("vrodosScheduleAvailableAssetsFetch();") 
 assert(editorNamespaceSource.includes("window.performance.mark('vrodos-editor-script-start')"), "the first editor dependency must mark script execution start");
 assert(editorInitializerSource.includes("window.performance.mark('vrodos-editor-shell-ready')"), "editor shell readiness must be marked");
 assert(sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-load-start')") && sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-ready')"), "scene loading must expose start and ready marks");
-assert(glbLoaderSource.includes("Retry Preview") && glbLoaderSource.includes("Load Full Source Quality"), "failed scene-editor previews must expose retry and explicit source actions");
+assert(glbLoaderSource.includes("retry.textContent = 'Retry'") && glbLoaderSource.includes("Load Full Source Quality"), "failed scene-editor previews must expose retry and explicit source actions");
 assert(glbLoaderSource.includes("managedAsset ? '' : canonicalUrl"), "managed assets must never bypass the shared resolver and silently load their source URL");
-assert(sceneLifecycleSource.includes("hasPreviewActions"), "scene finalization must not hide actionable preview failures");
+assert(!sceneLifecycleSource.includes("hasPreviewActions"), "independent preparation messages must not keep the loading indicator visible");
 assert(threeVendorSource.includes("SkeletonUtils"), "the Three.js vendor bundle must export SkeletonUtils for skinned clones");
 
 console.log("Editor scene loader tests passed.");

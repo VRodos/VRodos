@@ -84,6 +84,90 @@ function assetBrowserMatchesVisibility(value, visibility) {
     return true;
 }
 
+function updateAssetCardReadiness(asset) {
+    const card = document.getElementById(`asset-${asset.asset_id}`);
+    const readiness = asset.editorReadiness;
+    if (!card || !readiness) return;
+    let badge = card.querySelector('[data-asset-readiness]');
+    if (readiness.status === 'ready') {
+        if (badge) badge.remove();
+        card.title = 'Drag into scene';
+        return;
+    }
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.setAttribute('data-asset-readiness', '');
+        badge.setAttribute('aria-live', 'polite');
+        badge.style.cssText = 'position:absolute;top:6px;left:6px;right:30px;z-index:11;padding:3px 5px;border-radius:4px;font-size:9px;font-weight:700;color:white;pointer-events:none';
+        card.appendChild(badge);
+    }
+    const pending = ['queued', 'preparing'].includes(readiness.status);
+    badge.textContent = readiness.label;
+    if (pending) {
+        const spinner = document.createElement('span');
+        spinner.className = 'tw-inline-block tw-animate-spin';
+        spinner.textContent = '◌';
+        spinner.setAttribute('aria-hidden', 'true');
+        badge.prepend(spinner, ' ');
+    }
+    badge.style.background = pending ? '#92400e' : '#b91c1c';
+    card.title = `${readiness.label}. ${readiness.message}`;
+}
+
+VRODOS.ui.applyAssetReadiness = function(assetId, readiness, restartPolling = false) {
+    const asset = window.vrodosAssetBrowserItemsById && window.vrodosAssetBrowserItemsById[String(assetId)];
+    if (!asset || !readiness) return;
+    asset.editorReadiness = readiness;
+    updateAssetCardReadiness(asset);
+    if (restartPolling) VRODOS.ui.startAssetReadinessPolling();
+};
+
+VRODOS.ui.stopAssetReadinessPolling = function() {
+    const state = VRODOS.ui.assetReadinessPolling;
+    if (!state) return;
+    state.stopped = true;
+    if (state.timer) window.clearTimeout(state.timer);
+};
+
+VRODOS.ui.startAssetReadinessPolling = function() {
+    VRODOS.ui.stopAssetReadinessPolling();
+    const state = { stopped: false, timer: null, attempts: 0 };
+    VRODOS.ui.assetReadinessPolling = state;
+    const poll = async () => {
+        if (state.stopped) return;
+        const pending = Object.values(window.vrodosAssetBrowserItemsById).filter((asset) => (
+            asset.editorReadiness && ['queued', 'preparing'].includes(asset.editorReadiness.status)
+            && document.getElementById(`asset-${asset.asset_id}`)
+        ));
+        if (pending.length === 0) return;
+        state.attempts++;
+        try {
+            for (let offset = 0; offset < pending.length && !state.stopped; offset += 100) {
+                const body = new URLSearchParams({ action: 'vrodos_asset_readiness_action', nonce: window.vrodos_data.scene_mutation_nonce });
+                pending.slice(offset, offset + 100).forEach((asset) => body.append('asset_ids[]', String(asset.asset_id)));
+                const response = await fetch(VRODOS.utils.getAjaxUrl(), { method: 'POST', body });
+                const payload = await response.json();
+                if (!response.ok || !payload.success) throw new Error('Could not check asset preparation.');
+                if (state.stopped) return;
+                Object.entries(payload.data.items).forEach(([id, readiness]) => {
+                    VRODOS.ui.applyAssetReadiness(id, readiness);
+                });
+            }
+        } catch (error) {
+            if (state.stopped) return;
+            pending.forEach((asset) => {
+                const card = document.getElementById(`asset-${asset.asset_id}`);
+                if (card) card.title = 'Connection interrupted. Checking preparation again automatically.';
+            });
+            console.warn('Could not check asset preparation.', error);
+        }
+        if (!state.stopped) state.timer = window.setTimeout(poll, Math.min(15000, 3000 + state.attempts * 1000));
+    };
+    state.timer = window.setTimeout(poll, 3000);
+};
+
+window.addEventListener('pagehide', VRODOS.ui.stopAssetReadinessPolling);
+
 VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
 
     const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
@@ -117,6 +201,7 @@ VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforA
  * @param responseData
  */
 VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAssetEdit) {
+    VRODOS.ui.stopAssetReadinessPolling();
     window.vrodosAssetBrowserItemsById = {};
 
     function vrodos_getAssetPreviewFallbackIcon(asset) {
@@ -223,6 +308,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
     bindAssetCategoryTabs(categoryTabs, openCategoryTab);
     bindAssetVisibilityFilters();
     render(responseData, gameProjectSlug, urlforAssetEdit);
+    responseData.forEach(updateAssetCardReadiness);
+    VRODOS.ui.startAssetReadinessPolling();
     applyAssetBrowserFilters();
     if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
         VRODOS.ui.setHierarchyViewer();
@@ -333,6 +420,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
                 let draggable_string = '';
                 for (const [key, value] of Object.entries(f)) {
+                    if (key === 'editorReadiness') continue;
                     draggable_string += `data-${  key  }="${  VRODOS.utils.escapeAttribute(value)  }" `;
                 }
 

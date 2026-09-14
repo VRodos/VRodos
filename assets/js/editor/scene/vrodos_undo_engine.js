@@ -352,6 +352,9 @@ VRODOS.editor.DeleteObjectCommand = class {
         this.object3D.updateMatrix();
         this.object3D.updateMatrixWorld(true);
         VRODOS.utils.sceneSetObjectRecord(this.nameModel, this.objectData);
+        if (this.object3D.userData.vrodosEditorPlaceholder) {
+            VRODOS.loader.resumeEditorPlaceholder(this.object3D).catch((error) => console.warn('Could not resume asset preparation.', error));
+        }
         
         let restoredLightAssociates = null;
         // Specialized restoration for lights

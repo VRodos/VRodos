@@ -185,6 +185,8 @@ Template rules:
 - Selection fires on `mouseup`, not `mousedown`.
 - `_CLICK_THRESHOLD = 5px` distinguishes click vs drag.
 - No object should be auto-selected on scene load.
+- Pending GLB placements use a movable editor-only box under a stable selectable Group. Replace its visual children when the model arrives; preserve root identity, transforms, selection, locks, and undo history.
+- Asset cards and upload notices use the editor-load resolver's readiness contract. Save pending asset references and transforms normally; never publish placeholder geometry or preparation status.
 - `envir.camera` is not used; use `envir.orbitControls.object` for the camera.
 - Use the cel-shaded back-face hull highlight helpers instead of `OutlinePass`.
 - Use `lil-gui`, not `dat.gui`.

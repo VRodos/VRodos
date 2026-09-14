@@ -130,7 +130,12 @@ $GLOBALS['vrodos_editor_load_preview_record'] = [];
 $GLOBALS['vrodos_editor_load_web'] = [];
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
 vrodos_editor_load_assert( 'pending' === $state['status'] && '' === $state['loadUrl'], 'a qualifying large source must not load automatically while optimization is pending' );
+vrodos_editor_load_assert( 'Preparing' === $state['readiness']['label'], 'a running asset must expose its preparation stage' );
+vrodos_editor_load_assert( str_contains( $state['readiness']['uploadMessage'], 'You can add and position it now.' ), 'upload success must explain that pending assets can be placed' );
 vrodos_editor_load_assert( true === $state['canLoadSource'], 'the original source must remain an explicit action' );
+$GLOBALS['vrodos_editor_load_preview']['status'] = 'queued';
+$state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
+vrodos_editor_load_assert( 'Queued' === $state['readiness']['label'], 'a queued asset must expose an explicit queue label' );
 
 $GLOBALS['vrodos_editor_load_web'] = [
 	'web-medium' => [
@@ -144,14 +149,19 @@ $GLOBALS['vrodos_editor_load_web'] = [
 ];
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
 vrodos_editor_load_assert( 'web-medium' === $state['loadVariant'] && '/private/21.glb' === $state['loadUrl'], 'the smallest validated ready Web derivative must be selected' );
+vrodos_editor_load_assert( 'Ready to add' === $state['readiness']['label'], 'a usable derivative must report editor readiness even when preview processing continues' );
 
 $source_state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7, true );
 vrodos_editor_load_assert( 'source' === $source_state['loadVariant'] && '/private/source.glb' === $source_state['loadUrl'], 'Full Source Quality must remain explicit and exact' );
 
 $GLOBALS['vrodos_editor_load_web'] = [];
+$GLOBALS['vrodos_editor_load_preview'] = [ 'status' => 'running', 'shouldPreview' => true ];
+$state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
+vrodos_editor_load_assert( 'Preparing' === $state['readiness']['label'], 'running preparation must expose its actual stage' );
 $GLOBALS['vrodos_editor_load_preview'] = [ 'status' => 'failed', 'message' => 'Encoder failed.', 'shouldPreview' => true ];
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
 vrodos_editor_load_assert( 'failed' === $state['status'] && true === $state['canRetry'] && '' === $state['loadUrl'], 'preview failures must be actionable without silently loading a large source' );
+vrodos_editor_load_assert( 'Preparation failed' === $state['readiness']['label'], 'preparation failures must remain explicit' );
 $GLOBALS['vrodos_editor_load_editable'] = false;
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
 vrodos_editor_load_assert( false === $state['canRetry'] && true === $state['canLoadSource'], 'read-only asset users may load the source but must not be offered a retry they cannot authorize' );

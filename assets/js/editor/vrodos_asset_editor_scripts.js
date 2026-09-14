@@ -1267,6 +1267,10 @@ function vrodos_asset_editor_preview_label(state) {
 
 function vrodos_update_asset_editor_preview_controls(state) {
 	const current = state || {};
+	const uploadNotice = document.getElementById('assetEditorNotice');
+	if (uploadNotice && new URL(window.location.href).searchParams.get('vrodos_notice') === 'asset-uploaded' && current.readiness) {
+		vrodos_set_asset_editor_notice(current.readiness.uploadMessage, !['ready', 'queued', 'preparing'].includes(current.readiness.status));
+	}
 	const badge = document.getElementById('assetPreviewQualityBadge');
 	const retryButton = document.getElementById('assetPreviewRetryBtn');
 	const fullSourceButton = document.getElementById('assetPreviewFullSourceBtn');
@@ -1291,10 +1295,10 @@ function vrodos_update_asset_editor_preview_controls(state) {
 	}
 	if (placeholderTitle && placeholderDetail && !current.loadUrl) {
 		if (current.status === 'pending') {
-			placeholderTitle.textContent = 'Optimized preview is being prepared';
+			placeholderTitle.textContent = 'Preparing for the scene editor';
 			placeholderDetail.textContent = current.message || 'This model will appear automatically when it is ready.';
 		} else if (current.status === 'failed') {
-			placeholderTitle.textContent = 'Preview generation needs attention';
+			placeholderTitle.textContent = 'Preparation failed';
 			placeholderDetail.textContent = current.message || 'Retry the preview or load the full source.';
 		} else if (current.status === 'forbidden') {
 			placeholderTitle.textContent = 'Preview unavailable';

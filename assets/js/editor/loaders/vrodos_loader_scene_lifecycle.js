@@ -47,9 +47,7 @@ VRODOS.api.hideSceneLoadingProgress = function(options) {
     }
 
 	const progressWrapper = document.getElementById("progressWrapper");
-	const previewActions = document.getElementById('editorPreviewLoadActions');
-	const hasPreviewActions = previewActions && previewActions.children.length > 0;
-	if (progressWrapper && (!hasPreviewActions || opts.force)) {
+	if (progressWrapper) {
 		progressWrapper.style.visibility = "hidden";
 	}
 };
@@ -87,6 +85,7 @@ VRODOS.api.getSceneAssetResources = function(resources3D) {
 };
 
 VRODOS.api.clearSceneForReload = function() {
+    VRODOS.loader.cancelPendingEditorGlbLoads();
     const envir = VRODOS.editor.envir;
     if (!envir || !envir.scene) return;
 

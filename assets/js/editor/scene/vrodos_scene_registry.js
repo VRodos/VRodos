@@ -162,6 +162,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             const removeOptions = options || {};
             if (!object) return null;
 
+            if (object.userData && object.userData.vrodosEditorPlaceholder && VRODOS.loader.cancelEditorPlaceholder) {
+                VRODOS.loader.cancelEditorPlaceholder(object);
+            }
+
             if (object.uuid) {
                 this.byUuid.delete(object.uuid);
             }

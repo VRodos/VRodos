@@ -7,6 +7,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Selects one validated, authorized GLB URL for authoring previews. */
 trait VRodos_Asset_Optimization_Editor_Load {
 	public static function resolve_editor_glb_load( int $asset_id, bool $force_source = false ): array {
+		$state = self::resolve_editor_glb_load_state( $asset_id, $force_source );
+		$ready = ! empty( $state['loadUrl'] );
+		$preparing = $state['previewStatus'] === 'running' || ( $state['previewStatus'] === 'waiting-high' && ( self::desktop_profile_record( $asset_id, 'web-high' )['status'] ?? '' ) === 'running' );
+		$status = $ready ? 'ready' : ( $state['status'] === 'pending' ? ( $preparing ? 'preparing' : 'queued' ) : $state['status'] );
+		$labels = [ 'ready' => 'Ready to add', 'queued' => 'Queued', 'preparing' => 'Preparing', 'failed' => 'Preparation failed', 'missing' => 'Asset unavailable', 'forbidden' => 'Access unavailable' ];
+		$state['readiness'] = [
+			'status' => $status,
+			'label' => $labels[ $status ] ?? 'Asset unavailable',
+			'message' => $ready ? 'Ready to add.' : ( $state['status'] === 'pending' ? 'Add a placeholder while preparation finishes.' : $state['message'] ),
+			'uploadMessage' => $ready ? 'Asset uploaded. Ready to add.' : ( $state['status'] === 'pending' ? 'Asset uploaded. Preparing it for the scene editor. You can add and position it now.' : 'Asset uploaded. ' . ( $labels[ $status ] ?? 'Asset unavailable' ) . '.' ),
+		];
+		return $state;
+	}
+
+	private static function resolve_editor_glb_load_state( int $asset_id, bool $force_source ): array {
 		$asset_id = absint( $asset_id );
 		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) ) {
 			return self::empty_editor_load_state( 'missing', 'Asset is no longer available.' );
@@ -29,6 +44,7 @@ trait VRodos_Asset_Optimization_Editor_Load {
 			'sourceBytes'      => $source_bytes,
 			'protectsGeometry' => $protects_geometry,
 			'canLoadSource'    => '' !== $canonical_url,
+			'canRetryLoad'     => $can_retry,
 		];
 
 		if ( $force_source ) {
@@ -167,6 +183,7 @@ trait VRodos_Asset_Optimization_Editor_Load {
 			'reductionPercent' => 0.0,
 			'protectsGeometry' => false,
 			'canRetry'         => false,
+			'canRetryLoad'     => false,
 			'canLoadSource'    => false,
 			'previewStatus'    => 'none',
 		];

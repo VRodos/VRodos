@@ -307,6 +307,7 @@ VRODOS.exporter.SceneExporter = class {
             'editorPreviewShouldUse',
 			'editorPreviewMustAvoidSource',
 			'editorLoad',
+            'editorReadiness',
             'editorMetadataHydrated',
 			'editor_loaded_glb_path',
 			'editor_load_variant',

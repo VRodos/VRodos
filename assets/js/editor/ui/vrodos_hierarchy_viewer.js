@@ -545,6 +545,19 @@ function _findInsertionPoint(obj) {
     return skeleton || null;
 }
 
+function _hierarchyPreparationLabel(obj) {
+    const readiness = obj.userData && obj.userData.vrodosEditorReadiness;
+    return readiness ? (['queued', 'preparing', 'pending'].includes(readiness.status) ? 'Preparing' : readiness.label) : '';
+}
+
+VRODOS.ui.updateHierarchyPreparationStatus = function(obj) {
+    const item = VRODOS.ui.getHierarchyItemForObject(obj.uuid, obj.name);
+    if (!item) { VRODOS.ui.addInHierarchyViewer(obj); return; }
+    const label = item.querySelector('[data-hierarchy-object-label]');
+    const status = _hierarchyPreparationLabel(obj);
+    if (label) label.textContent = _hierarchyDisplayName(obj) + (status ? ` · ${status}` : '');
+};
+
 function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const iconName = _hierarchyIconForObject(obj);
     const iconColor = _hierarchyIconColorForObject(obj);
@@ -553,7 +566,8 @@ function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetBu
     const safeName = _hierarchyAttribute(obj.name);
     const safeIconName = _hierarchyAttribute(iconName);
     const safeTitle = _hierarchyAttribute(obj.title || object_name);
-    const safeObjectName = _hierarchyHTML(object_name);
+    const preparationLabel = _hierarchyPreparationLabel(obj);
+    const safeObjectName = _hierarchyHTML(object_name + (preparationLabel ? ` · ${preparationLabel}` : ''));
     const safeCreated = _hierarchyHTML(created);
 
     const itemHTML = `<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"` +
@@ -561,7 +575,7 @@ function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetBu
         `<i data-lucide="${  safeIconName  }" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ${  iconColor  }"></i>` +
         `<span class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-tight tw-text-white"` +
         ` title="${  safeTitle  }">` +
-        `<span class="tw-block tw-font-medium tw-truncate">${  safeObjectName  }</span>${
+        `<span data-hierarchy-object-label class="tw-block tw-font-medium tw-truncate">${  safeObjectName  }</span>${
         assessmentBadgesHTML
         }${created ? `<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">${  safeCreated  }</span>` : ''
         }</span>` +

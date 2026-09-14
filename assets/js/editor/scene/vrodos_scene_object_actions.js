@@ -567,6 +567,10 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
                 VRODOS.api.hideSceneLoadingProgress();
                 return;
             }
+            if (insertedObject.userData.vrodosEditorAddFinalized) {
+                VRODOS.api.hideSceneLoadingProgress();
+                return;
+            }
             applyAddedObjectTRS(insertedObject, nameModel);
 
             VRODOS.loader.prepareLoadedGlbRootMaterial(insertedObject);
@@ -575,6 +579,7 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
                 alreadyRegistered: true,
                 selectOptions: { source: 'glb-added' }
             });
+            insertedObject.userData.vrodosEditorAddFinalized = true;
             if (typeof VRODOS.editor.requestRender === 'function') {
                 VRODOS.editor.requestRender('asset-added');
             }
@@ -877,7 +882,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
         return;
     }
 
-    captureDeleteUndoCommand(objectSelected, sceneRecord);
+    const retainedForUndo = captureDeleteUndoCommand(objectSelected, sceneRecord);
     deleteSceneObjectRecord(sceneRecord);
 
     removeObjectAnimationMixers(objectSelected);
@@ -886,7 +891,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
 
     clearDeletedObjectSelection();
 
-    if (!preventDispose) {
+    if (!preventDispose && (!objectSelected.userData.vrodosEditorPlaceholder || !retainedForUndo)) {
         VRODOS.utils.disposeObject(objectSelected);
     }
 

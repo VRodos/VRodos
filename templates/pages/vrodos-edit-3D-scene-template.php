@@ -448,8 +448,8 @@ extract( $data );
 					</div>
 
 					<div id="result_download" class="result"></div>
-					<div id="editorPreviewLoadActions" class="tw-hidden tw-mt-3 tw-space-y-2" aria-live="polite"></div>
 				</div>
+				<div id="editorPreviewLoadActions" class="tw-hidden tw-space-y-2" style="position:absolute;right:16px;bottom:16px;z-index:30;max-width:320px;max-height:40%;overflow:auto" aria-live="polite"></div>
 
 
 				<!--  Asset browse Left panel  -->

@@ -296,10 +296,18 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		if ( ! isset( $_GET['vrodos_asset'] ) ) {
 			$redirect_url = add_query_arg( 'vrodos_asset', $asset_id, $redirect_url );
 		}
+		$upload_message = 'Asset saved.';
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
+			$readiness = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( $asset_id )['readiness'];
+			$upload_message = $has_new_model_upload ? $readiness['uploadMessage'] : 'Asset saved. ' . $readiness['label'] . '.';
+			if ( $has_new_model_upload ) {
+				$redirect_url = add_query_arg( 'vrodos_notice', 'asset-uploaded', $redirect_url );
+			}
+		}
 		self::update_frontend_asset_save_progress(
 			'complete',
 			'Asset saved',
-			'Opening the saved asset. Any required background optimization can continue safely afterward.',
+			$upload_message,
 			100,
 			'complete',
 			$redirect_url
@@ -456,6 +464,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			$data['canonical_glb_file_name']   = $asset_3d_files['glb'];
 			if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && ! empty( $asset_3d_files['glb'] ) ) {
 				$data['editor_glb_load'] = VRodos_Asset_Optimization_Manager::resolve_editor_glb_load( (int) $data['asset_id'] );
+				if ( $data['asset_notice_code'] === 'asset-uploaded' ) {
+					$data['asset_notice_type'] = 'success';
+					$data['asset_notice_message'] = $data['editor_glb_load']['readiness']['uploadMessage'];
+				}
 				$data['glb_file_name'] = (string) ( $data['editor_glb_load']['loadUrl'] ?? '' );
 				$data['canonical_glb_file_name'] = (string) ( $data['editor_glb_load']['canonicalUrl'] ?? $asset_3d_files['glb'] );
 			} else {
