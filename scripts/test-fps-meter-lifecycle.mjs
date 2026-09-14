@@ -48,7 +48,7 @@ const ast = parse(source, { ecmaVersion: 'latest', range: true });
 const registration = ast.body.find(n => n.expression?.callee?.property?.name === 'registerComponent');
 const methods = {};
 for (const property of registration.expression.arguments[1].properties) {
-    if (['isFPSMeterRequested','shouldShowFPSMeter','getFPSMeterOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
+    if (['queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
         methods[property.key.name] = vm.runInContext(`(${source.slice(...property.value.range)})`, context);
     }
 }
@@ -130,4 +130,74 @@ teardown.el.removeAttribute=name=>{ order.push(name); remove(name); };
 teardown.settings.remove();
 assert.deepEqual(order,['legacy','pmndrs','vrodos-atmosphere','vrodos-reflections','vrodos-render-profile']);
 assert.equal(final.disposals,1); assert.equal(teardown.owner.settings,null);
-console.log('FPS owner, lazy-load races, real stats-gl render wrapping, failures, and teardown tests passed.');
+// Execute the quality-refresh facade with controlled timers, including a valid zero handle.
+const timers = new Map(), canceledTimers = [];
+let nextTimer = 0;
+context.setTimeout = (callback, delay) => {
+    assert.equal(delay, 50, 'preserve model/material refresh delay');
+    const id = nextTimer++; timers.set(id, callback); return id;
+};
+context.clearTimeout = id => { canceledTimers.push(id); timers.delete(id); };
+function runTimer(id) { const callback = timers.get(id); timers.delete(id); callback(); }
+function qualityFixture() {
+    const f = fixture('0'); f.events = [];
+    f.settings.applyQualityProfiles = () => f.events.push('quality');
+    f.settings.requestSceneProbeRefresh = settle => f.events.push(['probe', settle]);
+    return f;
+}
+const quality = qualityFixture();
+quality.settings.queueQualityRefresh(false);
+assert.equal(quality.owner.queuedQualityRefreshId, 0);
+quality.settings.queueQualityRefresh(false);
+assert.equal(timers.size, 1, 'coalesce even when the timer handle is zero');
+runTimer(0);
+assert.deepEqual(quality.events, ['quality', ['probe', false]]);
+assert.equal(quality.owner.queuedQualityRefreshId, null);
+assert.equal(quality.owner.pendingQualityRefreshWaitForSettle, false);
+for (const requests of [[false, true, false], [false, undefined], [true, false]]) {
+    quality.events.length = 0;
+    for (const settle of requests) quality.settings.queueQualityRefresh(settle);
+    assert.equal(timers.size, 1);
+    runTimer(quality.owner.queuedQualityRefreshId);
+    assert.deepEqual(quality.events, ['quality', ['probe', true]], 'settle requests win within a batch');
+}
+// Independent scenes and reentrant requests keep distinct batches.
+const independent = qualityFixture();
+quality.settings.applyQualityProfiles = () => {
+    quality.events.push('quality'); quality.settings.queueQualityRefresh(false);
+};
+quality.settings.queueQualityRefresh(true); independent.settings.queueQualityRefresh(false);
+const initialBatch = quality.owner.queuedQualityRefreshId;
+runTimer(initialBatch);
+assert.notEqual(quality.owner.queuedQualityRefreshId, initialBatch);
+assert.equal(quality.owner.pendingQualityRefreshWaitForSettle, false);
+runTimer(independent.owner.queuedQualityRefreshId);
+assert.deepEqual(independent.events, ['quality', ['probe', false]]);
+// Removal invalidates callbacks already delivered to the event loop, even after reattachment.
+const oldQualityOwner = quality.owner;
+const queuedId = oldQualityOwner.queuedQualityRefreshId;
+const stale = timers.get(queuedId);
+quality.el.removeAttribute('vrodos-render-profile'); oldQualityOwner.remove();
+assert.ok(canceledTimers.includes(queuedId));
+assert.equal(oldQualityOwner.settings, null);
+assert.equal(oldQualityOwner.pendingQualityRefreshWaitForSettle, false);
+quality.settings.queueQualityRefresh(); oldQualityOwner.queueQualityRefresh();
+assert.equal(timers.size, 0, 'removed owner is not recreated by refresh requests');
+attach(quality); quality.events.length = 0;
+quality.settings.applyQualityProfiles = () => quality.events.push('quality');
+quality.settings.queueQualityRefresh(false); stale();
+assert.deepEqual(quality.events, []);
+runTimer(quality.owner.queuedQualityRefreshId);
+assert.deepEqual(quality.events, ['quality', ['probe', false]]);
+// Removing during quality application must not call through a released settings reference.
+quality.settings.applyQualityProfiles = () => quality.el.removeAttribute('vrodos-render-profile');
+quality.events.length = 0; quality.settings.queueQualityRefresh();
+runTimer(quality.owner.queuedQualityRefreshId); assert.deepEqual(quality.events, []);
+// Authored scene-settings teardown cancels its owner's pending refresh.
+const scheduledTeardown = qualityFixture();
+for (const name of ['clearXrExitRestoreTimers','clearXrExitSessionAttachTimers','detachXrExitSessionEndListener','removePhotorealHelperLights','disposeHardwareDiagnostics','disablePostProcessing','disablePmndrsPostProcessing']) scheduledTeardown.settings[name] = () => {};
+scheduledTeardown.settings.queueQualityRefresh();
+const teardownCallback = timers.get(scheduledTeardown.owner.queuedQualityRefreshId);
+scheduledTeardown.settings.remove(); teardownCallback();
+assert.equal(timers.size, 0); assert.deepEqual(scheduledTeardown.events, []);
+console.log('Render-profile FPS and quality-refresh lifecycle, coalescing, cancellation, and teardown tests passed.');

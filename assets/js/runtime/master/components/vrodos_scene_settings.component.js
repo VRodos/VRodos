@@ -938,7 +938,10 @@ AFRAME.registerComponent('scene-settings', {
     requestSceneProbeRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.requestSceneProbeRefresh,
     markSceneCollectionsDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markSceneCollectionsDirty,
     getCachedSceneQuery: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getCachedSceneQuery,
-    queueQualityRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.queueQualityRefresh,
+    queueQualityRefresh: function (waitForModelSettle) {
+        const owner = this.getRenderProfileOwner();
+        if (owner) owner.queueQualityRefresh(waitForModelSettle);
+    },
     getSceneProbeAnchorObject: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorObject,
     getSceneProbeAnchorYaw: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorYaw,
     getSceneProbeYawDeltaDegrees: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeYawDeltaDegrees,
@@ -969,22 +972,22 @@ AFRAME.registerComponent('scene-settings', {
     shouldShowFPSMeter: function () {
         return this.isFPSMeterRequested() && typeof Stats !== 'undefined';
     },
-    getFPSMeterOwner: function () {
+    getRenderProfileOwner: function () {
         const owner = this.el.components['vrodos-render-profile'];
         if (!owner || owner.removed) return null;
         owner.bindSettings(this);
         return owner;
     },
     queueFPSMeterEnable: function () {
-        const owner = this.getFPSMeterOwner();
+        const owner = this.getRenderProfileOwner();
         if (owner) owner.queueFPSMeterEnable();
     },
     enableFPSMeter: function () {
-        const owner = this.getFPSMeterOwner();
+        const owner = this.getRenderProfileOwner();
         if (owner) owner.enableFPSMeter();
     },
     syncFPSMeterState: function () {
-        const owner = this.getFPSMeterOwner();
+        const owner = this.getRenderProfileOwner();
         if (owner) owner.syncFPSMeterState();
     },
     disableFPSMeter: function () {
@@ -3111,8 +3114,6 @@ AFRAME.registerComponent('scene-settings', {
         this.sceneCollectionsDirty = true;
         this._pmndrsSceneSelectionsDirty = true;
         this._pmndrsSceneSelectionRefreshAfterMs = 0;
-        this.queuedQualityRefreshId = null;
-        this.pendingQualityRefreshWaitForSettle = false;
         this.postProcessingTarget = null;
         this.postProcessingMaterial = null;
         this.postProcessingScene = null;
@@ -3385,10 +3386,6 @@ AFRAME.registerComponent('scene-settings', {
         this.clearXrExitRestoreTimers();
         this.clearXrExitSessionAttachTimers();
         this.detachXrExitSessionEndListener();
-        if (this.queuedQualityRefreshId) {
-            clearTimeout(this.queuedQualityRefreshId);
-            this.queuedQualityRefreshId = null;
-        }
         if (this._vrodosShadowFlushHandle) {
             if (typeof cancelAnimationFrame === 'function') {
                 cancelAnimationFrame(this._vrodosShadowFlushHandle);

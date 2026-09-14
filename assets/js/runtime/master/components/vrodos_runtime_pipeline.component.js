@@ -20,6 +20,8 @@
             this.fpsStatsRoot = null;
             this.fpsStatsPending = false;
             this.fpsStatsEpoch = 0;
+            this.queuedQualityRefreshId = null;
+            this.pendingQualityRefreshWaitForSettle = false;
             this.removed = false;
         },
         bindSettings: function (settings) {
@@ -36,9 +38,26 @@
         remove: function () {
             if (this.removed) return;
             this.removed = true;
+            if (this.queuedQualityRefreshId !== null) window.clearTimeout(this.queuedQualityRefreshId);
+            this.queuedQualityRefreshId = null;
+            this.pendingQualityRefreshWaitForSettle = false;
             this.disableFPSMeter();
             if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
             this.settings = null;
+        },
+        queueQualityRefresh: function (waitForModelSettle) {
+            if (this.removed) return;
+            this.pendingQualityRefreshWaitForSettle = this.pendingQualityRefreshWaitForSettle || waitForModelSettle !== false;
+            if (this.queuedQualityRefreshId !== null) return;
+
+            this.queuedQualityRefreshId = window.setTimeout(() => {
+                if (this.removed) return;
+                const shouldWaitForModelSettle = this.pendingQualityRefreshWaitForSettle;
+                this.queuedQualityRefreshId = null;
+                this.pendingQualityRefreshWaitForSettle = false;
+                this.settings.applyQualityProfiles();
+                if (!this.removed) this.settings.requestSceneProbeRefresh(shouldWaitForModelSettle);
+            }, 50);
         },
         queueFPSMeterEnable: function () {
             if (this.removed || this.fpsStatsPending || !this.settings.isFPSMeterRequested()) {

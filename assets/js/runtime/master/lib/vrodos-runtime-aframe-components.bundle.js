@@ -785,6 +785,8 @@
         this.fpsStatsRoot = null;
         this.fpsStatsPending = false;
         this.fpsStatsEpoch = 0;
+        this.queuedQualityRefreshId = null;
+        this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
       },
       bindSettings: function(settings) {
@@ -803,9 +805,25 @@
       remove: function() {
         if (this.removed) return;
         this.removed = true;
+        if (this.queuedQualityRefreshId !== null) window.clearTimeout(this.queuedQualityRefreshId);
+        this.queuedQualityRefreshId = null;
+        this.pendingQualityRefreshWaitForSettle = false;
         this.disableFPSMeter();
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
+      },
+      queueQualityRefresh: function(waitForModelSettle) {
+        if (this.removed) return;
+        this.pendingQualityRefreshWaitForSettle = this.pendingQualityRefreshWaitForSettle || waitForModelSettle !== false;
+        if (this.queuedQualityRefreshId !== null) return;
+        this.queuedQualityRefreshId = window.setTimeout(() => {
+          if (this.removed) return;
+          const shouldWaitForModelSettle = this.pendingQualityRefreshWaitForSettle;
+          this.queuedQualityRefreshId = null;
+          this.pendingQualityRefreshWaitForSettle = false;
+          this.settings.applyQualityProfiles();
+          if (!this.removed) this.settings.requestSceneProbeRefresh(shouldWaitForModelSettle);
+        }, 50);
       },
       queueFPSMeterEnable: function() {
         if (this.removed || this.fpsStatsPending || !this.settings.isFPSMeterRequested()) {
@@ -2038,7 +2056,10 @@
     requestSceneProbeRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.requestSceneProbeRefresh,
     markSceneCollectionsDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markSceneCollectionsDirty,
     getCachedSceneQuery: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getCachedSceneQuery,
-    queueQualityRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.queueQualityRefresh,
+    queueQualityRefresh: function(waitForModelSettle) {
+      const owner = this.getRenderProfileOwner();
+      if (owner) owner.queueQualityRefresh(waitForModelSettle);
+    },
     getSceneProbeAnchorObject: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorObject,
     getSceneProbeAnchorYaw: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorYaw,
     getSceneProbeYawDeltaDegrees: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeYawDeltaDegrees,
@@ -2068,22 +2089,22 @@
     shouldShowFPSMeter: function() {
       return this.isFPSMeterRequested() && typeof Stats !== "undefined";
     },
-    getFPSMeterOwner: function() {
+    getRenderProfileOwner: function() {
       const owner = this.el.components["vrodos-render-profile"];
       if (!owner || owner.removed) return null;
       owner.bindSettings(this);
       return owner;
     },
     queueFPSMeterEnable: function() {
-      const owner = this.getFPSMeterOwner();
+      const owner = this.getRenderProfileOwner();
       if (owner) owner.queueFPSMeterEnable();
     },
     enableFPSMeter: function() {
-      const owner = this.getFPSMeterOwner();
+      const owner = this.getRenderProfileOwner();
       if (owner) owner.enableFPSMeter();
     },
     syncFPSMeterState: function() {
-      const owner = this.getFPSMeterOwner();
+      const owner = this.getRenderProfileOwner();
       if (owner) owner.syncFPSMeterState();
     },
     disableFPSMeter: function() {
@@ -3767,8 +3788,6 @@
       this.sceneCollectionsDirty = true;
       this._pmndrsSceneSelectionsDirty = true;
       this._pmndrsSceneSelectionRefreshAfterMs = 0;
-      this.queuedQualityRefreshId = null;
-      this.pendingQualityRefreshWaitForSettle = false;
       this.postProcessingTarget = null;
       this.postProcessingMaterial = null;
       this.postProcessingScene = null;
@@ -4026,10 +4045,6 @@
       this.clearXrExitRestoreTimers();
       this.clearXrExitSessionAttachTimers();
       this.detachXrExitSessionEndListener();
-      if (this.queuedQualityRefreshId) {
-        clearTimeout(this.queuedQualityRefreshId);
-        this.queuedQualityRefreshId = null;
-      }
       if (this._vrodosShadowFlushHandle) {
         if (typeof cancelAnimationFrame === "function") {
           cancelAnimationFrame(this._vrodosShadowFlushHandle);

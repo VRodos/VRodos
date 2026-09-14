@@ -3640,19 +3640,6 @@ ${STOCHASTIC_GLSL}`).replace(
       }
       return this.sceneQueryCache[key];
     };
-    H.queueQualityRefresh = function(waitForModelSettle) {
-      this.pendingQualityRefreshWaitForSettle = this.pendingQualityRefreshWaitForSettle || waitForModelSettle !== false;
-      if (this.queuedQualityRefreshId) {
-        return;
-      }
-      this.queuedQualityRefreshId = window.setTimeout(() => {
-        const shouldWaitForModelSettle = this.pendingQualityRefreshWaitForSettle;
-        this.queuedQualityRefreshId = null;
-        this.pendingQualityRefreshWaitForSettle = false;
-        this.applyQualityProfiles();
-        this.requestSceneProbeRefresh(shouldWaitForModelSettle);
-      }, 50);
-    };
     R.getSceneProbeAnchorObject = function() {
       const cameraRig = document.getElementById("cameraA");
       if (cameraRig && cameraRig.object3D) {

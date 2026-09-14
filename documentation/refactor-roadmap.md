@@ -65,6 +65,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move atmosphere resource state, generator lifecycle, and deferred visual refresh ownership into `vrodos-atmosphere`.
 - [x] Move HDR, scene-probe, and Takram sky PMREM resource lifecycle and reflection scratch/smoothing state into `vrodos-reflections`.
 - [x] Move FPS meter state, deferred enablement, renderer instrumentation, and disposal into `vrodos-render-profile`.
+- [x] Move coalesced quality-refresh scheduling and cancellation into `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -421,3 +422,14 @@ All 77 regression scripts pass (45 runtime, 32 compiler), including catalog cove
 The user questioned the growing test count. Count alone is not evidence of value; a focused audit of duplicate fixtures and implementation-text assertions is recorded above. Keep the FPS regression because it covers observed lifecycle defects and the real upstream render wrapper, rather than adding more assertion-only scripts.
 
 Remaining lighting/render ownership, the complete GPU/listener audit, and integrated browser/Quest/profile coverage remain open. Published scenes were not recompiled and no browser/GPU/physical Quest acceptance is claimed for this package. No development server was started and no commit or push was performed.
+
+
+### Quality-refresh scheduling ownership (2026-09-14)
+
+The working tree was clean before this package. The render-profile component now owns the quality-refresh timer and pending model-settle flag. Scene-settings retains its queueQualityRefresh() entrypoint and shares getRenderProfileOwner() with the FPS delegates. The scheduler was removed from the reflection helper module; scene-settings no longer initializes or disposes its timer. Scene mutation/model listeners, shared query caches, and quality application policy remain on scene-settings.
+
+The existing 50 ms delay, coalescing semantics, settle-request precedence, and quality-before-probe order are preserved. Component removal cancels queued work and invalidates callbacks already delivered to the event loop; callbacks cannot affect a replacement owner. A valid zero timer handle coalesces correctly. Removal during quality application does not call the probe through a released settings reference. No rendering formulas, settings, shaders, dependencies, navigation, or vendor patches changed.
+
+Extended the existing FPS/render-profile lifecycle fixture rather than adding a regression script. Coverage includes independent scenes, repeated requests, default/explicit settle flags, reentrant batches, removal, stale callback delivery, reattachment, and actual scene-settings teardown. All 78 existing scripts pass (46 runtime, 32 compiler), plus runtime syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint reports zero errors and 249 warnings; comparing edited files with HEAD shows unchanged warning counts (ten in scene-settings, zero in the other two sources). npm run build:runtime succeeded; only the core and A-Frame components bundles changed among generated outputs.
+
+Remaining lighting/shadow lifecycle ownership and the full GPU/listener audit stay open. Published clients were not recompiled; browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.
