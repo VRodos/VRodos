@@ -52,6 +52,11 @@ if ( ! function_exists( 'absint' ) ) {
 		return abs( (int) $value );
 	}
 }
+if ( ! function_exists( 'wp_check_filetype' ) ) {
+	function wp_check_filetype( string $filename ): array {
+		return [ 'type' => str_ends_with( $filename, '.png' ) ? 'image/png' : '' ];
+	}
+}
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	function wp_parse_url( string $url, int $component = -1 ) {
 		return -1 === $component ? parse_url( $url ) : parse_url( $url, $component );
@@ -294,6 +299,46 @@ if ( class_exists( 'DOMDocument' ) ) {
 		42,
 		[ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $scene ]
 	);
+	$media_dom = new DOMDocument( '1.0', 'UTF-8' );
+	$media_scene = $media_dom->createElement( 'a-scene' );
+	$media_assets = $media_dom->createElement( 'a-assets' );
+	$media_dom->appendChild( $media_scene );
+	$media_scene->appendChild( $media_assets );
+	$media_renderer = new VRodos_Compiler_AFrame_Entity_Renderer(
+		new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn ( $url ) => $url
+	);
+	$media_renderer->configure( '/plugin/', false );
+	$media_renderer->render_scene_objects( $media_dom, $media_scene, $media_assets, [
+		'video' => (object) [
+			'uuid' => 'two-faced-video', 'category_slug' => 'video',
+			'video_path' => '/sample.mp4', 'screenshot_path' => '/poster.png',
+			'position' => [ -2.5, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+		],
+		'text' => (object) [
+			'uuid' => 'two-faced-text', 'category_slug' => '3d-text', 'text_content' => "Readable text\nSecond line",
+			'position' => [ 1, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+		],
+	], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $media_scene ] );
+	$media_xpath = new DOMXPath( $media_dom );
+	$video_display = $media_xpath->query( '//*[@id="video-display_two-faced-video"]' )->item( 0 );
+	vrodos_foundation_assert( $video_display instanceof DOMElement, 'video emits one display entity' );
+	vrodos_foundation_assert( 'primitive: vrodos-two-sided-plane; width: 4; height: 3' === $video_display->getAttribute( 'geometry' ), 'video uses readable front and rear geometry' );
+	vrodos_foundation_assert( str_contains( $video_display->getAttribute( 'material' ), 'side: front' ), 'video renders only outward faces' );
+	vrodos_foundation_assert( 1 === $media_xpath->query( '//*[@video-controls]' )->length, 'both video faces share one playback controller' );
+	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon]', $video_display )->length, 'video has two play hints' );
+	$rear_hint = $media_xpath->query( './a-entity[@id="video-playhint-back_two-faced-video"]', $video_display )->item( 0 );
+	vrodos_foundation_assert( '0 0 -0.1' === $rear_hint->getAttribute( 'position' ) && '0 180 0' === $rear_hint->getAttribute( 'rotation' ), 'rear play hint faces outwards' );
+	$text_panel = $media_xpath->query( '//*[@id="text-panel_two-faced-text"]' )->item( 0 );
+	$text_faces = $media_xpath->query( './a-entity', $text_panel );
+	vrodos_foundation_assert( 2 === $text_faces->length, 'text slab has two face containers' );
+	vrodos_foundation_assert( '0 180 0' === $text_faces->item( 1 )->getAttribute( 'rotation' ), 'rear text face rotates as a whole to retain left alignment' );
+	foreach ( $text_faces as $text_face ) {
+		$face_label = $media_xpath->query( './a-text', $text_face )->item( 0 );
+		vrodos_foundation_assert( "Readable text\nSecond line" === $face_label->getAttribute( 'value' ), 'both text faces preserve multiline content' );
+		vrodos_foundation_assert( 'left' === $face_label->getAttribute( 'align' ) && 'side: front; transparent: true' === $face_label->getAttribute( 'material' ), 'text faces retain readable orientation and alignment' );
+		vrodos_foundation_assert( 4 === $media_xpath->query( './a-box', $text_face )->length, 'both text faces have identical borders' );
+	}
+
 	$lights = $dom->getElementsByTagName( 'a-light' );
 	vrodos_foundation_assert( 1 === $lights->length, 'light renderer emits a-light' );
 	vrodos_foundation_assert( str_contains( $lights->item( 0 )->getAttribute( 'light' ), 'type: directional' ), 'sun renderer emits directional light' );

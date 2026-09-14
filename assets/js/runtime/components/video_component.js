@@ -1,3 +1,32 @@
+// One mesh/material/video texture, with independently oriented front and rear UVs.
+AFRAME.registerGeometry('vrodos-two-sided-plane', {
+    schema: {
+        width: { default: 1, min: 0 },
+        height: { default: 1, min: 0 }
+    },
+    init: function (data) {
+        const halfWidth = data.width / 2;
+        const halfHeight = data.height / 2;
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+            -halfWidth, halfHeight, 0, -halfWidth, -halfHeight, 0,
+            halfWidth, halfHeight, 0, halfWidth, -halfHeight, 0,
+            halfWidth, halfHeight, 0, halfWidth, -halfHeight, 0,
+            -halfWidth, halfHeight, 0, -halfWidth, -halfHeight, 0
+        ], 3));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute([
+            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+            0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+        ], 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute([
+            0, 1, 0, 0, 1, 1, 1, 0,
+            0, 1, 0, 0, 1, 1, 1, 0
+        ], 2));
+        geometry.setIndex([0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6]);
+        this.geometry = geometry;
+    }
+});
+
 AFRAME.registerComponent('video-controls', {
     schema: {
         id: { default: "default value" },
@@ -25,7 +54,10 @@ AFRAME.registerComponent('video-controls', {
 
         // Element Selection
         this.videoDisplay = document.querySelector(this.video_display_id);
-        this.playHintEl = document.querySelector("#video-playhint_" + this.data.id);
+        this.playHintEls = [
+            document.querySelector("#video-playhint_" + this.data.id),
+            document.querySelector("#video-playhint-back_" + this.data.id)
+        ].filter(Boolean);
         this.backgroundEl = document.querySelector('#aframe-scene-container');
         this.dialogVideo = document.getElementById("video-panel-video");
 
@@ -81,9 +113,9 @@ AFRAME.registerComponent('video-controls', {
 
         if (this.videoSourceUrl) {
             this.videoDisplay.addEventListener('click', this.onVideoClick);
-            if (this.playHintEl) {
-                this.playHintEl.addEventListener('click', this.onPlayHintClick);
-            }
+            this.playHintEls.forEach((hint) => {
+                hint.addEventListener('click', this.onPlayHintClick);
+            });
         }
 
         this.checkAutoplay();
@@ -295,8 +327,8 @@ AFRAME.registerComponent('video-controls', {
 
     getWorldVideoMaterial: function (src) {
         var material = this.useFlatMediaMaterial
-            ? "shader: flat; side: double; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true"
-            : "side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+            ? "shader: flat; side: front; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true"
+            : "side: front; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
         if (src) material += "; src: " + src;
         return material;
     },
@@ -359,10 +391,11 @@ AFRAME.registerComponent('video-controls', {
     },
 
     updateInlinePlayHint: function () {
-        if (!this.playHintEl) return;
         var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
-        this.playHintEl.setAttribute("visible", shouldShow ? "true" : "false");
-        this.playHintEl.classList.toggle("raycastable", shouldShow);
+        this.playHintEls.forEach((hint) => {
+            hint.setAttribute("visible", shouldShow ? "true" : "false");
+            hint.classList.toggle("raycastable", shouldShow);
+        });
     },
 
     tuneVideoTexture: function () {
@@ -602,9 +635,9 @@ AFRAME.registerComponent('video-controls', {
         if (this.videoDisplay) {
             this.videoDisplay.removeEventListener('click', this.onVideoClick);
         }
-        if (this.playHintEl) {
-            this.playHintEl.removeEventListener('click', this.onPlayHintClick);
-        }
+        this.playHintEls.forEach((hint) => {
+            hint.removeEventListener('click', this.onPlayHintClick);
+        });
     }
 });
 

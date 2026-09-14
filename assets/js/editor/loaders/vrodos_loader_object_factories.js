@@ -121,6 +121,20 @@ VRODOS.loader.createDoubleSidedTextureMaterial = function(texture, options) {
     return material;
 };
 
+// Physical slabs need separate outward-facing surfaces, not mirrored back faces.
+VRODOS.loader.createOutwardFacingPlanes = function(name, width, height, faceOffset, material) {
+    const geometry = new THREE.PlaneGeometry(width, height);
+    material.side = THREE.FrontSide;
+    return [1, -1].map((direction) => {
+        const face = new THREE.Mesh(geometry, material);
+        face.name = `${name}_${direction === 1 ? 'front' : 'back'}`;
+        face.position.z = direction * faceOffset;
+        face.rotation.y = direction === 1 ? 0 : Math.PI;
+        face.isSelectableMesh = false;
+        return face;
+    });
+};
+
 VRODOS.loader.prepareFallbackPbrMaterial = function(material) {
     if (!material || !Number.isNaN(Number(material.metalness))) {
         return material;
@@ -156,8 +170,8 @@ VRODOS.loader.prepareLoadedGlbRootMaterial = function(object) {
     return object;
 };
 
-function vrodosLoaderApplyVideoTextureToMesh(node, texture) {
-    node.material = VRODOS.loader.createDoubleSidedTextureMaterial(texture);
+function vrodosLoaderApplyVideoTextureToMesh(node, material) {
+    node.material = material;
 }
 
 function vrodosLoaderIsVideoScreenMesh(node) {
@@ -180,6 +194,9 @@ VRODOS.loader.applyVideoThumbnailTexture = function(object, resource) {
     texLoader.load(
         screenshotPath,
         (texture) => {
+            const material = VRODOS.loader.createDoubleSidedTextureMaterial(texture, {
+                side: THREE.FrontSide
+            });
             let screenFound = false;
             const fallbackMeshes = [];
 
@@ -188,14 +205,14 @@ VRODOS.loader.applyVideoThumbnailTexture = function(object, resource) {
 
                 fallbackMeshes.push(node);
                 if (vrodosLoaderIsVideoScreenMesh(node)) {
-                    vrodosLoaderApplyVideoTextureToMesh(node, texture);
+                    vrodosLoaderApplyVideoTextureToMesh(node, material);
                     screenFound = true;
                 }
             });
 
             if (!screenFound) {
                 fallbackMeshes.forEach((node) => {
-                    vrodosLoaderApplyVideoTextureToMesh(node, texture);
+                    vrodosLoaderApplyVideoTextureToMesh(node, material);
                 });
             }
         },
@@ -233,18 +250,10 @@ VRODOS.loader.createVideoDisplayObject = function(name, resource) {
     body.receiveShadow = true;
     group.add(body);
 
-    const screen = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.887, 2.98),
-        new THREE.MeshBasicMaterial({
-            color: 0x111827,
-            side: THREE.DoubleSide
-        })
-    );
-    screen.name = `${name}_screen`;
-    screen.position.z = -0.0805;
-    screen.rotation.y = Math.PI;
-    screen.isSelectableMesh = false;
-    group.add(screen);
+    group.add(...VRODOS.loader.createOutwardFacingPlanes(
+        `${name}_screen`, 3.887, 2.98, 0.0805,
+        new THREE.MeshBasicMaterial({ color: 0x111827 })
+    ));
 
     return group;
 };
@@ -319,17 +328,18 @@ VRODOS.loader.createAssessmentInfoPlate = function(type, levels) {
 
     const texture = VRODOS.loader.createCanvasTexture(canvas);
 
-    const plate = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.02, 0.38),
-        VRODOS.loader.createDoubleSidedTextureMaterial(texture, {
-            depthWrite: false,
-            side: THREE.DoubleSide
-        })
-    );
+    const plate = new THREE.Group();
     plate.name = 'assessment_info_plate';
-    plate.position.set(0, 0.05, 0.051);
     plate.isSelectableMesh = false;
-    plate.renderOrder = 12;
+    const faces = VRODOS.loader.createOutwardFacingPlanes(
+        'assessment_info_plate', 1.02, 0.38, 0.051,
+        VRODOS.loader.createDoubleSidedTextureMaterial(texture, { depthWrite: false })
+    );
+    faces.forEach((face) => {
+        face.position.y = 0.05;
+        face.renderOrder = 12;
+    });
+    plate.add(...faces);
     return plate;
 };
 
@@ -467,6 +477,11 @@ VRODOS.loader.createAssessmentPlaceholder = function(nameModel, resource) {
     assessmentGroup.add(card);
     assessmentGroup.add(accent);
     assessmentGroup.add(dot);
+    const rearDot = new THREE.Mesh(dot.geometry, dot.material);
+    rearDot.name = `${nameModel}_status_back`;
+    rearDot.position.set(-dot.position.x, dot.position.y, -dot.position.z);
+    rearDot.isSelectableMesh = false;
+    assessmentGroup.add(rearDot);
 
     const infoPlate = VRODOS.loader.createAssessmentInfoPlate(
         assessmentGroup.assessment_type || assessmentGroup.assessment_group,
@@ -611,17 +626,19 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
     border.position.z = 0.024;
     border.isSelectableMesh = false;
     group.add(border);
+    const rearBorder = new THREE.LineSegments(border.geometry, border.material);
+    rearBorder.name = `${name}_border_back`;
+    rearBorder.position.z = -border.position.z;
+    rearBorder.rotation.y = Math.PI;
+    rearBorder.isSelectableMesh = false;
+    group.add(rearBorder);
 
-    const textPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(textWidth, textHeight),
+    group.add(...VRODOS.loader.createOutwardFacingPlanes(
+        `${name}_text`, textWidth, textHeight, 0.026,
         VRODOS.loader.createDoubleSidedTextureMaterial(VRODOS.loader.createTextPanelTexture(text), {
             depthWrite: false
         })
-    );
-    textPlane.name = `${name  }_text`;
-    textPlane.position.z = 0.026;
-    textPlane.isSelectableMesh = false;
-    group.add(textPlane);
+    ));
 
     return group;
 };

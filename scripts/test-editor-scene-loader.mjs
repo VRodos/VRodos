@@ -387,6 +387,15 @@ for (const { object, options } of context.VRODOS.editor.objectFactory.added) {
 }
 const thumbnailScreen = context.VRODOS.editor.objectFactory.added[0].object.children.find((child) => child.name.includes("screen"));
 assert(Boolean(thumbnailScreen.material.map), "the existing video thumbnail texture path must target the generated screen mesh");
+for (const { object } of context.VRODOS.editor.objectFactory.added.slice(0, 2)) {
+    const screens = object.children.filter((child) => child.name.includes("screen"));
+    assert(screens.length === 2, "each video frame must expose a screen on both sides");
+    assert(screens[0].position.z === -screens[1].position.z, "screens must sit outside opposite frame faces");
+    assert(screens[0].rotation.y === 0 && screens[1].rotation.y === Math.PI, "both screens must face outwards");
+    assert(screens[0].geometry === screens[1].geometry, "screens must share geometry");
+    assert(screens[0].material === screens[1].material, "screens must share their thumbnail material");
+    assert(screens.every((screen) => screen.material.side === context.THREE.FrontSide), "screens must not render mirrored back faces");
+}
 
 const planeAddedStart = context.VRODOS.editor.objectFactory.added.length;
 const defaultPlaneObject = context.VRODOS.loader.createPrimitivePlaneObject("default-ground", {});

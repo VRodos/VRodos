@@ -1150,13 +1150,18 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$label->setAttribute( 'wrap-count', '28' );
 		$label->setAttribute( 'width', '1.08' );
 		$label->setAttribute( 'position', '-0.54 0.71 0.026' );
-		$label->setAttribute( 'material', 'side: double; transparent: true' );
+		$label->setAttribute( 'material', 'side: front; transparent: true' );
 
 		$entity->appendChild( $backing );
+		$front_face = $dom->createElement( 'a-entity' );
 		foreach ( $border_elements as $border ) {
-			$entity->appendChild( $border );
+			$front_face->appendChild( $border );
 		}
-		$entity->appendChild( $label );
+		$front_face->appendChild( $label );
+		$rear_face = $front_face->cloneNode( true );
+		$rear_face->setAttribute( 'rotation', '0 180 0' );
+		$entity->appendChild( $front_face );
+		$entity->appendChild( $rear_face );
 		$ascene->appendChild( $entity );
 	}
 
@@ -1644,12 +1649,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->setAttribute( 'id', 'video-display_' . $uuid );
 			$display->setAttribute( 'width', '4' );
 			$display->setAttribute( 'height', '3' );
+			$display->setAttribute( 'geometry', 'primitive: vrodos-two-sided-plane; width: 4; height: 3' );
 			if ( $poster_id ) {
 				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
 			}
-			$material_attr = $this->media_material( '', 'double', true );
+			$material_attr = $this->media_material( '', 'front', true );
 			if ( $poster_id ) {
-				$material_attr = $this->media_material( "#$poster_id", 'double', true );
+				$material_attr = $this->media_material( "#$poster_id", 'front', true );
 			}
 			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
@@ -1677,6 +1683,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$play_hint->setAttribute( 'position', '0 0 0.1' );
 			$play_hint->setAttribute( 'scale', '0.28 0.28 0.28' );
 			$display->appendChild( $play_hint );
+			$rear_play_hint = $play_hint->cloneNode( true );
+			$rear_play_hint->setAttribute( 'id', 'video-playhint-back_' . $uuid );
+			$rear_play_hint->setAttribute( 'highlight', 'video-playhint-back_' . $uuid );
+			$rear_play_hint->setAttribute( 'position', '0 0 -0.1' );
+			$rear_play_hint->setAttribute( 'rotation', '0 180 0' );
+			$display->appendChild( $rear_play_hint );
 
 			$ascene->appendChild( $display );
 		}
