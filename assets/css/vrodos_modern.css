@@ -79,7 +79,15 @@ body.vrodos-manager-wrapper {
   height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
 }
 
+/* Keep theme viewport sizing from adding height below the WordPress toolbar. */
+html:has(> body.vrodos-manager-wrapper) {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
 body.vrodos-manager-wrapper {
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
