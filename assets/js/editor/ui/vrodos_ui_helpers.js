@@ -338,7 +338,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
 	}
 
 	function buildProfileStatusLabel(profile) {
-		if (profile.status === 'ready') return 'Ready';
 		if (profile.status === 'failed') return 'Failed';
 		const percent = Math.max(0, Math.min(99, Math.round(Number(profile.percent) || 0)));
 		if (profile.status === 'running') {
@@ -353,10 +352,11 @@ VRODOS.ui.compileDialogState = (function(existing) {
 	function renderBuildProfiles(profiles) {
 		const container = getElement('progressProfiles');
 		if (!container) return;
+		const pendingProfiles = profiles.filter((profile) => profile.status !== 'ready');
 		container.replaceChildren();
-		setDisplay(container, profiles.length ? 'grid' : 'none');
+		setDisplay(container, pendingProfiles.length ? 'grid' : 'none');
 
-		profiles.forEach((profile) => {
+		pendingProfiles.forEach((profile) => {
 			const row = document.createElement('div');
 			row.className = 'tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white tw-p-2';
 			row.setAttribute('role', 'listitem');
@@ -370,9 +370,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 			const status = document.createElement('span');
 			status.className = profile.status === 'failed'
 				? 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-red-700'
-				: (profile.status === 'ready'
-					? 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-emerald-700'
-					: 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-slate-600');
+				: 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-slate-600';
 			status.textContent = buildProfileStatusLabel(profile);
 			summary.append(identity, status);
 			row.append(summary);
