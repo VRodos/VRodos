@@ -59,7 +59,7 @@ final class VRodos_Desktop_Performance_Profiles {
 			$preset = 'high' === $profile_id
 				? $high_preset
 				: array_merge( $high_preset, self::normalize_settings( (array) ( $definition['settings'] ?? [] ) ) );
-			$settings = array_merge( $preset, self::normalize_settings( (array) ( $stored_profile['settings'] ?? [] ) ) );
+			$settings = array_merge( $preset, self::profile_overrides( $stored_profile ) );
 			$profiles[ $profile_id ] = [
 				'id'          => $profile_id,
 				'label'       => (string) ( $definition['label'] ?? ucfirst( $profile_id ) ),
@@ -420,6 +420,18 @@ final class VRodos_Desktop_Performance_Profiles {
 			}
 			$settings['reflectionsEnabled'] = $reflections && self::truthy( $settings['reflectionsEnabled'] ?? false ) ? '1' : '0';
 		}
+	}
+
+	/** Saved defaults follow the current preset; only author modifications override it. */
+	private static function profile_overrides( array $stored_profile ): array {
+		$settings = self::normalize_settings( (array) ( $stored_profile['settings'] ?? [] ) );
+		$previous_preset = self::normalize_settings( (array) ( $stored_profile['presetSettings'] ?? [] ) );
+		foreach ( $settings as $key => $value ) {
+			if ( array_key_exists( $key, $previous_preset ) && $value === $previous_preset[ $key ] ) {
+				unset( $settings[ $key ] );
+			}
+		}
+		return $settings;
 	}
 
 	private static function preset_state( array $stored_profile, array $template ): string {

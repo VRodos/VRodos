@@ -750,8 +750,8 @@ vrodos_foundation_assert( 2 === $desktop_profiles['schemaVersion'], 'desktop pro
 vrodos_foundation_assert( 'custom' === $desktop_profiles['buildMode'], 'desktop profiles default to Custom-only build mode' );
 vrodos_foundation_assert( 'custom' === $desktop_profiles['defaultProfile'], 'default desktop builds select the Custom cache identity' );
 vrodos_foundation_assert( isset( $desktop_profiles['profiles']['custom'] ), 'desktop profiles include the independently cached Custom build' );
-vrodos_foundation_assert( 'performance' === $desktop_profiles['profiles']['low']['settings']['renderQuality'], 'Low preset uses performance render quality' );
-vrodos_foundation_assert( 'standard' === $desktop_profiles['profiles']['medium']['settings']['renderQuality'], 'Medium preset uses standard render quality' );
+vrodos_foundation_assert( 'standard' === $desktop_profiles['profiles']['low']['settings']['renderQuality'], 'Low inherits the previous Medium render quality' );
+vrodos_foundation_assert( 'high' === $desktop_profiles['profiles']['medium']['settings']['renderQuality'], 'Medium uses high rendering with a bounded pixel budget' );
 vrodos_foundation_assert( 'high' === $desktop_profiles['profiles']['high']['settings']['renderQuality'], 'High preset remains the visual maximum' );
 vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['low']['settings']['pmndrsCloudsEnabled'], 'Low does not enable clouds absent from High' );
 vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['medium']['settings']['pmndrsCloudsEnabled'], 'Medium does not enable clouds absent from High' );
@@ -781,15 +781,39 @@ $cloud_plan = $plan_resolver->resolve(
 );
 $cloud_profiles = $cloud_plan->scenes[0]->desktop_profiles['profiles'];
 vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsAtmosphereEnabled'], 'Low keeps authored atmosphere enabled' );
-vrodos_foundation_assert( 'performance' === $cloud_profiles['low']['settings']['pmndrsAtmosphereQuality'], 'Low caps atmosphere at Performance quality' );
+vrodos_foundation_assert( 'balanced' === $cloud_profiles['low']['settings']['pmndrsAtmosphereQuality'], 'Low caps atmosphere at Balanced quality' );
 vrodos_foundation_assert( 'true' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereEnabled'], 'Medium keeps authored atmosphere enabled' );
-vrodos_foundation_assert( 'balanced' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereQuality'], 'Medium caps atmosphere at Balanced quality' );
+vrodos_foundation_assert( 'quality' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereQuality'], 'Medium caps atmosphere at Quality' );
 vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsCloudsEnabled'], 'Low keeps authored clouds enabled' );
-vrodos_foundation_assert( 'low' === $cloud_profiles['low']['settings']['pmndrsCloudsQuality'], 'Low caps clouds at Low quality' );
+vrodos_foundation_assert( 'medium' === $cloud_profiles['low']['settings']['pmndrsCloudsQuality'], 'Low caps clouds at Medium quality' );
 vrodos_foundation_assert( 'false' === $cloud_profiles['low']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Low disables cloud light shafts' );
-vrodos_foundation_assert( 'medium' === $cloud_profiles['medium']['settings']['pmndrsCloudsQuality'], 'Medium caps clouds at Medium quality' );
+vrodos_foundation_assert( 'high' === $cloud_profiles['medium']['settings']['pmndrsCloudsQuality'], 'Medium caps clouds at High quality' );
 vrodos_foundation_assert( 'false' === $cloud_profiles['medium']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Medium disables cloud light shafts' );
 vrodos_foundation_assert( 'true' === $cloud_profiles['high']['settings']['pmndrsCloudsLightShaftsEnabled'], 'High preserves authored cloud light shafts' );
+vrodos_foundation_assert( 'web-medium' === $cloud_profiles['low']['assets']['profile'] && 2048 === $cloud_profiles['low']['assets']['textureMaxSize'], 'Low prepares and publishes existing Web Medium textures' );
+vrodos_foundation_assert( 'web-high' === $cloud_profiles['medium']['assets']['profile'] && 4096 === $cloud_profiles['medium']['assets']['textureMaxSize'], 'Medium uses Web High assets' );
+vrodos_foundation_assert( 3700000 === $cloud_profiles['low']['renderBudget']['pixelBudget'], 'Low inherits the previous Medium pixel budget' );
+vrodos_foundation_assert( 5000000 === $cloud_profiles['medium']['renderBudget']['pixelBudget'], 'Medium has a bounded intermediate pixel budget' );
+vrodos_foundation_assert( 'ultra' === $cloud_profiles['high']['settings']['pmndrsAAPreset'] && 'smaa' === $cloud_profiles['high']['settings']['pmndrsAAMode'], 'High uses Ultra SMAA, which remains compatible with SSAO' );
+vrodos_foundation_assert( 'high' === $cloud_profiles['high']['settings']['shadowQuality'] && 'dynamic' === $cloud_profiles['high']['settings']['shadowUpdateMode'], 'High maximizes shadow quality and updates' );
+vrodos_foundation_assert( 2.0 === $cloud_profiles['high']['renderBudget']['maxPixelRatio'], 'High permits DPR 2' );
+$adaptive_cloud_profiles = $cloud_plan->scenes[0]->desktop_profiles;
+$adaptive_cloud_profiles['buildMode'] = 'adaptive';
+vrodos_foundation_assert( [] === VRodos_Desktop_Performance_Profiles::validate_monotonic( $adaptive_cloud_profiles ), 'rebalanced adaptive defaults remain monotonic' );
+$saved_defaults = (object) [ 'desktopPerformanceProfiles' => (object) [
+	'schemaVersion' => 2,
+	'buildMode' => 'adaptive',
+	'profiles' => (object) [
+		'high' => (object) [
+			'presetSettings' => (object) [ 'pmndrsCloudsQuality' => 'high', 'pmndrsAtmosphereQuality' => 'balanced', 'shadowQuality' => 'medium' ],
+			'settings' => (object) [ 'pmndrsCloudsQuality' => 'high', 'pmndrsAtmosphereQuality' => 'balanced', 'shadowQuality' => 'off' ],
+		],
+	],
+] ];
+$refreshed = VRodos_Desktop_Performance_Profiles::resolve( $saved_defaults, $cloud_plan->scenes[0]->settings );
+vrodos_foundation_assert( 'ultra' === $refreshed['profiles']['high']['settings']['pmndrsCloudsQuality'], 'saved default cloud quality follows the current preset' );
+vrodos_foundation_assert( 'cinematic' === $refreshed['profiles']['high']['settings']['pmndrsAtmosphereQuality'], 'saved default atmosphere follows the current preset' );
+vrodos_foundation_assert( 'off' === $refreshed['profiles']['high']['settings']['shadowQuality'], 'author modifications survive a preset refresh' );
 
 $fixed_scene = json_decode( wp_json_encode( $scene_one ) );
 $fixed_scene->metadata->desktopPerformanceProfiles = (object) [

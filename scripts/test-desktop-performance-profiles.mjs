@@ -166,12 +166,14 @@ assertEqual(migratedFixed.activeTab, 'custom', 'fixed migration opens the Custom
 assertEqual(editor.scene.aframeRenderQuality, 'performance', 'fixed migration copies selected tier quality into Custom');
 assertEqual(Object.prototype.hasOwnProperty.call(migratedFixed, 'autoSelect'), false, 'schema v2 does not retain autoSelect');
 
-const lowStored = editor.api.tierSettings('low', { pmndrsCloudsEnabled: true, pmndrsCloudsQuality: 'low', shadowQuality: 'high' });
+const lowStored = editor.api.tierSettings('low', { pmndrsCloudsEnabled: true, pmndrsCloudsQuality: 'low', shadowQuality: 'medium', shadowUpdateMode: 'dynamic' });
 assertEqual(lowStored.pmndrsCloudsEnabled, true, 'Low stores its editable cloud override');
-assertEqual(Object.prototype.hasOwnProperty.call(lowStored, 'shadowQuality'), false, 'Low does not store fixed shadow controls');
-assertEqual(editor.api.allowedValues('medium', 'pmndrsCloudsQuality').join(','), 'low,medium', 'Medium cloud choices are bounded');
+assertEqual(lowStored.shadowQuality, 'medium', 'Low exposes the previous Medium shadow controls');
+assertEqual(Object.prototype.hasOwnProperty.call(lowStored, 'shadowUpdateMode'), false, 'Low keeps shadow updates fixed');
+assertEqual(editor.api.allowedValues('low', 'pmndrsCloudsQuality').join(','), 'low,medium', 'Low inherits previous Medium cloud limits');
+assertEqual(editor.api.allowedValues('medium', 'pmndrsCloudsQuality').join(','), 'low,medium,high', 'Medium cloud choices are bounded');
 assertEqual(editor.api.allowedValues('medium', 'pmndrsAAMode').join(','), 'none,smaa', 'Medium AA is limited to Off or SMAA');
-assertEqual(editor.api.allowedValues('medium', 'pmndrsAAPreset').join(','), 'low,medium', 'Medium SMAA quality is limited to Low or Medium');
+assertEqual(editor.api.allowedValues('medium', 'pmndrsAAPreset').join(','), 'low,medium,high', 'Medium SMAA quality is capped at High');
 
 editor.scene.aframePmndrsToneMappingExposure = 2.4;
 defaultProfiles.buildMode = 'adaptive';
@@ -184,5 +186,22 @@ assertEqual(defaultProfiles.activeTab, 'custom', 'switching from Adaptive opens 
 assertEqual(editor.scene.aframePmndrsCloudsEnabled, true, 'Custom inherits the active tier cloud setting');
 assertEqual(editor.scene.aframeAmbientOcclusionPreset, 'off', 'Custom inherits the active tier SSAO setting');
 assertEqual(editor.scene.aframePmndrsToneMappingExposure, 2.4, 'Custom conversion preserves authored exposure');
+
+const refreshed = editorHarness();
+refreshed.scene.aframePostFXEnabled = true;
+refreshed.scene.aframePmndrsCloudsEnabled = false;
+refreshed.scene.desktopPerformanceProfiles = {
+    schemaVersion: 2, buildMode: 'adaptive', activeTab: 'high',
+    profiles: { high: {
+        presetSettings: { pmndrsCloudsQuality: 'high', pmndrsAtmosphereQuality: 'balanced', shadowQuality: 'high' },
+        settings: { pmndrsCloudsQuality: 'high', pmndrsAtmosphereQuality: 'balanced', shadowQuality: 'off' }
+    } }
+};
+const refreshedProfiles = refreshed.api.ensureProfiles();
+assertEqual(refreshedProfiles.profiles.high.settings.pmndrsCloudsQuality, 'ultra', 'saved default cloud quality follows the new preset');
+assertEqual(refreshedProfiles.profiles.high.settings.pmndrsAtmosphereQuality, 'cinematic', 'saved default atmosphere quality follows the new preset');
+assertEqual(refreshedProfiles.profiles.high.settings.shadowQuality, 'off', 'saved deliberate shadow override is preserved');
+assertEqual(refreshedProfiles.profiles.low.settings.postFXEnabled, true, 'Low keeps post-FX available for SMAA without clouds');
+assertEqual(refreshed.api.ensureProfiles().profiles.high.settings.shadowQuality, 'off', 'repeated preset refresh preserves modifications');
 
 console.log('Desktop performance profile selection tests passed.');

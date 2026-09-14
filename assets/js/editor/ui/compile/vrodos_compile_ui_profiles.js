@@ -21,9 +21,9 @@ VRODOS.ui = VRODOS.ui || {};
         reflectionsEnabled: 'Reflections'
     };
     const FIXED_SUMMARIES = {
-        low: 'Shadows, AA, AO/contact shadows, heavy post-effects, scene probes, and cloud shafts are fixed off.',
+        low: '2048px textures, static shadows, SMAA, and up to Medium clouds. Cloud shafts, bloom, SSR, TAA, flare, and scene probes are fixed off.',
         medium: 'Shadow updates are static. Shafts, bloom, SSR, TAA, flare, noise, chromatic aberration, and scene probes are fixed off.',
-        high: 'Texture and geometry fidelity stay authored. All supported runtime quality controls remain available.'
+        high: 'Maximum quality defaults: high dynamic shadows, Ultra SMAA and clouds, cinematic atmosphere, and enhanced reflections. The authored look and effect toggles stay shared.'
     };
     const ORDERED_SETTINGS = {
         renderQuality: ['performance', 'standard', 'high'],
@@ -169,8 +169,6 @@ VRODOS.ui = VRODOS.ui || {};
         if (highClouds) {
             preset.postFXEnabled = true;
             preset.postFXEngine = 'pmndrs';
-        } else if (profileId === 'low') {
-            preset.postFXEnabled = false;
         }
         Object.entries(ORDERED_SETTINGS).forEach(([settingKey, order]) => {
             if (settingKey === 'renderQuality') return;
@@ -242,6 +240,7 @@ VRODOS.ui = VRODOS.ui || {};
         });
         delete state.activeProfile;
         delete state.autoSelect;
+        refreshTierPresets(state);
         return state;
     }
 
@@ -549,7 +548,6 @@ VRODOS.ui = VRODOS.ui || {};
         if (!currentTargetIsDesktop()) return;
         const state = ensureProfiles();
         if (!state || state.activeTab !== 'custom') return;
-        refreshTierPresets(state);
         updateUi();
     }
 
@@ -672,7 +670,7 @@ VRODOS.ui = VRODOS.ui || {};
         validationErrors,
         switchProfile,
         resetActive,
-        _test: { migrateState, tierSettings, allowedValues, settingsEqual, changeBuildMode }
+        _test: { migrateState, tierSettings, allowedValues, settingsEqual, changeBuildMode, ensureProfiles }
     };
     window.addEventListener('DOMContentLoaded', bind);
 }());

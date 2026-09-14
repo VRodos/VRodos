@@ -1719,10 +1719,12 @@
     isPmndrsAerialPerspectiveEffectEnabled: function() {
       return this.data.postFXEngine === "pmndrs" && (vrodosRuntimeTruthy(this.data.pmndrsAerialPerspectiveEnabled) || vrodosRuntimeDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     },
-    isPmndrsCloudsEnabled: function() {
+    allowsPmndrsQualityEffects: function() {
       const adaptiveProfile = this._vrodosDesktopPerformanceProfile && this._vrodosDesktopPerformanceProfile.id;
-      const qualityAllowsClouds = this.getRenderQualityLevel() === "high" || adaptiveProfile === "medium" || adaptiveProfile === "low";
-      const authored = qualityAllowsClouds && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
+      return this.getRenderQualityLevel() === "high" || adaptiveProfile === "medium" || adaptiveProfile === "low";
+    },
+    isPmndrsCloudsEnabled: function() {
+      const authored = this.allowsPmndrsQualityEffects() && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
       return this.vrRuntimeAllows("clouds", authored);
     },
     getReflectionSource: function() {
@@ -2168,7 +2170,7 @@
       if (this.data.postFXEngine === "pmndrs" && this.getRenderQualityLevel() === "high" && (this.isHeadsetPmndrsStereoComposerForceEnabled() || this.canUseVrHeadsetStereoPmndrsComposer())) {
         return true;
       }
-      return this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.getRenderQualityLevel() === "high" && (this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled() || this.isPmndrsCloudsEnabled());
+      return this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.allowsPmndrsQualityEffects() && (this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled() || this.isPmndrsCloudsEnabled());
     },
     hasPostProcessingPipelineRequest: function() {
       if (this.data.postFXEngine === "pmndrs") {

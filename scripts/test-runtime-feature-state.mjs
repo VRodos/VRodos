@@ -289,6 +289,7 @@ function createFeatureStateFixture(options) {
         _pmndrsSunSpriteActive: false,
         _pmndrsVrLensFlareSuppressed: false
     });
+    component._vrodosDesktopPerformanceProfile = options.desktopProfile ? { id: options.desktopProfile } : null;
     scene.components["scene-settings"] = component;
 
     context.window.POSTPROCESSING = options.postprocessingBundle ? {} : null;
@@ -322,6 +323,34 @@ function createFeatureStateFixture(options) {
 function assertPath(actual, expected, label) {
     assert(actual === expected, `${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
+
+// A compiled adaptive profile can request clouds below the legacy High renderer
+// quality. Its compositor must agree with that request, including old builds.
+for (const [profile, renderQuality] of [['low', 'performance'], ['low', 'standard'], ['medium', 'standard'], ['medium', 'high'], ['high', 'high']]) {
+    const data = {
+        renderQuality,
+        postFXEngine: 'pmndrs',
+        postFXEnabled: '1',
+        pmndrsAtmosphereEnabled: '1',
+        pmndrsCloudsEnabled: '1'
+    };
+    const state = createFeatureStateFixture({ desktopProfile: profile, data });
+    assertPath(state.postProcessing.requested, true, `${profile}/${renderQuality} clouds request a compositor`);
+    assertPath(state.postProcessing.allowed, true, `${profile}/${renderQuality} permits the compositor`);
+    assertPath(state.takram.cloudsRequested, true, `${profile}/${renderQuality} retains clouds`);
+    const disabled = createFeatureStateFixture({ desktopProfile: profile, data: { ...data, postFXEnabled: '0' } });
+    assertPath(disabled.postProcessing.requested, false, `${profile}/${renderQuality} respects post-FX off`);
+    const noEffects = createFeatureStateFixture({ desktopProfile: profile, data: { ...data, pmndrsCloudsEnabled: '0' } });
+    assertPath(noEffects.postProcessing.requested, false, `${profile}/${renderQuality} skips an empty compositor`);
+}
+const adaptiveSmaa = createFeatureStateFixture({ desktopProfile: 'low', data: {
+    renderQuality: 'standard', postFXEngine: 'pmndrs', postFXEnabled: '1', pmndrsAAMode: 'smaa'
+} });
+assertPath(adaptiveSmaa.postProcessing.requested, true, 'Adaptive Low permits SMAA without clouds');
+const fixedStandard = createFeatureStateFixture({ data: {
+    renderQuality: 'standard', postFXEngine: 'pmndrs', postFXEnabled: '1', pmndrsCloudsEnabled: '1', pmndrsAtmosphereEnabled: '1'
+} });
+assertPath(fixedStandard.postProcessing.requested, false, 'Fixed Standard quality retains its existing policy');
 
 const desktopPmndrs = createFeatureStateFixture({
     pmndrsActive: true,

@@ -12,10 +12,12 @@ const publisher = readFileSync(resolve(root, 'includes/class-vrodos-compiler-res
 
 assert.equal(profiles.custom.assetProfile, 'web-high');
 assert.equal(profiles.custom.textureMaxSize, 4096);
-assert.equal(profiles.profiles.medium.assetProfile, 'web-medium');
-assert.equal(profiles.profiles.medium.textureMaxSize, 2048);
-assert.equal(profiles.profiles.low.assetProfile, 'web-low');
-assert.equal(profiles.profiles.low.textureMaxSize, 1024);
+assert.equal(profiles.profiles.medium.assetProfile, 'web-high');
+assert.equal(profiles.profiles.medium.textureMaxSize, 4096);
+assert.equal(profiles.profiles.medium.geometryRatio, 1);
+assert.equal(profiles.profiles.low.assetProfile, 'web-medium');
+assert.equal(profiles.profiles.low.textureMaxSize, 2048);
+assert.equal(profiles.profiles.low.geometryRatio, 0.8);
 assert.match(optimizer, /new NodeIO\(\)/, 'optimizer must use one programmatic glTF document pipeline');
 assert.doesNotMatch(optimizer, /function profileSteps/, 'optimizer must not create a full intermediate GLB per transform');
 assert.match(optimizer, /atomicLinkOrWrite\(sourcePath, options\.preparedBaseline/, 'no-op prepared baselines must avoid a second source-size copy');
