@@ -38,7 +38,7 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 						<?php foreach ( $group['scenes'] as $scene ) : ?>
 							<?php $available = '' !== $scene['url']; ?>
 							<?php if ( $available ) : ?>
-								<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $profile_labels[ $scene['profile'] ] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?>">
+								<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $profile_labels[ $scene['profile'] ] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?> in a new tab">
 							<?php else : ?>
 								<div class="immerse-hub-card is-unavailable">
 							<?php endif; ?>
