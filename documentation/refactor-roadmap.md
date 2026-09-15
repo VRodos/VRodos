@@ -69,6 +69,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move coalesced shadow-flush frame/timer scheduling and cancellation into `vrodos-render-profile`.
 - [x] Move navigation shadow-settle timer scheduling, cancellation, and callback invalidation into `vrodos-render-profile`.
 - [x] Move shadow dirty/refresh, navigation-refresh, and adaptive-fit scratch state into `vrodos-render-profile`, preserving read-only diagnostic views.
+- [x] Track and cancel deferred adaptive shadow-fit frames/timers in `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -469,3 +470,13 @@ Delayed adaptive-fit frame/80 ms callbacks now check their captured owner before
 Extended the existing shadow fixture to cover all 19 read-only views, independent scene vectors, diagnostic parity, removal, fresh state on reattachment, no-owner calls, and stale adaptive-fit callbacks. Updated celestial-lighting and shadow-compatibility fixtures to use the actual registered owner. No regression script was added. All 81 tests pass; runtime syntax, build configuration, catalog, and diff checks pass. Lint reports zero errors and 249 existing warnings. Runtime rebuilding changed only the core and A-Frame components bundles.
 
 Remaining lighting/shadow resources and state, the complete GPU/listener audit, and integrated browser/Quest acceptance remain open. Published scenes were not recompiled. No development server was started and no commit or push was performed.
+
+### Adaptive shadow-fit callback cleanup (2026-09-15)
+
+The working tree was clean before this package. Render-profile now tracks deferred adaptive shadow-fit animation frames and 80 ms timers in separate sets. Delivered callbacks remove their handles; component removal cancels all remaining handles and clears both sets. Removed/replaced-owner guards remain active for callbacks already queued for delivery.
+
+The shadow helper retains immediate fitting and headset policy, then delegates deferred scheduling to the owner. Repeated requests retain their separate callbacks; desktop keeps the immediate/frame/80 ms sequence, environments without animation frames keep immediate/80 ms, and headset profiles remain immediate-only. Fitting math, rendering settings, shadow thresholds, dependencies, and vendor patches are unchanged.
+
+Extended the existing shadow regression for active callback order/reasons, repeated requests, completed-handle removal, headset/no-frame paths, zero IDs in both scheduler namespaces, independent scenes, cancellation, and stale callbacks after reattachment. No test script was added. All 81 tests pass; lint reports zero errors and 249 existing warnings. Runtime syntax, build configuration, catalog, and diff checks pass. Runtime rebuilding changed only the core and A-Frame components bundles.
+
+Remaining shadow resources, lighting state, and the broader GPU/listener audit stay open. Published scenes were not recompiled; browser/GPU/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.

@@ -5237,22 +5237,12 @@ ${STOCHASTIC_GLSL}`).replace(
         if (typeof self.isVrRuntimeHeadsetProfile === "function" && self.isVrRuntimeHeadsetProfile()) {
           return;
         }
-        if (typeof requestAnimationFrame === "function") {
-          requestAnimationFrame(() => {
-            if (owner.removed || self.renderProfileRuntime !== owner) return;
-            applyAdaptiveShadowFit(self);
-            if (typeof self.markShadowDirty === "function") {
-              self.markShadowDirty("adaptive-shadow-fit-frame");
-            }
-          });
-        }
-        setTimeout(() => {
-          if (owner.removed || self.renderProfileRuntime !== owner) return;
+        owner.scheduleAdaptiveShadowFit((reason) => {
           applyAdaptiveShadowFit(self);
           if (typeof self.markShadowDirty === "function") {
-            self.markShadowDirty("adaptive-shadow-fit-settle");
+            self.markShadowDirty(reason);
           }
-        }, 80);
+        });
       }
       function schedulePmndrsAtmosphereShadowFit(self, config) {
         if (!isPmndrsDayNightCycleEnabled(self)) {

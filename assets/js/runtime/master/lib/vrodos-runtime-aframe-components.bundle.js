@@ -810,6 +810,8 @@
         this.shadowFlushUsesAnimationFrame = false;
         this.navigationShadowSettleTimer = null;
         this.navigationShadowSettleEpoch = 0;
+        this.adaptiveShadowFitFrames = /* @__PURE__ */ new Set();
+        this.adaptiveShadowFitTimers = /* @__PURE__ */ new Set();
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
@@ -847,10 +849,31 @@
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.clearNavigationShadowRefreshSettleTimer();
+        this.adaptiveShadowFitFrames.forEach((handle) => cancelAnimationFrame(handle));
+        this.adaptiveShadowFitTimers.forEach((handle) => clearTimeout(handle));
+        this.adaptiveShadowFitFrames.clear();
+        this.adaptiveShadowFitTimers.clear();
         this.disableFPSMeter();
         this.shadowState = null;
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
+      },
+      scheduleAdaptiveShadowFit: function(callback) {
+        if (this.removed) return;
+        if (typeof requestAnimationFrame === "function") {
+          const handle2 = requestAnimationFrame(() => {
+            this.adaptiveShadowFitFrames.delete(handle2);
+            if (this.removed || this.settings.renderProfileRuntime !== this) return;
+            callback("adaptive-shadow-fit-frame");
+          });
+          this.adaptiveShadowFitFrames.add(handle2);
+        }
+        const handle = setTimeout(() => {
+          this.adaptiveShadowFitTimers.delete(handle);
+          if (this.removed || this.settings.renderProfileRuntime !== this) return;
+          callback("adaptive-shadow-fit-settle");
+        }, 80);
+        this.adaptiveShadowFitTimers.add(handle);
       },
       queueShadowFlush: function() {
         if (this.removed || this.shadowFlushHandle !== null) return;

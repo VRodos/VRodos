@@ -379,6 +379,10 @@ const staleFits = [...frames.values(), ...[...timers.values()].map(timer => time
 assert.equal(staleFits.length, 2);
 delete owned.component.el.components['vrodos-render-profile'];
 owned.owner.remove(); owned.owner.remove();
+assert.equal(frames.size, 0);
+assert.equal(timers.size, 0);
+assert.equal(owned.owner.adaptiveShadowFitFrames.size, 0);
+assert.equal(owned.owner.adaptiveShadowFitTimers.size, 0);
 assert.equal(owned.owner.shadowState, null);
 assert.equal(owned.component._vrodosShadowFitCameraPosition, null);
 assert.equal(owned.component.requestNavigationShadowRefresh('removed', { force: true }), false);
@@ -394,6 +398,55 @@ assert.notEqual(owned.component._vrodosShadowFitCameraPosition, oldPosition);
 assert.equal(owned.component._vrodosNavigationShadowRefreshApplied, 1);
 assert.equal(otherOwned.component._vrodosNavigationShadowRefreshApplied, 1);
 freshOwner.remove(); otherOwned.owner.remove();
+
+// Preserve repeated immediate/frame/80ms fits and the headset/no-rAF paths.
+for (const mode of ['desktop', 'no-frame', 'headset']) {
+    const pendingFrames = new Map(), pendingTimers = new Map();
+    let frameId = 0, timerId = 0;
+    context.requestAnimationFrame = callback => { const id = frameId++; pendingFrames.set(id, callback); return id; };
+    if (mode === 'no-frame') delete context.requestAnimationFrame;
+    context.cancelAnimationFrame = id => pendingFrames.delete(id);
+    context.setTimeout = (callback, delay) => {
+        assert.equal(delay, 80);
+        const id = timerId++; pendingTimers.set(id, callback); return id;
+    };
+    context.clearTimeout = id => pendingTimers.delete(id);
+    const f = fixture();
+    const reasons = [];
+    f.component.markShadowDirty = reason => reasons.push(reason);
+    f.component.isVrRuntimeHeadsetProfile = () => mode === 'headset';
+    runtime.schedulePmndrsAtmosphereShadowFit(f.component, {});
+    runtime.schedulePmndrsAtmosphereShadowFit(f.component, {});
+    assert.deepEqual(reasons, ['adaptive-shadow-fit', 'adaptive-shadow-fit']);
+    assert.equal(pendingFrames.size, mode === 'desktop' ? 2 : 0);
+    assert.equal(pendingTimers.size, mode === 'headset' ? 0 : 2);
+    for (const pending of [pendingFrames, pendingTimers]) {
+        for (const [id, callback] of pending) { pending.delete(id); callback(); }
+    }
+    assert.equal(f.owner.adaptiveShadowFitFrames.size, 0);
+    assert.equal(f.owner.adaptiveShadowFitTimers.size, 0);
+    assert.deepEqual(reasons, [
+        'adaptive-shadow-fit', 'adaptive-shadow-fit',
+        ...(mode === 'desktop' ? ['adaptive-shadow-fit-frame', 'adaptive-shadow-fit-frame'] : []),
+        ...(mode !== 'headset' ? ['adaptive-shadow-fit-settle', 'adaptive-shadow-fit-settle'] : [])
+    ]);
+    // Cancellation includes ID zero in both namespaces and leaves another scene's work intact.
+    frameId = 0; timerId = 0;
+    runtime.schedulePmndrsAtmosphereShadowFit(f.component, {});
+    const stale = [...pendingFrames.values(), ...pendingTimers.values()];
+    const independent = fixture(); independent.component.markShadowDirty = () => {};
+    runtime.schedulePmndrsAtmosphereShadowFit(independent.component, {});
+    delete f.component.el.components['vrodos-render-profile'];
+    f.owner.remove(); f.owner.remove();
+    assert.equal(pendingFrames.size, mode === 'no-frame' ? 0 : 1);
+    assert.equal(pendingTimers.size, 1);
+    const count = reasons.length;
+    stale.forEach(callback => callback());
+    f.owner.scheduleAdaptiveShadowFit(() => assert.fail('removed owner scheduled work'));
+    assert.equal(reasons.length, count);
+    independent.owner.remove();
+    assert.equal(pendingFrames.size, 0); assert.equal(pendingTimers.size, 0);
+}
 
 const core = runtimeBuildChunks.find(chunk => chunk.id === 'core-runtime');
 const index = name => core.sourceFiles.indexOf(`assets/js/runtime/master/${name}`);
