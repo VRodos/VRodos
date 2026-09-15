@@ -23,6 +23,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	];
 	private int $project_id = 0;
 	private array $media = [];
+	private array $scene_previews = [];
 	private array $created_files = [];
 	private string $runtime_mode = '';
 	private string $runtime_profile = 'desktop';
@@ -43,6 +44,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	public function prepare_plan( VRodos_Project_Compile_Plan $plan ): array {
 		$this->project_id = $plan->request->project_id;
 		$this->media      = [];
+		$this->scene_previews = [];
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
 		$this->runtime_profile = $plan->request->vr_runtime_profile;
@@ -69,6 +71,21 @@ final class VRodos_Compiler_Resource_Publisher {
 				}
 				$this->hydrate_value( $scene->scene_json );
 				$this->hydrate_scene_surface_textures( $scene->scene_json, $scene->scene_id );
+				$preview_id = absint( get_post_thumbnail_id( $scene->scene_id ) );
+				if ( 'immerse' === get_post_meta( $this->project_id, '_immerse_source', true ) && $preview_id && wp_attachment_is_image( $preview_id ) && VRodos_Storage_Manager::attachment_is_owned_by( $preview_id, 'scene', $scene->scene_id ) ) {
+					try {
+						$preview_path = get_attached_file( $preview_id, true );
+						if ( is_string( $preview_path ) && is_file( $preview_path ) ) {
+							$extension = sanitize_key( strtolower( pathinfo( $preview_path, PATHINFO_EXTENSION ) ) );
+							if ( in_array( $extension, [ 'jpg', 'jpeg', 'png', 'webp', 'gif' ], true ) ) {
+								$preview_url = $this->publish_attachment( $preview_id, 'scene-' . $scene->scene_id . '-preview' );
+								$this->scene_previews[ $scene->scene_id ] = basename( (string) wp_parse_url( $preview_url, PHP_URL_PATH ) );
+							}
+						}
+					} catch ( Throwable $preview_error ) {
+						$this->warnings[] = 'Scene #' . $scene->scene_id . ' preview could not be published; the Immerse hub will use a placeholder.';
+					}
+				}
 				$background_id = absint( get_post_meta( $scene->scene_id, 'vrodos_scene_bg_image', true ) );
 				if ( $background_id && isset( $scene->scene_json->metadata ) && is_object( $scene->scene_json->metadata ) ) {
 					if ( ! VRodos_Storage_Manager::attachment_is_owned_by( $background_id, 'scene', $scene->scene_id ) ) {
@@ -103,6 +120,9 @@ final class VRodos_Compiler_Resource_Publisher {
 			'schemaVersion' => 1,
 			'projectId'     => $this->project_id,
 			'publishedAt'   => current_time( 'mysql', true ),
+			'runtimeMode'   => $this->runtime_mode,
+			'vrRuntimeProfile' => $this->runtime_profile,
+			'scenePreviews' => $this->scene_previews,
 			'clients'       => $clients,
 			'media'         => array_values( $this->media ),
 		];

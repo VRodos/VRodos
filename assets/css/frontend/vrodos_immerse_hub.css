@@ -1,0 +1,32 @@
+.vrodos-immerse-hub{margin:0;min-height:100vh;background:#091b20;color:#edf8f3;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.immerse-hub-shell{max-width:1240px;margin:auto;padding:clamp(24px,5vw,64px)}
+.immerse-hub-header{padding:18px 0 48px}
+.immerse-hub-brand{display:inline-block;color:#8cebc3;font-weight:900;font-size:1.35rem;text-decoration:none;letter-spacing:.02em}
+.immerse-hub-eyebrow{margin:42px 0 12px;color:#86dcb9;font-size:.8rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.immerse-hub-header h1{margin:0;font-size:clamp(2.25rem,5vw,4.4rem);line-height:1.08;letter-spacing:-.04em}
+.immerse-hub-intro{color:#b6cbc5;font-size:1.12rem;line-height:1.5}
+.immerse-hub-project{margin:0 0 54px}
+.immerse-hub-project-heading{display:flex;align-items:baseline;gap:16px;margin-bottom:18px;border-bottom:1px solid #31514b;padding-bottom:13px}
+.immerse-hub-project-heading h2{margin:0;font-size:1.5rem}
+.immerse-hub-project-heading span{color:#a7c8bd;font-size:.9rem}
+.immerse-hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:22px}
+.immerse-hub-card{display:block;overflow:hidden;border:1px solid #355e53;border-radius:18px;background:#16332f;color:inherit;text-decoration:none;transition:transform .16s,border-color .16s,box-shadow .16s}
+a.immerse-hub-card:hover,a.immerse-hub-card:focus-visible{transform:translateY(-3px);border-color:#90efc0;box-shadow:0 12px 28px #0006;outline:none}
+.immerse-hub-card.is-unavailable{opacity:.72}
+.immerse-hub-preview{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,#235b51,#102c30);overflow:hidden}
+.immerse-hub-preview img{width:100%;height:100%;object-fit:cover}
+.immerse-hub-placeholder{display:grid;place-items:center;width:100%;height:100%;color:#a3e2ca}
+.immerse-hub-placeholder svg{width:64px;height:64px;stroke-width:1.3}
+.immerse-hub-badges{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:7px}
+.immerse-hub-badges span{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:10px;background:#071a1be8;color:#fff;font-size:.76rem;font-weight:750;box-shadow:0 2px 8px #0005}
+.immerse-hub-badges svg{width:16px;height:16px}
+.immerse-hub-card-body{display:flex;min-height:102px;flex-direction:column;justify-content:space-between;gap:13px;padding:18px}
+.immerse-hub-card-body h3{margin:0;font-size:1.12rem;line-height:1.35}
+.immerse-hub-enter{display:inline-flex;align-items:center;gap:5px;color:#a4f1c6;font-size:.92rem;font-weight:800}
+.immerse-hub-enter svg{width:17px;height:17px}
+.immerse-hub-unavailable{color:#e3c69f;font-size:.86rem;line-height:1.4}
+.immerse-hub-empty{border:1px solid #355e53;border-radius:20px;padding:48px 24px;text-align:center;background:#16332f}
+.immerse-hub-empty svg{width:42px;height:42px;color:#91e8c4}
+.immerse-hub-empty h2{margin:18px 0 8px}
+.immerse-hub-empty p{margin:0;color:#b6cbc5}
+@media(max-width:600px){.immerse-hub-shell{padding:22px}.immerse-hub-header{padding-bottom:32px}.immerse-hub-eyebrow{margin-top:32px}.immerse-hub-project-heading{align-items:flex-start;flex-direction:column;gap:5px}.immerse-hub-grid{gap:16px}.immerse-hub-card-body{min-height:90px}}

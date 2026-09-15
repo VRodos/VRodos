@@ -16,6 +16,7 @@ class VRodos_Asset_Manager {
 		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...), 999 );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_immerse_hub_assets(...), 999 );
 		add_action( 'admin_enqueue_scripts', $this->enqueue_asset_admin_scripts(...) );
 
         // Modern stats-gl module loader
@@ -465,11 +466,22 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_dashboard_table', VRodos_Path_Manager::css_url( 'admin/vrodos_dashboard_table_style.css' ) );
 		wp_register_style( 'vrodos_3D_editor_browser', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor_browser.css' ), [], $asset_browser_css_version );
 		wp_register_style( 'vrodos_frontend_stylesheet', VRodos_Path_Manager::css_url( 'frontend/vrodos_frontend.css' ) );
+		$hub_css_path = VRodos_Path_Manager::asset_path( 'css/frontend/vrodos_immerse_hub.css' );
+		wp_register_style( 'vrodos_immerse_hub', VRodos_Path_Manager::css_url( 'frontend/vrodos_immerse_hub.css' ), [], file_exists( $hub_css_path ) ? (string) filemtime( $hub_css_path ) : null );
 		wp_register_style( 'vrodos_asseteditor_stylesheet', VRodos_Path_Manager::css_url( 'editor/vrodos_asseteditor.css' ) );
 		$modern_css_path    = VRodos_Path_Manager::asset_path( 'css/vrodos_modern_compiled.css' );
 		$modern_css_version = (string) filemtime( $modern_css_path );
 		wp_register_style( 'vrodos_modern_compiled', VRodos_Path_Manager::css_url( 'vrodos_modern_compiled.css' ), [], $modern_css_version );
 		wp_register_style( 'vrodos_runtime', VRodos_Path_Manager::css_url( 'runtime/vrodos_runtime.css' ) );
+	}
+
+	public function enqueue_immerse_hub_assets(): void {
+		if ( ! $this->is_matching_page_template( 'vrodos-immerse-hub-template.php' ) || ! VRodos_Immerse_Hub::enabled() ) {
+			return;
+		}
+		wp_enqueue_style( 'vrodos_immerse_hub' );
+		wp_enqueue_script( 'lucide-icons' );
+		wp_add_inline_script( 'lucide-icons', 'if (window.lucide) { window.lucide.createIcons(); }', 'after' );
 	}
 
 	private function enqueue_three_vendor_bundle(): void {

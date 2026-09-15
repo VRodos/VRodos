@@ -50,6 +50,7 @@ export const testGroups = Object.freeze({
     "scripts/test-profile-feature-state-check.mjs"
   ],
   "compiler": [
+    "scripts/test-immerse-hub.php",
     "scripts/test-standalone-export.php",
     "scripts/test-standalone-server.mjs",
     "scripts/test-decoration-collision-policy.php",

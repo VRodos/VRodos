@@ -33,6 +33,9 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-storage-manager.
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-deployment-health.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shared-repository-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-immerse-access-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-immerse-hub.php');
+add_filter( 'wp_robots', [ VRodos_Immerse_Hub::class, 'robots' ] );
+add_action( 'template_redirect', [ VRodos_Immerse_Hub::class, 'send_page_headers' ] );
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-text-asset-helper.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-origin.php');

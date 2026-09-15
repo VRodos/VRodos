@@ -34,7 +34,9 @@ class VRodos_Pages_Manager {
 			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ) => 'Assets List Template',
 			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ) => 'Scene 3D Editor Template',
 			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
+			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) => 'Immerse Scene Hub Template',
 		];
+		add_action( 'admin_init', [ self::class, 'ensure_immerse_hub_page' ] );
 
 		if ( ! class_exists( 'VRodos_Legacy_Metadata_Migration' ) || ! VRodos_Legacy_Metadata_Migration::is_complete() ) {
 			$this->legacy_template_aliases = [
@@ -74,6 +76,13 @@ class VRodos_Pages_Manager {
 			return $template;
 		}
 		$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
+		if ( VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) === $page_template && ! VRodos_Immerse_Hub::enabled() ) {
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+			return get_404_template() ?: get_index_template();
+		}
 		if ( ! isset( $this->get_supported_templates()[ $page_template ] ) ) {
 			return $template;
 		}
@@ -126,6 +135,35 @@ class VRodos_Pages_Manager {
 				add_action( 'transition_post_status', '_wp_auto_add_pages_to_menu', 10, 3 );
 			}
 			ob_end_clean();
+		}
+		self::ensure_immerse_hub_page();
+	}
+
+	/** Create the short public URL without replacing a page that already owns it. */
+	public static function ensure_immerse_hub_page(): void {
+		$existing = get_page_by_path( 'immerse', OBJECT, 'page' );
+		$template = VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' );
+		if ( $existing instanceof WP_Post ) {
+			if ( $template !== get_post_meta( $existing->ID, '_wp_page_template', true ) ) {
+				add_action( 'admin_notices', static function (): void {
+					echo '<div class="notice notice-error"><p>' . esc_html__( 'VRodos cannot create /immerse/: another WordPress page already uses that slug.' ) . '</p></div>';
+				} );
+			} elseif ( 'publish' !== $existing->post_status ) {
+				wp_update_post( [ 'ID' => $existing->ID, 'post_status' => 'publish' ] );
+			}
+			return;
+		}
+		$page_id = wp_insert_post( [
+			'post_title' => 'Immerse Scenes', 'post_type' => 'page', 'post_name' => 'immerse',
+			'post_status' => 'publish', 'post_content' => '', 'comment_status' => 'closed', 'ping_status' => 'closed',
+		], true );
+		if ( ! is_wp_error( $page_id ) ) {
+			update_post_meta( $page_id, '_wp_page_template', $template );
+			if ( 'immerse' !== get_post_field( 'post_name', $page_id ) ) {
+				add_action( 'admin_notices', static function (): void {
+					echo '<div class="notice notice-error"><p>' . esc_html__( 'VRodos could not claim /immerse/. Check for a conflicting permalink.' ) . '</p></div>';
+				} );
+			}
 		}
 	}
 

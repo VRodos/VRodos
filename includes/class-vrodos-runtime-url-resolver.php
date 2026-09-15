@@ -50,6 +50,10 @@ final readonly class VRodos_Runtime_URL_Resolver {
 		return $this->runtime_base_urls()['local'];
 	}
 
+	public function public_runtime_base_url(): string {
+		return $this->settings['public_base_url'];
+	}
+
 	public function primary_runtime_mode(): string {
 		if ( 'public' === $this->settings['default_link_mode'] && '' !== $this->settings['public_base_url'] ) {
 			return 'public';

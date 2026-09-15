@@ -53,6 +53,8 @@ class VRodos_Settings_Manager {
 		add_settings_field( 'vrodos_runtime_local_port', __( 'Local runtime port' ), $this->field_vrodos_runtime_local_port(...), $this->general_settings_key, 'section_runtime_links' );
 
 		add_settings_field( 'vrodos_runtime_default_link_mode', __( 'Default compile link mode' ), $this->field_vrodos_runtime_default_link_mode(...), $this->general_settings_key, 'section_runtime_links' );
+		add_settings_section( 'section_immerse_hub', __( 'Immerse Scene Hub' ), $this->section_immerse_hub_desc(...), $this->general_settings_key );
+		add_settings_field( VRodos_Immerse_Hub::SETTING, __( 'Public scene hub' ), $this->field_vrodos_immerse_hub_enabled(...), $this->general_settings_key, 'section_immerse_hub' );
 	}
 
 	public function section_runtime_links_desc(): void {
@@ -65,6 +67,7 @@ class VRodos_Settings_Manager {
 			'vrodos_runtime_local_host'        => '',
 			'vrodos_runtime_local_port'        => '5832',
 			'vrodos_runtime_default_link_mode' => 'both',
+			VRodos_Immerse_Hub::SETTING => '0',
 		];
 	}
 
@@ -89,6 +92,23 @@ class VRodos_Settings_Manager {
 					break;
 				case 'vrodos_runtime_default_link_mode':
 					$output[ $key ] = in_array( $value, [ 'local', 'public', 'both' ], true ) ? (string) $value : $defaults[ $key ];
+					break;
+				case VRodos_Immerse_Hub::SETTING:
+					$output[ $key ] = '1' === (string) $value ? '1' : '0';
+					if ( '1' === $output[ $key ] && ! VRodos_Immerse_Hub::enabled() ) {
+						VRodos_Pages_Manager::ensure_immerse_hub_page();
+						$page = get_page_by_path( 'immerse', OBJECT, 'page' );
+						if ( ! ( $page instanceof WP_Post ) || VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) !== get_post_meta( $page->ID, '_wp_page_template', true ) ) {
+							$output[ $key ] = '0';
+							add_settings_error( $this->general_settings_key, 'immerse_hub_slug', __( 'The /immerse/ URL is already owned by another page. Resolve the slug conflict before enabling the hub.' ) );
+						} else {
+							$backfill = VRodos_Immerse_Hub::backfill_existing();
+							if ( is_wp_error( $backfill ) ) {
+								$output[ $key ] = '0';
+								add_settings_error( $this->general_settings_key, 'immerse_hub_backfill', $backfill->get_error_message() );
+							}
+						}
+					}
 					break;
 				default:
 					$output[ $key ] = sanitize_text_field( (string) $value );
@@ -158,6 +178,21 @@ class VRodos_Settings_Manager {
 			<option value="public" <?php selected( $current, 'public' ); ?>><?php echo esc_html__( 'Public' ); ?></option>
 		</select>
 		<p class="description"><?php echo esc_html__( 'Controls which link remains in the legacy compile response fields.' ); ?></p>
+		<?php
+	}
+
+	public function section_immerse_hub_desc(): void {
+		echo '<p>' . esc_html__( 'A headset-friendly public list of built Immerse scenes.' ) . '</p>';
+	}
+
+	public function field_vrodos_immerse_hub_enabled(): void {
+		?>
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( $this->general_settings_key ); ?>[<?php echo esc_attr( VRodos_Immerse_Hub::SETTING ); ?>]" value="1" <?php checked( $this->general_settings[ VRodos_Immerse_Hub::SETTING ], '1' ); ?> />
+			<?php echo esc_html__( 'Enable the public Immerse scene hub' ); ?>
+		</label>
+		<p class="description"><?php echo esc_html__( 'The page is unavailable until this switch is enabled. Anyone with its URL can see and open built scenes.' ); ?></p>
+		<p><a href="<?php echo esc_url( VRodos_Immerse_Hub::url() ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( VRodos_Immerse_Hub::url() ); ?></a></p>
 		<?php
 	}
 
