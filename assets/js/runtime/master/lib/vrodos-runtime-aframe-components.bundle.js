@@ -787,6 +787,8 @@
         this.fpsStatsEpoch = 0;
         this.shadowFlushHandle = null;
         this.shadowFlushUsesAnimationFrame = false;
+        this.navigationShadowSettleTimer = null;
+        this.navigationShadowSettleEpoch = 0;
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
@@ -815,6 +817,7 @@
         if (this.queuedQualityRefreshId !== null) window.clearTimeout(this.queuedQualityRefreshId);
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
+        this.clearNavigationShadowRefreshSettleTimer();
         this.disableFPSMeter();
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
@@ -828,6 +831,21 @@
         };
         this.shadowFlushUsesAnimationFrame = typeof requestAnimationFrame === "function";
         this.shadowFlushHandle = this.shadowFlushUsesAnimationFrame ? requestAnimationFrame(flush) : setTimeout(flush, 16);
+      },
+      clearNavigationShadowRefreshSettleTimer: function() {
+        this.navigationShadowSettleEpoch++;
+        if (this.navigationShadowSettleTimer !== null) window.clearTimeout(this.navigationShadowSettleTimer);
+        this.navigationShadowSettleTimer = null;
+      },
+      scheduleNavigationShadowRefreshSettle: function(callback, settleMs) {
+        if (this.removed) return;
+        this.clearNavigationShadowRefreshSettleTimer();
+        const epoch = this.navigationShadowSettleEpoch;
+        this.navigationShadowSettleTimer = window.setTimeout(() => {
+          if (this.removed || epoch !== this.navigationShadowSettleEpoch) return;
+          this.navigationShadowSettleTimer = null;
+          callback();
+        }, settleMs);
       },
       queueQualityRefresh: function(waitForModelSettle) {
         if (this.removed) return;
@@ -4067,9 +4085,6 @@
       this.clearXrExitRestoreTimers();
       this.clearXrExitSessionAttachTimers();
       this.detachXrExitSessionEndListener();
-      if (typeof this.clearNavigationShadowRefreshSettleTimer === "function") {
-        this.clearNavigationShadowRefreshSettleTimer();
-      }
       if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
         this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
         this._vrodosShadowPerfOverlay = null;

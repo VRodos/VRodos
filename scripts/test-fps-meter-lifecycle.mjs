@@ -203,8 +203,11 @@ scheduledTeardown.settings.flushShadowUpdate = () => scheduledTeardown.events.pu
 scheduledTeardown.settings.queueShadowFlush();
 const shadowTeardownCallback = shadowFrames.get(0);
 scheduledTeardown.settings.queueQualityRefresh();
+scheduledTeardown.owner.scheduleNavigationShadowRefreshSettle(() => scheduledTeardown.events.push('settle'), 50);
+const settleTeardownCallback = timers.get(scheduledTeardown.owner.navigationShadowSettleTimer);
 const teardownCallback = timers.get(scheduledTeardown.owner.queuedQualityRefreshId);
-scheduledTeardown.settings.remove(); teardownCallback(); shadowTeardownCallback();
+scheduledTeardown.settings.remove(); teardownCallback(); shadowTeardownCallback(); settleTeardownCallback();
+assert.equal(scheduledTeardown.owner.navigationShadowSettleTimer, null);
 assert.equal(shadowFrames.size, 0);
 assert.equal(scheduledTeardown.owner.shadowFlushHandle, null);
 assert.equal(timers.size, 0); assert.deepEqual(scheduledTeardown.events, []);

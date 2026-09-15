@@ -67,6 +67,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move FPS meter state, deferred enablement, renderer instrumentation, and disposal into `vrodos-render-profile`.
 - [x] Move coalesced quality-refresh scheduling and cancellation into `vrodos-render-profile`.
 - [x] Move coalesced shadow-flush frame/timer scheduling and cancellation into `vrodos-render-profile`.
+- [x] Move navigation shadow-settle timer scheduling, cancellation, and callback invalidation into `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -447,3 +448,13 @@ Extended the existing shadow subsystem and FPS/render-profile fixtures; no regre
 All 81 existing regression scripts pass. Runtime/generated-bundle syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint reports zero errors and 249 warnings, matching the previous package. `npm run build:runtime` succeeded; only the core and A-Frame components bundles changed among generated outputs.
 
 Navigation shadow-settle scheduling, remaining lighting/shadow state ownership, and the complete GPU/listener audit remain open. Published clients were not recompiled; browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.
+
+### Navigation shadow-settle scheduling ownership (2026-09-15)
+
+The working tree was clean before this package. `vrodos-render-profile` now owns the navigation shadow-settle timer and its cancellation generation. The shadow helper retains eligibility checks, delay validation, options, reason suffixes, and the forced settle refresh. Its existing clear entrypoint delegates to the owner. Component removal cancels the timer; scene-settings no longer duplicates that cleanup.
+
+Replacement, explicit cancellation, loss of eligibility, and removal invalidate callbacks already queued for delivery. Zero-valued timer IDs are canceled correctly. Invalid/nonpositive delays retain the existing behavior of leaving pending settle work alone. Navigation thresholds, throttling, shadow fitting, refresh formulas, rendering policy, shaders, and dependencies are unchanged. Navigation diagnostics and scratch state remain on scene-settings.
+
+Extended the existing shadow and render-profile lifecycle fixtures without adding scripts. Tests execute actual helpers and owner methods for timer replacement, explicit cancellation, zero IDs, delay validation, eligibility changes, independent scenes, removal, stale callbacks, reattachment, and scene teardown with simultaneous quality, shadow-flush, and navigation-settle work. All 81 regression scripts pass; lint has zero errors and 249 existing warnings. Runtime syntax, build configuration, catalog, and diff checks pass. `npm run build:runtime` succeeded; only the core and A-Frame components bundles changed among generated outputs.
+
+Remaining lighting/shadow scratch-state ownership and the full GPU/listener audit stay open. Published clients were not recompiled; browser/GPU/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.

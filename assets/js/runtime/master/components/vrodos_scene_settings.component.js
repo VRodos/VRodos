@@ -3391,9 +3391,6 @@ AFRAME.registerComponent('scene-settings', {
         this.clearXrExitRestoreTimers();
         this.clearXrExitSessionAttachTimers();
         this.detachXrExitSessionEndListener();
-        if (typeof this.clearNavigationShadowRefreshSettleTimer === 'function') {
-            this.clearNavigationShadowRefreshSettleTimer();
-        }
         if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
             this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
             this._vrodosShadowPerfOverlay = null;

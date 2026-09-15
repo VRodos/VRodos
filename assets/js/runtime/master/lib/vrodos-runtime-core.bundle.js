@@ -5449,16 +5449,8 @@ ${STOCHASTIC_GLSL}`).replace(
         updateShadowPerfDebugOverlay(self);
       }
       function clearNavigationShadowRefreshSettleTimer(self) {
-        if (!self || !self._vrodosNavigationShadowRefreshSettleTimer) {
-          return;
-        }
-        const timer = self._vrodosNavigationShadowRefreshSettleTimer;
-        self._vrodosNavigationShadowRefreshSettleTimer = null;
-        if (typeof window !== "undefined" && typeof window.clearTimeout === "function") {
-          window.clearTimeout(timer);
-        } else if (typeof clearTimeout === "function") {
-          clearTimeout(timer);
-        }
+        const owner = self && self.getRenderProfileOwner();
+        if (owner) owner.clearNavigationShadowRefreshSettleTimer();
       }
       function scheduleNavigationShadowRefreshSettle(self, refreshReason, options) {
         const opts = options || {};
@@ -5471,13 +5463,9 @@ ${STOCHASTIC_GLSL}`).replace(
           clearNavigationShadowRefreshSettleTimer(self);
           return;
         }
-        clearNavigationShadowRefreshSettleTimer(self);
-        const setTimer = typeof window !== "undefined" && typeof window.setTimeout === "function" ? window.setTimeout.bind(window) : typeof setTimeout === "function" ? setTimeout : null;
-        if (!setTimer) {
-          return;
-        }
-        self._vrodosNavigationShadowRefreshSettleTimer = setTimer(() => {
-          self._vrodosNavigationShadowRefreshSettleTimer = null;
+        const owner = self.getRenderProfileOwner();
+        if (!owner) return;
+        owner.scheduleNavigationShadowRefreshSettle(() => {
           applyNavigationShadowRefresh(self, `${refreshReason || "navigation-shadow-camera"}-settle`, Object.assign({}, opts, {
             force: true,
             settleMs: 0
