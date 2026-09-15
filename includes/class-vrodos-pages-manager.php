@@ -149,20 +149,31 @@ class VRodos_Pages_Manager {
 					echo '<div class="notice notice-error"><p>' . esc_html__( 'VRodos cannot create /immerse/: another WordPress page already uses that slug.' ) . '</p></div>';
 				} );
 			} elseif ( 'publish' !== $existing->post_status ) {
-				wp_update_post( [ 'ID' => $existing->ID, 'post_status' => 'publish' ] );
+				self::without_menu_auto_add( static fn () => wp_update_post( [ 'ID' => $existing->ID, 'post_status' => 'publish' ] ) );
 			}
 			return;
 		}
-		$page_id = wp_insert_post( [
+		$page_id = self::without_menu_auto_add( static fn () => wp_insert_post( [
 			'post_title' => 'Immerse Scenes', 'post_type' => 'page', 'post_name' => 'immerse',
 			'post_status' => 'publish', 'post_content' => '', 'comment_status' => 'closed', 'ping_status' => 'closed',
-		], true );
+		], true ) );
 		if ( ! is_wp_error( $page_id ) ) {
 			update_post_meta( $page_id, '_wp_page_template', $template );
 			if ( 'immerse' !== get_post_field( 'post_name', $page_id ) ) {
 				add_action( 'admin_notices', static function (): void {
 					echo '<div class="notice notice-error"><p>' . esc_html__( 'VRodos could not claim /immerse/. Check for a conflicting permalink.' ) . '</p></div>';
 				} );
+			}
+		}
+	}
+
+	private static function without_menu_auto_add( callable $write ) {
+		$removed = remove_action( 'transition_post_status', '_wp_auto_add_pages_to_menu', 10 );
+		try {
+			return $write();
+		} finally {
+			if ( $removed ) {
+				add_action( 'transition_post_status', '_wp_auto_add_pages_to_menu', 10, 3 );
 			}
 		}
 	}

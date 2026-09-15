@@ -22,6 +22,7 @@ $test_terms = [ 21 => [ (object) [ 'slug' => 'immerse-a' ] ], 22 => [ (object) [
 $test_options = [ 'vrodos_general_settings' => [ 'vrodos_runtime_public_base_url' => '', 'vrodos_immerse_hub_enabled' => '0' ] ];
 $test_hub_page = new WP_Post( 99, 'page', 'publish', 'immerse', 'Conflicting page' );
 $test_page_template = '';
+$test_menu_hook_removed = false;
 $test_inventory = [ 11 => [ 'schemaVersion' => 1, 'projectId' => 11, 'publishedAt' => '2026-01-01', 'clients' => [ 'Master_Client_21.html', 'Master_Client_22.html', 'Master_Client_23.html' ], 'media' => [] ] ];
 $test_preview = $test_root . '/private-preview.png';
 
@@ -41,7 +42,7 @@ function get_post_field( string $field, int $id ): string { return get_post( $id
 function get_the_title( int $id ): string { return get_post( $id )->post_title; }
 function wp_get_post_terms( int $id, string $taxonomy ): array { global $test_terms; return $test_terms[ $id ] ?? []; }
 function get_post_meta( int $id, string $key, bool $single = false ) { global $test_inventory, $test_page_template; if ( '_wp_page_template' === $key && 99 === $id ) { return $test_page_template; } return '_vrodos_published_inventory' === $key ? ( $test_inventory[ $id ] ?? '' ) : ''; }
-function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory; $test_inventory[ $id ] = $value; return true; }
+function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory, $test_page_template; if ( '_wp_page_template' === $key && 99 === $id ) { $test_page_template = $value; } else { $test_inventory[ $id ] = $value; } return true; }
 function wp_upload_dir( $time = null, bool $create = false ): array { global $test_root; return [ 'basedir' => $test_root, 'baseurl' => 'https://wp.test/uploads', 'error' => '' ]; }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function get_post_thumbnail_id( int $id ): int { return 21 === $id ? 101 : 0; }
@@ -53,8 +54,11 @@ function is_page( string $slug ): bool { return 'immerse' === $slug; }
 function is_admin(): bool { return false; }
 function get_bloginfo( string $key ): string { return '6.8'; }
 function add_filter( string $hook, $callback ): void {}
-function add_action( string $hook, $callback ): void {}
+function add_action( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void { global $test_menu_hook_removed; if ( 'transition_post_status' === $hook ) { $test_menu_hook_removed = false; } }
+function remove_action( string $hook, $callback, int $priority = 10 ): bool { global $test_menu_hook_removed; if ( 'transition_post_status' === $hook ) { $test_menu_hook_removed = true; return true; } return false; }
 function get_page_by_path( string $slug, $output = null, string $post_type = 'page' ): ?WP_Post { global $test_hub_page; return $test_hub_page; }
+function wp_insert_post( array $args, bool $wp_error = false ): int { global $test_hub_page, $test_menu_hook_removed; check( $test_menu_hook_removed, 'Hub page creation left WordPress menu auto-add active.' ); $test_hub_page = new WP_Post( 99, 'page', 'publish', 'immerse', 'Immerse Scenes' ); return 99; }
+function wp_update_post( array $args ): int { global $test_hub_page, $test_menu_hook_removed; check( $test_menu_hook_removed, 'Hub page republication left WordPress menu auto-add active.' ); $test_hub_page->post_status = 'publish'; return $test_hub_page->ID; }
 function add_settings_error( string $setting, string $code, string $message ): void {}
 function __( string $value ): string { return $value; }
 function get_404_template(): string { return 'theme-404.php'; }
@@ -109,6 +113,13 @@ check( '0' === $switch_result[ VRodos_Immerse_Hub::SETTING ], 'Hub switch enable
 $test_page_template = VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' );
 $switch_result = $settings_manager->sanitize_general_settings( [ VRodos_Immerse_Hub::SETTING => '1' ] );
 check( '1' === $switch_result[ VRodos_Immerse_Hub::SETTING ], 'Hub switch did not enable for its own page.' );
+$test_hub_page = null;
+$test_page_template = '';
+VRodos_Pages_Manager::ensure_immerse_hub_page();
+check( $test_hub_page instanceof WP_Post && ! $test_menu_hook_removed, 'Hub page creation did not restore the menu hook afterward.' );
+$test_hub_page->post_status = 'draft';
+VRodos_Pages_Manager::ensure_immerse_hub_page();
+check( 'publish' === $test_hub_page->post_status && ! $test_menu_hook_removed, 'Hub page republication did not restore the menu hook afterward.' );
 $pages_manager = new VRodos_Pages_Manager();
 $post = $test_hub_page;
 $wp_query = new class { public bool $is_404 = false; public function set_404(): void { $this->is_404 = true; } };
