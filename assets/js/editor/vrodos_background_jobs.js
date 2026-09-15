@@ -6,9 +6,8 @@
 	if (!root) return;
 	let loading = false;
 
-	function formatTime(value) {
-		const seconds = Number(value) || 0;
-		return seconds > 0 ? new Date(seconds * 1000).toLocaleString() : '—';
+	function formatTime(label) {
+		return label || '—';
 	}
 
 	function textCell(row, value) {
@@ -68,8 +67,8 @@
 			textCell(row, job.percent == null ? status : `${status} · ${job.percent}%`);
 			textCell(row, job.priority);
 			const scheduled = Number(job.scheduledAt) || 0;
-			textCell(row, scheduled > 0 && scheduled <= Date.now() / 1000 ? 'Due now' : formatTime(scheduled));
-			textCell(row, formatTime(job.updatedAt));
+			textCell(row, scheduled > 0 && scheduled <= Date.now() / 1000 ? 'Due now' : formatTime(job.scheduledAtLabel));
+			textCell(row, formatTime(job.updatedAtLabel));
 			const details = textCell(row, job.message);
 			if (job.note) {
 				const note = document.createElement('div');
@@ -87,8 +86,8 @@
 	function render(snapshot) {
 		if (!snapshot || !snapshot.scheduler || !snapshot.worker) return;
 		const cron = snapshot.scheduler;
-		const lastTick = cron.lastTickAt ? `last tick ${formatTime(cron.lastTickAt)}` : 'no recorded tick';
-		const nextTick = cron.nextTickAt ? `; next scheduled ${formatTime(cron.nextTickAt)}` : '';
+		const lastTick = cron.lastTickAt ? `last tick ${formatTime(cron.lastTickAtLabel)}` : 'no recorded tick';
+		const nextTick = cron.nextTickAt ? `; next scheduled ${formatTime(cron.nextTickAtLabel)}` : '';
 		root.querySelector('[data-vrodos-jobs-cron]').textContent =
 			`${cron.status} · ${lastTick}${nextTick} · request cron ${cron.cronDisabled ? 'disabled' : 'enabled'}`;
 		const workerCell = root.querySelector('[data-vrodos-jobs-worker]');
@@ -99,14 +98,14 @@
 			assetLink(workerCell, snapshot.worker.assetLabel, snapshot.worker.editUrl);
 		}
 		if (snapshot.worker.expiresAt) {
-			workerCell.appendChild(document.createTextNode(` · lease expires ${formatTime(snapshot.worker.expiresAt)}`));
+			workerCell.appendChild(document.createTextNode(` · lease expires ${formatTime(snapshot.worker.expiresAtLabel)}`));
 		}
 		if (snapshot.worker.note) {
 			workerCell.appendChild(document.createTextNode(` · ${snapshot.worker.note}`));
 		}
 		renderJobs(root.querySelector('[data-vrodos-jobs-active]'), snapshot.active, 'No asset jobs are running or queued.');
 		renderJobs(root.querySelector('[data-vrodos-jobs-recent]'), snapshot.recent, 'No recent completed or failed jobs are recorded.');
-		root.querySelector('[data-vrodos-jobs-updated]').textContent = `Updated ${formatTime(snapshot.generatedAt)} · refreshes every 10 seconds while this tab is visible`;
+		root.querySelector('[data-vrodos-jobs-updated]').textContent = `Updated ${formatTime(snapshot.generatedAtLabel)} · refreshes every 10 seconds while this tab is visible`;
 	}
 
 	function refresh() {

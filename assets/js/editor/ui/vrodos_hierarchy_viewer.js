@@ -292,32 +292,14 @@ function _hierarchyCreatedLabel(obj) {
         if (addedAt > 9999999999) {
             addedAt = Math.floor(addedAt / 1000);
         }
-        const addedLabel = _hierarchyUnixTimestampToDateTime(Math.floor(addedAt));
-        return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
+        return VRODOS.utils.formatWordPressDateTime(Math.floor(addedAt));
     }
 
     const name = String(obj.name || '');
     const match = name.match(/(\d{10})$/);
     if (!match) return '';
 
-    const created = _hierarchyUnixTimestampToDateTime(match[1]);
-    return (created && !created.includes('NaN')) ? created : '';
-}
-
-function _hierarchyUnixTimestampToDateTime(unixTimestamp) {
-    const secondsValue = Number(unixTimestamp);
-    if (!Number.isFinite(secondsValue) || secondsValue <= 0) {
-        return '';
-    }
-
-    const date = new Date(secondsValue * 1000);
-    const day = `0${date.getDate()}`.slice(-2);
-    const month = `0${date.getMonth() + 1}`.slice(-2);
-    const year = `0${date.getFullYear() % 100}`.slice(-2);
-    const hours = `0${date.getHours()}`.slice(-2);
-    const minutes = `0${date.getMinutes()}`.slice(-2);
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return VRODOS.utils.formatWordPressDateTime(match[1]);
 }
 
 function _hierarchyAssetBrowserItemForObject(obj) {

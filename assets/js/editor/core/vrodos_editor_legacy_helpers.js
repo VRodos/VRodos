@@ -15,16 +15,6 @@ VRODOS.ui.fillinWidgetAssetTRS = function(selectedObject) {
     }
 };
 
-VRODOS.utils.unixTimestampToTime = function(tStr) {
-    const unix_timestamp = parseInt(tStr, 10);
-    const date = new Date(unix_timestamp * 1000);
-    const hours = date.getHours();
-    const minutes = `0${  date.getMinutes()}`;
-    const seconds = `0${  date.getSeconds()}`;
-    const formattedTime = `${hours  }:${  minutes.substr(-2)  }:${  seconds.substr(-2)}`;
-    return `${date.getDate()  }/${  date.getMonth()  }/${  date.getFullYear()  } ${  formattedTime}`;
-};
-
 VRODOS.utils.rgbToHex = function(red, green, blue) {
     const rgb = (red << 16) | (green << 8) | (blue << 0);
     return `#${  (0x1000000 + rgb).toString(16).slice(1)}`;

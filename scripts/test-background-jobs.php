@@ -19,6 +19,9 @@ class VRodos_Storage_Manager {
 	public static string $root;
 	public static function private_site_root( bool $create = false ): string { return self::$root; }
 }
+class WP_Post {
+	public function __construct( public string $post_type, public int $ID ) {}
+}
 
 function absint( $value ): int { return max( 0, (int) $value ); }
 function sanitize_key( string $value ): string { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ); }
@@ -30,6 +33,8 @@ function get_the_title( int $id ): string { return [ 1 => 'Import', 2 => 'Previe
 function get_edit_post_link( int $id, string $context = 'display' ): string { return '/edit/' . $id; }
 function get_post_meta( int $id, string $key, bool $single = true ) { return $GLOBALS['meta'][ $id ][ $key ] ?? ''; }
 function get_option( string $key, $default = false ) { return $GLOBALS['options'][ $key ] ?? $default; }
+function wp_date( string $format, int $timestamp ): string { return "WP locale: $format @ $timestamp"; }
+function get_post_timestamp( WP_Post $post ): int { return $GLOBALS['post_timestamps'][ $post->ID ] ?? 0; }
 function wp_next_scheduled( string $hook, array $args = [] ) { return $GLOBALS['events'][ $hook . ':' . json_encode( $args ) ] ?? false; }
 function __( string $message, string $domain = '' ): string { return $message; }
 function add_filter() {}
@@ -38,6 +43,7 @@ function current_user_can( string $capability ): bool { return $GLOBALS['can_man
 function wp_send_json_error( array $error, int $code ): never { throw new RuntimeException( 'HTTP ' . $code ); }
 function check_ajax_referer(): void { throw new RuntimeException( 'Bad nonce' ); }
 
+require_once __DIR__ . '/../includes/class-vrodos-admin-date-formatter.php';
 require_once __DIR__ . '/../includes/class-vrodos-background-jobs.php';
 
 function check_jobs( bool $ok, string $message ): void {
@@ -86,16 +92,26 @@ $events = [
 	VRodos_Deployment_Health::TICK_HOOK . ':[]' => $now + 60,
 ];
 $options = [
+	'date_format' => 'd/m/Y',
+	'time_format' => 'H:i',
 	VRodos_Deployment_Health::STATE_OPTION => [ 'lastTickAt' => $now - 60 ],
 	VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION => [ 'owner' => 'web:3:running-key', 'token' => 'secret-token', 'expiresAt' => $now + 600 ],
 ];
 $GLOBALS['meta'] = $meta;
 $GLOBALS['events'] = $events;
 $GLOBALS['options'] = $options;
+$GLOBALS['post_timestamps'] = [ 1 => $now - 40 ];
 
 try {
+	$formatter = new VRodos_Admin_Date_Formatter();
+	check_jobs( "WP locale: d/m/Y H:i @ " . ( $now - 40 ) === $formatter->format_post_date( '2026/09/15', new WP_Post( 'vrodos_scene', 1 ) ), 'VRodos list dates must follow the WordPress settings.' );
+	check_jobs( '2026/09/15' === $formatter->format_post_date( '2026/09/15', new WP_Post( 'post', 1 ) ), 'The VRodos date rule must not change other post lists.' );
 	$snapshot = VRodos_Background_Jobs_Read_Model::snapshot();
 	check_jobs( 'Current' === $snapshot['scheduler']['status'], 'A recent cron tick should show current scheduler health.' );
+	check_jobs( "WP locale: d/m/Y H:i @ $now" === $snapshot['generatedAtLabel'], 'Snapshot time must use WordPress date and time settings.' );
+	check_jobs( "WP locale: d/m/Y H:i @ " . ( $now - 40 ) === $snapshot['active'][0]['updatedAtLabel'], 'Job update time must use the WordPress formatter.' );
+	check_jobs( "WP locale: d/m/Y H:i @ " . ( $now + 600 ) === $snapshot['worker']['expiresAtLabel'], 'Worker lease time must use the WordPress formatter.' );
+	check_jobs( "WP locale: d/m/Y H:i @ " . ( $now + 60 ) === $snapshot['scheduler']['nextTickAtLabel'], 'Scheduler time must use the WordPress formatter.' );
 	check_jobs( 'Busy' === $snapshot['worker']['status'] && 'Running Web' === $snapshot['worker']['assetLabel'], 'The worker must identify its asset without exposing the lease token.' );
 	check_jobs( [ 1, 3, 4, 4, 2 ] === array_column( $snapshot['active'], 'assetId' ), 'Running work must lead, then build-priority events and unscheduled queue records.' );
 	check_jobs( 100 === $snapshot['active'][1]['percent'] && str_contains( $snapshot['active'][1]['message'], 'awaiting WordPress finalization' ), 'A ready progress file with a running record must show finalization.' );

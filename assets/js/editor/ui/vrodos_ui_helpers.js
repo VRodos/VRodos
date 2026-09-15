@@ -4,6 +4,13 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.ui = VRODOS.ui || {};
 VRODOS.utils = VRODOS.utils || {};
 
+VRODOS.utils.formatWordPressDateTime = function(unixTimestamp) {
+    const seconds = Number(unixTimestamp);
+    if (!Number.isFinite(seconds) || seconds <= 0) return '';
+    const formats = window.wp.date.getSettings().formats;
+    return window.wp.date.dateI18n(`${formats.date} ${formats.time}`, new Date(seconds * 1000));
+};
+
 VRODOS.ui.refreshLucideIcons = function(options) {
     if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
         lucide.createIcons(options);
@@ -520,7 +527,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 
         setDisplay(getElement('statusRow'), 'none');
         setDisplay(getElement('appResult'), 'flex');
-		setText(getElement('resultMeta'), `Step 3 of 3 complete — ready to be shared · ${new Date().toLocaleString()}`);
+		setText(getElement('resultMeta'), `Step 3 of 3 complete — ready to be shared · ${VRODOS.utils.formatWordPressDateTime(Date.now() / 1000)}`);
 
         if (openWebLink) {
             setHref(openWebLink, primaryExperienceUrl);

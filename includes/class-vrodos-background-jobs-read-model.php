@@ -206,10 +206,7 @@ class VRodos_Background_Jobs_Read_Model {
 	}
 
 	private static function format_time( int $timestamp ): string {
-		if ( $timestamp <= 0 ) {
-			return '';
-		}
-		return wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), $timestamp );
+		return VRodos_Admin_Date_Formatter::format_timestamp( $timestamp );
 	}
 
 	private static function web_progress( array $record, string $profile ): array {

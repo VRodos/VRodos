@@ -37,6 +37,8 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-m
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-text-asset-helper.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-origin.php');
 add_action( 'admin_notices', [ VRodos_Render_Runtime_Manager::class, 'render_admin_notice' ] );
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-vrodos-admin-date-formatter.php';
+new VRodos_Admin_Date_Formatter();
 new VRodos_Immerse_Access_Manager();
 
 // Asset Manager Class
