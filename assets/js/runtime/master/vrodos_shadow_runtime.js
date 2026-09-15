@@ -616,6 +616,9 @@
         }
 
         function applyAdaptiveShadowFit(self, options) {
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return;
+            const shadowState = owner.shadowState;
             const shadowQuality = self && self.data ? (self.data.shadowQuality || 'medium') : 'medium';
             if (shadowQuality === 'off') {
                 return;
@@ -626,14 +629,14 @@
                 return;
             }
 
-            self._vrodosAdaptiveShadowCenter = self._vrodosAdaptiveShadowCenter || new THREE.Vector3();
+            shadowState._vrodosAdaptiveShadowCenter = self._vrodosAdaptiveShadowCenter || new THREE.Vector3();
             bounds.getCenter(self._vrodosAdaptiveShadowCenter);
 
             const fitOptions = Object.assign({}, options || {}, { self });
             collectDirectionalShadowLights(self).forEach((light) => {
                 fitDirectionalShadowCameraToBounds(light, bounds, shadowQuality, fitOptions);
             });
-            self._vrodosShadowFitLastMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+            shadowState._vrodosShadowFitLastMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
         }
 
         function getAdaptiveShadowCenter(self) {
@@ -646,6 +649,8 @@
             if (!self || !self.el || self.data.shadowQuality === 'off') {
                 return;
             }
+            const owner = self.getRenderProfileOwner();
+            if (!owner) return;
 
             applyAdaptiveShadowFit(self);
             if (typeof self.markShadowDirty === 'function') {
@@ -658,6 +663,7 @@
 
             if (typeof requestAnimationFrame === 'function') {
                 requestAnimationFrame(() => {
+                    if (owner.removed || self.renderProfileRuntime !== owner) return;
                     applyAdaptiveShadowFit(self);
                     if (typeof self.markShadowDirty === 'function') {
                         self.markShadowDirty('adaptive-shadow-fit-frame');
@@ -666,6 +672,7 @@
             }
 
             setTimeout(() => {
+                if (owner.removed || self.renderProfileRuntime !== owner) return;
                 applyAdaptiveShadowFit(self);
                 if (typeof self.markShadowDirty === 'function') {
                     self.markShadowDirty('adaptive-shadow-fit-settle');
@@ -929,12 +936,15 @@
         }
 
         function recordNavigationShadowRefreshSkip(self, skippedReason, eligibility) {
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return;
+            const shadowState = owner.shadowState;
             if (!self) {
                 return;
             }
 
-            self._vrodosNavigationShadowRefreshLastSkippedReason = skippedReason || 'skipped';
-            self._vrodosNavigationShadowRefreshLastPresentationMode = eligibility && eligibility.presentationMode
+            shadowState._vrodosNavigationShadowRefreshLastSkippedReason = skippedReason || 'skipped';
+            shadowState._vrodosNavigationShadowRefreshLastPresentationMode = eligibility && eligibility.presentationMode
                 ? eligibility.presentationMode
                 : null;
             updateShadowPerfDebugOverlay(self);
@@ -969,6 +979,9 @@
         }
 
         function applyNavigationShadowRefresh(self, reason, options) {
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return false;
+            const shadowState = owner.shadowState;
             const refreshReason = reason || 'navigation-shadow-camera';
             const opts = options || {};
             const eligibility = getNavigationShadowRefreshEligibility(self, opts);
@@ -991,8 +1004,8 @@
             }
 
             if (!self._vrodosNavigationShadowRefreshCameraPosition) {
-                self._vrodosNavigationShadowRefreshCameraPosition = new THREE.Vector3();
-                self._vrodosNavigationShadowRefreshCurrentCameraPosition = new THREE.Vector3();
+                shadowState._vrodosNavigationShadowRefreshCameraPosition = new THREE.Vector3();
+                shadowState._vrodosNavigationShadowRefreshCurrentCameraPosition = new THREE.Vector3();
                 force = true;
             }
 
@@ -1002,7 +1015,7 @@
                 ? Math.max(0, Number(opts.minDistance))
                 : 0.35;
 
-            self._vrodosNavigationShadowRefreshLastDistance = Math.sqrt(distanceSq);
+            shadowState._vrodosNavigationShadowRefreshLastDistance = Math.sqrt(distanceSq);
             if (!force && minDistance > 0 && distanceSq < (minDistance * minDistance)) {
                 recordNavigationShadowRefreshSkip(self, 'distance', eligibility);
                 return false;
@@ -1010,8 +1023,8 @@
 
             self._vrodosNavigationShadowRefreshCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
             if (!self._vrodosShadowFitCameraPosition) {
-                self._vrodosShadowFitCameraPosition = new THREE.Vector3();
-                self._vrodosShadowFitCurrentCameraPosition = new THREE.Vector3();
+                shadowState._vrodosShadowFitCameraPosition = new THREE.Vector3();
+                shadowState._vrodosShadowFitCurrentCameraPosition = new THREE.Vector3();
             }
             self._vrodosShadowFitCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
             self._vrodosShadowFitCurrentCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
@@ -1021,11 +1034,11 @@
                 self.markShadowDirty(refreshReason);
             }
 
-            self._vrodosNavigationShadowRefreshApplied = (self._vrodosNavigationShadowRefreshApplied || 0) + 1;
-            self._vrodosNavigationShadowRefreshLastReason = refreshReason;
-            self._vrodosNavigationShadowRefreshLastSkippedReason = '';
-            self._vrodosNavigationShadowRefreshLastPresentationMode = eligibility.presentationMode;
-            self._vrodosNavigationShadowRefreshLastAppliedMs = now;
+            shadowState._vrodosNavigationShadowRefreshApplied = (self._vrodosNavigationShadowRefreshApplied || 0) + 1;
+            shadowState._vrodosNavigationShadowRefreshLastReason = refreshReason;
+            shadowState._vrodosNavigationShadowRefreshLastSkippedReason = '';
+            shadowState._vrodosNavigationShadowRefreshLastPresentationMode = eligibility.presentationMode;
+            shadowState._vrodosNavigationShadowRefreshLastAppliedMs = now;
             updateShadowPerfDebugOverlay(self);
             return true;
         }
@@ -1275,12 +1288,15 @@
         };
 
         H.requestNavigationShadowRefresh = function (reason, options) {
+            const owner = this && this.getRenderProfileOwner();
+            if (!owner) return false;
+            const shadowState = owner.shadowState;
             if (!this || !this.el) {
                 return false;
             }
 
             const refreshReason = reason || 'navigation-shadow-camera';
-            this._vrodosNavigationShadowRefreshRequests = (this._vrodosNavigationShadowRefreshRequests || 0) + 1;
+            shadowState._vrodosNavigationShadowRefreshRequests = (this._vrodosNavigationShadowRefreshRequests || 0) + 1;
             const applied = applyNavigationShadowRefresh(this, refreshReason, options || {});
             scheduleNavigationShadowRefreshSettle(this, refreshReason, options || {});
             return applied;
@@ -1291,6 +1307,9 @@
         };
 
         H.markShadowDirty = function (reason) {
+            const owner = this && this.getRenderProfileOwner();
+            if (!owner) return;
+            const shadowState = owner.shadowState;
             if (!this || !this.el) {
                 return;
             }
@@ -1303,9 +1322,9 @@
             }
 
             const dirtyReason = reason || 'manual';
-            this._vrodosShadowDirty = true;
-            this._vrodosShadowDirtyReason = dirtyReason;
-            this._vrodosShadowDirtyRequests = (this._vrodosShadowDirtyRequests || 0) + 1;
+            shadowState._vrodosShadowDirty = true;
+            shadowState._vrodosShadowDirtyReason = dirtyReason;
+            shadowState._vrodosShadowDirtyRequests = (this._vrodosShadowDirtyRequests || 0) + 1;
             if (this.el && typeof this.el.setAttribute === 'function') {
                 this.el.setAttribute('data-vrodos-shadow-dirty-source', dirtyReason);
             }
@@ -1315,6 +1334,9 @@
         };
 
         H.flushShadowUpdate = function () {
+            const owner = this && this.getRenderProfileOwner();
+            if (!owner) return;
+            const shadowState = owner.shadowState;
             if (!this || !this.el) {
                 return;
             }
@@ -1338,10 +1360,10 @@
             renderer.shadowMap.needsUpdate = true;
             markAllShadowLightsDirty(this);
 
-            this._vrodosShadowDirty = false;
-            this._vrodosShadowUpdateCount = (this._vrodosShadowUpdateCount || 0) + 1;
-            this._vrodosShadowLastUpdateReason = this._vrodosShadowDirtyReason || 'manual';
-            this._vrodosShadowLastUpdateMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+            shadowState._vrodosShadowDirty = false;
+            shadowState._vrodosShadowUpdateCount = (this._vrodosShadowUpdateCount || 0) + 1;
+            shadowState._vrodosShadowLastUpdateReason = this._vrodosShadowDirtyReason || 'manual';
+            shadowState._vrodosShadowLastUpdateMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
             updateShadowPerfDebugOverlay(this);
         };
 
@@ -1512,6 +1534,9 @@
         };
 
         H.updateAdaptiveShadowFit = function (force) {
+            const owner = this && this.getRenderProfileOwner();
+            if (!owner) return;
+            const shadowState = owner.shadowState;
             if (!this ||
                 !this.el ||
                 !this.el.camera ||
@@ -1529,8 +1554,8 @@
             }
 
             if (!this._vrodosShadowFitCameraPosition) {
-                this._vrodosShadowFitCameraPosition = new THREE.Vector3();
-                this._vrodosShadowFitCurrentCameraPosition = new THREE.Vector3();
+                shadowState._vrodosShadowFitCameraPosition = new THREE.Vector3();
+                shadowState._vrodosShadowFitCurrentCameraPosition = new THREE.Vector3();
                 force = true;
             }
 
@@ -1540,7 +1565,7 @@
             }
 
             this._vrodosShadowFitCameraPosition.copy(this._vrodosShadowFitCurrentCameraPosition);
-            this._vrodosShadowFitLastMs = now;
+            shadowState._vrodosShadowFitLastMs = now;
             applyAdaptiveShadowFit(this);
             if (typeof this.markShadowDirty === 'function') {
                 this.markShadowDirty(force ? 'adaptive-shadow-force' : 'adaptive-shadow-camera');

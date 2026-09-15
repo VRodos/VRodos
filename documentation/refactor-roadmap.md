@@ -68,6 +68,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move coalesced quality-refresh scheduling and cancellation into `vrodos-render-profile`.
 - [x] Move coalesced shadow-flush frame/timer scheduling and cancellation into `vrodos-render-profile`.
 - [x] Move navigation shadow-settle timer scheduling, cancellation, and callback invalidation into `vrodos-render-profile`.
+- [x] Move shadow dirty/refresh, navigation-refresh, and adaptive-fit scratch state into `vrodos-render-profile`, preserving read-only diagnostic views.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -458,3 +459,13 @@ Replacement, explicit cancellation, loss of eligibility, and removal invalidate 
 Extended the existing shadow and render-profile lifecycle fixtures without adding scripts. Tests execute actual helpers and owner methods for timer replacement, explicit cancellation, zero IDs, delay validation, eligibility changes, independent scenes, removal, stale callbacks, reattachment, and scene teardown with simultaneous quality, shadow-flush, and navigation-settle work. All 81 regression scripts pass; lint has zero errors and 249 existing warnings. Runtime syntax, build configuration, catalog, and diff checks pass. `npm run build:runtime` succeeded; only the core and A-Frame components bundles changed among generated outputs.
 
 Remaining lighting/shadow scratch-state ownership and the full GPU/listener audit stay open. Published clients were not recompiled; browser/GPU/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.
+
+### Shadow refresh and adaptive-fit state ownership (2026-09-15)
+
+The working tree was clean before this package. Render-profile now owns 19 fields covering shadow dirty state, refresh counters/reasons, navigation refresh diagnostics/throttling, adaptive-fit timestamps/center, and cached camera positions. Shadow helpers write the owner's state; scene-settings retains read-only field views for existing diagnostics and helper readers. Component removal releases the state and reattachment starts with fresh counters and vectors. Calls without an active owner do not recreate state.
+
+Delayed adaptive-fit frame/80 ms callbacks now check their captured owner before running, preventing removed-generation work from fitting shadows or marking a replacement owner's state dirty. Active scheduling, navigation thresholds, fitting math, shadow policy, shaders, dependencies, and vendor patches remain unchanged. Those deferred handles are still not centrally canceled; their full resource audit remains open. Shadow material/program compatibility counters, presented-light caches, celestial state, and the debug overlay remain at their existing ownership boundaries.
+
+Extended the existing shadow fixture to cover all 19 read-only views, independent scene vectors, diagnostic parity, removal, fresh state on reattachment, no-owner calls, and stale adaptive-fit callbacks. Updated celestial-lighting and shadow-compatibility fixtures to use the actual registered owner. No regression script was added. All 81 tests pass; runtime syntax, build configuration, catalog, and diff checks pass. Lint reports zero errors and 249 existing warnings. Runtime rebuilding changed only the core and A-Frame components bundles.
+
+Remaining lighting/shadow resources and state, the complete GPU/listener audit, and integrated browser/Quest acceptance remain open. Published scenes were not recompiled. No development server was started and no commit or push was performed.

@@ -785,6 +785,27 @@
         this.fpsStatsRoot = null;
         this.fpsStatsPending = false;
         this.fpsStatsEpoch = 0;
+        this.shadowState = {
+          _vrodosAdaptiveShadowCenter: null,
+          _vrodosShadowFitLastMs: null,
+          _vrodosNavigationShadowRefreshLastSkippedReason: null,
+          _vrodosNavigationShadowRefreshLastPresentationMode: null,
+          _vrodosNavigationShadowRefreshCameraPosition: null,
+          _vrodosNavigationShadowRefreshCurrentCameraPosition: null,
+          _vrodosNavigationShadowRefreshLastDistance: null,
+          _vrodosShadowFitCameraPosition: null,
+          _vrodosShadowFitCurrentCameraPosition: null,
+          _vrodosNavigationShadowRefreshApplied: null,
+          _vrodosNavigationShadowRefreshLastReason: null,
+          _vrodosNavigationShadowRefreshLastAppliedMs: null,
+          _vrodosNavigationShadowRefreshRequests: null,
+          _vrodosShadowDirty: false,
+          _vrodosShadowDirtyReason: null,
+          _vrodosShadowDirtyRequests: 0,
+          _vrodosShadowUpdateCount: 0,
+          _vrodosShadowLastUpdateReason: null,
+          _vrodosShadowLastUpdateMs: 0
+        };
         this.shadowFlushHandle = null;
         this.shadowFlushUsesAnimationFrame = false;
         this.navigationShadowSettleTimer = null;
@@ -797,6 +818,14 @@
         if (this.settings === settings || this.removed) return;
         this.settings = settings;
         settings.renderProfileRuntime = this;
+        Object.keys(this.shadowState).forEach((field) => {
+          Object.defineProperty(settings, field, {
+            configurable: true,
+            get: function() {
+              return this.renderProfileRuntime ? this.renderProfileRuntime.shadowState[field] : null;
+            }
+          });
+        });
         ["fpsStats", "fpsStatsRoot", "fpsStatsPending"].forEach((field) => {
           Object.defineProperty(settings, field, {
             configurable: true,
@@ -819,6 +848,7 @@
         this.pendingQualityRefreshWaitForSettle = false;
         this.clearNavigationShadowRefreshSettleTimer();
         this.disableFPSMeter();
+        this.shadowState = null;
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
       },
@@ -3869,11 +3899,6 @@
       this._blackBloomTexture = null;
       this._whiteSAOTexture = null;
       this._blackSSRTexture = null;
-      this._vrodosShadowDirty = false;
-      this._vrodosShadowDirtyReason = null;
-      this._vrodosShadowDirtyRequests = 0;
-      this._vrodosShadowUpdateCount = 0;
-      this._vrodosShadowLastUpdateMs = 0;
       this._pmndrsTickTimeMs = null;
       this._pmndrsDayNightCycleState = null;
       this._pmndrsDayNightCycleShadowLastMs = 0;

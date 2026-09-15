@@ -3160,11 +3160,6 @@ AFRAME.registerComponent('scene-settings', {
         this._blackBloomTexture = null;
         this._whiteSAOTexture = null;
         this._blackSSRTexture = null;
-        this._vrodosShadowDirty = false;
-        this._vrodosShadowDirtyReason = null;
-        this._vrodosShadowDirtyRequests = 0;
-        this._vrodosShadowUpdateCount = 0;
-        this._vrodosShadowLastUpdateMs = 0;
         this._pmndrsTickTimeMs = null;
         this._pmndrsDayNightCycleState = null;
         this._pmndrsDayNightCycleShadowLastMs = 0;

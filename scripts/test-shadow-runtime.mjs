@@ -347,8 +347,9 @@ for (const useFrame of [true, false]) {
     settings.queueShadowFlush(); scheduled.owner.queueShadowFlush();
     assert.equal(pending.size, 0, 'requests cannot recreate a removed owner');
     const replacement = attachRenderProfile(settings);
+    settings.markShadowDirty('replacement');
     const count = settings._vrodosShadowUpdateCount;
-    settings.markShadowDirty('replacement'); stale();
+    stale();
     assert.equal(settings._vrodosShadowUpdateCount, count, 'stale callback cannot touch replacement state');
     assert.equal(pending.size, 1);
     run(replacement.shadowFlushHandle);
@@ -357,6 +358,42 @@ for (const useFrame of [true, false]) {
     replacement.remove(); independent.owner.remove();
 }
 context.requestAnimationFrame = requestFrame;
+
+// Scratch state has one owner, read-only facade fields, and fresh vectors/counters on reattachment.
+const owned = fixture(), otherOwned = fixture();
+owned.component.requestNavigationShadowRefresh('ownership', { force: true });
+otherOwned.component.requestNavigationShadowRefresh('other', { force: true });
+const oldState = owned.owner.shadowState;
+const oldPosition = owned.component._vrodosShadowFitCameraPosition;
+assert.equal(oldPosition, oldState._vrodosShadowFitCameraPosition);
+assert.notEqual(oldPosition, otherOwned.component._vrodosShadowFitCameraPosition);
+for (const field of Object.keys(oldState)) {
+    assert.equal(owned.component[field], oldState[field]);
+    assert.throws(() => { owned.component[field] = null; }, TypeError, field);
+}
+const diagnostic = owned.component.getShadowDiagnosticState();
+assert.equal(diagnostic.navigationRefreshApplied, oldState._vrodosNavigationShadowRefreshApplied);
+frames.clear(); timers.clear();
+runtime.schedulePmndrsAtmosphereShadowFit(owned.component, {});
+const staleFits = [...frames.values(), ...[...timers.values()].map(timer => timer.fn)];
+assert.equal(staleFits.length, 2);
+delete owned.component.el.components['vrodos-render-profile'];
+owned.owner.remove(); owned.owner.remove();
+assert.equal(owned.owner.shadowState, null);
+assert.equal(owned.component._vrodosShadowFitCameraPosition, null);
+assert.equal(owned.component.requestNavigationShadowRefresh('removed', { force: true }), false);
+owned.component.markShadowDirty('removed'); owned.component.flushShadowUpdate(); owned.component.updateAdaptiveShadowFit(true);
+const freshOwner = attachRenderProfile(owned.component);
+owned.component.getRenderProfileOwner();
+staleFits.forEach(callback => callback());
+assert.equal(owned.component._vrodosShadowFitCameraPosition, null);
+assert.equal(owned.component._vrodosShadowDirtyRequests, 0);
+assert.equal(owned.component._vrodosShadowUpdateCount, 0);
+owned.component.requestNavigationShadowRefresh('fresh', { force: true });
+assert.notEqual(owned.component._vrodosShadowFitCameraPosition, oldPosition);
+assert.equal(owned.component._vrodosNavigationShadowRefreshApplied, 1);
+assert.equal(otherOwned.component._vrodosNavigationShadowRefreshApplied, 1);
+freshOwner.remove(); otherOwned.owner.remove();
 
 const core = runtimeBuildChunks.find(chunk => chunk.id === 'core-runtime');
 const index = name => core.sourceFiles.indexOf(`assets/js/runtime/master/${name}`);

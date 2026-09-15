@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { runtimeBuildChunks } from './build/runtime-chunks.mjs';
 
 let lighting;
+const components = {};
 const elements = new Map();
 function element(tag = 'a-entity') {
     const attrs = {};
@@ -17,6 +18,7 @@ function element(tag = 'a-entity') {
     };
 }
 const context = vm.createContext({
+    AFRAME: { registerComponent: (name, definition) => { components[name] = definition; }, registerSystem() {} },
     THREE, console, URLSearchParams, performance: { now: () => 1000 },
     document: { getElementById: id => elements.get(id), createElement: element, querySelector: () => null },
     requestAnimationFrame: () => 1, setTimeout: () => 1
@@ -24,6 +26,7 @@ const context = vm.createContext({
 context.window = context;
 context.location = { search: '' };
 context.VRODOSMaster = {};
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js', import.meta.url), 'utf8'), context);
 context.VRODOS_RUNTIME_SETTINGS_CONTRACT = JSON.parse(readFileSync(new URL('../assets/runtime-settings-contract.json', import.meta.url), 'utf8'));
 for (const name of ['vrodos_runtime_settings_helpers.js', 'vrodos_celestial_clock.js', 'vrodos_moon_phase.js', 'vrodos_celestial_coordinates.js', 'vrodos_light_smoothing.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js', 'vrodos_celestial_lighting.js', 'vrodos_render_quality.js', 'vrodos_cloud_occlusion.js', 'vrodos_sun_occlusion.js', 'vrodos_sun_sprite.js', 'vrodos_gradient_sky.js', 'vrodos_atmosphere_visuals.js', 'vrodos_quality_profiles.js']) {
     if (name === 'vrodos_quality_profiles.js') {
@@ -65,6 +68,9 @@ function fixture(initial = config()) {
         markShadowDirty() { this.dirtyCount = (this.dirtyCount || 0) + 1; },
         markSceneCollectionsDirty() { this.collectionChanges = (this.collectionChanges || 0) + 1; }
     });
+    const owner = Object.assign(Object.create(components['vrodos-render-profile']), { el });
+    owner.init();
+    self.getRenderProfileOwner = () => { owner.bindSettings(self); return owner; };
     return { self, scene, children, resources, setConfig: c => { activeConfig = c; }, config: () => activeConfig };
 }
 

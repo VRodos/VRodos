@@ -3,6 +3,12 @@ import { resolve } from "node:path";
 import vm from "node:vm";
 
 const root = resolve(import.meta.dirname, "..");
+const components = {};
+function attachRenderProfile(component) {
+    const owner = Object.assign(Object.create(components['vrodos-render-profile']), { el: component.el });
+    owner.init();
+    component.getRenderProfileOwner = () => { owner.bindSettings(component); return owner; };
+}
 
 function assert(condition, message) {
     if (!condition) {
@@ -24,6 +30,7 @@ function createQualityProfileContext() {
     windowStub.VRODOSMaster = master;
 
     const context = {
+        AFRAME: { registerComponent: (name, definition) => { components[name] = definition; }, registerSystem() {} },
         console,
         window: windowStub,
         VRODOSMaster: master,
@@ -103,6 +110,7 @@ function createQualityProfileContext() {
     windowStub.THREE = context.THREE;
     context.globalThis = context;
     vm.createContext(context);
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js'), 'utf8'), context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_runtime_settings_helpers.js'), 'utf8'), context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_celestial_clock.js'), 'utf8'), context);
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_moon_phase.js'), 'utf8'), context);
@@ -180,6 +188,7 @@ function createFixture({ compatible }) {
         }
     };
 
+    attachRenderProfile(component);
     return { component, light, material, disposed: () => disposed };
 }
 
@@ -418,6 +427,7 @@ assert(compatible.component._vrodosShadowProgramRefreshes === 1, "same shadow ma
 assert(compatible.material.needsUpdate === false, "same shadow map type should not repeatedly dirty materials");
 
 const defaultRole = createShadowRoleComponent();
+attachRenderProfile(defaultRole.component);
 helpers.applyShadowQualityProfile.call(defaultRole.component);
 assert(defaultRole.mesh.castShadow === true, "caster-receiver meshes should cast shadows by default");
 assert(defaultRole.mesh.receiveShadow === true, "caster-receiver meshes should receive shadows by default");
