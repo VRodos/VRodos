@@ -10,17 +10,15 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Immerse Scenes | VRodos</title>
+	<title>Immerse Scenes</title>
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class( 'vrodos-manager-wrapper vrodos-immerse-hub' ); ?>>
 	<?php wp_body_open(); ?>
 	<main class="immerse-hub-shell">
 		<header class="immerse-hub-header">
-			<a class="immerse-hub-brand" href="<?php echo esc_url( home_url( '/' ) ); ?>">VRodos</a>
-			<p class="immerse-hub-eyebrow">Immerse scene library</p>
-			<h1>Choose a scene to enter</h1>
-			<p class="immerse-hub-intro">Select a built scene below to open it in your browser.</p>
+			<div class="immerse-hub-brand"><span class="immerse-hub-brand-mark" aria-hidden="true"></span>Immerse</div>
+			<h1>Scenes</h1>
 		</header>
 
 		<?php if ( ! $groups ) : ?>
