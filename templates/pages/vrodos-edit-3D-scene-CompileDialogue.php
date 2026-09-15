@@ -148,6 +148,20 @@
 							<input id="compileVrHeadsetStereoPostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-sm tw-mt-0.5 tw-flex-shrink-0">
 							<span class="tw-min-w-0"><strong class="tw-block tw-text-xs tw-uppercase tw-text-emerald-700">Stereo Post-FX</strong><span class="tw-block tw-text-xs tw-leading-relaxed tw-text-emerald-700/80 tw-mt-0.5">PMNDRS per-eye composer with SMAA.</span></span>
 						</label>
+						<label class="tw-form-control">
+							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Tone mapping</span>
+							<select id="compileVrHeadsetToneMappingSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+								<option value="agx">AgX</option>
+								<option value="reinhard">Reinhard</option>
+								<option value="cineon">Cineon</option>
+								<option value="aces-filmic">ACES Filmic</option>
+								<option value="linear">Linear</option>
+							</select>
+						</label>
+						<label class="tw-form-control">
+							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Exposure <span id="compileVrHeadsetExposureValue">1.00</span></span>
+							<input id="compileVrHeadsetExposureSlider" type="range" min="0.1" max="5" step="0.1" value="1" class="tw-range tw-range-primary tw-range-xs tw-mt-2">
+						</label>
 						<div class="tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white tw-p-3">
 							<p class="tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Fixed policy</p>
 							<div class="tw-mt-2 tw-flex tw-flex-wrap tw-gap-1.5">

@@ -20,6 +20,7 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 - `custom-movement` owns only virtual navigation and moves/rotates `#vrodos-authored-world` in immersive XR.
 - Freshly recompile representative scenes. Do not add per-root or old-layout fallbacks for generated clients.
 - PMNDRS/Legacy composer ownership, Takram clouds, scene probes, Takram sky PMREM capture, native WebXR layers, old movement HUDs, and old movement emitter scaffolding remain disabled by default.
+- Headset tone mapping and exposure are authored in the headset build controls. They apply through the direct Three.js renderer when stereo post-FX is off, or through the PMNDRS tone-mapping effect when stereo post-FX is enabled. These controls do not enable a composer.
 - New headset realism work belongs only behind `vrHeadsetStereoPostFxEnabled` and must use dynamic Takram sky/time/light state. Do not substitute static headset palettes, A-Frame fallback environments, or fixed lower-hemisphere fills.
 - Keep `vrodos-postprocessing.bundle.js` available when headset Takram atmosphere needs the full PMNDRS/Takram vendor classes; disabling composer ownership does not make the vendor library itself invalid.
 - Headset atmosphere capability must remain independent of `postFXEnabled`: with PMNDRS atmosphere enabled and post-FX off, compile the Takram atmosphere and PMNDRS vendor dependencies, but omit the post-FX adapter/composer and clouds. Otherwise the generated scene requests a sky whose implementation is missing.

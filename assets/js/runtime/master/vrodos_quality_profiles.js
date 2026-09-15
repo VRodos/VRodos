@@ -1756,7 +1756,7 @@
         canvas.style.filter = '';
 
         if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
-            if (this.data.postFXEngine === 'pmndrs') {
+            if (this.data.postFXEngine === 'pmndrs' || this.data.vrRuntimeProfile === 'headset') {
                 const atmosphereConfig = typeof this.getPmndrsAtmosphereConfig === 'function'
                     ? this.getPmndrsAtmosphereConfig()
                     : null;

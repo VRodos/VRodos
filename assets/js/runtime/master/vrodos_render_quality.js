@@ -70,7 +70,7 @@
             }
 
             if (typeof renderer.toneMappingExposure !== 'undefined') {
-                if (this.data.postFXEngine === 'pmndrs') {
+                if (this.data.postFXEngine === 'pmndrs' || this.data.vrRuntimeProfile === 'headset') {
                     const atmosphereConfig = typeof this.getPmndrsAtmosphereConfig === 'function'
                         ? this.getPmndrsAtmosphereConfig()
                         : null;
@@ -98,7 +98,7 @@
                     this.shouldUsePostProcessing();
                 if (isPmndrsComposerActive && typeof THREE.NoToneMapping !== 'undefined') {
                     renderer.toneMapping = THREE.NoToneMapping;
-                } else if (this.data.postFXEngine === 'pmndrs') {
+                } else if (this.data.postFXEngine === 'pmndrs' || this.data.vrRuntimeProfile === 'headset') {
                     const pmndrsDirectToneMapping = getThreeToneMappingForPmndrsMode(this.data.pmndrsToneMappingMode);
                     if (pmndrsDirectToneMapping !== null) {
                         renderer.toneMapping = pmndrsDirectToneMapping;

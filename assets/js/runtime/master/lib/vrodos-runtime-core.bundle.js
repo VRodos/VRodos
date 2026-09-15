@@ -7522,7 +7522,7 @@ ${STOCHASTIC_GLSL}`).replace(
           renderer.sortObjects = rendererSettings.sortTransparentObjects === true || rendererSettings.sortTransparentObjects === "true";
         }
         if (typeof renderer.toneMappingExposure !== "undefined") {
-          if (this.data.postFXEngine === "pmndrs") {
+          if (this.data.postFXEngine === "pmndrs" || this.data.vrRuntimeProfile === "headset") {
             const atmosphereConfig = typeof this.getPmndrsAtmosphereConfig === "function" ? this.getPmndrsAtmosphereConfig() : null;
             renderer.toneMappingExposure = smoothPmndrsRuntimeLightValue(
               this,
@@ -7542,7 +7542,7 @@ ${STOCHASTIC_GLSL}`).replace(
           const isPmndrsComposerActive = this.data.postFXEngine === "pmndrs" && typeof this.shouldUsePostProcessing === "function" && this.shouldUsePostProcessing();
           if (isPmndrsComposerActive && typeof THREE.NoToneMapping !== "undefined") {
             renderer.toneMapping = THREE.NoToneMapping;
-          } else if (this.data.postFXEngine === "pmndrs") {
+          } else if (this.data.postFXEngine === "pmndrs" || this.data.vrRuntimeProfile === "headset") {
             const pmndrsDirectToneMapping = getThreeToneMappingForPmndrsMode(this.data.pmndrsToneMappingMode);
             if (pmndrsDirectToneMapping !== null) {
               renderer.toneMapping = pmndrsDirectToneMapping;
@@ -11693,7 +11693,7 @@ ${shader.fragmentShader}` : withUniform;
       }
       canvas.style.filter = "";
       if (renderer && typeof renderer.toneMappingExposure !== "undefined") {
-        if (this.data.postFXEngine === "pmndrs") {
+        if (this.data.postFXEngine === "pmndrs" || this.data.vrRuntimeProfile === "headset") {
           const atmosphereConfig = typeof this.getPmndrsAtmosphereConfig === "function" ? this.getPmndrsAtmosphereConfig() : null;
           renderer.toneMappingExposure = smoothPmndrsRuntimeLightValue(
             this,

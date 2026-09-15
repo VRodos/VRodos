@@ -355,7 +355,7 @@ class VRodos_Compiler_Scene_Settings {
 			return $this->normalize_aframe_tone_mapping( (string) $metadata->aframeRendererToneMapping, 'ACESFilmic' );
 		}
 
-		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) ) {
+		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) || 'headset' === (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' ) ) {
 			return $this->should_use_pmndrs_composer( $settings )
 				? 'no'
 				: $this->aframe_tone_mapping_for_pmndrs_mode( (string) ( $settings['pmndrsToneMappingMode'] ?? 'agx' ) );
@@ -410,7 +410,7 @@ class VRodos_Compiler_Scene_Settings {
 			return max( 0.0, min( 20.0, (float) $metadata->aframeRendererExposure ) );
 		}
 
-		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) ) {
+		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) || 'headset' === (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' ) ) {
 			return $this->get_effective_pmndrs_initial_exposure( $settings );
 		}
 
@@ -421,7 +421,8 @@ class VRodos_Compiler_Scene_Settings {
 		$exposure = max( 0.1, min( 5.0, (float) ( $settings['pmndrsToneMappingExposure'] ?? 1.0 ) ) );
 		if (
 			! $this->setting_bool( $settings, 'pmndrsAtmosphereEnabled' ) ||
-			! $this->setting_bool( $settings, 'pmndrsLowLightAutoExposureEnabled' )
+			! $this->setting_bool( $settings, 'pmndrsLowLightAutoExposureEnabled' ) ||
+			( $this->setting_bool( $settings, 'pmndrsToneMappingExposureAuthored' ) && ! $this->setting_bool( $settings, 'pmndrsDayNightCycleEnabled' ) )
 		) {
 			return $exposure;
 		}

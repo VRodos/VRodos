@@ -81,6 +81,9 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsToneMapping: document.getElementById('compilePmndrsToneMappingSelect'),
             pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
             pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
+            vrHeadsetToneMapping: document.getElementById('compileVrHeadsetToneMappingSelect'),
+            vrHeadsetExposure: document.getElementById('compileVrHeadsetExposureSlider'),
+            vrHeadsetExposureValue: document.getElementById('compileVrHeadsetExposureValue'),
             pmndrsLensFlare: document.getElementById('compilePmndrsLensFlareToggle'),
             pmndrsLut: document.getElementById('compilePmndrsLutToggle'),
             pmndrsLutWrapper: document.getElementById('compilePmndrsLutWrapper'),
@@ -383,6 +386,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function updatePmndrsValueLabels() {
         const c = getCompileDialogElements();
+        if (c.vrHeadsetExposure && c.vrHeadsetExposureValue) {
+            c.vrHeadsetExposureValue.textContent = Number(c.vrHeadsetExposure.value).toFixed(2);
+        }
         VRodosCompileUI.General.updateValueLabels(c);
         VRodosCompileUI.PostFX.updateValueLabels(c);
         if (c.pmndrsSunElevation && c.pmndrsSunElevationValue) {
@@ -522,6 +528,10 @@ window.addEventListener('DOMContentLoaded', () => {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = Boolean(controls.hoveringInteractables.checked);
         }
         applyHeadsetStereoPostFxToControls(controls);
+        if (VRodosCompileUI.General.isVrHeadsetTarget(controls)) {
+            controls.pmndrsToneMapping.value = controls.vrHeadsetToneMapping.value;
+            controls.pmndrsExposure.value = controls.vrHeadsetExposure.value;
+        }
         VRodosCompileUI.PostFX.syncToScene(controls);
         
         const headsetPolicyPostFxAuthored = VRodosCompileUI.General.isHeadsetSkyTimeAuthored(controls) ||
@@ -686,6 +696,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
         }
+        if (controls.vrHeadsetToneMapping) controls.vrHeadsetToneMapping.value = controls.pmndrsToneMapping.value;
+        if (controls.vrHeadsetExposure) controls.vrHeadsetExposure.value = controls.pmndrsExposure.value;
         if (controls.pmndrsLensFlare) {
             controls.pmndrsLensFlare.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled);
         }
@@ -966,6 +978,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const controls = getCompileDialogElements();
     if (controls.runtimeTarget) {
         controls.runtimeTarget.addEventListener('change', () => {
+            if (VRodosCompileUI.General.isVrHeadsetTarget(controls)) {
+                controls.vrHeadsetToneMapping.value = controls.pmndrsToneMapping.value;
+                controls.vrHeadsetExposure.value = controls.pmndrsExposure.value;
+                updatePmndrsValueLabels();
+            }
             syncCompilePostFxState();
         });
     }
@@ -988,6 +1005,24 @@ window.addEventListener('DOMContentLoaded', () => {
             syncCompilePostFxState();
             VRodosCompileUI.PostFX.syncToScene(controls);
         });
+    }
+    if (controls.vrHeadsetToneMapping) {
+        controls.vrHeadsetToneMapping.addEventListener('change', () => {
+            controls.pmndrsToneMapping.value = controls.vrHeadsetToneMapping.value;
+            VRodosCompileUI.PostFX.syncToScene(controls);
+        });
+    }
+    if (controls.vrHeadsetExposure) {
+        const syncHeadsetExposure = () => {
+            controls.pmndrsExposure.value = controls.vrHeadsetExposure.value;
+            controls.vrHeadsetExposureValue.textContent = Number(controls.vrHeadsetExposure.value).toFixed(2);
+            if (VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene) {
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored = true;
+            }
+            VRodosCompileUI.PostFX.syncToScene(controls);
+        };
+        controls.vrHeadsetExposure.addEventListener('input', syncHeadsetExposure);
+        controls.vrHeadsetExposure.addEventListener('change', syncHeadsetExposure);
     }
     if (controls.renderQuality) {
         controls.renderQuality.addEventListener('change', () => {
@@ -1397,6 +1432,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
             if (c.pmndrsExposure) c.pmndrsExposure.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
             if (c.pmndrsToneMapping) c.pmndrsToneMapping.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
+            if (c.vrHeadsetExposure) c.vrHeadsetExposure.value = c.pmndrsExposure.value;
+            if (c.vrHeadsetToneMapping) c.vrHeadsetToneMapping.value = c.pmndrsToneMapping.value;
             if (c.pmndrsLensFlare) c.pmndrsLensFlare.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
             if (c.pmndrsLut) c.pmndrsLut.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
             if (c.pmndrsLutLook) c.pmndrsLutLook.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutLook;
