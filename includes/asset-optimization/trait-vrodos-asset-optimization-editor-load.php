@@ -29,6 +29,17 @@ trait VRodos_Asset_Optimization_Editor_Load {
 		if ( ! class_exists( 'VRodos_Immerse_Access_Manager' ) || ! VRodos_Immerse_Access_Manager::can_read_asset( $asset_id ) ) {
 			return self::empty_editor_load_state( 'forbidden', 'You are not allowed to load this asset.' );
 		}
+		if ( has_term( 'audio', 'vrodos_asset3d_cat', $asset_id ) ) {
+			$marker_url = VRodos_Core_Manager::get_builtin_audio_marker_url();
+			return array_merge(
+				self::empty_editor_load_state( 'ready', 'Audio marker is ready.' ),
+				[
+					'loadUrl'      => $marker_url,
+					'canonicalUrl' => $marker_url,
+					'loadVariant' => 'source',
+				]
+			);
+		}
 
 		$source = self::prepare_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {

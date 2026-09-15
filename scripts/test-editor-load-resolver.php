@@ -12,6 +12,7 @@ $GLOBALS['vrodos_editor_load_allowed'] = true;
 $GLOBALS['vrodos_editor_load_post_type'] = 'vrodos_asset3d';
 $GLOBALS['vrodos_editor_load_protected'] = false;
 $GLOBALS['vrodos_editor_load_editable'] = true;
+$GLOBALS['vrodos_editor_load_audio'] = false;
 
 class WP_Error {
 	public function __construct( private string $code, private string $message ) {}
@@ -23,6 +24,12 @@ class WP_Error {
 class VRodos_Immerse_Access_Manager {
 	public static function can_read_asset( int $asset_id ): bool {
 		return $asset_id > 0 && $GLOBALS['vrodos_editor_load_allowed'];
+	}
+}
+
+class VRodos_Core_Manager {
+	public static function get_builtin_audio_marker_url(): string {
+		return '/plugin/speaker.glb';
 	}
 }
 
@@ -45,6 +52,10 @@ function sanitize_key( string $value ): string {
 
 function get_post_type( int $post_id ): string {
 	return $post_id > 0 ? $GLOBALS['vrodos_editor_load_post_type'] : '';
+}
+
+function has_term( string $term, string $taxonomy, int $post_id ): bool {
+	return 'audio' === $term && 'vrodos_asset3d_cat' === $taxonomy && $post_id > 0 && $GLOBALS['vrodos_editor_load_audio'];
 }
 
 function is_wp_error( $value ): bool {
@@ -184,6 +195,13 @@ $GLOBALS['vrodos_editor_load_preview_record'] = [
 ];
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
 vrodos_editor_load_assert( true === $state['protectsGeometry'], 'walkable and collision previews must report exact protected geometry' );
+
+$GLOBALS['vrodos_editor_load_audio'] = true;
+$GLOBALS['vrodos_editor_load_source'] = new WP_Error( 'not-local', 'Only local uploaded GLB files can be optimized.' );
+$state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
+vrodos_editor_load_assert( 'ready' === $state['readiness']['status'] && '/plugin/speaker.glb' === $state['loadUrl'], 'audio assets must load their bundled marker without GLB preparation errors' );
+vrodos_editor_load_assert( 'source' === $state['loadVariant'] && ! $state['canRetry'], 'the audio marker must not offer optimization actions' );
+$GLOBALS['vrodos_editor_load_audio'] = false;
 
 $GLOBALS['vrodos_editor_load_post_type'] = '';
 $state = VRodos_Editor_Load_Test_Harness::resolve_editor_glb_load( 7 );
