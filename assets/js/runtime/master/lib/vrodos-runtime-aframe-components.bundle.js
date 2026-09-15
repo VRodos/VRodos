@@ -785,6 +785,7 @@
         this.fpsStatsRoot = null;
         this.fpsStatsPending = false;
         this.fpsStatsEpoch = 0;
+        this._vrodosShadowPerfOverlay = null;
         this.shadowState = {
           _vrodosAdaptiveShadowCenter: null,
           _vrodosShadowFitLastMs: null,
@@ -828,7 +829,7 @@
             }
           });
         });
-        ["fpsStats", "fpsStatsRoot", "fpsStatsPending"].forEach((field) => {
+        ["fpsStats", "fpsStatsRoot", "fpsStatsPending", "_vrodosShadowPerfOverlay"].forEach((field) => {
           Object.defineProperty(settings, field, {
             configurable: true,
             get: function() {
@@ -853,10 +854,71 @@
         this.adaptiveShadowFitTimers.forEach((handle) => clearTimeout(handle));
         this.adaptiveShadowFitFrames.clear();
         this.adaptiveShadowFitTimers.clear();
+        if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
+          this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
+        }
+        this._vrodosShadowPerfOverlay = null;
         this.disableFPSMeter();
         this.shadowState = null;
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
+      },
+      ensureShadowPerfDebugOverlay: function() {
+        if (this.removed || typeof document === "undefined") {
+          return null;
+        }
+        if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
+          return this._vrodosShadowPerfOverlay;
+        }
+        const overlay = document.createElement("pre");
+        overlay.id = "vrodos-shadow-perf-debug";
+        overlay.style.position = "fixed";
+        overlay.style.right = "16px";
+        overlay.style.bottom = "16px";
+        overlay.style.zIndex = "9999";
+        overlay.style.margin = "0";
+        overlay.style.padding = "10px 12px";
+        overlay.style.maxWidth = "360px";
+        overlay.style.maxHeight = "40vh";
+        overlay.style.overflow = "auto";
+        overlay.style.background = "rgba(15, 23, 42, 0.86)";
+        overlay.style.color = "#e2e8f0";
+        overlay.style.font = "12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        overlay.style.border = "1px solid rgba(148, 163, 184, 0.35)";
+        overlay.style.borderRadius = "8px";
+        overlay.style.pointerEvents = "none";
+        document.body.appendChild(overlay);
+        this._vrodosShadowPerfOverlay = overlay;
+        return overlay;
+      },
+      updateShadowPerfDebugOverlay: function(state) {
+        const overlay = this.ensureShadowPerfDebugOverlay();
+        if (!overlay) {
+          return;
+        }
+        overlay.textContent = [
+          "VRodos shadow perf",
+          `mode: ${state.mode}`,
+          `type: ${state.typeName || state.type}`,
+          `autoUpdate: ${state.autoUpdate}`,
+          `needsUpdate: ${state.needsUpdate}`,
+          `updates: ${state.updateCount}`,
+          `dirty requests: ${state.dirtyRequests}`,
+          `last reason: ${state.lastDirtyReason || "none"}`,
+          `last update: ${state.lastUpdateReason || "none"}`,
+          `navigation refresh: ${state.navigationRefreshApplied}/${state.navigationRefreshRequests}`,
+          `navigation refresh reason: ${state.navigationRefreshLastReason || "none"}`,
+          `navigation refresh skip: ${state.navigationRefreshLastSkippedReason || "none"}`,
+          `navigation refresh mode: ${state.navigationRefreshLastPresentationMode || "none"}`,
+          `takram signature: ${state.takramSignature || "none"}`,
+          `presented shadow transforms: ${state.presentedShadowTransforms}`,
+          `presented shadow nav transform: ${state.presentedShadowLastNavigationTransformCount === null ? "none" : state.presentedShadowLastNavigationTransformCount}`,
+          `casters: ${state.casters}`,
+          `receivers: ${state.receivers}`,
+          `receiver-only: ${state.receiverOnly}`,
+          `dir shadow lights: ${state.dirShadowLights}/${state.dirLights}`,
+          `fit: ${state.fittedDirLights} ${state.fitted}`
+        ].join("\n");
       },
       scheduleAdaptiveShadowFit: function(callback) {
         if (this.removed) return;
@@ -4133,10 +4195,6 @@
       this.clearXrExitRestoreTimers();
       this.clearXrExitSessionAttachTimers();
       this.detachXrExitSessionEndListener();
-      if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
-        this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
-        this._vrodosShadowPerfOverlay = null;
-      }
       this.disablePostProcessing();
       this.disablePmndrsPostProcessing();
       this.el.removeAttribute("vrodos-atmosphere");

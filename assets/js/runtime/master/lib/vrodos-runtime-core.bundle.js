@@ -5592,63 +5592,10 @@ ${STOCHASTIC_GLSL}`).replace(
       function shadowPerfDebugEnabled() {
         return hasPmndrsDebugFlag("shadowPerf", "vrodos_debug_shadow_perf");
       }
-      function ensureShadowPerfDebugOverlay(self) {
-        if (!shadowPerfDebugEnabled() || typeof document === "undefined") {
-          return null;
-        }
-        if (self._vrodosShadowPerfOverlay && self._vrodosShadowPerfOverlay.parentNode) {
-          return self._vrodosShadowPerfOverlay;
-        }
-        const overlay = document.createElement("pre");
-        overlay.id = "vrodos-shadow-perf-debug";
-        overlay.style.position = "fixed";
-        overlay.style.right = "16px";
-        overlay.style.bottom = "16px";
-        overlay.style.zIndex = "9999";
-        overlay.style.margin = "0";
-        overlay.style.padding = "10px 12px";
-        overlay.style.maxWidth = "360px";
-        overlay.style.maxHeight = "40vh";
-        overlay.style.overflow = "auto";
-        overlay.style.background = "rgba(15, 23, 42, 0.86)";
-        overlay.style.color = "#e2e8f0";
-        overlay.style.font = "12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-        overlay.style.border = "1px solid rgba(148, 163, 184, 0.35)";
-        overlay.style.borderRadius = "8px";
-        overlay.style.pointerEvents = "none";
-        document.body.appendChild(overlay);
-        self._vrodosShadowPerfOverlay = overlay;
-        return overlay;
-      }
       function updateShadowPerfDebugOverlay(self) {
-        const overlay = ensureShadowPerfDebugOverlay(self);
-        if (!overlay) {
-          return;
-        }
-        const state = getShadowDiagnosticState(self);
-        overlay.textContent = [
-          "VRodos shadow perf",
-          `mode: ${state.mode}`,
-          `type: ${state.typeName || state.type}`,
-          `autoUpdate: ${state.autoUpdate}`,
-          `needsUpdate: ${state.needsUpdate}`,
-          `updates: ${state.updateCount}`,
-          `dirty requests: ${state.dirtyRequests}`,
-          `last reason: ${state.lastDirtyReason || "none"}`,
-          `last update: ${state.lastUpdateReason || "none"}`,
-          `navigation refresh: ${state.navigationRefreshApplied}/${state.navigationRefreshRequests}`,
-          `navigation refresh reason: ${state.navigationRefreshLastReason || "none"}`,
-          `navigation refresh skip: ${state.navigationRefreshLastSkippedReason || "none"}`,
-          `navigation refresh mode: ${state.navigationRefreshLastPresentationMode || "none"}`,
-          `takram signature: ${state.takramSignature || "none"}`,
-          `presented shadow transforms: ${state.presentedShadowTransforms}`,
-          `presented shadow nav transform: ${state.presentedShadowLastNavigationTransformCount === null ? "none" : state.presentedShadowLastNavigationTransformCount}`,
-          `casters: ${state.casters}`,
-          `receivers: ${state.receivers}`,
-          `receiver-only: ${state.receiverOnly}`,
-          `dir shadow lights: ${state.dirShadowLights}/${state.dirLights}`,
-          `fit: ${state.fittedDirLights} ${state.fitted}`
-        ].join("\n");
+        if (!shadowPerfDebugEnabled() || typeof document === "undefined") return;
+        const owner = self.getRenderProfileOwner();
+        if (owner) owner.updateShadowPerfDebugOverlay(getShadowDiagnosticState(self));
       }
       function capturePresentedShadowLightBase(self, light, options) {
         if (!light || !light.position || !light.target || !light.target.position) {

@@ -399,6 +399,68 @@ assert.equal(owned.component._vrodosNavigationShadowRefreshApplied, 1);
 assert.equal(otherOwned.component._vrodosNavigationShadowRefreshApplied, 1);
 freshOwner.remove(); otherOwned.owner.remove();
 
+// Debug overlay uses real diagnostics and the owner with a minimal DOM boundary.
+const overlayBody = {
+    children: new Set(),
+    appendChild(node) { this.children.add(node); node.parentNode = this; },
+    removeChild(node) { assert.ok(this.children.delete(node)); node.parentNode = null; }
+};
+context.document.body = overlayBody;
+context.document.createElement = tag => ({ tagName: tag, style: {}, textContent: '' });
+const overlayScene = fixture(), otherOverlayScene = fixture();
+overlayScene.component.flushShadowUpdate();
+assert.equal(overlayBody.children.size, 0, 'debug-off does not create an overlay');
+flags.add('shadowPerf');
+overlayScene.component.flushShadowUpdate();
+const overlay = overlayScene.owner._vrodosShadowPerfOverlay;
+assert.equal(overlay.tagName, 'pre');
+assert.equal(overlay.id, 'vrodos-shadow-perf-debug');
+assert.equal(overlay.style.position, 'fixed');
+assert.equal(overlay.style.right, '16px');
+assert.equal(overlay.style.bottom, '16px');
+assert.equal(overlay.style.pointerEvents, 'none');
+assert.equal(overlay.style.maxHeight, '40vh');
+assert.equal(overlayScene.component._vrodosShadowPerfOverlay, overlay);
+assert.throws(() => { overlayScene.component._vrodosShadowPerfOverlay = null; }, TypeError);
+assert.ok(overlay.textContent.startsWith('VRodos shadow perf\nmode: static\n'));
+assert.ok(overlay.textContent.includes('\nupdates: 2\n'));
+assert.ok(overlay.textContent.includes('\nlast update: manual\n'));
+overlayScene.component.flushShadowUpdate();
+assert.equal(overlayScene.owner._vrodosShadowPerfOverlay, overlay);
+assert.equal(overlayBody.children.size, 1);
+assert.ok(overlay.textContent.includes('\nupdates: 3\n'));
+const textBeforeDisable = overlay.textContent;
+flags.delete('shadowPerf'); overlayScene.component.flushShadowUpdate();
+assert.equal(overlay.textContent, textBeforeDisable, 'debug-off preserves existing display without updates');
+flags.add('shadowPerf');
+otherOverlayScene.component.flushShadowUpdate();
+const otherOverlay = otherOverlayScene.owner._vrodosShadowPerfOverlay;
+assert.notEqual(otherOverlay, overlay);
+overlayBody.removeChild(overlay);
+overlayScene.component.flushShadowUpdate();
+const recreatedOverlay = overlayScene.owner._vrodosShadowPerfOverlay;
+assert.notEqual(recreatedOverlay, overlay, 'externally detached overlays are recreated');
+assert.equal(overlayBody.children.size, 2);
+delete overlayScene.component.el.components['vrodos-render-profile'];
+overlayScene.owner.remove(); overlayScene.owner.remove();
+assert.equal(overlayScene.owner._vrodosShadowPerfOverlay, null);
+assert.equal(overlayScene.component._vrodosShadowPerfOverlay, null);
+assert.equal(recreatedOverlay.parentNode, null);
+assert.equal(otherOverlay.parentNode, overlayBody);
+overlayScene.owner.updateShadowPerfDebugOverlay({});
+overlayScene.component.flushShadowUpdate();
+assert.equal(overlayBody.children.size, 1, 'removed owner cannot recreate the overlay');
+const reattachedOverlayOwner = attachRenderProfile(overlayScene.component);
+overlayScene.component.flushShadowUpdate();
+assert.notEqual(reattachedOverlayOwner._vrodosShadowPerfOverlay, recreatedOverlay);
+assert.ok(reattachedOverlayOwner._vrodosShadowPerfOverlay.textContent.includes('\nupdates: 1\n'));
+overlayBody.removeChild(reattachedOverlayOwner._vrodosShadowPerfOverlay);
+reattachedOverlayOwner.remove();
+assert.equal(reattachedOverlayOwner._vrodosShadowPerfOverlay, null, 'cleanup releases an already detached node');
+otherOverlayScene.owner.remove();
+assert.equal(overlayBody.children.size, 0);
+flags.delete('shadowPerf');
+
 // Preserve repeated immediate/frame/80ms fits and the headset/no-rAF paths.
 for (const mode of ['desktop', 'no-frame', 'headset']) {
     const pendingFrames = new Map(), pendingTimers = new Map();

@@ -3386,10 +3386,6 @@ AFRAME.registerComponent('scene-settings', {
         this.clearXrExitRestoreTimers();
         this.clearXrExitSessionAttachTimers();
         this.detachXrExitSessionEndListener();
-        if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
-            this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
-            this._vrodosShadowPerfOverlay = null;
-        }
         this.disablePostProcessing();
         this.disablePmndrsPostProcessing();
         this.el.removeAttribute('vrodos-atmosphere');

@@ -70,6 +70,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move navigation shadow-settle timer scheduling, cancellation, and callback invalidation into `vrodos-render-profile`.
 - [x] Move shadow dirty/refresh, navigation-refresh, and adaptive-fit scratch state into `vrodos-render-profile`, preserving read-only diagnostic views.
 - [x] Track and cancel deferred adaptive shadow-fit frames/timers in `vrodos-render-profile`.
+- [x] Move shadow debug-overlay DOM creation, text updates, and cleanup into `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -480,3 +481,13 @@ The shadow helper retains immediate fitting and headset policy, then delegates d
 Extended the existing shadow regression for active callback order/reasons, repeated requests, completed-handle removal, headset/no-frame paths, zero IDs in both scheduler namespaces, independent scenes, cancellation, and stale callbacks after reattachment. No test script was added. All 81 tests pass; lint reports zero errors and 249 existing warnings. Runtime syntax, build configuration, catalog, and diff checks pass. Runtime rebuilding changed only the core and A-Frame components bundles.
 
 Remaining shadow resources, lighting state, and the broader GPU/listener audit stay open. Published scenes were not recompiled; browser/GPU/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.
+
+### Shadow debug-overlay ownership (2026-09-15)
+
+The working tree was clean before this package. Render-profile now owns the shadow debug-overlay DOM node, creation/reuse, text formatting, and removal. The shadow helper retains the debug flag and diagnostic calculation, forwarding active updates to the owner. Scene-settings exposes a read-only `_vrodosShadowPerfOverlay` view and no longer duplicates cleanup. Owner removal clears its node reference even if the node was already detached; removed owners cannot recreate the overlay.
+
+The overlay's styling and diagnostic text assembly were mechanically compared with HEAD and are identical. Existing debug-toggle behavior is preserved: disabling diagnostics stops updates while leaving the last display visible. No rendering settings, algorithms, thresholds, dependencies, or vendor patches changed. No polling or event listeners were added.
+
+Extended the existing shadow and render-profile lifecycle fixtures for debug gating, live text updates, node reuse, independent scenes, external detachment, read-only access, repeated removal, reattachment with fresh diagnostics, detached-node cleanup, and actual scene-settings teardown. No regression script was added. All 81 tests pass; lint reports zero errors and 249 existing warnings. Runtime syntax, build configuration, catalog, and diff checks pass. Runtime rebuilding changed only the core and A-Frame components bundles.
+
+Remaining shadow compatibility state, presented-light caches, lighting resources, and the broader GPU/listener audit stay open. Published scenes were not recompiled; browser/GPU/physical Quest acceptance was not performed. No development server was started and no commit or push was performed.

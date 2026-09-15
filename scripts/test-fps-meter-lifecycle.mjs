@@ -35,7 +35,7 @@ class Stats extends StatsCore {
     }
 }
 const context = vm.createContext({ console: { warn: (...args) => warnings.push(args) }, Stats,
-    document: { body, getElementById: () => null, removeEventListener() {} },
+    document: { body, createElement: () => ({ style: {} }), getElementById: () => null, removeEventListener() {} },
     vrodosRuntimeDebugFlag: () => debugDisabled,
     AFRAME: { registerComponent: (name, def) => { definitions[name] = def; }, registerSystem() {} }
 });
@@ -122,6 +122,7 @@ for (failure of ['init','async','no-dom','panel','dispose']) {
 failure='';
 // Execute actual scene-settings teardown to enforce composer shutdown before meter disposal.
 const teardown=fixture(); teardown.settings.enableFPSMeter(); const final=meters.at(-1); const order=[];
+const teardownOverlay = teardown.owner.ensureShadowPerfDebugOverlay();
 for (const name of ['clearXrExitRestoreTimers','clearXrExitSessionAttachTimers','detachXrExitSessionEndListener','removePhotorealHelperLights','disposeHardwareDiagnostics']) teardown.settings[name]=()=>{};
 teardown.settings.disablePostProcessing=()=>order.push('legacy');
 teardown.settings.disablePmndrsPostProcessing=()=>order.push('pmndrs');
@@ -130,6 +131,8 @@ teardown.el.removeAttribute=name=>{ order.push(name); remove(name); };
 teardown.settings.remove();
 assert.deepEqual(order,['legacy','pmndrs','vrodos-atmosphere','vrodos-reflections','vrodos-render-profile']);
 assert.equal(final.disposals,1); assert.equal(teardown.owner.settings,null);
+assert.equal(teardownOverlay.parentNode, null);
+assert.equal(teardown.owner._vrodosShadowPerfOverlay, null);
 // Execute the quality-refresh facade with controlled timers, including a valid zero handle.
 const timers = new Map(), canceledTimers = [];
 let nextTimer = 0;
