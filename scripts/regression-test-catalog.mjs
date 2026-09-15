@@ -54,6 +54,7 @@ export const testGroups = Object.freeze({
     "scripts/test-standalone-server.mjs",
     "scripts/test-decoration-collision-policy.php",
     "scripts/test-optimizer-dashboard-row.php",
+    "scripts/test-background-jobs.php",
     "scripts/test-import-execution.php",
     "scripts/test-import-session.php",
     "scripts/test-optimizer-source-inspection.php",

@@ -49,6 +49,8 @@ Published HTML and content-addressed media keep the cache policy documented in [
 
 Administrators can inspect the same checks under **VRodos → Settings → Deployment Health** and **Tools → Site Health**. The report verifies PHP and WordPress capabilities, the plugin-owned Node/KTX optimizer preflight, public and private storage, optional Blender configuration, and WordPress background-event execution.
 
+**VRodos → Settings → Background Jobs** shows the current cron tick, optimizer worker lease, running and queued asset imports/previews/Web derivatives, and the 20 most recently updated completed or failed job records. It refreshes while open and does not change the queue. A held worker lease whose job record is no longer running is called out because it may block queued optimization work.
+
 VRodos schedules a lightweight health tick every five minutes. A tick within 15 minutes is current, a tick between 15 and 45 minutes is delayed, and a production site with no tick for more than 45 minutes is critical. This window allows one existing 30-minute derivative worker to finish without falsely declaring the scheduler dead. When POSIX UID reporting is available, VRodos also verifies that the event and web request use the same effective UID.
 
 **Run checks now** refreshes the runtime checks and queues a unique event with a 90-second completion window. A completed probe proves that WordPress processed a scheduled event. If request-triggered WP-Cron is enabled, visitor or polling traffic may have initiated that run, so the result recommends a dedicated scheduler instead of claiming single ownership.

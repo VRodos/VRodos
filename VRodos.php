@@ -102,6 +102,9 @@ new VRodos_Asset_Import_Manager();
 // Portable deployment and background-processing diagnostics.
 new VRodos_Deployment_Health();
 
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-background-jobs.php');
+new VRodos_Background_Jobs();
+
 // Default Data Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-data-manager.php');
 new VRodos_Default_Data_Manager();

@@ -61,6 +61,8 @@ Important managers:
 - `VRodos_Admin_Dashboard_Page`: top-level dashboard rendering, including notices, stats, Active Projects, and Actionable Assets tabs
 - `VRodos_Path_Manager`: path/url indirection
 - `VRodos_Deployment_Health`: portable runtime, storage, optimizer, and WordPress cron diagnostics; the host remains responsible for scheduler ownership
+- `VRodos_Background_Jobs`: read-only Settings tab and admin status endpoint for import, editor-preview, and Web derivative jobs plus optimizer lease visibility
+- `VRodos_Background_Jobs`: read-only Settings tab and admin status endpoint for import, editor-preview, and Web derivative jobs plus optimizer lease visibility
 
 ## Runtime And Rendering
 

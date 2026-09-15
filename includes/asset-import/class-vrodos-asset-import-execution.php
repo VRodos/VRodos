@@ -10,6 +10,7 @@ require_once __DIR__ . '/class-vrodos-asset-import-glb-normalizer.php';
 class VRodos_Asset_Import_Execution {
 	public const CONVERSION_VERSION  = '2026-05-11-core-asset-import-v1';
 	private const STATUS_META          = '_vrodos_asset_import_status';
+	private const STATUS_UPDATED_META  = '_vrodos_asset_import_updated_at';
 	private const ERROR_META           = '_vrodos_asset_import_error';
 	private const DIAGNOSTIC_META      = '_vrodos_asset_import_diagnostic';
 	private const SELECTED_ENTRY_META  = '_vrodos_asset_import_selected_entry';
@@ -185,7 +186,7 @@ class VRodos_Asset_Import_Execution {
 			];
 		}
 
-		update_post_meta( $asset_id, self::STATUS_META, 'pending' );
+		self::set_status( $asset_id, 'pending' );
 		update_post_meta( $asset_id, self::JOB_TOKEN_META, $token );
 		update_post_meta( $asset_id, self::SOURCE_EXT_META, $extension );
 		update_post_meta( $asset_id, self::SOURCE_PATH_META, $source_path );
@@ -865,7 +866,7 @@ class VRodos_Asset_Import_Execution {
 		}
 
 		set_transient( $lock_key, time(), 10 * MINUTE_IN_SECONDS );
-		update_post_meta( $asset_id, self::STATUS_META, 'running' );
+		self::set_status( $asset_id, 'running' );
 		delete_post_meta( $asset_id, self::ERROR_META );
 
 		try {
@@ -1159,7 +1160,7 @@ class VRodos_Asset_Import_Execution {
 
 	private static function mark_ready( int $asset_id, int $attachment_id, string $diagnostic = '', string $selected_entry = '' ): void {
 		VRodos_Asset_Origin::mark_bounds_centered( $asset_id );
-		update_post_meta( $asset_id, self::STATUS_META, 'ready' );
+		self::set_status( $asset_id, 'ready' );
 		update_post_meta( $asset_id, self::FINAL_GLB_ID_META, $attachment_id );
 		delete_post_meta( $asset_id, self::ERROR_META );
 		delete_post_meta( $asset_id, self::CLEANUP_AFTER_META );
@@ -1177,7 +1178,7 @@ class VRodos_Asset_Import_Execution {
 	}
 
 	private static function mark_failed( int $asset_id, string $message, string $diagnostic = '' ): void {
-		update_post_meta( $asset_id, self::STATUS_META, 'failed' );
+		self::set_status( $asset_id, 'failed' );
 		update_post_meta( $asset_id, self::ERROR_META, $message );
 		update_post_meta( $asset_id, self::CLEANUP_AFTER_META, time() + DAY_IN_SECONDS );
 		if ( '' !== $diagnostic ) {
@@ -1356,7 +1357,7 @@ class VRodos_Asset_Import_Execution {
 			delete_post_meta( $expired_asset_id, self::CLEANUP_AFTER_META );
 
 			if ( 'failed' !== $status ) {
-				update_post_meta( $expired_asset_id, self::STATUS_META, 'failed' );
+				self::set_status( $expired_asset_id, 'failed' );
 				update_post_meta( $expired_asset_id, self::ERROR_META, 'The staged model package expired before conversion completed. Upload the model package again.' );
 			}
 		}
@@ -1406,9 +1407,14 @@ class VRodos_Asset_Import_Execution {
 			self::mark_failed( $asset_id, $message );
 			return new WP_Error( 'source_missing', $message );
 		}
-		update_post_meta( $asset_id, self::STATUS_META, 'pending' );
+		self::set_status( $asset_id, 'pending' );
 		delete_post_meta( $asset_id, self::ERROR_META );
 		self::schedule_job( $asset_id );
 		return self::status_for_asset( $asset_id );
+	}
+
+	private static function set_status( int $asset_id, string $status ): void {
+		update_post_meta( $asset_id, self::STATUS_META, $status );
+		update_post_meta( $asset_id, self::STATUS_UPDATED_META, time() );
 	}
 }
