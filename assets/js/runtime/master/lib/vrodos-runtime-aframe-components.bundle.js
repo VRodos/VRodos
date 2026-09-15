@@ -785,6 +785,8 @@
         this.fpsStatsRoot = null;
         this.fpsStatsPending = false;
         this.fpsStatsEpoch = 0;
+        this.shadowFlushHandle = null;
+        this.shadowFlushUsesAnimationFrame = false;
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
@@ -805,12 +807,27 @@
       remove: function() {
         if (this.removed) return;
         this.removed = true;
+        if (this.shadowFlushHandle !== null) {
+          if (this.shadowFlushUsesAnimationFrame) cancelAnimationFrame(this.shadowFlushHandle);
+          else clearTimeout(this.shadowFlushHandle);
+        }
+        this.shadowFlushHandle = null;
         if (this.queuedQualityRefreshId !== null) window.clearTimeout(this.queuedQualityRefreshId);
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.disableFPSMeter();
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
+      },
+      queueShadowFlush: function() {
+        if (this.removed || this.shadowFlushHandle !== null) return;
+        const flush = () => {
+          if (this.removed) return;
+          this.shadowFlushHandle = null;
+          this.settings.flushShadowUpdate();
+        };
+        this.shadowFlushUsesAnimationFrame = typeof requestAnimationFrame === "function";
+        this.shadowFlushHandle = this.shadowFlushUsesAnimationFrame ? requestAnimationFrame(flush) : setTimeout(flush, 16);
       },
       queueQualityRefresh: function(waitForModelSettle) {
         if (this.removed) return;
@@ -3653,6 +3670,10 @@
     },
     isStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isStaticShadowMode || vrodosRuntimeFalse,
     markShadowDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markShadowDirty || vrodosRuntimeNoop,
+    queueShadowFlush: function() {
+      const owner = this.getRenderProfileOwner();
+      if (owner) owner.queueShadowFlush();
+    },
     flushShadowUpdate: VRODOSSceneSettingsMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
     syncStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
     getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function() {
@@ -3834,7 +3855,6 @@
       this._vrodosShadowDirtyReason = null;
       this._vrodosShadowDirtyRequests = 0;
       this._vrodosShadowUpdateCount = 0;
-      this._vrodosShadowFlushHandle = null;
       this._vrodosShadowLastUpdateMs = 0;
       this._pmndrsTickTimeMs = null;
       this._pmndrsDayNightCycleState = null;
@@ -4047,13 +4067,6 @@
       this.clearXrExitRestoreTimers();
       this.clearXrExitSessionAttachTimers();
       this.detachXrExitSessionEndListener();
-      if (this._vrodosShadowFlushHandle) {
-        if (typeof cancelAnimationFrame === "function") {
-          cancelAnimationFrame(this._vrodosShadowFlushHandle);
-        }
-        clearTimeout(this._vrodosShadowFlushHandle);
-        this._vrodosShadowFlushHandle = null;
-      }
       if (typeof this.clearNavigationShadowRefreshSettleTimer === "function") {
         this.clearNavigationShadowRefreshSettleTimer();
       }

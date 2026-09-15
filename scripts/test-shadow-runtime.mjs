@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import * as THREE from 'three';
+import { parse } from 'espree';
 import { runtimeBuildChunks } from './build/runtime-chunks.mjs';
 
 let now = 1000;
@@ -11,17 +12,35 @@ let cycle = false;
 const flags = new Set();
 const timers = new Map();
 const frames = new Map();
+const definitions = {};
 const sceneSettings = { data: { flatMediaShadowCasting: '1' } };
 const context = vm.createContext({
+    AFRAME: { registerComponent: (name, def) => { definitions[name] = def; }, registerSystem() {} },
     VRODOSMaster: {}, THREE, performance: { now: () => now },
     document: { querySelector: () => ({ components: { 'scene-settings': sceneSettings } }) },
     setTimeout: (fn, delay) => { const id = nextTimer++; timers.set(id, { fn, delay }); return id; },
     clearTimeout: id => timers.delete(id),
+    cancelAnimationFrame: id => frames.delete(id),
     requestAnimationFrame: fn => { const id = nextTimer++; frames.set(id, fn); return id; }
 });
 context.window = context;
-for (const name of ['vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js']) {
+for (const name of ['vrodos_runtime_resources.js', 'components/vrodos_runtime_pipeline.component.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js']) {
     vm.runInContext(readFileSync(new URL(`../assets/js/runtime/master/${name}`, import.meta.url), 'utf8'), context);
+}
+const settingsSource = readFileSync(new URL('../assets/js/runtime/master/components/vrodos_scene_settings.component.js', import.meta.url), 'utf8');
+const settingsAst = parse(settingsSource, { ecmaVersion: 'latest', range: true });
+const registration = settingsAst.body.find(n => n.expression?.callee?.property?.name === 'registerComponent');
+const delegates = {};
+for (const property of registration.expression.arguments[1].properties) {
+    if (['getRenderProfileOwner', 'queueShadowFlush'].includes(property.key.name)) {
+        delegates[property.key.name] = vm.runInContext(`(${settingsSource.slice(...property.value.range)})`, context);
+    }
+}
+function attachRenderProfile(component) {
+    const owner = Object.assign(Object.create(definitions['vrodos-render-profile']), { el: component.el });
+    owner.init();
+    component.el.components['vrodos-render-profile'] = owner;
+    return owner;
 }
 const dependencies = {
     readPmndrsDebugNumber: (key, query, fallback) => fallback,
@@ -50,7 +69,7 @@ function fixture() {
     const component = Object.assign({
         data: { shadowQuality: 'high', shadowUpdateMode: 'static', rootShadowType: 'pcf', contactShadowPreset: 'strong' },
         el: {
-            object3D: scene, camera,
+            components: {}, object3D: scene, camera,
             renderer: { shadowMap: { type: THREE.PCFShadowMap, enabled: true } },
             querySelectorAll: () => [], getAttribute: () => ({}), hasAttribute: () => false, setAttribute() {}
         },
@@ -58,8 +77,9 @@ function fixture() {
         getContactShadowSettings: () => ({ bias: -0.001, normalBias: 0.005 }),
         getPresentationMode: () => 'desktop-fullscreen',
         isImmersiveXrActive: () => false
-    }, runtime.helpers);
-    return { component, scene, mesh, light, camera, tracked };
+    }, runtime.helpers, delegates);
+    const owner = attachRenderProfile(component);
+    return { component, owner, scene, mesh, light, camera, tracked };
 }
 
 // Role precedence: hidden ancestors win; navmesh intent and flat-media policy stay live.
@@ -149,13 +169,13 @@ assert.equal(headset.light.shadow.map, null);
 assert.equal(headset.mesh.receiveShadow, true);
 
 // Dirty updates coalesce; a flush invalidates programs once per map type.
-frames.clear(); fit.component._vrodosShadowFlushHandle = null;
+frames.clear(); fit.owner.shadowFlushHandle = null;
 fit.component.markShadowDirty('first'); fit.component.markShadowDirty('second');
 assert.equal(frames.size, 1);
 const flush = [...frames.values()][0]; frames.clear(); flush();
 assert.equal(fit.component._vrodosShadowLastUpdateReason, 'second');
 assert.equal(fit.component._vrodosShadowDirty, false);
-assert.equal(fit.component._vrodosShadowFlushHandle, null);
+assert.equal(fit.owner.shadowFlushHandle, null);
 const programCount = fit.component._vrodosShadowProgramRefreshes;
 fit.component.flushShadowUpdate();
 assert.equal(fit.component._vrodosShadowProgramRefreshes, programCount);
@@ -209,6 +229,74 @@ navigation.immersiveRootTransformCount++;
 assert.equal(presented.component.syncPresentedShadowLightTransforms(), false);
 navigation = null;
 assert.equal(presented.component.syncPresentedShadowLightTransforms(), false);
+
+// Exercise the actual owner and scene-settings delegates in both scheduler environments.
+const requestFrame = context.requestAnimationFrame;
+for (const useFrame of [true, false]) {
+    frames.clear(); timers.clear(); nextTimer = 0;
+    if (useFrame) context.requestAnimationFrame = requestFrame;
+    else delete context.requestAnimationFrame;
+    const pending = useFrame ? frames : timers;
+    const other = useFrame ? timers : frames;
+    const scheduled = fixture();
+    const settings = scheduled.component;
+    settings.data.shadowQuality = 'off';
+    settings.markShadowDirty('disabled');
+    assert.equal(pending.size, 0, 'disabled shadows do not schedule a flush');
+    settings.data.shadowQuality = 'high';
+    settings.markShadowDirty('first'); settings.markShadowDirty('latest');
+    assert.equal(scheduled.owner.shadowFlushHandle, 0);
+    assert.equal(pending.size, 1, 'zero handles still coalesce');
+    assert.equal(settings._vrodosShadowDirtyRequests, 2);
+    const callback = id => useFrame ? pending.get(id) : pending.get(id).fn;
+    const run = id => { const fn = callback(id); pending.delete(id); fn(); };
+    if (!useFrame) assert.equal(timers.get(0).delay, 16);
+    run(0);
+    assert.equal(settings._vrodosShadowLastUpdateReason, 'latest');
+    assert.equal(settings._vrodosShadowUpdateCount, 1);
+    assert.equal(scheduled.owner.shadowFlushHandle, null);
+
+    // Requests made during a flush form a new batch; independent scenes keep their own work.
+    const flushShadowUpdate = settings.flushShadowUpdate;
+    settings.flushShadowUpdate = function () {
+        flushShadowUpdate.call(this); this.markShadowDirty('reentrant');
+    };
+    settings.markShadowDirty('batch');
+    const batch = scheduled.owner.shadowFlushHandle;
+    const independent = fixture(); independent.component.markShadowDirty('independent');
+    run(batch);
+    assert.notEqual(scheduled.owner.shadowFlushHandle, batch);
+    run(independent.owner.shadowFlushHandle);
+    assert.equal(independent.component._vrodosShadowUpdateCount, 1);
+    settings.flushShadowUpdate = flushShadowUpdate;
+    run(scheduled.owner.shadowFlushHandle);
+    assert.equal(settings._vrodosShadowLastUpdateReason, 'reentrant');
+
+    // Removal cancels only the owning scheduler, including ID zero in both namespaces.
+    nextTimer = 0;
+    settings.markShadowDirty('remove');
+    const stale = callback(0);
+    const unrelated = {};
+    other.set(0, unrelated);
+    delete settings.el.components['vrodos-render-profile'];
+    scheduled.owner.remove(); scheduled.owner.remove();
+    assert.equal(pending.size, 0);
+    assert.equal(other.get(0), unrelated, 'do not cancel an unrelated timer/frame with the same ID');
+    other.delete(0);
+    assert.equal(scheduled.owner.settings, null);
+    settings.queueShadowFlush(); scheduled.owner.queueShadowFlush();
+    assert.equal(pending.size, 0, 'requests cannot recreate a removed owner');
+    const replacement = attachRenderProfile(settings);
+    const count = settings._vrodosShadowUpdateCount;
+    settings.markShadowDirty('replacement'); stale();
+    assert.equal(settings._vrodosShadowUpdateCount, count, 'stale callback cannot touch replacement state');
+    assert.equal(pending.size, 1);
+    run(replacement.shadowFlushHandle);
+    assert.equal(settings._vrodosShadowUpdateCount, count + 1);
+    assert.equal(settings._vrodosShadowLastUpdateReason, 'replacement');
+    replacement.remove(); independent.owner.remove();
+}
+context.requestAnimationFrame = requestFrame;
 
 const core = runtimeBuildChunks.find(chunk => chunk.id === 'core-runtime');
 const index = name => core.sourceFiles.indexOf(`assets/js/runtime/master/${name}`);

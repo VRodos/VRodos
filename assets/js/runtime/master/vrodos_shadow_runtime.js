@@ -1326,21 +1326,7 @@
                 this.el.setAttribute('data-vrodos-shadow-dirty-source', dirtyReason);
             }
 
-            if (this._vrodosShadowFlushHandle) {
-                updateShadowPerfDebugOverlay(this);
-                return;
-            }
-
-            const flush = () => {
-                this._vrodosShadowFlushHandle = null;
-                if (typeof this.flushShadowUpdate === 'function') {
-                    this.flushShadowUpdate();
-                }
-            };
-
-            this._vrodosShadowFlushHandle = typeof requestAnimationFrame === 'function'
-                ? requestAnimationFrame(flush)
-                : setTimeout(flush, 16);
+            this.queueShadowFlush();
             updateShadowPerfDebugOverlay(this);
         };
 

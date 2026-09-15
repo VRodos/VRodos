@@ -20,6 +20,8 @@
             this.fpsStatsRoot = null;
             this.fpsStatsPending = false;
             this.fpsStatsEpoch = 0;
+            this.shadowFlushHandle = null;
+            this.shadowFlushUsesAnimationFrame = false;
             this.queuedQualityRefreshId = null;
             this.pendingQualityRefreshWaitForSettle = false;
             this.removed = false;
@@ -38,12 +40,29 @@
         remove: function () {
             if (this.removed) return;
             this.removed = true;
+            if (this.shadowFlushHandle !== null) {
+                if (this.shadowFlushUsesAnimationFrame) cancelAnimationFrame(this.shadowFlushHandle);
+                else clearTimeout(this.shadowFlushHandle);
+            }
+            this.shadowFlushHandle = null;
             if (this.queuedQualityRefreshId !== null) window.clearTimeout(this.queuedQualityRefreshId);
             this.queuedQualityRefreshId = null;
             this.pendingQualityRefreshWaitForSettle = false;
             this.disableFPSMeter();
             if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
             this.settings = null;
+        },
+        queueShadowFlush: function () {
+            if (this.removed || this.shadowFlushHandle !== null) return;
+            const flush = () => {
+                if (this.removed) return;
+                this.shadowFlushHandle = null;
+                this.settings.flushShadowUpdate();
+            };
+            this.shadowFlushUsesAnimationFrame = typeof requestAnimationFrame === 'function';
+            this.shadowFlushHandle = this.shadowFlushUsesAnimationFrame
+                ? requestAnimationFrame(flush)
+                : setTimeout(flush, 16);
         },
         queueQualityRefresh: function (waitForModelSettle) {
             if (this.removed) return;

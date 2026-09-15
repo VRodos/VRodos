@@ -3012,6 +3012,10 @@ AFRAME.registerComponent('scene-settings', {
     getShadowUpdateMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowUpdateMode || function () { return this.data.shadowUpdateMode || 'static'; },
     isStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isStaticShadowMode || vrodosRuntimeFalse,
     markShadowDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markShadowDirty || vrodosRuntimeNoop,
+    queueShadowFlush: function () {
+        const owner = this.getRenderProfileOwner();
+        if (owner) owner.queueShadowFlush();
+    },
     flushShadowUpdate: VRODOSSceneSettingsMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
     syncStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
     getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function () { return null; },
@@ -3160,7 +3164,6 @@ AFRAME.registerComponent('scene-settings', {
         this._vrodosShadowDirtyReason = null;
         this._vrodosShadowDirtyRequests = 0;
         this._vrodosShadowUpdateCount = 0;
-        this._vrodosShadowFlushHandle = null;
         this._vrodosShadowLastUpdateMs = 0;
         this._pmndrsTickTimeMs = null;
         this._pmndrsDayNightCycleState = null;
@@ -3388,13 +3391,6 @@ AFRAME.registerComponent('scene-settings', {
         this.clearXrExitRestoreTimers();
         this.clearXrExitSessionAttachTimers();
         this.detachXrExitSessionEndListener();
-        if (this._vrodosShadowFlushHandle) {
-            if (typeof cancelAnimationFrame === 'function') {
-                cancelAnimationFrame(this._vrodosShadowFlushHandle);
-            }
-            clearTimeout(this._vrodosShadowFlushHandle);
-            this._vrodosShadowFlushHandle = null;
-        }
         if (typeof this.clearNavigationShadowRefreshSettleTimer === 'function') {
             this.clearNavigationShadowRefreshSettleTimer();
         }

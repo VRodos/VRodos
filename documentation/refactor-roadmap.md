@@ -66,6 +66,7 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move HDR, scene-probe, and Takram sky PMREM resource lifecycle and reflection scratch/smoothing state into `vrodos-reflections`.
 - [x] Move FPS meter state, deferred enablement, renderer instrumentation, and disposal into `vrodos-render-profile`.
 - [x] Move coalesced quality-refresh scheduling and cancellation into `vrodos-render-profile`.
+- [x] Move coalesced shadow-flush frame/timer scheduling and cancellation into `vrodos-render-profile`.
 - [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
@@ -433,3 +434,16 @@ The existing 50 ms delay, coalescing semantics, settle-request precedence, and q
 Extended the existing FPS/render-profile lifecycle fixture rather than adding a regression script. Coverage includes independent scenes, repeated requests, default/explicit settle flags, reentrant batches, removal, stale callback delivery, reattachment, and actual scene-settings teardown. All 78 existing scripts pass (46 runtime, 32 compiler), plus runtime syntax, build configuration, catalog coverage, and diff checks. Full browser-source lint reports zero errors and 249 warnings; comparing edited files with HEAD shows unchanged warning counts (ten in scene-settings, zero in the other two sources). npm run build:runtime succeeded; only the core and A-Frame components bundles changed among generated outputs.
 
 Remaining lighting/shadow lifecycle ownership and the full GPU/listener audit stay open. Published clients were not recompiled; browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.
+
+
+### Shadow-flush scheduling ownership (2026-09-15)
+
+The working tree was clean before this package. The render-profile component now owns the coalesced shadow-flush handle and its scheduler type. Scene-settings exposes `queueShadowFlush()` through the existing render-profile owner lookup; `markShadowDirty()` retains shadow eligibility, dirty state/reason counters, and debug overlay updates. Scene-settings no longer initializes or cancels the handle. Shadow fitting, navigation settle scheduling, dirty/diagnostic scratch state, resource policy, and lighting ownership remain in their existing locations.
+
+Active requests still coalesce until the next animation frame, or a 16 ms timer when animation frames are unavailable. A zero-valued handle now coalesces correctly. Owner removal cancels only the scheduler that allocated the handle, so an unrelated timer/frame with the same numeric ID is preserved. Callbacks already queued for delivery cannot flush through a removed owner or affect its replacement. Reentrant requests form a new batch and independent scenes retain separate schedules. No shadow/rendering formulas, shaders, settings, navigation math, dependencies, or vendor patches changed.
+
+Extended the existing shadow subsystem and FPS/render-profile fixtures; no regression script was added. Coverage executes the actual shadow helpers, registered render-profile component, and scene-settings delegates with real Three scene resources. It checks disabled shadows, latest-reason coalescing, zero handles, both scheduler paths, reentrant batches, independent scenes, repeated removal, stale callbacks, reattachment, and actual scene-settings teardown with simultaneous quality/shadow work.
+
+All 81 existing regression scripts pass. Runtime/generated-bundle syntax, build configuration, catalog coverage, and diff checks pass. Full browser-source lint reports zero errors and 249 warnings, matching the previous package. `npm run build:runtime` succeeded; only the core and A-Frame components bundles changed among generated outputs.
+
+Navigation shadow-settle scheduling, remaining lighting/shadow state ownership, and the complete GPU/listener audit remain open. Published clients were not recompiled; browser/GPU/physical Quest visual acceptance was not performed. No development server was started and no commit or push was performed.

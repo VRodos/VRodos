@@ -48,7 +48,7 @@ const ast = parse(source, { ecmaVersion: 'latest', range: true });
 const registration = ast.body.find(n => n.expression?.callee?.property?.name === 'registerComponent');
 const methods = {};
 for (const property of registration.expression.arguments[1].properties) {
-    if (['queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
+    if (['queueShadowFlush','queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
         methods[property.key.name] = vm.runInContext(`(${source.slice(...property.value.range)})`, context);
     }
 }
@@ -196,8 +196,16 @@ runTimer(quality.owner.queuedQualityRefreshId); assert.deepEqual(quality.events,
 // Authored scene-settings teardown cancels its owner's pending refresh.
 const scheduledTeardown = qualityFixture();
 for (const name of ['clearXrExitRestoreTimers','clearXrExitSessionAttachTimers','detachXrExitSessionEndListener','removePhotorealHelperLights','disposeHardwareDiagnostics','disablePostProcessing','disablePmndrsPostProcessing']) scheduledTeardown.settings[name] = () => {};
+const shadowFrames = new Map();
+context.requestAnimationFrame = callback => { shadowFrames.set(0, callback); return 0; };
+context.cancelAnimationFrame = id => shadowFrames.delete(id);
+scheduledTeardown.settings.flushShadowUpdate = () => scheduledTeardown.events.push('shadow');
+scheduledTeardown.settings.queueShadowFlush();
+const shadowTeardownCallback = shadowFrames.get(0);
 scheduledTeardown.settings.queueQualityRefresh();
 const teardownCallback = timers.get(scheduledTeardown.owner.queuedQualityRefreshId);
-scheduledTeardown.settings.remove(); teardownCallback();
+scheduledTeardown.settings.remove(); teardownCallback(); shadowTeardownCallback();
+assert.equal(shadowFrames.size, 0);
+assert.equal(scheduledTeardown.owner.shadowFlushHandle, null);
 assert.equal(timers.size, 0); assert.deepEqual(scheduledTeardown.events, []);
 console.log('Render-profile FPS and quality-refresh lifecycle, coalescing, cancellation, and teardown tests passed.');
