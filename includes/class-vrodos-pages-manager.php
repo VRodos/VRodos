@@ -76,7 +76,7 @@ class VRodos_Pages_Manager {
 			return $template;
 		}
 		$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
-		if ( VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) === $page_template && ! VRodos_Immerse_Hub::enabled() ) {
+		if ( is_page( 'immerse' ) && ! VRodos_Immerse_Hub::enabled() ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
@@ -140,7 +140,10 @@ class VRodos_Pages_Manager {
 	}
 
 	/** Create the short public URL without replacing a page that already owns it. */
-	public static function ensure_immerse_hub_page(): void {
+	public static function ensure_immerse_hub_page( bool $for_activation = false ): void {
+		if ( ! $for_activation && ! VRodos_Immerse_Hub::enabled() ) {
+			return;
+		}
 		$existing = get_page_by_path( 'immerse', OBJECT, 'page' );
 		$template = VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' );
 		if ( $existing instanceof WP_Post ) {

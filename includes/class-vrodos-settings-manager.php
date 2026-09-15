@@ -96,7 +96,7 @@ class VRodos_Settings_Manager {
 				case VRodos_Immerse_Hub::SETTING:
 					$output[ $key ] = '1' === (string) $value ? '1' : '0';
 					if ( '1' === $output[ $key ] && ! VRodos_Immerse_Hub::enabled() ) {
-						VRodos_Pages_Manager::ensure_immerse_hub_page();
+						VRodos_Pages_Manager::ensure_immerse_hub_page( true );
 						$page = get_page_by_path( 'immerse', OBJECT, 'page' );
 						if ( ! ( $page instanceof WP_Post ) || VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) !== get_post_meta( $page->ID, '_wp_page_template', true ) ) {
 							$output[ $key ] = '0';

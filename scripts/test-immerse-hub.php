@@ -116,14 +116,22 @@ check( '1' === $switch_result[ VRodos_Immerse_Hub::SETTING ], 'Hub switch did no
 $test_hub_page = null;
 $test_page_template = '';
 VRodos_Pages_Manager::ensure_immerse_hub_page();
+check( null === $test_hub_page, 'Disabled hub created a public page.' );
+VRodos_Pages_Manager::ensure_immerse_hub_page( true );
 check( $test_hub_page instanceof WP_Post && ! $test_menu_hook_removed, 'Hub page creation did not restore the menu hook afterward.' );
 $test_hub_page->post_status = 'draft';
 VRodos_Pages_Manager::ensure_immerse_hub_page();
+check( 'draft' === $test_hub_page->post_status, 'Disabled hub republished its page.' );
+VRodos_Pages_Manager::ensure_immerse_hub_page( true );
 check( 'publish' === $test_hub_page->post_status && ! $test_menu_hook_removed, 'Hub page republication did not restore the menu hook afterward.' );
 $pages_manager = new VRodos_Pages_Manager();
 $post = $test_hub_page;
 $wp_query = new class { public bool $is_404 = false; public function set_404(): void { $this->is_404 = true; } };
 check( 'theme-404.php' === $pages_manager->view_project_template( 'theme-page.php' ) && $wp_query->is_404, 'Disabled hub did not return a 404.' );
+$test_page_template = '';
+$wp_query->is_404 = false;
+check( 'theme-404.php' === $pages_manager->view_project_template( 'theme-page.php' ) && $wp_query->is_404, 'Disabled untemplated /immerse/ page did not return a 404.' );
+$test_page_template = VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' );
 $test_options['vrodos_general_settings'][ VRodos_Immerse_Hub::SETTING ] = '1';
 check( str_ends_with( $pages_manager->view_project_template( 'theme-page.php' ), 'vrodos-immerse-hub-template.php' ), 'Enabled hub did not load its page template.' );
 
