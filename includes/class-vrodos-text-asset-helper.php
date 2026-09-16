@@ -140,6 +140,9 @@ class VRodos_Text_Asset_Helper {
 		update_post_meta( $asset_id, 'vrodos_asset3d_text_original_length', (int) ( $result['original_length'] ?? 0 ) );
 		update_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', ! empty( $result['truncated'] ) ? '1' : '0' );
 		delete_post_meta( $asset_id, 'vrodos_asset3d_text_extract_error' );
+		// Both the asset editor and scene editor update the shared asset browser cache.
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
 	}
 
 	private static function normalize_text( string $text ): string {

@@ -9,12 +9,40 @@ require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 class VRodos_Asset_AJAX {
 
 	public function __construct() {
+		add_action( 'wp_ajax_vrodos_update_text_asset_action', [ $this, 'update_text_asset' ] );
 		add_action( 'wp_ajax_vrodos_delete_asset_action', [ $this, 'delete_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', [ $this, 'fetch_asset3d_meta_backend_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', [ $this, 'vrodos_fetch_game_assets_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_retry_editor_preview_action', [ $this, 'vrodos_retry_editor_preview_callback' ] );
 		add_action( 'wp_ajax_vrodos_asset_readiness_action', [ $this, 'vrodos_asset_readiness_callback' ] );
+	}
+
+	public function update_text_asset(): void {
+		if ( ! check_ajax_referer( 'vrodos_scene_mutation', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$asset_id = absint( $_POST['asset_id'] ?? 0 );
+		if ( 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! has_term( '3d-text', 'vrodos_asset3d_cat', $asset_id ) ) {
+			wp_send_json_error( 'Text asset not found.', 404 );
+		}
+		if ( ! VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ) ) {
+			wp_send_json_error( 'You are not allowed to edit this asset.', 403 );
+		}
+		if ( ! isset( $_POST['text_content'] ) || ! is_string( $_POST['text_content'] ) ) {
+			wp_send_json_error( 'Text content is required.', 400 );
+		}
+		$result = VRodos_Text_Asset_Helper::normalize_manual_text( wp_unslash( $_POST['text_content'] ) );
+		if ( empty( $result['success'] ) || ! empty( $result['truncated'] ) ) {
+			wp_send_json_error( 'Enter between 1 and ' . VRodos_Text_Asset_Helper::MAX_TEXT_LENGTH . ' characters.', 400 );
+		}
+		VRodos_Text_Asset_Helper::persist_extracted_text( $asset_id, $result );
+		wp_send_json_success( [
+			'asset_id' => $asset_id,
+			'text_content' => $result['text'],
+			'text_format' => $result['format'],
+			'text_truncated' => '0',
+		] );
 	}
 
 	/**

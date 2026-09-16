@@ -326,6 +326,10 @@ function displaySharedPropertySections(event, object) {
     let hasProperties = false;
 
     switch (vrodosGetEffectiveObjectCategory(object)) {
+        case '3d-text':
+            VRODOS.ui.displayTextAssetProperties(object);
+            hasProperties = true;
+            break;
         case 'poi-imagetext':
             VRODOS.ui.displayPoiImageTextProperties(event, name);
             hasProperties = true;

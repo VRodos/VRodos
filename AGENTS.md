@@ -187,6 +187,8 @@ Template rules:
 
 ## Scene Editor Rules
 
+- Text assets (`3d-text`) can be edited through the scene object's Text Asset section. Save Text Asset updates the original asset globally; placements reload its metadata and published scenes need recompilation. Manual text metadata takes precedence over any retained uploaded source file during compilation.
+
 - GLB decorations and walkable placements can use `sceneAssetRole: poi-imagetext`. Keep `category_slug` asset-owned and preserve physical rendering/navigation/collision through `scenePoiPhysicalRole`; converted POIs use the normal GLB renderer plus `info-panel`, without POI-button lighting. When scene hover is enabled, converted decorations float only the visual GLB so their collision box stays fixed; converted walkable surfaces do not float. Primitive planes do not support this role.
 - POI title/text are placement-owned. Optional `poiImageAttachmentId` selects a private scene-owned `poi-images` attachment; `0` explicitly removes the photo. Hydrate authoring/published URLs from the ID after asset metadata, and retain images referenced by undo history. Scene deletion removes owned photos; later saves collect unreferenced photos after a one-hour upload grace period.
 

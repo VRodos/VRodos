@@ -39,6 +39,15 @@ VRODOS.api.uploadPoiImage = function(file) {
     return vrodosSurfaceTextureRequest(formData);
 };
 
+VRODOS.api.updateTextAsset = function(assetId, text) {
+    const formData = new FormData();
+    formData.append('action', 'vrodos_update_text_asset_action');
+    formData.append('nonce', window.vrodos_data.scene_mutation_nonce);
+    formData.append('asset_id', assetId);
+    formData.append('text_content', text);
+    return vrodosSurfaceTextureRequest(formData);
+};
+
 VRODOS.api.uploadSurfaceMaterialPackage = function(file, onProgress) {
     const formData = new FormData();
     formData.append('action', 'vrodos_upload_surface_material_package_action');

@@ -7,6 +7,76 @@ function getSpotTargetOptionObjects() {
         : [];
 }
 
+VRODOS.ui.displayTextAssetProperties = function(object) {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return;
+    let section = document.getElementById('textAssetPropertiesDiv');
+    if (!section) {
+        section = document.createElement('div');
+        section.id = 'textAssetPropertiesDiv';
+        section.className = 'object-property-section';
+        section.innerHTML = '<div class="prop-section-title">Text Asset</div>' +
+            '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3">' +
+            '<label for="sceneTextAssetContent">Text content</label>' +
+            '<textarea id="sceneTextAssetContent" maxlength="2000" rows="8" class="tw-textarea tw-w-full tw-bg-slate-900/70 tw-text-slate-100"></textarea>' +
+            '<div class="tw-text-[10px] tw-text-slate-400">Saves the original asset everywhere it is used. Recompile published scenes to update them.</div>' +
+            '<button type="button" class="tw-btn tw-btn-sm tw-btn-primary">Save Text Asset</button>' +
+            '<div role="status" class="tw-text-[10px] tw-text-slate-400"></div></div>';
+        container.appendChild(section);
+        section.querySelector('button').addEventListener('click', async () => {
+            const target = getObjectControlsTargetObject();
+            if (!target || target.category_slug !== '3d-text') return;
+            const assetId = Number(target.asset_id);
+            const input = section.querySelector('textarea');
+            const button = section.querySelector('button');
+            const status = section.querySelector('[role="status"]');
+            button.disabled = true;
+            input.disabled = true;
+            section.dataset.saving = '1';
+            status.textContent = 'Saving…';
+            try {
+                const data = await VRODOS.api.updateTextAsset(assetId, input.value);
+                VRODOS.utils.getSelectableEditorSceneRoots().forEach((placement) => {
+                    if (Number(placement.asset_id) !== assetId || placement.category_slug !== '3d-text') return;
+                    VRODOS.loader.updateTextPanelObject(placement, data);
+                    const record = VRODOS.utils.sceneFindObjectRecord(placement.uuid, placement);
+                    if (record && record.value) Object.assign(record.value, data);
+                });
+                const browserAsset = window.vrodosAssetBrowserItemsById && window.vrodosAssetBrowserItemsById[String(assetId)];
+                if (browserAsset) {
+                    Object.assign(browserAsset, data);
+                    delete browserAsset.text_content_b64;
+                }
+                document.querySelectorAll(`[data-asset_id="${assetId}"]`).forEach((card) => {
+                    card.removeAttribute('data-text_content_b64');
+                    card.setAttribute('data-text_content', data.text_content);
+                    card.setAttribute('data-text_format', data.text_format);
+                    card.setAttribute('data-text_truncated', data.text_truncated);
+                });
+                VRODOS.editor.render.request('text-asset-updated');
+                if (Number(getObjectControlsTargetObject()?.asset_id) === assetId) {
+                    input.value = data.text_content;
+                    status.textContent = 'Saved everywhere. Recompile published scenes to update them.';
+                }
+            } catch (error) {
+                if (Number(getObjectControlsTargetObject()?.asset_id) === assetId) status.textContent = error.message || 'Could not save text.';
+            } finally {
+                delete section.dataset.saving;
+                const selected = getObjectControlsTargetObject();
+                const editable = selected && [true, 1, '1', 'true'].includes(selected.can_edit);
+                button.disabled = !editable;
+                input.disabled = !editable;
+            }
+        });
+    }
+    const editable = [true, 1, '1', 'true'].includes(object.can_edit);
+    section.querySelector('textarea').value = object.text_content || '';
+    section.querySelector('textarea').disabled = !editable || section.dataset.saving === '1';
+    section.querySelector('button').disabled = !editable || section.dataset.saving === '1';
+    section.querySelector('[role="status"]').textContent = editable ? '' : 'You do not have permission to edit this asset.';
+    section.style.display = 'block';
+};
+
 VRODOS.ui.displaySunProperties = function(event, name) {
     const panelState = _getPropertyPanelState("popUpSunPropertiesDiv", name);
     if (!panelState) return;

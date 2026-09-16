@@ -163,6 +163,22 @@ assert.equal(textPlanes[0].material, textPlanes[1].material);
 assert.equal(textPlanes[0].material.side, THREE.FrontSide);
 assert.equal(textPlanes[0].position.z, -textPlanes[1].position.z);
 assert.equal(textPanel.children.filter((child) => child.isLineSegments).length, 2);
+textPanel.position.set(3, 4, 5);
+textPanel.scale.set(2, 2, 2);
+const textPanelUuid = textPanel.uuid;
+const previousTextTexture = textPlanes[0].material.map;
+let textTextureDisposals = 0;
+previousTextTexture.addEventListener('dispose', () => { textTextureDisposals++; });
+editorLoader.updateTextPanelObject(textPanel, { text_content: 'Updated Ελληνικά\nSecond line', text_format: 'manual' });
+assert.equal(textPanel.uuid, textPanelUuid, 'Editing text preserves placement identity.');
+assert.deepEqual(textPanel.position.toArray(), [3, 4, 5]);
+assert.deepEqual(textPanel.scale.toArray(), [2, 2, 2]);
+assert.equal(textPanel.text_content, 'Updated Ελληνικά\nSecond line');
+assert.notEqual(textPlanes[0].material.map, previousTextTexture);
+assert.equal(textPlanes[0].material.map, textPlanes[1].material.map, 'Both sides show the updated text.');
+assert.equal(textTextureDisposals, 1, 'The shared old texture is released once.');
+textPanel.position.set(0, 0, 0);
+textPanel.scale.set(1, 1, 1);
 const assessment = editorLoader.createAssessmentObject('quiz', {
     assessment_type: 'Question', assessment_levels: 'A1,B2', assessment_supported: 'true'
 });

@@ -324,7 +324,7 @@ final class VRodos_Compiler_Resource_Publisher {
 
 		$text_attachment_id = absint( get_post_meta( $asset_id, 'vrodos_asset3d_text_file', true ) );
 		$text_result = null;
-		if ( $text_attachment_id ) {
+		if ( $text_attachment_id && 'manual' !== get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true ) ) {
 			if ( ! VRodos_Storage_Manager::attachment_is_owned_by( $text_attachment_id, 'asset', $asset_id ) ) {
 				throw new RuntimeException( sprintf( '[VRodos] Text attachment #%d must be migrated to private asset storage before compilation.', $text_attachment_id ) );
 			}

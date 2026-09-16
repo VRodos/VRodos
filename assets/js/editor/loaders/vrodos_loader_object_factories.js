@@ -524,6 +524,23 @@ VRODOS.loader.normalizeTextPanelContent = function(resource) {
     return text || 'Text asset';
 };
 
+// Update the texture in place so transforms, selection and placement identity survive.
+VRODOS.loader.updateTextPanelObject = function(object, data) {
+    const materials = new Set();
+    object.children.forEach((child) => {
+        if (child.material && child.material.map) materials.add(child.material);
+    });
+    const oldTextures = new Set();
+    const texture = VRODOS.loader.createTextPanelTexture(data.text_content);
+    materials.forEach((material) => {
+        oldTextures.add(material.map);
+        material.map = texture;
+        material.needsUpdate = true;
+    });
+    oldTextures.forEach((oldTexture) => oldTexture.dispose());
+    Object.assign(object, data);
+};
+
 VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
     const lines = [];
     const paragraphs = String(text || '').split('\n');

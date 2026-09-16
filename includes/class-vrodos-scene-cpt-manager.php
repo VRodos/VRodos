@@ -320,6 +320,7 @@ class VRodos_Scene_CPT_Manager {
 			$metadata['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
 		}
 		if ( '3d-text' === $category_slug ) {
+			$metadata['can_edit']       = VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ) ? '1' : '0';
 			$metadata['text_content']   = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
 			$metadata['text_format']    = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
 			$metadata['text_truncated'] = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
