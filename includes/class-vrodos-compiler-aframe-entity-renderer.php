@@ -681,7 +681,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$assets,
 			$model,
 			$contentObject,
-			VRodos_Path_Manager::model_url( 'runtime/assessment.glb' ),
+			VRodos_Path_Manager::model_url( 'runtime/assessment-web.glb' ),
 			'assessment_' . $uuid,
 			'gltf-inline',
 			'assessment:' . $uuid
@@ -693,6 +693,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( $this->isHoverEnabled ) {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
+		$model->setAttribute( 'vrodos-shared-model-textures', '' );
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
 		$model->setAttribute( 'id', 'vrodos-assessment-' . sanitize_html_class( (string) $uuid ) );
 		$this->set_world_lighting_attributes( $model, $this->flat_media_shadow_role() );

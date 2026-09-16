@@ -737,6 +737,77 @@
       }
     }
   });
+  (function() {
+    const scenes = /* @__PURE__ */ new WeakMap();
+    AFRAME.registerComponent("vrodos-shared-model-textures", {
+      init: function() {
+        this.onModelLoaded = this.share.bind(this);
+        this.el.addEventListener("model-loaded", this.onModelLoaded);
+        this.share();
+      },
+      share: function() {
+        var _a;
+        const root = this.el.getObject3D("mesh");
+        if (!root || root === this.root) return;
+        this.release();
+        const scene = this.el.sceneEl;
+        let src = this.el.getAttribute("gltf-model");
+        if (typeof src !== "string" || !src || !scene) return;
+        if (src[0] === "#") src = (_a = scene.querySelector(src)) == null ? void 0 : _a.getAttribute("src");
+        if (!src) return;
+        const textures = /* @__PURE__ */ new Set();
+        root.traverse((node) => {
+          for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+            if (!material) continue;
+            for (const key of Object.keys(material).sort()) {
+              const texture = material[key];
+              if ((texture == null ? void 0 : texture.isTexture) && !texture.isVideoTexture && !texture.isCanvasTexture) textures.add(texture);
+            }
+          }
+        });
+        if (!textures.size) return;
+        let pool = scenes.get(scene);
+        if (!pool) {
+          pool = /* @__PURE__ */ new Map();
+          scenes.set(scene, pool);
+        }
+        let entry = pool.get(src);
+        const list = Array.from(textures);
+        if (!entry) {
+          entry = { images: list.map((texture) => ({ source: texture.source, mipmaps: texture.mipmaps })), users: /* @__PURE__ */ new Set() };
+          pool.set(src, entry);
+        } else {
+          if (entry.images.length !== list.length) return;
+          list.forEach((texture, index) => {
+            const image = entry.images[index];
+            if (texture.source === image.source) return;
+            texture.dispose();
+            texture.source = image.source;
+            texture.mipmaps = image.mipmaps;
+            texture.needsUpdate = true;
+          });
+        }
+        entry.users.add(this);
+        this.entry = entry;
+        this.pool = pool;
+        this.key = src;
+        this.root = root;
+      },
+      release: function() {
+        if (this.entry) {
+          this.entry.users.delete(this);
+          if (!this.entry.users.size) this.pool.delete(this.key);
+        }
+        this.entry = null;
+        this.pool = null;
+        this.root = null;
+      },
+      remove: function() {
+        this.el.removeEventListener("model-loaded", this.onModelLoaded);
+        this.release();
+      }
+    });
+  })();
   AFRAME.registerComponent("avatar-movement-info", {
     schema: {
       movementState: { type: "string", default: "idle" }

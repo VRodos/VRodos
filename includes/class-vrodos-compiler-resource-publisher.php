@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-vrodos-asset-origin.php';
 require_once __DIR__ . '/class-vrodos-compiler-asset-policy.php';
+require_once __DIR__ . '/class-vrodos-surface-texture-optimizer.php';
 
 require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
 require_once __DIR__ . '/class-vrodos-scene-poi-images.php';
@@ -223,7 +224,15 @@ final class VRodos_Compiler_Resource_Publisher {
 					throw new RuntimeException( sprintf( '[VRodos] Plane surface attachment #%d is not owned by scene #%d.', $attachment_id, $scene_id ) );
 				}
 				$context = sprintf( 'scene-%d-plane-%s-%s', $scene_id, sanitize_key( (string) $object_key ), sanitize_key( $attachment_field ) );
-				$object->{$url_field} = $this->publish_attachment( $attachment_id, $context );
+				$source = get_attached_file( $attachment_id, true );
+				if ( ! is_string( $source ) || ! is_readable( $source ) ) {
+					throw new RuntimeException( '[VRodos] Missing plane surface texture.' );
+				}
+				$cap = VRodos_Compiler_Asset_Policy::texture_cap( $this->vr_asset_profile );
+				$object->{$url_field} = VRodos_Surface_Texture_Optimizer::publish(
+					$source, $cap, 'surfaceAlbedoUrl' !== $url_field,
+					fn( string $path ): string => $this->publish_file( $path, $context, $attachment_id )
+				);
 			}
 		}
 	}
