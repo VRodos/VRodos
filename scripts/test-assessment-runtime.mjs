@@ -830,15 +830,21 @@ async function runAssessmentFreeSceneHarness() {
     assert(contextText.includes("Place [1: ____] here."), "Fill gaps: missing masked passage context");
     assert(!contextText.includes("temple"), "Fill gaps: authored answer leaked in passage");
     assert(button("Submit").disabled, "Fill gaps: incomplete submission enabled");
+    const answerFrame = activePanel.api.frames.at(-1);
+    const answerRenderCount = runtime.renderCount;
     choose(answers[0]);
+    assert(activePanel.api.frames.at(-1) === answerFrame && runtime.renderCount === answerRenderCount, "Fill gaps: selecting a word rebuilt the panel");
+    assert(answerFrame.statusText.options.text === "Filled 1 of 10 blanks", "Fill gaps: status did not update in place");
     click("Clear");
+    assert(activePanel.api.frames.at(-1) === answerFrame && runtime.renderCount === answerRenderCount, "Fill gaps: clearing a word rebuilt the panel");
+    assert(!button(answers[0]).disabled && button("Clear").disabled, "Fill gaps: clear did not restore controls");
     assert(runtime.state.values["gap-0"] === "", "Fill gaps: clear retained a response");
     choose(answers[1]);
     choose(answers[0]);
     assert(runtime.state.values["gap-0"] === answers[0], "Fill gaps: replacement failed");
     for (let index = 1; index < answers.length; index += 1) {
         click("Next");
-        assert(!button(answers[0]), "Fill gaps: assigned word offered for reuse");
+        assert(button(answers[0])?.disabled, "Fill gaps: assigned word must stay visible and disabled");
         choose(answers[index]);
     }
     click("Previous");

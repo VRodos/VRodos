@@ -7090,6 +7090,8 @@
         return;
       }
       const api = runtime.api;
+      const wordButtons = [];
+      const gapButtons = [];
       const phrase = state.phrases[state.activePhraseIndex];
       const active = state.annotations[state.activeBlankIndex];
       const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
@@ -7147,7 +7149,7 @@
         borderRadius: 16,
         padding: 18
       });
-      api.text(passage, {
+      const passageText = api.text(passage, {
         text: fillGapContext(state),
         fontSize: 32,
         lineHeight: "130%",
@@ -7164,7 +7166,7 @@
           overflow: "scroll",
           pointerEvents: "listener"
         });
-        phrase.blankIndices.forEach((index) => api.button(gaps, {
+        phrase.blankIndices.forEach((index) => gapButtons.push({ index, button: api.button(gaps, {
           label: "Gap " + (index + 1),
           width: 160,
           height: 64,
@@ -7176,15 +7178,15 @@
             state.wordPage = 0;
             runtime.rerender();
           }
-        }));
+        }) }));
       }
       const prompt = api.row(frame.content, { width: "100%", height: 56, flexShrink: 0 });
-      api.text(prompt, {
+      const promptText = api.text(prompt, {
         text: state.values[active.id] ? "Gap " + (state.activeBlankIndex + 1) + " filled. You can change the word." : "Choose a word for gap " + (state.activeBlankIndex + 1) + ".",
         fontSize: 26,
         flexGrow: 1
       });
-      api.button(prompt, {
+      const clearButton = api.button(prompt, {
         label: "Clear",
         width: 140,
         height: 56,
@@ -7193,12 +7195,10 @@
         onClick: function() {
           delete state.assignmentsByBlank[active.id];
           state.values[active.id] = "";
-          state.wordPage = 0;
-          runtime.rerender();
+          updateView();
         }
       });
-      const assignedWordIds = new Set(Object.values(state.assignmentsByBlank));
-      const availableWords = state.wordBank.filter((word) => !assignedWordIds.has(word.id) || state.assignmentsByBlank[active.id] === word.id);
+      const availableWords = state.wordBank;
       const pageCount = Math.max(1, Math.ceil(availableWords.length / FILL_GAP_WORDS_PER_PAGE));
       state.wordPage = Math.min(state.wordPage, pageCount - 1);
       const choices = api.column(frame.content, { width: "100%", height: 264, flexShrink: 0, gapRow: 12 });
@@ -7206,7 +7206,7 @@
       const words = availableWords.slice(pageStart, pageStart + FILL_GAP_WORDS_PER_PAGE);
       for (let index = 0; index < words.length; index += 3) {
         const row = api.row(choices, { width: "100%", height: 80, flexShrink: 0, gapColumn: 16 });
-        words.slice(index, index + 3).forEach((word) => api.button(row, {
+        words.slice(index, index + 3).forEach((word) => wordButtons.push({ word, button: api.button(row, {
           label: word.text,
           width: "31%",
           height: 80,
@@ -7215,10 +7215,13 @@
           textSize: 30,
           variant: state.assignmentsByBlank[active.id] === word.id ? "primary" : "secondary",
           onClick: function() {
+            if (Object.entries(state.assignmentsByBlank).some(([blankId, wordId]) => blankId !== active.id && wordId === word.id)) {
+              return;
+            }
             assignFillGapWord(state, word.id, active.id);
-            runtime.rerender();
+            updateView();
           }
-        }));
+        }) }));
       }
       const pages = api.row(frame.content, { width: "100%", height: 60, flexShrink: 0, gapColumn: 16 });
       api.button(pages, {
@@ -7244,6 +7247,28 @@
           runtime.rerender();
         }
       });
+      function updateView() {
+        const filled = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
+        api.updateText(frame.statusText, { text: "Filled " + filled + " of " + state.annotations.length + " blanks" });
+        api.updateButton(frame.primaryButton, { disabled: filled !== state.annotations.length });
+        api.updateText(passageText, { text: fillGapContext(state) });
+        api.updateText(promptText, {
+          text: state.values[active.id] ? "Gap " + (state.activeBlankIndex + 1) + " filled. You can change the word." : "Choose a word for gap " + (state.activeBlankIndex + 1) + "."
+        });
+        api.updateButton(clearButton, { disabled: !state.values[active.id] });
+        const assignedWordIds = new Set(Object.values(state.assignmentsByBlank));
+        wordButtons.forEach(({ word, button }) => {
+          const selected = state.assignmentsByBlank[active.id] === word.id;
+          api.updateButton(button, {
+            variant: selected ? "primary" : "secondary",
+            disabled: assignedWordIds.has(word.id) && !selected
+          });
+        });
+        gapButtons.forEach(({ index, button }) => api.updateButton(button, {
+          variant: index === state.activeBlankIndex ? "primary" : state.values[state.annotations[index].id] ? "positive" : "secondary"
+        }));
+      }
+      updateView();
     }
     function renderHighlight(runtime) {
       const state = runtime.state;
