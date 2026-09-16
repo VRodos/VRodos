@@ -60,6 +60,21 @@ vm.runInContext(
 const movementDefinition = registeredComponents["custom-movement"];
 assert(movementDefinition, "custom-movement component was not registered");
 
+{
+    const nav = Object.create(movementDefinition);
+    nav.desktopVisionMinEyeToGroundOffset = 0.8;
+    nav.desktopVisionMaxEyeToGroundOffset = 2.8;
+    nav.isImmersiveXrPresenting = () => false;
+
+    assertNear(nav.resolveNavigationHeightOffset(0.2), 0.8, "desktop eye height should match the VR minimum above walkable ground");
+    assertNear(nav.resolveNavigationHeightOffset(1.6), 1.6, "authored standing eye height should be preserved");
+    assertNear(nav.resolveNavigationHeightOffset(3), 2.8, "desktop and VR should share the upper eye-height limit");
+
+    nav.getRuntimeNow = () => 0;
+    nav.recordDesktopVisionHeightOffset(new THREE.Vector3(0, 0.2, 0), createGroundHit(), "desktop-start");
+    assertNear(nav.getDesiredImmersiveEyeToGroundOffset(), nav.resolveNavigationHeightOffset(0.2), "VR entry should retain the desktop eye height");
+}
+
 function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
     return {
         point: new THREE.Vector3(x, y, z),

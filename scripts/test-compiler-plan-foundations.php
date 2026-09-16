@@ -324,13 +324,27 @@ if ( class_exists( 'DOMDocument' ) ) {
 		vrodos_foundation_assert( $entity instanceof DOMElement, 'converted model has POI interaction' );
 		vrodos_foundation_assert( 'Έκθεμα' === $entity->getAttribute( 'data-vrodos-poi-title' ) && str_contains( $entity->getAttribute( 'data-vrodos-poi-description' ), "\n" ), 'POI preserves Greek multiline content' );
 		vrodos_foundation_assert( $poi->poi_img_path === $entity->getAttribute( 'data-vrodos-poi-image-src' ), 'each placement has its own optional photo' );
-		vrodos_foundation_assert( ! $entity->hasAttribute( 'vrodos-hypnotic-hover' ) && ! str_contains( $entity->getAttribute( 'class' ), 'menu-button' ), 'converted model does not adopt POI button presentation' );
+		vrodos_foundation_assert( ! str_contains( $entity->getAttribute( 'class' ), 'menu-button' ), 'converted model does not adopt POI button presentation' );
+		vrodos_foundation_assert( ( 'decoration' === $physical ) === ( 'visualOnly: true' === $entity->getAttribute( 'vrodos-hypnotic-hover' ) ), 'converted decorations float only their visual model' );
 		vrodos_foundation_assert( '2 3 4' === $entity->getAttribute( 'position' ) && '2 2 2' === $entity->getAttribute( 'scale' ), 'conversion preserves transforms' );
 		vrodos_foundation_assert( ( 'walkable-surface' === $physical ) === $entity->hasAttribute( 'data-vrodos-navmesh' ), 'POI keeps original navigation role' );
 		if ( 'decoration' === $physical ) {
 			vrodos_foundation_assert( 1 === $poi_xpath->query( './a-entity[@vrodos-box-collider]', $entity )->length, 'converted decoration keeps its source-bounds box' );
 		}
 	}
+	$no_hover_renderer = new VRodos_Compiler_AFrame_Entity_Renderer(
+		new VRodos_Compiler_Runtime_Assets(),
+		new VRodos_Compiler_Scene_Repository(),
+		static fn ( $url ) => $url
+	);
+	$no_hover_renderer->configure( '/plugin/', false );
+	$no_hover_dom = new DOMDocument( '1.0', 'UTF-8' );
+	$no_hover_scene = $no_hover_dom->createElement( 'a-scene' );
+	$no_hover_dom->appendChild( $no_hover_scene );
+	$no_hover_assets = $no_hover_dom->createElement( 'a-assets' );
+	$no_hover_scene->appendChild( $no_hover_assets );
+	$no_hover_renderer->render_scene_objects( $no_hover_dom, $no_hover_scene, $no_hover_assets, [ 'decoration' => $poi_objects['decoration'] ], 1, 42 );
+	vrodos_foundation_assert( 0 === ( new DOMXPath( $no_hover_dom ) )->query( '//*[@vrodos-hypnotic-hover]' )->length, 'converted decoration respects disabled scene hover' );
 	vrodos_foundation_assert( ( new VRodos_Compiler_Runtime_Feature_Flags() )->has_spatial_ui_content( (object) [ 'objects' => (object) $poi_objects ] ), 'converted POIs require spatial UI' );
 
 	$media_dom = new DOMDocument( '1.0', 'UTF-8' );

@@ -2046,7 +2046,11 @@ AFRAME.registerComponent('custom-movement', {
             return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
         }
 
-        return VRODOSMaster.clamp(rawHeightOffset, 0.2, 2.5);
+        return VRODOSMaster.clamp(
+            rawHeightOffset,
+            this.desktopVisionMinEyeToGroundOffset,
+            this.desktopVisionMaxEyeToGroundOffset
+        );
     },
     clearImmersiveGroundCaches: function () {
         this.hasLastGroundHit = false;

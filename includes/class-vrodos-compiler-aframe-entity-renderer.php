@@ -1445,6 +1445,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( 'poi-imagetext' === ( $obj->sceneAssetRole ?? '' ) ) {
 			$class .= ' raycastable';
 			$this->apply_poi_interaction_attributes( $entity, $obj );
+			if ( 'decoration' === $cat && $this->isHoverEnabled ) {
+				$entity->setAttribute( 'vrodos-hypnotic-hover', 'visualOnly: true' );
+			}
 		}
 
 		$material = '';

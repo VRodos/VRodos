@@ -2882,10 +2882,13 @@
       // How high it floats
       speed: { type: "number", default: 1.5 },
       // How fast it moves
+      visualOnly: { type: "boolean", default: false },
       enabled: { type: "boolean", default: true }
     },
     init: function() {
       this.initialY = this.el.object3D.position.y;
+      this.visual = null;
+      this.visualInitialY = 0;
       this.deferredToImmersiveWorldTransform = false;
       this.offset = Math.random() * Math.PI * 2;
     },
@@ -2901,7 +2904,7 @@
       return Boolean(sceneEl && this.el && this.el.parentElement === sceneEl);
     },
     shouldDeferToImmersiveWorldTransform: function() {
-      return this.isImmersiveXrPresenting() && this.isTopLevelSceneRoot();
+      return !this.data.visualOnly && this.isImmersiveXrPresenting() && this.isTopLevelSceneRoot();
     },
     tick: function(time, timeDelta) {
       if (!this.data.enabled) {
@@ -2913,9 +2916,25 @@
       }
       this.deferredToImmersiveWorldTransform = false;
       var bounce = Math.sin(time / 1e3 * this.data.speed + this.offset) * this.data.amplitude;
-      this.el.object3D.position.y = this.initialY + bounce;
+      if (this.data.visualOnly) {
+        const visual = this.el.getObject3D("mesh");
+        if (!visual) {
+          return;
+        }
+        if (this.visual !== visual) {
+          this.visual = visual;
+          this.visualInitialY = visual.position.y;
+        }
+        visual.position.y = this.visualInitialY + bounce;
+      } else {
+        this.el.object3D.position.y = this.initialY + bounce;
+      }
     },
     remove: function() {
+      if (this.data.visualOnly && this.visual) {
+        this.visual.position.y = this.visualInitialY;
+        return;
+      }
       if (this.el.object3D && !this.shouldDeferToImmersiveWorldTransform()) {
         this.el.object3D.position.y = this.initialY;
       }
