@@ -55,7 +55,7 @@
       "textureMaxSize": 2048,
       "textureMemoryBudgetMiB": 192,
       "geometryRatio": 0.8,
-      "summary": "3.7 MP, DPR up to 1, 2048px textures, 192 MiB texture target, 80% visual geometry.",
+      "summary": "3.7 MP, DPR up to 1, 2048px textures, 192 MiB texture target, budgeted visual geometry (up to 80%).",
       "editableSettings": [
         "shadowQuality",
         "pmndrsAAMode",
@@ -126,7 +126,7 @@
       "textureMaxSize": 4096,
       "textureMemoryBudgetMiB": 256,
       "geometryRatio": 1,
-      "summary": "5 MP, DPR up to 1.25, 4096px textures, 256 MiB texture target, and exact geometry.",
+      "summary": "5 MP, DPR up to 1.25, 4096px textures, 256 MiB texture target, and conservatively simplified geometry.",
       "editableSettings": [
         "shadowQuality",
         "pmndrsAAMode",
@@ -196,7 +196,7 @@
       "textureMaxSize": 4096,
       "textureMemoryBudgetMiB": null,
       "geometryRatio": 1,
-      "summary": "DPR up to 2, exact geometry, 4096px textures, cinematic atmosphere, High clouds, Ultra SMAA, and high dynamic shadows.",
+      "summary": "DPR up to 2, conservatively simplified geometry, 4096px textures, cinematic atmosphere, High clouds, Ultra SMAA, and high dynamic shadows.",
       "editableSettings": [
         "shadowQuality",
         "shadowUpdateMode",

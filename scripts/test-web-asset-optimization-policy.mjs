@@ -22,8 +22,7 @@ assert.match(optimizer, /new NodeIO\(\)/, 'optimizer must use one programmatic g
 assert.doesNotMatch(optimizer, /function profileSteps/, 'optimizer must not create a full intermediate GLB per transform');
 assert.match(optimizer, /atomicLinkOrWrite\(sourcePath, options\.preparedBaseline/, 'no-op prepared baselines must avoid a second source-size copy');
 assert.match(optimizer, /preparedSha256: sourceDigest\(preparedBinary\)/, 'prepared baselines must be checksummed independently');
-assert.match(optimizer, /options\.profile === 'web-low'.*options\.profile === 'web-medium'/s);
-assert.match(optimizer, /options\.profile === 'editor-preview' \|\| options\.profile === 'web-low' \|\| options\.profile === 'web-medium'\) && !protectGeometry/, 'Web High and protected assets must bypass visual simplification');
+assert.match(optimizer, /simplifyAssetGeometry\(document, options\.profile, protectGeometry\)/, 'Web recipes must apply the shared guarded geometry policy');
 assert.match(optimizer, /DATA_TEXTURE_SLOTS.*normalTexture.*metallicRoughnessTexture/s, 'data textures must use UASTC');
 assert.match(optimizer, /COLOR_TEXTURE_SLOTS.*baseColorTexture.*emissiveTexture/s, 'color textures must use ETC1S');
 assert.match(optimizer, /draco\(\{ method: 'edgebreaker' \}\)/, 'all compiled web recipes must finish with Draco');

@@ -9,7 +9,7 @@ require_once dirname( __DIR__ ) . '/class-vrodos-compiler-entity-policy.php';
 require_once dirname( __DIR__ ) . '/class-vrodos-compiler-asset-policy.php';
 
 trait VRodos_Asset_Optimization_Desktop_Profiles {
-	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 6;
+	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 7;
 	protected const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
 	protected const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
 	protected const DESKTOP_PROFILE_STALE_SECONDS = 720;
@@ -91,7 +91,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				$texture_max_size = absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) );
 				$is_standard_profile = $texture_max_size === self::runtime_derivative_texture_cap( $profile );
 				$options = [
-					'protectGeometry' => 'web-high' === $profile || $protection,
+					'protectGeometry' => $protection,
 					'textureMaxSize'  => $texture_max_size,
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => $profile,
@@ -253,12 +253,13 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$source_bytes = (int) ( $source['sizeBytes'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$has_uncompressed_textures = $image_bytes > 0 && (int) ( $analysis['counts']['images'] ?? 0 ) > 0;
-		if ( $source_bytes < 20 * 1024 * 1024 && ( ! $has_uncompressed_textures || $image_bytes < 8 * 1024 * 1024 ) ) {
+		$geometry_candidate = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 ) >= VRodos_Compiler_Asset_Policy::automatic_geometry_min_triangles();
+		if ( ! $geometry_candidate && $source_bytes < 20 * 1024 * 1024 && ( ! $has_uncompressed_textures || $image_bytes < 8 * 1024 * 1024 ) ) {
 			return false;
 		}
 
 		$options = [
-			'protectGeometry' => true,
+			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
 			'textureMaxSize'  => 4096,
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 			'recipe'          => 'web-high',
@@ -512,7 +513,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	protected static function normalize_desktop_profile_options( string $profile, array $options ): array {
 		return [
-			'protectGeometry' => 'web-high' === $profile || ! empty( $options['protectGeometry'] ),
+			'protectGeometry' => ! empty( $options['protectGeometry'] ),
 			'textureMaxSize'  => max( self::DESKTOP_PROFILE_MIN_TEXTURE_SIZE, absint( $options['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) ) ),
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 			'recipe'          => sanitize_key( (string) ( $options['recipe'] ?? $profile ) ),
@@ -620,7 +621,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	protected static function desktop_profile_total_steps( string $profile, array $options ): int {
-		return 'web-high' === $profile || ! empty( $options['protectGeometry'] ) ? 9 : 11;
+		return 10;
 	}
 
 	protected static function desktop_profile_overall_percent( array $profiles, int $total ): int {

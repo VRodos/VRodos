@@ -434,6 +434,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'unaccountedTextureImages' => (int) ( $record['derivative']['textureMemory']['unaccountedImages'] ?? 0 ),
 			'textureImageCount'    => (int) ( $record['derivative']['counts']['images'] ?? 0 ),
 			'runtimeSubstitutionReady' => ! empty( $record['runtimeSubstitutionReady'] ),
+			'geometrySimplification' => (array) ( $record['geometrySimplification'] ?? [] ),
 			'performance'         => is_array( $record['performance'] ?? null ) ? $record['performance'] : [],
 			'stageTimings'        => is_array( $record['stageTimings'] ?? null ) ? $record['stageTimings'] : [],
 			'generatedAt'         => current_time( 'mysql', true ),

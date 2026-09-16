@@ -34,6 +34,7 @@ export const testGroups = Object.freeze({
     "scripts/test-hardware-diagnostics.mjs",
     "scripts/test-desktop-performance-profiles.mjs",
     "scripts/test-web-asset-optimization-policy.mjs",
+    "scripts/test-asset-geometry-policy.mjs",
     "scripts/test-asset-material-preparation.mjs",
     "scripts/test-network-chat-runtime.mjs",
     "scripts/test-aframe-runtime-provenance.mjs",

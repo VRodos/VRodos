@@ -13,6 +13,7 @@ import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { dedup, draco, meshopt, simplify, textureCompress, weld } from '@gltf-transform/functions';
 import { prepareAssetMaterials } from './prepare-asset-materials.mjs';
+import { simplifyAssetGeometry } from './asset-geometry-policy.mjs';
 import { Mode, toktx } from '@gltf-transform/cli';
 import draco3d from 'draco3dgltf';
 import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
@@ -858,7 +859,7 @@ async function optimizeAsset(asset, index, options) {
 
     const sourceAnalysis = record.original;
     const protectedByContent = Boolean(sourceAnalysis?.protectedGeometry?.hasSkins || sourceAnalysis?.protectedGeometry?.hasMorphTargets);
-    const protectGeometry = Boolean(options.protectGeometry || protectedByContent || options.profile === 'web-high');
+    const protectGeometry = Boolean(options.protectGeometry || protectedByContent);
     record.profileOptions = {
         protectGeometry,
         protectedByContent,
@@ -953,9 +954,17 @@ async function optimizeAsset(asset, index, options) {
         }
     }
 
-    if ((options.profile === 'editor-preview' || options.profile === 'web-low' || options.profile === 'web-medium') && !protectGeometry) {
-        const ratio = options.profile === 'editor-preview' ? 0.35 : (options.profile === 'web-low' ? 0.5 : 0.8);
-        const error = options.profile === 'web-medium' ? 0.005 : 0.01;
+    if (isWebProfile(options.profile)) {
+        operations.push({
+            id: 'simplify',
+            label: 'Applying visual geometry budget',
+            run: async () => { record.geometrySimplification = await simplifyAssetGeometry(document, options.profile, protectGeometry); }
+        });
+    }
+
+    if (options.profile === 'editor-preview' && !protectGeometry) {
+        const ratio = 0.35;
+        const error = 0.01;
         operations.push({ id: 'weld', label: 'Welding visual geometry', run: () => document.transform(weld()) });
         operations.push({
             id: 'simplify',

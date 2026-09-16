@@ -51,8 +51,8 @@ try {
     assert.equal(progress.profile, 'web-high');
     assert.equal(path.resolve(progress.sourcePath), path.resolve(source));
     assert.equal(progress.status, 'ready');
-    assert.equal(progress.step, 9);
-    assert.equal(progress.totalSteps, 9);
+    assert.equal(progress.step, 10);
+    assert.equal(progress.totalSteps, 10);
     assert.equal(progress.percent, 100);
     assert.match(progress.message, /ready/i);
     assert.equal((await readdir(successDir)).some((entry) => entry.endsWith('.tmp')), false, 'atomic progress writes must not leave temporary files');
@@ -86,7 +86,7 @@ try {
     if (highManifest.assets[0].preparedBaselineReusedSourceBytes) {
         assert.equal(preparedBaselineStat.ino, familySourceStat.ino, 'no-op prepared baselines must be hard linked instead of copied');
     }
-    assert.equal(highManifest.assets[0].profileOptions.protectGeometry, true, 'Web High must always preserve geometry');
+    assert.equal(highManifest.assets[0].profileOptions.protectGeometry, false, 'Web High permits guarded simplification');
     assert.equal(highManifest.assets[0].original.geometry.estimatedTriangles, highManifest.assets[0].derivative.geometry.estimatedTriangles, 'Web High must preserve triangle count');
     assert.equal(highManifest.assets[0].original.geometry.vertexCount, highManifest.assets[0].derivative.geometry.vertexCount, 'Web High must preserve vertex count');
     assert.ok(highManifest.assets[0].performance.queueWaitMs >= 900, 'queue wait time must be recorded');
@@ -94,7 +94,7 @@ try {
     assert.ok(Number.isFinite(highManifest.assets[0].performance.systemCpuUtilizationPercent), 'system CPU utilization must be recorded');
     assert.ok(highManifest.encoderVersions.sharp && highManifest.encoderVersions.libvips, 'encoder versions must be recorded');
     const preparedMetadata = JSON.parse(await readFile(preparedAnalysis, 'utf8'));
-    assert.equal(preparedMetadata.schemaVersion, 2);
+    assert.equal(preparedMetadata.schemaVersion, 4);
     assert.match(preparedMetadata.preparedSha256, /^[a-f0-9]{64}$/, 'prepared baselines must store their own checksum');
 
     const mediumDir = path.join(familyRoot, 'medium');

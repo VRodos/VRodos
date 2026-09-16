@@ -127,7 +127,7 @@
 							<select id="compileVrHeadsetAssetQualitySelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
 								<option value="low">Low — 1024px textures</option>
 								<option value="medium">Medium — 2048px textures</option>
-								<option value="high">High — 4096px, preserved geometry</option>
+								<option value="high">High — 4096px, fine geometry detail</option>
 							</select>
 							<span class="tw-text-xs tw-leading-relaxed tw-text-emerald-700/80 tw-mt-1">Applies to all GLB objects in this project build. Low/Medium may simplify eligible decorations. High is optimized quality, not original-source quality, and may increase headset GPU/memory load.</span>
 						</label>

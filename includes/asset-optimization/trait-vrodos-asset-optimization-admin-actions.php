@@ -114,7 +114,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 				$profile,
 				$source,
 				[
-					'protectGeometry' => 'web-high' === $profile || self::automatic_profile_protects_geometry( $asset_id ),
+					'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
 					'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
 					'recipe'          => $profile,
 				],
@@ -246,7 +246,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 				$profile,
 				$source,
 				[
-					'protectGeometry' => 'web-high' === $profile || self::automatic_profile_protects_geometry( $asset_id ),
+					'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
 					'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
 					'recipe'          => $profile,
 				],

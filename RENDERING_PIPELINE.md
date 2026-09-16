@@ -24,10 +24,10 @@ The Custom tab owns canonical shared artistic intent and the exact fixed-build q
 
 | Slot | Render/assets | Expensive rendering |
 | --- | --- | --- |
-| Custom | Authored render settings, DPR ≤1.5, Web High 4096px KTX2 and exact geometry | Exact authored fixed-build quality; no hardware selection |
-| Low | `standard`, 3.7 MP / DPR ≤1, Web Medium 2048px KTX2, 192 MiB target, 80% visual geometry | Previous Medium preset: static Medium shadows, Medium SMAA, Soft AO/contact, Balanced atmosphere and no clouds by default; no shafts or heavy post-effects |
-| Medium | `high`, 5 MP / DPR ≤1.25, Web High 4096px KTX2, 256 MiB target, exact geometry | Static Medium shadows, High SMAA, Soft AO/contact, Quality atmosphere and Low-quality clouds; no bloom/SSR/TAA/flare/noise/chromatic aberration or shafts |
-| High | `high`, DPR ≤2, Web High 4096px KTX2, no texture-memory target, exact geometry | High dynamic shadows, Ultra SMAA and High clouds (Ultra selectable), Cinematic atmosphere, enhanced reflections and 256px slow-dynamic probes when authored; shared effect toggles remain authoritative |
+| Custom | Authored render settings, DPR ≤1.5, Web High 4096px KTX2 and conservatively simplified geometry | Exact authored fixed-build quality; no hardware selection |
+| Low | `standard`, 3.7 MP / DPR ≤1, Web Medium 2048px KTX2, 192 MiB target, budgeted visual geometry (up to 80%) | Previous Medium preset: static Medium shadows, Medium SMAA, Soft AO/contact, Balanced atmosphere and no clouds by default; no shafts or heavy post-effects |
+| Medium | `high`, 5 MP / DPR ≤1.25, Web High 4096px KTX2, 256 MiB target, conservatively simplified geometry | Static Medium shadows, High SMAA, Soft AO/contact, Quality atmosphere and Low-quality clouds; no bloom/SSR/TAA/flare/noise/chromatic aberration or shafts |
+| High | `high`, DPR ≤2, Web High 4096px KTX2, no texture-memory target, conservatively simplified geometry | High dynamic shadows, Ultra SMAA and High clouds (Ultra selectable), Cinematic atmosphere, enhanced reflections and 256px slow-dynamic probes when authored; shared effect toggles remain authoritative |
 
 Editing a tier-controlled field changes only that slot from `Default` to `Modified`; artistic/shared fields do not. Saved values matching their preset baseline follow updated defaults at compile time; actual modifications are retained. Publication validates Low ≤ Medium ≤ High for performance-sensitive settings. Collision/navigation assets and skinned or morph-target GLBs are never simplified. Standalone headset derivative quality is unchanged: Web Low/Medium/High remain 1024/2048/4096px recipes.
 

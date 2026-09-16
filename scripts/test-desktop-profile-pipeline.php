@@ -266,7 +266,7 @@ $source = [
 $options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 4096,
-	'pipelineVersion' => 6,
+	'pipelineVersion' => 7,
 	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
@@ -382,10 +382,16 @@ vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a
 $auto_record = invoke_desktop_profile_method( 'desktop_profile_record', [ 55, 'web-high' ] );
 vrodos_desktop_assert( 1 === $auto_record['attempts'] && ! empty( $auto_record['queuedAt'] ), 'an idempotent queued job must retain one attempt and its original queue timestamp' );
 
+$dense_analysis = array_merge( $small_analysis, [ 'geometry' => [ 'estimatedTriangles' => 50000 ] ] );
+$GLOBALS['vrodos_desktop_test_terms'][ 56 ] = [ 'decoration' ];
+vrodos_desktop_assert( true === VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 56, $small_source, $dense_analysis ), 'dense GLBs below byte thresholds must enter the automatic family' );
+$dense_record = invoke_desktop_profile_method( 'desktop_profile_record', [ 56, 'web-high' ] );
+vrodos_desktop_assert( false === $dense_record['profileOptions']['protectGeometry'], 'automatic decoration High must permit guarded simplification' );
+
 $medium_options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 2048,
-	'pipelineVersion' => 6,
+	'pipelineVersion' => 7,
 	'recipe'          => 'web-medium',
 ];
 $low_options = array_merge( $medium_options, [ 'textureMaxSize' => 1024, 'recipe' => 'web-low' ] );
@@ -393,8 +399,8 @@ $medium_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $sourc
 $low_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-low', $low_options ] );
 vrodos_desktop_assert( $medium_key !== $low_key, 'profile identity must distinguish recipe and texture cap' );
 vrodos_desktop_assert(
-	$job_key === invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-high', array_merge( $options, [ 'protectGeometry' => false ] ) ] ),
-	'Web High must canonicalize geometry protection so upload and Build join the same job'
+	$job_key !== invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-high', array_merge( $options, [ 'protectGeometry' => false ] ) ] ),
+	'Web High must keep protected and simplified geometry in separate jobs'
 );
 vrodos_desktop_assert(
 	$medium_key !== invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-medium', array_merge( $medium_options, [ 'protectGeometry' => false ] ) ] ),
@@ -499,7 +505,7 @@ foreach ( [ false, true ] as $category_protected ) {
 	$GLOBALS['vrodos_desktop_test_terms'][ $variant_asset ] = [ $category_protected ? 'walkable-surface' : 'decoration' ];
 	$family_meta = [ 'schemaVersion' => 2, 'derivatives' => [], 'webVariants' => [], 'webProfileDefaults' => [] ];
 	foreach ( [ 'web-high' => 4096, 'web-medium' => 2048, 'web-low' => 1024 ] as $family_profile => $cap ) {
-		$family_options = array_merge( $options, [ 'recipe' => $family_profile, 'textureMaxSize' => $cap, 'protectGeometry' => 'web-high' === $family_profile || $category_protected, 'familySequence' => true ] );
+		$family_options = array_merge( $options, [ 'recipe' => $family_profile, 'textureMaxSize' => $cap, 'protectGeometry' => $category_protected, 'familySequence' => true ] );
 		seed_desktop_profile_record( $variant_asset, $family_profile, 'ready', $source, $family_options, gmdate( 'Y-m-d H:i:s' ) );
 		$seeded = $GLOBALS['vrodos_desktop_test_meta'][ $variant_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ];
 		foreach ( [ 'derivatives', 'webVariants', 'webProfileDefaults' ] as $key ) {
@@ -532,16 +538,17 @@ foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $ca
 	$quality_plan = clone $ordered_plan;
 	$quality_plan->request = (object) [ 'vr_runtime_profile' => 'headset', 'vr_headset_asset_quality' => $quality ];
 	$quality_asset_id = 100 + $cap;
+	$GLOBALS['vrodos_desktop_test_terms'][ $quality_asset_id ] = [ 'decoration' ];
 	$quality_plan->scenes = [ (object) [ 'scene_id' => 50, 'scene_json' => (object) [ 'asset_id' => $quality_asset_id ], 'desktop_profiles' => [] ] ];
 	$GLOBALS['vrodos_desktop_test_events'] = [];
 	$quality_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $quality_plan );
 	vrodos_desktop_assert( 'pending' === $quality_state['status'], 'new headset assets wait for preparation at every quality' );
 	vrodos_desktop_assert( 'web-' . $quality === $quality_state['profiles'][0]['profile'], 'pending progress identifies requested headset derivative' );
 	vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'each quality joins one ordered family job' );
-	$quality_options = array_merge( $options, [ 'recipe' => 'web-' . $quality, 'textureMaxSize' => $cap, 'protectGeometry' => 'high' === $quality ] );
+	$quality_options = array_merge( $options, [ 'recipe' => 'web-' . $quality, 'textureMaxSize' => $cap, 'protectGeometry' => false ] );
 	$quality_record = invoke_desktop_profile_method( 'desktop_profile_record', [ $quality_asset_id, 'web-' . $quality, $source, $quality_options ] );
 	if ( 'high' === $quality ) {
-		vrodos_desktop_assert( 4096 === $quality_record['profileOptions']['textureMaxSize'] && true === $quality_record['profileOptions']['protectGeometry'], 'High queues preserved geometry with the standard 4096px cap' );
+		vrodos_desktop_assert( 4096 === $quality_record['profileOptions']['textureMaxSize'] && false === $quality_record['profileOptions']['protectGeometry'], 'High queues eligible decoration simplification with the standard 4096px cap' );
 	}
 }
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
