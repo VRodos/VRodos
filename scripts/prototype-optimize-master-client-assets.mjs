@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
-import { dedup, draco, meshopt, prune, simplify, textureCompress, weld } from '@gltf-transform/functions';
+import { dedup, draco, meshopt, simplify, textureCompress, weld } from '@gltf-transform/functions';
+import { prepareAssetMaterials } from './prepare-asset-materials.mjs';
 import { Mode, toktx } from '@gltf-transform/cli';
 import draco3d from 'draco3dgltf';
 import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
@@ -787,7 +788,7 @@ async function optimizeAsset(asset, index, options) {
     if ((isWebProfile(options.profile) || options.profile === 'editor-preview') && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
         try {
             const prepared = JSON.parse(await readFile(options.preparedAnalysis, 'utf8'));
-            if (prepared.schemaVersion === 2 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
+            if (prepared.schemaVersion === 3 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
                 const candidateBuffer = await readFile(options.preparedBaseline);
                 if (prepared.preparedSha256 && sourceDigest(candidateBuffer) === prepared.preparedSha256) {
                     inputBuffer = candidateBuffer;
@@ -907,7 +908,12 @@ async function optimizeAsset(asset, index, options) {
         operations.push({
             id: 'prune',
             label: 'Removing unused data',
-            run: () => document.transform(prune({ keepLeaves: true, keepSolidTextures: true }))
+            run: async () => {
+                record.disabledAnisotropy = await prepareAssetMaterials(document);
+                if (record.disabledAnisotropy.length) {
+                    record.runtimeNotes.push(`Disabled anisotropy on ${record.disabledAnisotropy.length} primitives without a usable tangent frame; base PBR materials are preserved.`);
+                }
+            }
         });
         operations.push({
             id: 'dedup',
@@ -930,7 +936,7 @@ async function optimizeAsset(asset, index, options) {
                         await atomicWriteFile(options.preparedBaseline, preparedBinary);
                     }
                     await atomicWriteFile(options.preparedAnalysis, `${JSON.stringify({
-                        schemaVersion: 2,
+                        schemaVersion: 3,
                         sourcePath,
                         sourceSha256,
                         preparedSha256: sourceDigest(preparedBinary),

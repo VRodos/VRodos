@@ -258,6 +258,7 @@ Performance tooling:
 - Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the vendor build no longer publishes a `.module.js` compatibility copy for older generated clients.
 - Keep `safe-draco`/`safe-meshopt` as inspection/prototype profiles. Production compilation automatically selects the validated `web-*` family and requires the generated client decoder paths plus profile/browser parity checks.
 - Treat future LOD as an explicit derivative family (`lod0`, `lod1`, `lod2`) with opt-in compile/runtime selection, not as a silent downgrade of uploaded source assets.
+- Asset preparation in `scripts/prepare-asset-materials.mjs` preserves anisotropy tangent/UV attributes through pruning. Only primitives without a usable normal/tangent-or-UV input lose the unsupported anisotropy extension, with repairs recorded in the optimizer manifest; shared valid materials retain it. Missing tangent frames can produce NaN/Infinity pixels that bloom and lens flare spread across the entire desktop frame. Bump derivative pipeline and prepared-baseline versions when changing this preparation contract.
 
 Do not manually copy standalone PMNDRS bundles. `postprocessing` is exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 

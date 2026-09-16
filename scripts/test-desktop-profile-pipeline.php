@@ -266,11 +266,21 @@ $source = [
 $options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 4096,
-	'pipelineVersion' => 4,
+	'pipelineVersion' => 5,
 	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
 $GLOBALS['vrodos_desktop_test_progress_path'] = $progress_path;
+
+$obsolete_material_record = [
+	'sourceSha256' => $source['sha256'],
+	'jobKey' => invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, $profile, $options ] ),
+	'profileOptions' => array_merge( $options, [ 'pipelineVersion' => 4 ] ),
+];
+vrodos_desktop_assert(
+	false === invoke_desktop_profile_method( 'desktop_profile_record_matches_request', [ $obsolete_material_record, $source, $options ] ),
+	'derivatives prepared before anisotropy attribute preservation must not be reused'
+);
 
 $job_key = seed_desktop_profile_record( $asset_id, $profile, 'queued', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
 $result = VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
@@ -375,7 +385,7 @@ vrodos_desktop_assert( 1 === $auto_record['attempts'] && ! empty( $auto_record['
 $medium_options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 2048,
-	'pipelineVersion' => 4,
+	'pipelineVersion' => 5,
 	'recipe'          => 'web-medium',
 ];
 $low_options = array_merge( $medium_options, [ 'textureMaxSize' => 1024, 'recipe' => 'web-low' ] );
