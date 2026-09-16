@@ -257,6 +257,9 @@ class VRodos_Compiler_Scene_Settings {
 	}
 
 	private function should_enable_renderer_antialias( array $settings, $metadata ): bool {
+		if ( 'headset' === (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' ) ) {
+			return true;
+		}
 		if ( property_exists( $metadata, 'aframeRendererAntialias' ) ) {
 			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeRendererAntialias, true );
 		}

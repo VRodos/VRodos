@@ -51,6 +51,24 @@ final class VRodos_Compiler_Plan_Resolver {
 			$quality_key = VRodos_Runtime_Settings_Contract::metadata_key( 'vrHeadsetAssetQuality' );
 			$metadata->{$quality_key} = $request->vr_headset_asset_quality;
 
+			// Full headset rendering is a build policy, never a saved UI override.
+			$headset_baseline = 'headset' === $request->vr_runtime_profile ? [
+				'postFXEngine' => 'pmndrs',
+				'postFXEnabled' => '1',
+				'vrHeadsetStereoPostFxEnabled' => '1',
+				'renderQuality' => 'high',
+				'pmndrsAAMode' => 'none',
+				'pmndrsToneMappingMode' => 'aces-filmic',
+				'pmndrsAtmosphereEnabled' => 'true',
+				'pmndrsAtmosphereQuality' => 'quality',
+				'vrFramebufferScale' => '1',
+				'vrFoveationStrength' => '0.5',
+			] : [];
+			foreach ( $headset_baseline as $key => $value ) {
+				$metadata_key = VRodos_Runtime_Settings_Contract::metadata_key( $key );
+				$metadata->{$metadata_key} = $value;
+			}
+
 			$diagnostics = [];
 			$settings    = $this->scene_settings->build_settings(
 				$metadata,
@@ -61,6 +79,8 @@ final class VRodos_Compiler_Plan_Resolver {
 			$settings['runtimeMode']     = $request->runtime_mode;
 			$settings['vrRuntimeProfile'] = $request->vr_runtime_profile;
 			$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
+			// Legacy composite metadata must not override the target policy either.
+			$settings = array_replace( $settings, $headset_baseline );
 
 			$desktop_profiles = [];
 			if ( 'desktop' === $request->vr_runtime_profile ) {

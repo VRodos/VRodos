@@ -9,6 +9,7 @@ VRodosCompileUI.General = (function () {
 
     const Shared = VRodosCompileUI.Shared;
     const RUNTIME_TARGET_OVERRIDDEN_CONTROLS = [
+        'renderQuality',
         'ambientOcclusionPreset',
         'reflectionsEnabled',
         'reflectionProfile',
@@ -237,10 +238,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function isHeadsetStereoPostFxAuthored(controls) {
-        return Boolean(controls &&
-            controls.vrHeadsetStereoPostFx &&
-            isVrHeadsetTarget(controls) &&
-            controls.vrHeadsetStereoPostFx.checked === true);
+        return isVrHeadsetTarget(controls);
     }
 
     // --- UI Logic ---
@@ -290,15 +288,12 @@ VRodosCompileUI.General = (function () {
 
         if (controls.runtimeTargetHint) {
             controls.runtimeTargetHint.textContent = headsetTarget
-                ? 'Uses the standalone headset policy: lean by default, with desktop-grade features added back only after headset validation.'
+                ? 'Uses the fixed headset rendering baseline: native anti-aliasing, ACES Filmic, render scale 1.0 and foveation 0.5.'
                 : (pcRenderedVrTarget
                     ? 'Uses the PC-rendered VR parent profile for later PCVR/WebXR validation with desktop rendering behavior.'
                     : 'Uses the authored desktop rendering pipeline without headset-specific overrides.');
         }
 
-        if (controls.vrHeadsetStereoPostFx) {
-            controls.vrHeadsetStereoPostFx.disabled = !headsetTarget;
-        }
     }
 
     function updateEdgeAAStrengthLabel(controls) {

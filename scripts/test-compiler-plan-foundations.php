@@ -651,6 +651,13 @@ $scene_two = (object) [
 		'aframeVrRuntimeProfile' => 'pc-rendered-vr',
 		'aframeRenderQuality' => 'performance',
 		'aframeVrHeadsetAssetQuality' => 'low',
+		'aframePostFXEngine' => 'legacy',
+		'aframePostFXEnabled' => false,
+		'aframeVrHeadsetStereoPostFxEnabled' => false,
+		'aframePmndrsToneMappingMode' => 'agx',
+		'aframePmndrsAAMode' => 'smaa',
+		'aframeVrFramebufferScale' => 1.5,
+		'aframeVrFoveationStrength' => 1,
 		'aframeHoveringInteractables' => false,
 	],
 	'objects' => (object) [],
@@ -671,6 +678,9 @@ vrodos_foundation_assert( 'headset' === $project_plan->scenes[0]->settings['vrRu
 foreach ( $project_plan->scenes as $scene_plan ) {
 	vrodos_foundation_assert( 'high' === $scene_plan->settings['vrHeadsetAssetQuality'], 'project quality overrides every scene setting' );
 	vrodos_foundation_assert( 'high' === $scene_plan->scene_json->metadata->aframeVrHeadsetAssetQuality, 'project quality overrides normalized metadata' );
+	foreach ( [ 'postFXEngine' => 'pmndrs', 'postFXEnabled' => '1', 'vrHeadsetStereoPostFxEnabled' => '1', 'pmndrsAAMode' => 'none', 'pmndrsToneMappingMode' => 'aces-filmic', 'vrFramebufferScale' => '1', 'vrFoveationStrength' => '0.5', 'pmndrsAtmosphereQuality' => 'quality' ] as $key => $expected ) {
+		vrodos_foundation_assert( $expected === $scene_plan->settings[ $key ], 'headset baseline overrides saved ' . $key );
+	}
 }
 vrodos_foundation_assert( 'medium' === $scene_one->metadata->aframeVrHeadsetAssetQuality, 'compile does not mutate authored quality' );
 vrodos_foundation_assert( 'low' === ( new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'headset', false ) )->vr_headset_asset_quality, 'absent quality defaults to Low' );
@@ -681,7 +691,19 @@ try {
 	vrodos_foundation_assert( str_contains( $error->getMessage(), 'quality' ), 'invalid quality produces explicit error' );
 }
 vrodos_foundation_assert( 'high' === $project_plan->scenes[0]->settings['renderQuality'], 'first scene artistic settings remain local' );
-vrodos_foundation_assert( 'performance' === $project_plan->scenes[1]->settings['renderQuality'], 'second scene artistic settings remain local' );
+vrodos_foundation_assert( 'high' === $project_plan->scenes[1]->settings['renderQuality'], 'headset renderer quality is fixed across scenes' );
+vrodos_foundation_assert( 'agx' === $scene_two->metadata->aframePmndrsToneMappingMode, 'headset compilation preserves source authoring settings' );
+if ( class_exists( 'DOMDocument' ) ) {
+	$aa_scene = clone $project_plan->scenes[1]->scene_json;
+	$aa_scene->metadata = clone $aa_scene->metadata;
+	$aa_scene->metadata->aframeRendererAntialias = false;
+	$aa_dom = new DOMDocument();
+	$aa_element = $aa_dom->createElement( 'a-scene' );
+	$aa_dom->appendChild( $aa_element );
+	$aa_element->setAttribute( 'renderer', 'antialias: false' );
+	$plan_settings->apply( $aa_dom, $aa_element, $aa_scene, 9, static fn ( $url ) => $url, $project_plan->scenes[1]->settings );
+	vrodos_foundation_assert( str_contains( $aa_element->getAttribute( 'renderer' ), 'antialias: true' ), 'headset native AA cannot be disabled by saved renderer metadata' );
+}
 vrodos_foundation_assert( $project_plan->scenes[0]->hover_enabled && ! $project_plan->scenes[1]->hover_enabled, 'hover remains scene-specific' );
 vrodos_foundation_assert( in_array( 'networked-components', $project_plan->scenes[0]->chunk_ids, true ), 'project capability plan activates networking' );
 $planned_decoration = $project_plan->scenes[0]->scene_json->objects->decoration0;

@@ -30,7 +30,6 @@ window.addEventListener('DOMContentLoaded', () => {
             vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
             vrHeadsetSkyTime: document.getElementById('compileVrHeadsetSkyTimeSelect'),
             vrHeadsetAssetQuality: document.getElementById('compileVrHeadsetAssetQualitySelect'),
-            vrHeadsetStereoPostFx: document.getElementById('compileVrHeadsetStereoPostFxToggle'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
@@ -81,7 +80,6 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsToneMapping: document.getElementById('compilePmndrsToneMappingSelect'),
             pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
             pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
-            vrHeadsetToneMapping: document.getElementById('compileVrHeadsetToneMappingSelect'),
             vrHeadsetExposure: document.getElementById('compileVrHeadsetExposureSlider'),
             vrHeadsetExposureValue: document.getElementById('compileVrHeadsetExposureValue'),
             pmndrsLensFlare: document.getElementById('compilePmndrsLensFlareToggle'),
@@ -497,11 +495,15 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.postFx) {
             controls.postFx.checked = true;
         }
+        if (controls.renderQuality) controls.renderQuality.value = 'high';
+        if (controls.pmndrsToneMapping) controls.pmndrsToneMapping.value = 'aces-filmic';
+        if (controls.pmndrsAtmosphere) controls.pmndrsAtmosphere.checked = true;
+        if (controls.pmndrsAtmosphereQuality) controls.pmndrsAtmosphereQuality.value = 'quality';
         if (controls.postFxEngine) {
             controls.postFxEngine.value = 'pmndrs';
         }
         if (controls.pmndrsAAMode) {
-            controls.pmndrsAAMode.value = 'smaa';
+            controls.pmndrsAAMode.value = 'none';
         }
         if (controls.pmndrsAAPreset) {
             controls.pmndrsAAPreset.value = 'medium';
@@ -529,7 +531,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         applyHeadsetStereoPostFxToControls(controls);
         if (VRodosCompileUI.General.isVrHeadsetTarget(controls)) {
-            controls.pmndrsToneMapping.value = controls.vrHeadsetToneMapping.value;
+            controls.pmndrsToneMapping.value = 'aces-filmic';
             controls.pmndrsExposure.value = controls.vrHeadsetExposure.value;
         }
         VRodosCompileUI.PostFX.syncToScene(controls);
@@ -600,9 +602,6 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.hoveringInteractables.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframeHoveringInteractables !== false;
         }
         controls.postFx.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePostFXEnabled);
-        if (controls.vrHeadsetStereoPostFx) {
-            controls.vrHeadsetStereoPostFx.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled);
-        }
         if (controls.legacyHorizonStageSize) {
             controls.legacyHorizonStageSize.value = VRodosCompileUI.General.clampLegacyHorizonStageSize(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize : 5000);
         }
@@ -696,7 +695,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
         }
-        if (controls.vrHeadsetToneMapping) controls.vrHeadsetToneMapping.value = controls.pmndrsToneMapping.value;
         if (controls.vrHeadsetExposure) controls.vrHeadsetExposure.value = controls.pmndrsExposure.value;
         if (controls.pmndrsLensFlare) {
             controls.pmndrsLensFlare.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled);
@@ -979,7 +977,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.runtimeTarget) {
         controls.runtimeTarget.addEventListener('change', () => {
             if (VRodosCompileUI.General.isVrHeadsetTarget(controls)) {
-                controls.vrHeadsetToneMapping.value = controls.pmndrsToneMapping.value;
                 controls.vrHeadsetExposure.value = controls.pmndrsExposure.value;
                 updatePmndrsValueLabels();
             }
@@ -997,19 +994,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.vrHeadsetAssetQuality) {
         controls.vrHeadsetAssetQuality.addEventListener('change', () => {
             VRodosCompileUI.General.syncToScene(controls);
-        });
-    }
-    if (controls.vrHeadsetStereoPostFx) {
-        controls.vrHeadsetStereoPostFx.addEventListener('change', () => {
-            applyHeadsetStereoPostFxToControls(controls);
-            syncCompilePostFxState();
-            VRodosCompileUI.PostFX.syncToScene(controls);
-        });
-    }
-    if (controls.vrHeadsetToneMapping) {
-        controls.vrHeadsetToneMapping.addEventListener('change', () => {
-            controls.pmndrsToneMapping.value = controls.vrHeadsetToneMapping.value;
-            VRodosCompileUI.PostFX.syncToScene(controls);
         });
     }
     if (controls.vrHeadsetExposure) {
@@ -1433,7 +1417,6 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsExposure) c.pmndrsExposure.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
             if (c.pmndrsToneMapping) c.pmndrsToneMapping.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
             if (c.vrHeadsetExposure) c.vrHeadsetExposure.value = c.pmndrsExposure.value;
-            if (c.vrHeadsetToneMapping) c.vrHeadsetToneMapping.value = c.pmndrsToneMapping.value;
             if (c.pmndrsLensFlare) c.pmndrsLensFlare.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
             if (c.pmndrsLut) c.pmndrsLut.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
             if (c.pmndrsLutLook) c.pmndrsLutLook.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutLook;

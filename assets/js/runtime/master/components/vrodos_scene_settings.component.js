@@ -1536,6 +1536,9 @@ AFRAME.registerComponent('scene-settings', {
     getActivePostProcessingOwner: function (postProcessingRequested, postProcessingAllowed) {
         if (postProcessingAllowed) {
             if (this.data.postFXEngine === 'pmndrs') {
+                if (this.isImmersiveXrActive() && this.pmndrsNativeHeadsetDiagnostics && this.pmndrsNativeHeadsetDiagnostics.active) {
+                    return 'native-headset';
+                }
                 return this.pmndrsActive ? 'pmndrs' : 'pmndrs-pending';
             }
             return this.postProcessingActive ? 'legacy' : 'legacy-pending';
@@ -1754,6 +1757,7 @@ AFRAME.registerComponent('scene-settings', {
                 pmndrsActive: Boolean(this.pmndrsActive),
                 pmndrsBundleLoaded: Boolean(window.POSTPROCESSING),
                 pmndrsComposerBuilt: Boolean(this.pmndrsComposer),
+                nativeHeadset: this.pmndrsNativeHeadsetDiagnostics || null,
                 pmndrsEffectPass: Boolean(this.pmndrsEffectPass),
                 lensFlareAuthored: Boolean(vrodosRuntimeTruthy(this.data.pmndrsLensFlareEnabled)),
                 lensFlareEffective: Boolean(this.isPmndrsLensFlareEnabled()),

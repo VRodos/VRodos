@@ -2137,6 +2137,127 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     function isPmndrsXrStereoSmaaLabEnabled() {
       return hasPmndrsDebugFlag("forceXrPmndrsStereoSmaa", "vrodos_force_xr_pmndrs_stereo_smaa") || hasPmndrsDebugFlag("xrPmndrsStereoSmaa", "vrodos_xr_pmndrs_stereo_smaa");
     }
+    function shouldUsePmndrsNativeHeadset(self) {
+      return Boolean(self.canUseVrHeadsetStereoPmndrsComposer && self.canUseVrHeadsetStereoPmndrsComposer() && isPmndrsDirectVrPresentationActive(self) && getPmndrsToneMappingMode(self) === "aces-filmic" && !isPmndrsXrStereoComposerLabEnabled() && !isPmndrsXrStereoSmaaLabEnabled());
+    }
+    function prepareNativeHeadsetAtmosphereMaterial(material) {
+      if (!material) return null;
+      if (material.userData.vrodosNativeHeadsetOutput) return material.userData.vrodosNativeHeadsetOutput;
+      const output = { enabled: { value: 0 }, exposure: { value: 1 }, patched: false };
+      const compile = material.onBeforeCompile;
+      const cacheKey = material.customProgramCacheKey.bind(material);
+      const previousKey = cacheKey();
+      material.onBeforeCompile = function(shader, renderer) {
+        compile.call(this, shader, renderer);
+        const uniform = "void main() {";
+        const fragmentOutput = shader.fragmentShader.lastIndexOf("}");
+        if (!shader.fragmentShader.includes(uniform) || fragmentOutput < 0 || !shader.fragmentShader.includes("outputColor")) {
+          throw new Error("[VRodos] Native headset Takram output shader is incompatible.");
+        }
+        shader.uniforms.vrodosNativeHeadsetOutput = output.enabled;
+        shader.uniforms.toneMappingExposure = output.exposure;
+        shader.fragmentShader = `${shader.fragmentShader.slice(0, fragmentOutput)}  if (vrodosNativeHeadsetOutput > 0.5) outputColor.rgb = sRGBTransferOETF(vec4(ACESFilmicToneMapping(outputColor.rgb), 1.0)).rgb;
+${shader.fragmentShader.slice(fragmentOutput)}`.replace(
+          uniform,
+          `uniform float vrodosNativeHeadsetOutput;
+#include <tonemapping_pars_fragment>
+#include <colorspace_pars_fragment>
+${uniform}`
+        );
+        output.patched = true;
+      };
+      material.customProgramCacheKey = () => `${previousKey}:vrodos-native-headset-aces-v1`;
+      material.userData.vrodosNativeHeadsetOutput = output;
+      material.needsUpdate = true;
+      return output;
+    }
+    function createNativeHeadsetPresentation(self, renderer) {
+      const materials = /* @__PURE__ */ new Set();
+      let dirty = true;
+      let active = false;
+      const markDirty = () => {
+        dirty = true;
+      };
+      self.el.addEventListener("model-loaded", markDirty);
+      self.el.addEventListener("object3dset", markDirty);
+      const diagnostics = self.pmndrsNativeHeadsetDiagnostics = {
+        active: false,
+        path: "composer",
+        antialias: "composer",
+        skyOutputPatched: false
+      };
+      function sync(enabled) {
+        if (enabled && (!active || dirty)) {
+          self.el.object3D.traverse((object) => {
+            if (!object.isMesh) return;
+            for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+              if (material && material.isMeshBasicMaterial && !material.toneMapped) {
+                materials.add(material);
+                material.toneMapped = true;
+                material.needsUpdate = true;
+              }
+            }
+          });
+          dirty = false;
+        } else if (!enabled && active) {
+          for (const material of materials) {
+            material.toneMapped = false;
+            material.needsUpdate = true;
+          }
+          materials.clear();
+        }
+        active = enabled;
+        diagnostics.active = enabled;
+        diagnostics.path = enabled ? "native-xr" : "composer";
+        diagnostics.antialias = enabled ? "native-xr-layer" : "composer";
+      }
+      return {
+        sync,
+        render(scene, camera) {
+          const atmosphere = self._pmndrsAtmosphereState;
+          const sky = atmosphere && atmosphere.skyMesh;
+          const stars = atmosphere && atmosphere.starsMesh;
+          const output = prepareNativeHeadsetAtmosphereMaterial(sky && sky.material);
+          const starOutput = prepareNativeHeadsetAtmosphereMaterial(stars && stars.material);
+          const previousToneMapping = renderer.toneMapping;
+          const previousExposure = renderer.toneMappingExposure;
+          const previousOrder = sky && sky.renderOrder;
+          const previousStarOrder = stars && stars.renderOrder;
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.toneMappingExposure = typeof self.getPmndrsToneMappingExposure === "function" ? self.getPmndrsToneMappingExposure() : readPmndrsNumber(self, "pmndrsToneMappingExposure", 0.1, 5, 1);
+          if (output) {
+            output.enabled.value = 1;
+            output.exposure.value = renderer.toneMappingExposure;
+            sky.renderOrder = 1e4;
+          }
+          if (starOutput) {
+            starOutput.enabled.value = 1;
+            starOutput.exposure.value = renderer.toneMappingExposure;
+            stars.renderOrder = 10001;
+          }
+          try {
+            return self.pmndrsOriginalRender(scene, camera);
+          } finally {
+            if (output) {
+              output.enabled.value = 0;
+              sky.renderOrder = previousOrder;
+              diagnostics.skyOutputPatched = output.patched;
+            }
+            if (starOutput) {
+              starOutput.enabled.value = 0;
+              stars.renderOrder = previousStarOrder;
+            }
+            renderer.toneMapping = previousToneMapping;
+            renderer.toneMappingExposure = previousExposure;
+          }
+        },
+        dispose() {
+          sync(false);
+          self.el.removeEventListener("model-loaded", markDirty);
+          self.el.removeEventListener("object3dset", markDirty);
+        }
+      };
+    }
     function isPmndrsXrStereoComposerRequested(self) {
       return isPmndrsXrStereoComposerLabEnabled() || Boolean(self && typeof self.canUseVrHeadsetStereoPmndrsComposer === "function" && self.canUseVrHeadsetStereoPmndrsComposer());
     }
@@ -4244,7 +4365,14 @@ ${selectedSummaries.join("\n")}`);
       ensurePmndrsAADebugOverlay(this);
       updatePmndrsAADebugOverlay(this);
       const self = this;
+      const nativeHeadset = createNativeHeadsetPresentation(self, renderer);
+      this._pmndrsNativeHeadsetRelease = () => nativeHeadset.dispose();
       renderer.render = function(scene, camera) {
+        if (scene === self.el.object3D && camera && !self.pmndrsRendering && !self.sceneProbeCapturing) {
+          const native = self.pmndrsActive && self.shouldUsePostProcessing() && shouldUsePmndrsNativeHeadset(self);
+          nativeHeadset.sync(native);
+          if (native) return nativeHeadset.render(scene, camera);
+        }
         if (isPmndrsCloudsRequested(self) && shouldSkipPmndrsCloudsForVr(self)) {
           markPmndrsCloudsSkipped(self, "immersive-xr", {
             textureReady: Boolean(self._pmndrsCloudTextureState && self._pmndrsCloudTextureState.ready),
@@ -4364,6 +4492,10 @@ ${selectedSummaries.join("\n")}`);
       }
     };
     H.disablePmndrsPostProcessing = function() {
+      if (this._pmndrsNativeHeadsetRelease) {
+        this._pmndrsNativeHeadsetRelease();
+        this._pmndrsNativeHeadsetRelease = null;
+      }
       const cloudsRequested = isPmndrsCloudsRequested(this);
       const cloudSkipReason = getPmndrsCloudComposerDisabledReason(this);
       if (!this.pmndrsActive || !this.el.renderer) {
