@@ -9,7 +9,7 @@ require_once dirname( __DIR__ ) . '/class-vrodos-compiler-entity-policy.php';
 require_once dirname( __DIR__ ) . '/class-vrodos-compiler-asset-policy.php';
 
 trait VRodos_Asset_Optimization_Desktop_Profiles {
-	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 5;
+	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 6;
 	protected const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
 	protected const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
 	protected const DESKTOP_PROFILE_STALE_SECONDS = 720;

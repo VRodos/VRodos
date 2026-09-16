@@ -788,7 +788,7 @@ async function optimizeAsset(asset, index, options) {
     if ((isWebProfile(options.profile) || options.profile === 'editor-preview') && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
         try {
             const prepared = JSON.parse(await readFile(options.preparedAnalysis, 'utf8'));
-            if (prepared.schemaVersion === 3 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
+            if (prepared.schemaVersion === 4 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
                 const candidateBuffer = await readFile(options.preparedBaseline);
                 if (prepared.preparedSha256 && sourceDigest(candidateBuffer) === prepared.preparedSha256) {
                     inputBuffer = candidateBuffer;
@@ -936,7 +936,7 @@ async function optimizeAsset(asset, index, options) {
                         await atomicWriteFile(options.preparedBaseline, preparedBinary);
                     }
                     await atomicWriteFile(options.preparedAnalysis, `${JSON.stringify({
-                        schemaVersion: 3,
+                        schemaVersion: 4,
                         sourcePath,
                         sourceSha256,
                         preparedSha256: sourceDigest(preparedBinary),

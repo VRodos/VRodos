@@ -41,6 +41,25 @@ assert.ok(primitives[1].getAttribute('TEXCOORD_0'), 'published GLB must retain d
 assert.equal(primitives[2].getMaterial().getExtension('KHR_materials_anisotropy'), null);
 assert.deepEqual(await prepareAssetMaterials(reloaded), [], 'prepared baselines must not repeat material repairs');
 
+// The rebuilt gallery had TEXCOORD_0, but almost every triangle's UVs lay on
+// a line. Test values, not only attribute presence, including indexed geometry.
+const collapsedUv = attr('VEC2', [0, 0, 0.5, 0.5, 1, 1]);
+const cases = [
+    ['collapsed UV triangle', primitive().setAttribute('TEXCOORD_0', collapsedUv), false],
+    ['indexed collapsed UV triangle', primitive().setAttribute('TEXCOORD_0', collapsedUv)
+        .setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint16Array([0, 1, 2])).setBuffer(buffer)), false],
+    ['non-finite UV', primitive().setAttribute('TEXCOORD_0', attr('VEC2', [0, 0, 1, 0, NaN, 1])), false],
+    ['zero tangent', primitive().setAttribute('TANGENT', attr('VEC4', [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1])), false],
+    ['parallel normal and tangent', primitive().setAttribute('TANGENT', attr('VEC4', [0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1])), false],
+    ['tiny valid UV triangle', primitive().setAttribute('TEXCOORD_0', attr('VEC2', [0, 0, 1e-9, 0, 0, 1e-9])), true],
+    ['authored tangents with unused collapsed UVs', primitive().setAttribute('TANGENT', tangents).setAttribute('TEXCOORD_0', collapsedUv), true],
+];
+for (const [, candidate] of cases) mesh.addPrimitive(candidate);
+await prepareAssetMaterials(doc);
+for (const [name, candidate, supported] of cases) {
+    assert.equal(Boolean(candidate.getMaterial().getExtension('KHR_materials_anisotropy')), supported, name);
+}
+
 const ordinary = new Document();
 const ordinaryBuffer = ordinary.createBuffer();
 const unusedUv = ordinary.createAccessor().setType('VEC2').setArray(new Float32Array([0, 0])).setBuffer(ordinaryBuffer);
