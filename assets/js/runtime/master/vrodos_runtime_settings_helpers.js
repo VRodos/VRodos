@@ -27,8 +27,15 @@ window.VRODOSMaster = window.VRODOSMaster || {};
 
     H.clampNumber = clampNumber;
 
+    let cachedSearch;
+    let cachedQuery;
     H.queryValue = function (queryKey) {
-        return new URLSearchParams(window.location ? window.location.search : '').get(queryKey);
+        const search = window.location ? window.location.search : '';
+        if (search !== cachedSearch || !cachedQuery) {
+            cachedQuery = new URLSearchParams(search);
+            cachedSearch = search;
+        }
+        return cachedQuery.get(queryKey);
     };
 
     H.debugFlag = function (debugKey, queryKey) {

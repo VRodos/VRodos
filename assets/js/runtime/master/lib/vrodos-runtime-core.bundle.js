@@ -335,8 +335,15 @@ ${STOCHASTIC_GLSL}`).replace(
       return n;
     }
     H.clampNumber = clampNumber;
+    let cachedSearch;
+    let cachedQuery;
     H.queryValue = function(queryKey) {
-      return new URLSearchParams(window.location ? window.location.search : "").get(queryKey);
+      const search = window.location ? window.location.search : "";
+      if (search !== cachedSearch || !cachedQuery) {
+        cachedQuery = new URLSearchParams(search);
+        cachedSearch = search;
+      }
+      return cachedQuery.get(queryKey);
     };
     H.debugFlag = function(debugKey, queryKey) {
       return Boolean(window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) || H.queryValue(queryKey) === "1";

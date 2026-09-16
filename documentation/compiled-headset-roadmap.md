@@ -60,6 +60,8 @@ Diagnostic smoke pass on 2026-07-02:
 
 ## Active Standalone Validation
 
+- [Quest 2 Acropolis performance audit, 2026-09-16](quest-acropolis-performance-audit-2026-09-16.md) records the resolution/shimmer comparison, separate shadow artifact, live CPU/render counters, asset inventory, and prioritized optimization work. It is an initial audit, not performance acceptance; its baseline retained temporarily disabled shadow reception.
+
 ### Quest 2 sky cleanup optimization (2026-09-12)
 
 - `vrodos-atmosphere` owns legacy-sky cleanup invalidation. Stable PMNDRS frames skip the legacy DOM search and full-scene traversal; scene/model additions, object replacement, environment initialization/changes, and scene-settings changes invalidate cleanup. Initial and deferred sky handoff suppression remain in place. Removal detaches invalidation listeners.

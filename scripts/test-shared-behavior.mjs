@@ -4,7 +4,14 @@ import { resolve } from 'node:path';
 import vm from 'node:vm';
 
 const root = resolve(import.meta.dirname, '..');
-const context = vm.createContext({ console, URLSearchParams, TextDecoder, Uint8Array });
+let queryParses = 0;
+class CountedSearchParams extends URLSearchParams {
+    constructor(search) {
+        super(search);
+        queryParses++;
+    }
+}
+const context = vm.createContext({ console, URLSearchParams: CountedSearchParams, TextDecoder, Uint8Array });
 context.window = context;
 context.document = { createElement: () => ({ set innerHTML(value) { this.value = value; }, get value() { return this._value; }, set value(value) { this._value = value; } }) };
 context.atob = (value) => Buffer.from(value, 'base64').toString('binary');
@@ -19,8 +26,12 @@ for (const fixture of JSON.parse(readFileSync(resolve(root, 'scripts/fixtures/ce
 }
 const settings = context.VRODOSMaster.RuntimeSettings;
 assert.equal(settings.debugFlag('flag', 'flag'), true);
+const initialQueryParses = queryParses;
+for (let i = 0; i < 1000; i++) settings.queryValue('missing');
+assert.equal(queryParses, initialQueryParses, 'Stable frame-loop queries must reuse the parsed URL.');
 context.location.search = '';
 assert.equal(settings.debugFlag('flag', 'flag'), false);
+assert.equal(queryParses, initialQueryParses + 1, 'Changing the URL must invalidate the parsed query.');
 context.VRODOS_DEBUG = { flag: true };
 assert.equal(settings.debugFlag('flag', 'flag'), true);
 context.VRODOS_DEBUG.flag = false;
