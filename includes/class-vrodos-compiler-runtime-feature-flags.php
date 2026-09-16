@@ -43,6 +43,16 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		return false;
 	}
 
+	public function has_mesh_selection_content( $scene_json ): bool {
+		$policy = new VRodos_Compiler_Entity_Policy();
+		foreach ( $this->scene_objects( $scene_json ) as $object ) {
+			if ( in_array( $policy->effective_category( $object ), VRodos_Compiler_Entity_Policy::INTERACTIVE_GLTF_CATEGORIES, true ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private function scene_objects( $scene_json ): array {
 		$objects = [];
 		$source  = is_object( $scene_json ) ? ( $scene_json->objects ?? null ) : null;

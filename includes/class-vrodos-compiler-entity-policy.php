@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Canonicalizes objects from the compile plan's already-isolated scene copy. */
 final class VRodos_Compiler_Entity_Policy {
+	public const INTERACTIVE_GLTF_CATEGORIES = [ 'door', 'poi-link', 'chat', 'poi-chat', 'audio', 'poi-imagetext', 'assessment' ];
+
 	public function collision_shape( object $source ): string {
 		$category = $this->physical_category( $source );
 		$enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $source->compiledCollisionEnabled ?? ( 'decoration' === $category || 'primitive-plane' === $category ), false );

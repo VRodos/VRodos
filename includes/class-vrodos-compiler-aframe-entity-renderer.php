@@ -13,7 +13,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
 	private const GLTF_LOAD_PHASE_LAZY     = 'lazy';
 	private const CRITICAL_GLTF_CATEGORIES = [ 'walkable-surface', 'collision-proxy' ];
-	private const INTERACTIVE_GLTF_CATEGORIES = [ 'door', 'poi-link', 'chat', 'poi-chat', 'audio', 'poi-imagetext', 'assessment' ];
 	private const NEAR_GLTF_DISTANCE_METERS = 35.0;
 	private const INTERACTIVE_GLTF_DISTANCE_METERS = 60.0;
 	private const SMALL_GLTF_ASSET_BYTES = 5 * 1024 * 1024;
@@ -370,7 +369,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$phase    = self::GLTF_LOAD_PHASE_CRITICAL;
 			$priority = 50 + (int) round( $distance );
 			$reason   = 'near initial camera';
-		} elseif ( in_array( $cat, self::INTERACTIVE_GLTF_CATEGORIES, true ) && null !== $distance && $distance <= self::INTERACTIVE_GLTF_DISTANCE_METERS ) {
+		} elseif ( in_array( $cat, VRodos_Compiler_Entity_Policy::INTERACTIVE_GLTF_CATEGORIES, true ) && null !== $distance && $distance <= self::INTERACTIVE_GLTF_DISTANCE_METERS ) {
 			$phase    = self::GLTF_LOAD_PHASE_CRITICAL;
 			$priority = 120 + (int) round( $distance );
 			$reason   = 'near interaction target';

@@ -62,7 +62,7 @@ class VRodos_Compiler_Runtime_Script_Planner {
 			$capabilities[] = 'fps-meter';
 		}
 
-		if ( $this->feature_flags->is_static_collision_enabled( $metadata ) ) {
+		if ( $this->feature_flags->is_static_collision_enabled( $metadata ) || $this->feature_flags->has_mesh_selection_content( $scene_json ) ) {
 			$capabilities[] = 'collision-bvh';
 		}
 

@@ -546,4 +546,23 @@ vrodos_assert_same(
 	'actual generated manifest validation'
 );
 
+$selection_planner = new VRodos_Compiler_Runtime_Script_Planner( $actual_manifest );
+foreach ( [ 'poi-imagetext', 'door', 'poi-link' ] as $selection_category ) {
+	$selection_scene = vrodos_test_scene(
+		[ 'aframeNavigationMode' => 'fly', 'aframeCollisionMode' => 'off' ],
+		[ (object) [ 'category_slug' => $selection_category ] ]
+	);
+	vrodos_assert_true(
+		in_array( 'collision-bvh-vendor', $selection_planner->script_ids_for_scene( $selection_scene, 'single-player' ), true ),
+		$selection_category . ' selection acceleration does not depend on walking collision'
+	);
+}
+vrodos_assert_false(
+	in_array( 'collision-bvh-vendor', $selection_planner->script_ids_for_scene(
+		vrodos_test_scene( [ 'aframeNavigationMode' => 'fly' ], [ (object) [ 'category_slug' => 'decoration' ] ] ),
+		'single-player'
+	), true ),
+	'noninteractive fly scene keeps BVH lazy'
+);
+
 echo "Runtime script planner fixtures passed.\n";
