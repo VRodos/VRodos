@@ -171,7 +171,7 @@ VRODOS.importer = VRODOS.importer || {};
         return sceneCategoryAliases[value] || value;
     }
 
-    const sceneAssetRoleValues = Object.freeze(['decoration', 'walkable-surface']);
+    const sceneAssetRoleValues = Object.freeze(['decoration', 'walkable-surface', 'poi-imagetext']);
     const sceneAssetRoleSet = new Set(sceneAssetRoleValues);
 
     function getSceneAssetSourceCategory(resource) {
@@ -189,24 +189,33 @@ VRODOS.importer = VRODOS.importer || {};
 
     function isSceneAssetRoleEligible(resource) {
         const sourceCategory = getSceneAssetSourceCategory(resource);
-        return sceneAssetRoleSet.has(sourceCategory) || sourceCategory === 'primitive-plane';
+        return ['decoration', 'walkable-surface', 'primitive-plane'].includes(sourceCategory);
     }
 
     function resolveSceneAssetCategory(resource) {
         const sourceCategory = getSceneAssetSourceCategory(resource);
         if (sourceCategory === 'primitive-plane') {
-            return normalizeSceneAssetRole(resource.sceneAssetRole) || 'walkable-surface';
+            return ['decoration', 'walkable-surface'].includes(resource.sceneAssetRole) ? resource.sceneAssetRole : 'walkable-surface';
         }
-        if (!sceneAssetRoleSet.has(sourceCategory)) {
+        if (!['decoration', 'walkable-surface'].includes(sourceCategory)) {
             return sourceCategory;
         }
 
         return normalizeSceneAssetRole(resource.sceneAssetRole) || sourceCategory;
     }
 
+    function resolveScenePhysicalCategory(resource) {
+        const category = resolveSceneAssetCategory(resource);
+        if (category === 'poi-imagetext' && isSceneAssetRoleEligible(resource)) {
+            return ['decoration', 'walkable-surface'].includes(resource.scenePoiPhysicalRole)
+                ? resource.scenePoiPhysicalRole : getSceneAssetSourceCategory(resource);
+        }
+        return category;
+    }
+
     function normalizeCompiledCollisionEnabled(value, resource) {
         if (value === undefined || value === null || value === '') {
-            return resolveSceneAssetCategory(resource) === 'decoration' || ['decoration', 'primitive-plane'].includes(getSceneAssetSourceCategory(resource));
+            return resolveScenePhysicalCategory(resource) === 'decoration' || ['decoration', 'primitive-plane'].includes(getSceneAssetSourceCategory(resource));
         }
 
         const normalized = String(value).trim().toLowerCase();
@@ -217,7 +226,7 @@ VRODOS.importer = VRODOS.importer || {};
         const sourceCategory = getSceneAssetSourceCategory(resource);
         const normalizedRole = normalizeSceneAssetRole(selectedRole);
         const defaultRole = sourceCategory === 'primitive-plane' ? 'walkable-surface' : sourceCategory;
-        if ((!sceneAssetRoleSet.has(sourceCategory) && sourceCategory !== 'primitive-plane') || !normalizedRole || normalizedRole === defaultRole) {
+        if (!isSceneAssetRoleEligible(resource) || (sourceCategory === 'primitive-plane' && normalizedRole === 'poi-imagetext') || !normalizedRole || normalizedRole === defaultRole) {
             return '';
         }
 
@@ -489,6 +498,7 @@ VRODOS.importer = VRODOS.importer || {};
         isDisplayTextField,
         normalizeSceneAssetCategory,
         sceneAssetRoleValues,
+        resolveScenePhysicalCategory,
         getSceneAssetSourceCategory,
         normalizeSceneAssetRole,
         isSceneAssetRoleEligible,

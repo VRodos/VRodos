@@ -15,6 +15,7 @@ site-{blog_id}/
   assets/{asset_id}/derivatives/{profile}/
   scenes/{scene_id}/previews/
   scenes/{scene_id}/backgrounds/
+  scenes/{scene_id}/poi-images/
   tmp/{operation}/{random-token}/
 ```
 

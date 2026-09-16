@@ -101,6 +101,17 @@ function exportPlacement(overrides = {}) {
     });
 }
 
+const poiPlacement = exportPlacement({ sceneAssetRole: 'poi-imagetext', scenePoiPhysicalRole: 'decoration',
+    poi_img_title: 'Έκθεμα', poi_img_content: 'Πρώτη γραμμή\nΔεύτερη γραμμή', poiImageAttachmentId: 42,
+    poi_img_path: '/private/photo.jpg' });
+assert(poiPlacement.category_slug === 'decoration' && poiPlacement.sceneAssetRole === 'poi-imagetext', 'POI conversion must preserve the source category');
+assert(poiPlacement.poiImageAttachmentId === 42 && !poiPlacement.poi_img_path, 'POI photo ID, not its transient URL, must persist');
+assert(poiPlacement.poi_img_content.includes('\n') && poiPlacement.poi_img_title === 'Έκθεμα', 'Greek multiline POI content must survive saving');
+assert(context.VRODOS.utils.resolveScenePhysicalCategory(poiPlacement) === 'decoration', 'POIs must preserve physical decoration behavior');
+assert(context.VRODOS.utils.resolveScenePhysicalCategory({ ...poiPlacement, scenePoiPhysicalRole: 'walkable-surface' }) === 'walkable-surface', 'POIs must preserve physical walkable behavior');
+assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...primitivePlane, sceneAssetRole: 'poi-imagetext' }) === 'walkable-surface', 'planes must not convert to POIs');
+assert(!context.VRODOS.utils.isSceneAssetRoleEligible({ category_slug: 'poi-imagetext' }), 'existing POI assets must retain their presentation');
+
 const persisted = exportPlacement({
     sceneAssetRole: "walkable-surface",
     walkableBehavior: "auto"
@@ -160,6 +171,34 @@ context.VRODOS.editor.undoManager.redo();
 assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === "walkable-surface", "redo must restore the placement override");
 assert(undoObject.userData.sceneAssetRole === "walkable-surface", "redo must keep object metadata in sync");
 assert(presentationRefreshes === 2 && autosaves === 2, "undo and redo must refresh presentation and autosave");
+
+const poiRoleCommand = new context.VRODOS.editor.PropertyCommand(undoObject, 'sceneAssetRole', 'walkable-surface', 'poi-imagetext');
+poiRoleCommand.redo();
+assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === 'poi-imagetext', 'redo enters POI mode');
+assert(undoObject.scenePoiPhysicalRole === 'walkable-surface', 'entering POI mode remembers the previous physical role');
+poiRoleCommand.undo();
+assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === 'walkable-surface', 'undo restores walkable mode');
+poiRoleCommand.redo();
+const photoCommand = new context.VRODOS.editor.PoiImageCommand(undoObject, { attachmentId: undefined, url: '' }, { attachmentId: 42, url: '/photo.jpg' });
+let photoRefreshes = 0;
+context.VRODOS.ui.getSelectedPropertyTarget = () => undoObject;
+context.VRODOS.ui.refreshPoiImageControls = () => { photoRefreshes++; };
+photoCommand.redo();
+assert(undoObject.poiImageAttachmentId === 42, 'photo change belongs to its initiating placement');
+photoCommand.undo();
+assert(!Object.hasOwn(undoObject, 'poiImageAttachmentId') && undoObject.poi_img_path === '', 'photo undo restores the previous image choice');
+assert(photoRefreshes === 2, 'photo undo and redo refresh the selected placement preview');
+photoCommand.redo();
+poiRoleCommand.undo();
+assert(undoObject.poiImageAttachmentId === 42, 'switching away from POI keeps authored content');
+const saveSource = readFileSync(resolve(root, 'assets/js/editor/ajax/vrodos_save_scene_ajax.js'), 'utf8');
+vm.runInNewContext(saveSource.slice(saveSource.indexOf('function collectRetainedPoiImageIds()'), saveSource.indexOf('function parseSceneSaveResponse')), context);
+context.VRODOS.editor.undoManager.add(photoCommand);
+assert(context.collectRetainedPoiImageIds().includes(42), 'photo references in undo history must survive scene cleanup');
+context.VRODOS.editor.undoManager.undo();
+assert(context.collectRetainedPoiImageIds().includes(42), 'photo references in redo history must also survive cleanup');
+const duplicatePoi = exportPlacement({ ...poiPlacement, uuid: 'placement-copy', name: 'copy' });
+assert(duplicatePoi.poiImageAttachmentId === 42 && duplicatePoi.poi_img_content === poiPlacement.poi_img_content, 'duplicated placements retain their POI content');
 
 const transformed = new Object3D();
 transformed.name = 'transformed-object';

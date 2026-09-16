@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -76,7 +78,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	private function object_requires_spatial_ui( object $object ): bool {
-		$category = $this->normalize_scene_key( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
+		$category = ( new VRodos_Compiler_Entity_Policy() )->effective_category( $object );
 		if ( in_array( $category, [ 'assessment', 'poi-imagetext', 'poi-image-text' ], true ) ) {
 			return true;
 		}
@@ -97,12 +99,6 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		}
 
 		return '';
-	}
-
-	private function normalize_scene_key( string $value ): string {
-		$value = strtolower( trim( $value ) );
-		$value = preg_replace( '/[^a-z0-9]+/', '-', $value ) ?? $value;
-		return trim( $value, '-' );
 	}
 
 	public function runtime_mode_for_scene( $scene_json, $requested_runtime_mode = null ): string {

@@ -27,6 +27,16 @@ $object->category_slug = 'decoration';
 $object->sceneAssetRole = 'walkable-surface';
 check_box_policy( 'mesh' === $policy->collision_shape( $object ) && $policy->requires_protected_geometry( $object ), 'Effective walkable role' );
 $record = [ 'schemaVersion' => 1, 'min' => [ -1, -2, -3 ], 'max' => [ 1, 2, 3 ], 'center' => [ 0, 0, 0 ] ];
+foreach ( [ 'decoration' => 'box', 'walkable-surface' => 'mesh' ] as $physical => $shape ) {
+	$poi = (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'poi-imagetext', 'scenePoiPhysicalRole' => $physical, 'compiledCollisionEnabled' => true ];
+	check_box_policy( 'poi-imagetext' === $policy->effective_category( $poi ), 'POI role resolution' );
+	check_box_policy( $shape === $policy->collision_shape( $poi ), 'POI preserves physical collision shape' );
+	check_box_policy( ( 'mesh' === $shape ) === $policy->requires_protected_geometry( $poi ), 'POI preserves geometry protection' );
+	$normalized_poi = $policy->normalize( clone $poi, 1, 'poi' );
+	check_box_policy( $shape === $policy->collision_shape( $normalized_poi ), 'Physical role survives compile normalization' );
+	$poi->compiledCollisionEnabled = false;
+	check_box_policy( 'none' === $policy->collision_shape( $poi ), 'POI preserves disabled collision' );
+}
 check_box_policy( VRodos_Asset_Collision_Bounds::valid( $record ), 'Valid bounds' );
 $record['max'][0] = -2;
 check_box_policy( ! VRodos_Asset_Collision_Bounds::valid( $record ), 'Reject reversed bounds' );

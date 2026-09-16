@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-scene-poi-images.php';
+
 require_once __DIR__ . '/class-vrodos-url-normalizer.php';
 
 require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
@@ -351,6 +353,9 @@ class VRodos_Scene_CPT_Manager {
 			}
 
 			foreach ( $asset_metadata as $key => $value ) {
+				if ( 'poi_img_path' === $key && array_key_exists( VRodos_Scene_POI_Images::FIELD, $object_data ) ) {
+					continue;
+				}
 				$object_data[ $key ] = $value;
 			}
 		}
@@ -550,6 +555,8 @@ class VRodos_Scene_CPT_Manager {
 				$decoded_scene->metadata->backgroundImagePath = VRodos_Storage_Manager::authoring_url_for_attachment( $background_id );
 			}
 			self::hydrate_editor_surface_texture_urls( $decoded_scene, (int) $current_scene_id );
+			VRodos_Scene_POI_Images::hydrate( $decoded_scene, (int) $current_scene_id,
+				[ VRodos_Storage_Manager::class, 'authoring_url_for_attachment' ] );
 			$scene_json_from_db = wp_json_encode( $decoded_scene, JSON_UNESCAPED_SLASHES );
 		}
 

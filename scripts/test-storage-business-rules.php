@@ -257,6 +257,31 @@ try {
 	$result = VRodos_Storage_Manager::replace_attachment_references( 42, 'asset', [ 'source', 'preview' ], 201 );
 	vrodos_storage_assert( is_wp_error( $result ) && $test_meta[42]['source'] === 103 && $test_meta[42]['preview'] === 104, 'database failure rolls references back' );
 	vrodos_storage_assert( $test_deleted_attachments === [ 201 ], 'failed replacement deletes only the uncommitted copy' );
+	require_once dirname( __DIR__ ) . '/includes/class-vrodos-scene-poi-images.php';
+	$test_meta[502] = [ '_vrodos_private_storage' => '1', '_vrodos_storage_owner_type' => 'scene', '_vrodos_storage_owner_id' => 42, '_vrodos_storage_role' => 'poi-images' ];
+	$poi_scene = (object) [ 'objects' => (object) [
+		'photo' => (object) [ 'asset_id' => 700, 'poiImageAttachmentId' => 502, 'poi_img_path' => '/asset-photo.jpg' ],
+		'text' => (object) [ 'asset_id' => 700, 'poiImageAttachmentId' => 0, 'poi_img_path' => '/asset-photo.jpg' ],
+		'inherited' => (object) [ 'asset_id' => 700, 'poi_img_path' => '/asset-photo.jpg' ],
+	] ];
+	VRodos_Scene_POI_Images::hydrate( $poi_scene, 42, static fn( int $id ): string => '/published/' . $id . '.jpg' );
+	vrodos_storage_assert( '/published/502.jpg' === $poi_scene->objects->photo->poi_img_path, 'placement photo replaces asset photo during publication' );
+	vrodos_storage_assert( '' === $poi_scene->objects->text->poi_img_path, 'explicit photo removal does not inherit the asset photo' );
+	vrodos_storage_assert( '/asset-photo.jpg' === $poi_scene->objects->inherited->poi_img_path, 'existing POIs retain their asset photo' );
+	vrodos_storage_assert( [ 502 ] === VRodos_Scene_POI_Images::ids( $poi_scene->objects ), 'retained photos are tracked by scene attachment ID' );
+	try {
+		VRodos_Scene_POI_Images::hydrate( $poi_scene, 43, static fn( int $id ): string => '/published/' . $id );
+		vrodos_storage_assert( false, 'foreign scene photos must not publish' );
+	} catch ( RuntimeException $error ) {
+		vrodos_storage_assert( str_contains( $error->getMessage(), 'does not belong' ), 'foreign scene photo has an ownership error' );
+	}
+	$test_meta[502]['_vrodos_storage_role'] = 'backgrounds';
+	try {
+		VRodos_Scene_POI_Images::validate( 502, 42 );
+		vrodos_storage_assert( false, 'non-POI attachments must be rejected' );
+	} catch ( RuntimeException $error ) {
+		vrodos_storage_assert( str_contains( $error->getMessage(), 'does not belong' ), 'photo role is enforced' );
+	}
 	echo "Storage business rule tests passed.\n";
 } finally {
 	if ( is_dir( $test_root ) ) {

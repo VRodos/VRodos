@@ -277,23 +277,19 @@
 	</div>
 
 	<div class="prop-row">
-		<label class="prop-label">Image (WIP)</label>
-		<input id="ImgUploadInput" type="file" name="ImgloadInput"
-				value="" multiple accept=".jpg,.png" disabled
+		<label for="poi_image_upload" class="prop-label">Photo</label>
+		<input id="poi_image_upload" type="file"
+				accept="image/jpeg,image/png,image/webp"
 				class="tw-text-[10px] tw-text-slate-400" />
 	</div>
-
-	<div class="prop-row">
-		<label for="poi_image_desc_checkbox" class="prop-label">Description</label>
-		<input type="checkbox" id="poi_image_desc_checkbox" name="poi_image_desc_checkbox"
-				title="Enable description" value="" checked="true"
-				class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
-	</div>
+	<div class="prop-row"><img id="poi_image_preview" alt="POI photo" hidden style="max-width:100%;max-height:120px;object-fit:contain" /></div>
+	<div class="prop-row"><button type="button" id="poi_image_remove" class="tw-btn tw-btn-xs">Remove photo</button></div>
+	<div class="prop-row"><span id="poi_image_status" role="status" class="tw-text-[10px] tw-text-slate-400"></span></div>
 
 	<div class="prop-row">
 		<label for="poi_image_desc_text" class="prop-label">Text</label>
-		<input type="text" id="poi_image_desc_text" name="poiImgDesc" placeholder="Description"
-				class="prop-input tw-flex-1" value="" />
+		<textarea id="poi_image_desc_text" name="poiImgDesc" placeholder="Description"
+				class="prop-input tw-flex-1" rows="5" maxlength="2000"></textarea>
 	</div>
 </div>
 

@@ -12,7 +12,7 @@ scene.add(light);
 let selected = light;
 let saves = 0;
 const inputs = new Map();
-for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title']) {
+for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title', 'poi_image_title_text', 'poi_image_desc_text']) {
     const handlers = {};
     inputs.set(id, { value: '', addEventListener(type, callback) { handlers[type] = callback; },
         fire(type, value) { if (value !== undefined) this.value = value; handlers[type]?.call(this); } });
@@ -32,7 +32,7 @@ const read = path => readFileSync(new URL(`../assets/js/editor/${path}`, import.
 vm.runInContext(read('scene/vrodos_scene_light_artifacts.js'), context);
 vm.runInContext(read('scene/vrodos_undo_engine.js'), context);
 const source = read('ui/vrodos_property_controls.js');
-const names = new Set(['initPersistentPropertyListeners', '_getEditorInput', '_bindEditorInputChange',
+const names = new Set(['initPersistentPropertyListeners', 'bindPoiImageControls', '_getEditorInput', '_bindEditorInputChange',
     '_bindTrackedEditorInputChange', '_getLightShadowRadius', '_getFirstChildMaterialColorHex',
     '_getObjectColorHex', 'sanitizeInputValue']);
 for (const node of parse(source, { ecmaVersion: 'latest' }).body) {
@@ -93,6 +93,14 @@ power.fire('change', '999');
 assert.equal(other.power, undefined, 'A stale focused input must not edit a different selection.');
 inputs.get('poi_chat_title').fire('change', 'Discussion');
 assert.equal(other.poi_chat_title, 'Discussion', 'Shared non-light property inputs must remain usable.');
+inputs.get('poi_image_title_text').fire('change', 'Έκθεμα');
+inputs.get('poi_image_desc_text').fire('change', 'Πρώτη γραμμή\nΔεύτερη γραμμή');
+assert.equal(other.poi_img_title, 'Έκθεμα', 'POI title input must update the title property.');
+assert.equal(other.poi_img_content, 'Πρώτη γραμμή\nΔεύτερη γραμμή', 'POI description preserves Greek and line breaks.');
+manager.undo();
+assert.equal(other.poi_img_content, undefined, 'POI text can be undone independently.');
+manager.redo();
+assert.equal(other.poi_img_content, 'Πρώτη γραμμή\nΔεύτερη γραμμή', 'POI text redo restores content.');
 selected = null;
 power.fire('focus');
 power.fire('change', '1');

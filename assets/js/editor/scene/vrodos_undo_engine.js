@@ -498,18 +498,54 @@ VRODOS.editor.LockCommand = class {
 };
 
 /**
- * Command for Property Changes (Color, Intensity, etc.)
+ * Keep a POI photo's attachment reference and authoring URL together during undo.
  */
+VRODOS.editor.PoiImageCommand = class {
+    constructor(object, oldState, newState) {
+        this.objectUuid = object.uuid;
+        this.oldState = oldState;
+        this.newState = newState;
+    }
+
+    apply(state) {
+        const object = vrodosUndoGetObjectByUuid(this.objectUuid);
+        if (!object) return;
+        object.userData = object.userData || {};
+        if (state.attachmentId === undefined) {
+            delete object.poiImageAttachmentId;
+            delete object.userData.poiImageAttachmentId;
+        } else {
+            object.poiImageAttachmentId = state.attachmentId;
+            object.userData.poiImageAttachmentId = state.attachmentId;
+        }
+        object.poi_img_path = state.url;
+        object.userData.poi_img_path = state.url;
+        if (VRODOS.ui.getSelectedPropertyTarget && VRODOS.ui.getSelectedPropertyTarget() === object) {
+            VRODOS.ui.refreshPoiImageControls(object);
+        }
+        VRODOS.api.triggerAutoSave();
+    }
+
+    undo() { this.apply(this.oldState); }
+    redo() { this.apply(this.newState); }
+};
+
+/** Command for property changes (color, intensity, scene role, etc.). */
 VRODOS.editor.PropertyCommand = class {
     constructor(object, property, oldValue, newValue) {
         const target = object.realObject || object;
         this.objectUuid = target.uuid;
         this.property = property;
+        if (property === 'sceneAssetRole') {
+            this.oldPhysicalRole = target.scenePoiPhysicalRole;
+            this.newPhysicalRole = newValue === 'poi-imagetext'
+                ? VRODOS.utils.resolveScenePhysicalCategory(target) : target.scenePoiPhysicalRole;
+        }
         this.oldValue = oldValue;
         this.newValue = newValue;
     }
 
-    apply(val) {
+    apply(val, physicalRole) {
         const obj = vrodosUndoGetObjectByUuid(this.objectUuid);
         if (!obj) return;
 
@@ -523,6 +559,8 @@ VRODOS.editor.PropertyCommand = class {
                 ? VRODOS.utils.sceneAssetRoleOverrideFor(obj, val)
                 : val;
             obj.userData = obj.userData || {};
+            obj.scenePoiPhysicalRole = physicalRole;
+            obj.userData.scenePoiPhysicalRole = physicalRole;
             if (sceneRole) {
                 obj.sceneAssetRole = sceneRole;
                 obj.userData.sceneAssetRole = sceneRole;
@@ -580,11 +618,11 @@ VRODOS.editor.PropertyCommand = class {
     }
 
     undo() {
-        this.apply(this.oldValue);
+        this.apply(this.oldValue, this.oldPhysicalRole);
     }
 
     redo() {
-        this.apply(this.newValue);
+        this.apply(this.newValue, this.newPhysicalRole);
     }
 };
 

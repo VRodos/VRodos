@@ -246,7 +246,7 @@ final class VRodos_Storage_Manager {
 				}
 				$parts[] = $profile;
 			}
-		} elseif ( 'scene' === $entity_type && in_array( $role, [ 'previews', 'backgrounds', 'surface-textures' ], true ) ) {
+		} elseif ( 'scene' === $entity_type && in_array( $role, [ 'previews', 'backgrounds', 'surface-textures', 'poi-images' ], true ) ) {
 			$parts = [ 'scenes', (string) $entity_id, $role ];
 		} else {
 			return new WP_Error( 'vrodos_invalid_storage_role', 'The requested VRodos storage role is invalid.' );

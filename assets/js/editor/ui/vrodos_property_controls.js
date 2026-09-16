@@ -1,4 +1,70 @@
 /* global isObjectControlsPanelOpen, setObjectControlsActionsVisible, showObjectControlsPanel, hideObjectControlsPanel, vrodosGetEffectiveObjectCategory, showPropertiesInPanel, refreshSceneAssetRolePresentation, bindObjectControlsPanelEvents */
+
+const poiImageUploads = new WeakMap();
+
+VRODOS.ui.refreshPoiImageControls = function(object) {
+    const preview = document.getElementById('poi_image_preview');
+    const upload = document.getElementById('poi_image_upload');
+    const remove = document.getElementById('poi_image_remove');
+    const status = document.getElementById('poi_image_status');
+    const state = poiImageUploads.get(object);
+    const url = object.poi_img_path || '';
+    if (preview) {
+        preview.hidden = !url;
+        if (url) preview.src = url;
+        else preview.removeAttribute('src');
+    }
+    if (upload) upload.disabled = Boolean(state && state.pending);
+    if (remove) remove.disabled = !url || Boolean(state && state.pending);
+    if (status) status.textContent = state && state.message || 'Optional: JPEG, PNG or WebP, up to 10 MiB and 2048 px.';
+};
+
+function bindPoiImageControls() {
+    const upload = document.getElementById('poi_image_upload');
+    const remove = document.getElementById('poi_image_remove');
+    if (!upload || upload.dataset.poiBound) return;
+    upload.dataset.poiBound = '1';
+    const refresh = (object) => {
+        if (getObjectControlsTargetObject() === object) VRODOS.ui.refreshPoiImageControls(object);
+    };
+    const commit = (object, nextState) => {
+        const command = new VRODOS.editor.PoiImageCommand(object, {
+            attachmentId: object.poiImageAttachmentId,
+            url: object.poi_img_path || ''
+        }, nextState);
+        VRODOS.editor.undoManager.add(command);
+        command.redo();
+        refresh(object);
+    };
+    upload.addEventListener('change', async () => {
+        const object = getObjectControlsTargetObject();
+        const file = upload.files && upload.files[0];
+        upload.value = '';
+        if (!object || !file || vrodosGetEffectiveObjectCategory(object) !== 'poi-imagetext') return;
+        poiImageUploads.set(object, { pending: true, message: 'Uploading photo…' });
+        refresh(object);
+        try {
+            const result = await VRODOS.api.uploadPoiImage(file);
+            // Bind the result to the initiating placement, never the current selection.
+            if (VRODOS.editor.sceneRegistry.get(object.uuid) !== object) {
+                throw new Error('The object was removed before its photo finished uploading.');
+            }
+            commit(object, { attachmentId: result.attachmentId, url: result.url });
+            poiImageUploads.delete(object);
+        } catch (error) {
+            poiImageUploads.set(object, { pending: false, message: error.message || 'Photo upload failed.' });
+        }
+        refresh(object);
+    });
+    if (remove) {
+        remove.addEventListener('click', () => {
+            const object = getObjectControlsTargetObject();
+            if (!object) return;
+            poiImageUploads.delete(object);
+            commit(object, { attachmentId: 0, url: '' });
+        });
+    }
+}
 /* exported VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, vrodosNormalizeWalkableBehavior, vrodosNormalizeObjectShadowRole, vrodosNormalizeObjectMaterialRole, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, vrodosNormalizeAudioPlaybackMode, vrodosNormalizeAudioLoopValue, vrodosNormalizeAudioNumericValue, vrodosCommitObjectControlsProperty, vrodosPlaneSurfaceMaterialState, vrodosSavePlaneSurfaceMaterialPackage, vrodosSavePlaneTextureChange */
 // Shared property inputs and change application.
 
@@ -259,7 +325,7 @@ function displaySharedPropertySections(event, object) {
     const name = object.name;
     let hasProperties = false;
 
-    switch (object.category_slug) {
+    switch (vrodosGetEffectiveObjectCategory(object)) {
         case 'poi-imagetext':
             VRODOS.ui.displayPoiImageTextProperties(event, name);
             hasProperties = true;
@@ -480,34 +546,10 @@ function initPersistentPropertyListeners() {
         }
     });
 
-    const setTitle = _getEditorInput('poi_image_title_text');
-    const setDesc = _getEditorInput('poi_image_desc_text');
-
-    _bindEditorInputChange('poi_image_desc_checkbox', function () {
-        const obj = getSelectedPropertyTarget();
-        if (!obj) {
-            return;
-        }
-
-        const oldContent = obj.poi_img_content;
-        const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
-        const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
-
-        if (oldContent !== newContent) {
-            obj.poi_img_content = newContent;
-            obj.poi_img_title = newTitle;
-
-            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
-            }
-
-            if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
-            VRODOS.api.saveChanges();
-        }
-    });
+    bindPoiImageControls();
 
     bindPropEntries([
-        { id: 'poi_img_title_text', prop: 'poi_img_title' },
+        { id: 'poi_image_title_text', prop: 'poi_img_title' },
         { id: 'poi_image_desc_text', prop: 'poi_img_content' },
         { id: 'poi_chat_title', prop: 'poi_chat_title' },
         { id: 'poi_chat_participants', prop: 'poi_chat_participants', sanitize: true },
@@ -711,8 +753,13 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
         return;
     }
 
+    const command = new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue);
     if (!targetObject.userData) {
         targetObject.userData = {};
+    }
+    if (prop === 'sceneAssetRole' && nextValue === 'poi-imagetext') {
+        targetObject.scenePoiPhysicalRole = VRODOS.utils.resolveScenePhysicalCategory(targetObject);
+        targetObject.userData.scenePoiPhysicalRole = targetObject.scenePoiPhysicalRole;
     }
     if (prop === 'sceneAssetRole' && (nextValue === undefined || nextValue === null || nextValue === '')) {
         delete targetObject.sceneAssetRole;
@@ -725,7 +772,7 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
     VRODOS.loader.refreshPrimitivePlaneProperty(targetObject, prop);
 
     if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue));
+        VRODOS.editor.undoManager.add(command);
     }
 
     if (typeof VRODOS.api.saveChanges === 'function') {

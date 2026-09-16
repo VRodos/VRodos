@@ -8,6 +8,7 @@ require_once __DIR__ . '/class-vrodos-asset-origin.php';
 require_once __DIR__ . '/class-vrodos-compiler-asset-policy.php';
 
 require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
+require_once __DIR__ . '/class-vrodos-scene-poi-images.php';
 
 /** Publishes immutable, content-addressed copies required by one build. */
 final class VRodos_Compiler_Resource_Publisher {
@@ -71,6 +72,8 @@ final class VRodos_Compiler_Resource_Publisher {
 				}
 				$this->hydrate_value( $scene->scene_json );
 				$this->hydrate_scene_surface_textures( $scene->scene_json, $scene->scene_id );
+				VRodos_Scene_POI_Images::hydrate( $scene->scene_json, $scene->scene_id,
+					fn( int $id ): string => $this->publish_attachment( $id, 'scene-' . $scene->scene_id . '-poi-image' ) );
 				$preview_id = absint( get_post_thumbnail_id( $scene->scene_id ) );
 				if ( 'immerse' === get_post_meta( $this->project_id, '_immerse_source', true ) && $preview_id && wp_attachment_is_image( $preview_id ) && VRodos_Storage_Manager::attachment_is_owned_by( $preview_id, 'scene', $scene->scene_id ) ) {
 					try {
@@ -226,7 +229,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	}
 
 	private function hydrate_asset_object( object $object, int $asset_id ): void {
-		if ( 'decoration' === ( new VRodos_Compiler_Entity_Policy() )->effective_category( $object ) ) {
+		if ( 'decoration' === ( new VRodos_Compiler_Entity_Policy() )->physical_category( $object ) ) {
 			$bounds = VRodos_Asset_Optimization_Manager::collision_bounds_for_asset( $asset_id );
 			if ( is_wp_error( $bounds ) ) {
 				throw new RuntimeException( sprintf( '[VRodos] Decoration asset #%d: %s', $asset_id, $bounds->get_error_message() ) );
@@ -250,6 +253,9 @@ final class VRodos_Compiler_Resource_Publisher {
 		];
 		$protect_geometry = $this->asset_requires_protected_geometry( $object );
 		foreach ( $field_map as $property => $meta_key ) {
+			if ( 'poi_img_path' === $property && property_exists( $object, VRodos_Scene_POI_Images::FIELD ) ) {
+				continue;
+			}
 			$meta = get_post_meta( $asset_id, $meta_key, true );
 			if ( 'screenshot_path' === $property && ! absint( $meta ) ) {
 				$meta = get_post_thumbnail_id( $asset_id );

@@ -940,7 +940,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( ! is_object( $obj ) ) {
 			return '';
 		}
-		$category = $this->entity_policy->effective_category( $obj );
+		$category = $this->entity_policy->physical_category( $obj );
 		if ( 'primitive-plane' !== $category ) {
 			return $category;
 		}
@@ -1357,7 +1357,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {
 		$uuid = $obj->uuid ?? '';
-		$cat  = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? '' ) );
+		$cat  = $this->entity_policy->physical_category( $obj );
 		$context = $cat . ':' . ( $uuid !== '' ? $uuid : (string) ( $obj->name ?? 'unnamed' ) );
 
 		$glb_resolution = $this->resolve_compiled_gltf_asset_url( $obj, (string) ( $obj->glb_path ?? '' ) );
@@ -1440,6 +1440,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( $this->isHoverEnabled ) {
 				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
 			}
+		}
+
+		if ( 'poi-imagetext' === ( $obj->sceneAssetRole ?? '' ) ) {
+			$class .= ' raycastable';
+			$this->apply_poi_interaction_attributes( $entity, $obj );
 		}
 
 		$material = '';
@@ -1694,13 +1699,21 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 	}
 
-	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
-		$uuid = $obj->uuid ?? '';
+	private function apply_poi_interaction_attributes( DOMElement $entity, object $obj ): void {
+		$image_url = $this->normalize_url( $obj->poi_img_path ?? '' );
+		$this->track_runtime_asset( 'poi-image', $image_url, 'poi-imagetext:' . $obj->uuid );
+		$entity->setAttribute( 'info-panel', (string) $obj->uuid );
+		$entity->setAttribute( 'data-vrodos-poi-title', $this->sanitize_text_attr( $obj->poi_img_title ?? '' ) );
+		$entity->setAttribute( 'data-vrodos-poi-description', $this->sanitize_multiline_text_attr( $obj->poi_img_content ?? '' ) );
+		$entity->setAttribute( 'data-vrodos-poi-image-src', $image_url );
+	}
 
-		$image_url  = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
-		$title_text = $obj->poi_img_title ?? $obj->poi_title ?? '';
-		$desc_text  = $obj->poi_img_content ?? $obj->poi_description ?? '';
-		$this->track_runtime_asset( 'poi-image', $image_url, 'poi-imagetext:' . $uuid );
+	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
+		if ( 'poi-imagetext' === ( $obj->sceneAssetRole ?? '' ) ) {
+			$this->render_gltf_entity( $dom, $ascene, $assets, $obj );
+			return;
+		}
+		$uuid = $obj->uuid ?? '';
 
 		$button_anchor = $dom->createElement( 'a-entity' );
 		$button_anchor->setAttribute( 'id', 'button_poi_root_' . $uuid );
@@ -1721,10 +1734,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
-		$button->setAttribute( 'info-panel', $uuid );
-		$button->setAttribute( 'data-vrodos-poi-title', $this->sanitize_text_attr( $title_text ) );
-		$button->setAttribute( 'data-vrodos-poi-description', $this->sanitize_text_attr( $desc_text ) );
-		$button->setAttribute( 'data-vrodos-poi-image-src', $image_url );
+		$this->apply_poi_interaction_attributes( $button, $obj );
 		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );

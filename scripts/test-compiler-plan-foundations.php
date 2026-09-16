@@ -299,6 +299,40 @@ if ( class_exists( 'DOMDocument' ) ) {
 		42,
 		[ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $scene ]
 	);
+	$poi_dom = new DOMDocument( '1.0', 'UTF-8' );
+	$poi_scene = $poi_dom->createElement( 'a-scene' );
+	$poi_dom->appendChild( $poi_scene );
+	$poi_assets = $poi_dom->createElement( 'a-assets' );
+	$poi_scene->appendChild( $poi_assets );
+	$poi_objects = [];
+	foreach ( [ 'decoration', 'walkable-surface' ] as $physical ) {
+		$poi_objects[ $physical ] = $normalizer->normalize( (object) [
+			'category_slug' => 'decoration', 'sceneAssetRole' => 'poi-imagetext', 'scenePoiPhysicalRole' => $physical,
+			'uuid' => 'poi-' . $physical, 'glb_path' => '/same-model.glb', 'asset_id' => 701,
+			'vrodosAssetOriginMode' => 'bounds-center',
+			'vrodosCollisionBounds' => [ 'schemaVersion' => 1, 'min' => [ -1, -1, -1 ], 'max' => [ 1, 1, 1 ], 'center' => [ 0, 0, 0 ] ],
+			'poi_img_title' => 'Έκθεμα', 'poi_img_content' => "Πρώτη γραμμή\nΔεύτερη γραμμή",
+			'poi_img_path' => 'decoration' === $physical ? '/published/photo.jpg' : '',
+			'compiledCollisionEnabled' => true, 'walkableBehavior' => 'auto',
+			'position' => [ 2, 3, 4 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 2, 2, 2 ],
+		], 42, $physical );
+	}
+	$renderer->render_scene_objects( $poi_dom, $poi_scene, $poi_assets, $poi_objects, 1, 42 );
+	$poi_xpath = new DOMXPath( $poi_dom );
+	foreach ( $poi_objects as $physical => $poi ) {
+		$entity = $poi_xpath->query( '//*[@info-panel="poi-' . $physical . '"]' )->item( 0 );
+		vrodos_foundation_assert( $entity instanceof DOMElement, 'converted model has POI interaction' );
+		vrodos_foundation_assert( 'Έκθεμα' === $entity->getAttribute( 'data-vrodos-poi-title' ) && str_contains( $entity->getAttribute( 'data-vrodos-poi-description' ), "\n" ), 'POI preserves Greek multiline content' );
+		vrodos_foundation_assert( $poi->poi_img_path === $entity->getAttribute( 'data-vrodos-poi-image-src' ), 'each placement has its own optional photo' );
+		vrodos_foundation_assert( ! $entity->hasAttribute( 'vrodos-hypnotic-hover' ) && ! str_contains( $entity->getAttribute( 'class' ), 'menu-button' ), 'converted model does not adopt POI button presentation' );
+		vrodos_foundation_assert( '2 3 4' === $entity->getAttribute( 'position' ) && '2 2 2' === $entity->getAttribute( 'scale' ), 'conversion preserves transforms' );
+		vrodos_foundation_assert( ( 'walkable-surface' === $physical ) === $entity->hasAttribute( 'data-vrodos-navmesh' ), 'POI keeps original navigation role' );
+		if ( 'decoration' === $physical ) {
+			vrodos_foundation_assert( 1 === $poi_xpath->query( './a-entity[@vrodos-box-collider]', $entity )->length, 'converted decoration keeps its source-bounds box' );
+		}
+	}
+	vrodos_foundation_assert( ( new VRodos_Compiler_Runtime_Feature_Flags() )->has_spatial_ui_content( (object) [ 'objects' => (object) $poi_objects ] ), 'converted POIs require spatial UI' );
+
 	$media_dom = new DOMDocument( '1.0', 'UTF-8' );
 	$media_scene = $media_dom->createElement( 'a-scene' );
 	$media_assets = $media_dom->createElement( 'a-assets' );

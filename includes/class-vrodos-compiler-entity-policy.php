@@ -7,13 +7,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Canonicalizes objects from the compile plan's already-isolated scene copy. */
 final class VRodos_Compiler_Entity_Policy {
 	public function collision_shape( object $source ): string {
-		$category = $this->effective_category( $source );
+		$category = $this->physical_category( $source );
 		$enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $source->compiledCollisionEnabled ?? ( 'decoration' === $category || 'primitive-plane' === $category ), false );
 		return $enabled ? ( 'decoration' === $category ? 'box' : 'mesh' ) : 'none';
 	}
 
 	public function requires_protected_geometry( object $source ): bool {
-		return in_array( $this->effective_category( $source ), [ 'walkable-surface', 'collision-proxy' ], true )
+		return in_array( $this->physical_category( $source ), [ 'walkable-surface', 'collision-proxy' ], true )
 			|| 'mesh' === $this->collision_shape( $source );
 	}
 
@@ -39,7 +39,7 @@ final class VRodos_Compiler_Entity_Policy {
 			null === $source->compiledCollisionEnabled ||
 			( ! is_bool( $source->compiledCollisionEnabled ) && '' === trim( (string) $source->compiledCollisionEnabled ) );
 		if ( $collision_value_missing ) {
-			$source->compiledCollisionEnabled = 'decoration' === $this->effective_category( $source ) || in_array( $source_category, [ 'decoration', 'primitive-plane' ], true );
+			$source->compiledCollisionEnabled = 'decoration' === $this->physical_category( $source ) || in_array( $source_category, [ 'decoration', 'primitive-plane' ], true );
 		}
 		$source->category_slug = $this->effective_category( $source );
 		$source->name          = empty( $source->name ) ? $object_key : $source->name;
@@ -62,13 +62,23 @@ final class VRodos_Compiler_Entity_Policy {
 		}
 
 		$scene_role = strtolower( trim( (string) ( $source->sceneAssetRole ?? '' ) ) );
-		return in_array( $scene_role, self::SCENE_ASSET_ROLES, true ) ? $scene_role : $source_category;
+		return in_array( $scene_role, [ ...self::SCENE_ASSET_ROLES, 'poi-imagetext' ], true ) ? $scene_role : $source_category;
+	}
+
+	public function physical_category( object $source ): string {
+		$category = $this->effective_category( $source );
+		if ( 'poi-imagetext' === $category && 'poi-imagetext' === ( $source->sceneAssetRole ?? '' ) ) {
+			$role = (string) ( $source->scenePoiPhysicalRole ?? '' );
+			return in_array( $role, self::SCENE_ASSET_ROLES, true ) ? $role : 'decoration';
+		}
+		return $category;
 	}
 
 	public function is_normalized( object $entity ): bool {
 		$category = (string) ( $entity->category_slug ?? '' );
 		return '' !== $category &&
 			$category === $this->canonical_category( $category ) &&
+			$category === $this->effective_category( $entity ) &&
 			! empty( $entity->name ) &&
 			! empty( $entity->uuid ) &&
 			! property_exists( $entity, 'follow_camera' ) &&

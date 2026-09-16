@@ -43,6 +43,31 @@ function collectRetainedSurfaceTextureIds() {
 	return Array.from(retained);
 }
 
+function collectRetainedPoiImageIds() {
+	const retained = new Set();
+	const seen = new WeakSet();
+	const collect = (value) => {
+		if (!value || typeof value !== 'object' || seen.has(value)) return;
+		seen.add(value);
+		if (Number(value.poiImageAttachmentId) > 0) retained.add(Number(value.poiImageAttachmentId));
+		Object.entries(value).forEach(([key, child]) => {
+			if (key !== 'object3D') collect(child);
+		});
+	};
+	const manager = VRODOS.editor.undoManager;
+	if (manager) {
+		[...manager.undoStack, ...manager.redoStack].forEach((command) => {
+			collect(command.objectData);
+			if (command instanceof VRODOS.editor.PoiImageCommand) {
+				[command.oldState, command.newState].forEach((state) => {
+					if (Number(state.attachmentId) > 0) retained.add(Number(state.attachmentId));
+				});
+			}
+		});
+	}
+	return Array.from(retained);
+}
+
 function parseSceneSaveResponse(response) {
 	return response.text().then((text) => {
 		const trimmedText = String(text || '').trim();
@@ -165,6 +190,7 @@ VRODOS.api.saveScene = function() {
 		'scene_caption': ''
 	});
 	postdata.append('retained_surface_texture_ids', JSON.stringify(collectRetainedSurfaceTextureIds()));
+	postdata.append('retained_poi_image_ids', JSON.stringify(collectRetainedPoiImageIds()));
 
 	let pendingScreenshotData = null;
 	if (VRODOS.api.newScreenshotData) {

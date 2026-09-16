@@ -187,6 +187,9 @@ Template rules:
 
 ## Scene Editor Rules
 
+- GLB decorations and walkable placements can use `sceneAssetRole: poi-imagetext`. Keep `category_slug` asset-owned and preserve physical rendering/navigation/collision through `scenePoiPhysicalRole`; converted POIs use the normal GLB renderer plus `info-panel`, without POI-button lighting or hover. Primitive planes do not support this role.
+- POI title/text are placement-owned. Optional `poiImageAttachmentId` selects a private scene-owned `poi-images` attachment; `0` explicitly removes the photo. Hydrate authoring/published URLs from the ID after asset metadata, and retain images referenced by undo history. Scene deletion removes owned photos; later saves collect unreferenced photos after a one-hour upload grace period.
+
 - Selection fires on `mouseup`, not `mousedown`.
 - `_CLICK_THRESHOLD = 5px` distinguishes click vs drag.
 - No object should be auto-selected on scene load.

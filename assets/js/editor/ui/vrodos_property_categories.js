@@ -132,14 +132,9 @@ VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     const panelState = _getPropertyPanelState("popUpPoiImageTextPropertiesDiv", name);
     if (!panelState) return;
     const sceneObj = panelState.sceneObj;
-    const hasContent = sceneObj.poi_img_content != null;
-    const setDesc = _setEditorInputValue('poi_image_desc_text', sceneObj.poi_img_content || '');
-
-    _setEditorInputChecked('poi_image_desc_checkbox', hasContent);
-    if (setDesc) {
-        setDesc.style.display = hasContent ? "block" : "none";
-    }
+    _setEditorInputValue('poi_image_desc_text', sceneObj.poi_img_content || '');
     _setEditorInputValue('poi_image_title_text', sceneObj.poi_img_title || '');
+    VRODOS.ui.refreshPoiImageControls(sceneObj);
 
     _showEditorPanel(panelState.panel);
 }
@@ -243,6 +238,7 @@ function ensureSceneAssetRolePropertiesSection() {
         '<select id="sceneAssetRoleSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
         '<option value="decoration">Decoration</option>' +
         '<option value="walkable-surface">Walkable Surface</option>' +
+        '<option value="poi-imagetext">Image/Text POI</option>' +
         '</select>' +
         '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">This changes only this placement in the current scene. The uploaded asset and its other placements stay unchanged.</div>' +
         '</div>';
@@ -285,6 +281,7 @@ function displaySceneAssetRoleProperties(object) {
 
     const select = document.getElementById('sceneAssetRoleSelect');
     if (select) {
+        select.querySelector('[value="poi-imagetext"]').hidden = VRODOS.utils.getSceneAssetSourceCategory(object) === 'primitive-plane';
         select.value = vrodosGetEffectiveObjectCategory(object);
     }
 
@@ -430,7 +427,7 @@ function displayCollisionProperties(object) {
 
     const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
     const enabled = VRODOS.utils.normalizeCompiledCollisionEnabled(object.compiledCollisionEnabled, object);
-    const decoration = VRODOS.utils.resolveSceneAssetCategory(object) === 'decoration' && object.category_slug !== 'primitive-plane';
+    const decoration = VRODOS.utils.resolveScenePhysicalCategory(object) === 'decoration' && object.category_slug !== 'primitive-plane';
     document.getElementById('compiledCollisionLabel').textContent = decoration ? 'Automatic box collision' : 'Collides with player';
     document.getElementById('decorationCollisionDetails').style.display = decoration ? 'block' : 'none';
     document.getElementById('inspectDecorationCollider').disabled = !enabled || !object.vrodosCollisionBounds;

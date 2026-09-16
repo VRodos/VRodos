@@ -29,6 +29,16 @@ VRODOS.api.uploadSurfaceTexture = function(file, slot) {
     return vrodosSurfaceTextureRequest(formData);
 };
 
+VRODOS.api.uploadPoiImage = function(file) {
+    const formData = new FormData();
+    formData.append('action', 'vrodos_upload_poi_image_action');
+    formData.append('nonce', window.vrodos_data.scene_mutation_nonce);
+    formData.append('project_id', VRODOS.config.projectId);
+    formData.append('scene_id', VRODOS.config.sceneId);
+    formData.append('texture', file);
+    return vrodosSurfaceTextureRequest(formData);
+};
+
 VRODOS.api.uploadSurfaceMaterialPackage = function(file, onProgress) {
     const formData = new FormData();
     formData.append('action', 'vrodos_upload_surface_material_package_action');

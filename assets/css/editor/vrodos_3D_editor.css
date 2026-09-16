@@ -366,6 +366,22 @@
 	padding: 2px 4px !important;
 }
 
+#popUpPoiImageTextPropertiesDiv .prop-input {
+	min-width: 0;
+	text-align: left !important;
+	width: 100% !important;
+}
+
+#poi_image_upload {
+	min-width: 0;
+	width: 100%;
+}
+
+#poi_image_desc_text {
+	resize: vertical;
+	min-height: 90px;
+}
+
 .prop-select:focus {
 	outline: none !important;
 	border-color: rgba(52, 211, 153, 0.5) !important;
