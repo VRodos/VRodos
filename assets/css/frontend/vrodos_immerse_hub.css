@@ -27,6 +27,7 @@ a.immerse-hub-card:hover, a.immerse-hub-card:focus-visible { transform: translat
 .immerse-hub-badges svg { width: 16px; height: 16px; }
 .immerse-hub-card-body { display: flex; min-height: 102px; flex-direction: column; justify-content: space-between; gap: 13px; padding: 18px; }
 .immerse-hub-card-body h3 { margin: 0; font-size: 1.12rem; line-height: 1.35; }
+.immerse-hub-built-at { color: #64748b; font-size: .8rem; }
 .immerse-hub-enter { display: inline-flex; align-items: center; gap: 5px; color: #111827; font-size: .92rem; font-weight: 800; }
 .immerse-hub-enter svg { width: 17px; height: 17px; color: #d19416; }
 .immerse-hub-unavailable { color: #92400e; font-size: .86rem; line-height: 1.4; }

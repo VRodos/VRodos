@@ -55,6 +55,9 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 								</div>
 								<div class="immerse-hub-card-body">
 									<h3><?php echo esc_html( $scene['title'] ); ?></h3>
+									<?php if ( $scene['builtAt'] > 0 ) : ?>
+										<time class="immerse-hub-built-at" datetime="<?php echo esc_attr( gmdate( 'c', $scene['builtAt'] ) ); ?>">Latest build: <?php echo esc_html( wp_date( 'M j, Y · g:i A', $scene['builtAt'] ) ); ?></time>
+									<?php endif; ?>
 									<?php if ( $available ) : ?>
 										<span class="immerse-hub-enter">Enter scene <i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
 									<?php else : ?>

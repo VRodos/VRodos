@@ -86,6 +86,7 @@ final class VRodos_Immerse_Hub {
 					'title' => get_the_title( $scene_id ),
 					'url' => is_wp_error( $link ) ? '' : (string) $link,
 					'preview' => $preview,
+					'builtAt' => self::published_file_mtime( $project_id, 'clients', $filename ),
 					'profile' => $profile,
 					'mode' => $mode,
 				];
@@ -102,6 +103,62 @@ final class VRodos_Immerse_Hub {
 		}
 		usort( $groups, static fn ( array $a, array $b ): int => strcmp( $b['publishedAt'], $a['publishedAt'] ) );
 		return $groups;
+	}
+
+	/** Publish a newly saved screenshot for an already built Immerse scene. */
+	public static function refresh_scene_preview( int $scene_id ): true|WP_Error {
+		$scene = get_post( $scene_id );
+		if ( ! $scene instanceof WP_Post || 'vrodos_scene' !== $scene->post_type ) {
+			return true;
+		}
+		$projects = get_posts( [
+			'post_type' => 'vrodos_game', 'post_status' => 'publish', 'posts_per_page' => -1,
+			'meta_key' => '_immerse_source', 'meta_value' => 'immerse',
+		] );
+		$repository = new VRodos_Compiler_Scene_Repository();
+		foreach ( $projects as $project ) {
+			$project_id = absint( $project->ID );
+			if ( ! $repository->scene_belongs_to_project( $scene_id, (string) $project->post_name ) ) {
+				continue;
+			}
+			$filename = 'Master_Client_' . $scene_id . '.html';
+			$lock_dir = VRodos_Storage_Manager::temporary_directory( 'compiler-locks', 'shared' );
+			if ( is_wp_error( $lock_dir ) ) {
+				return $lock_dir;
+			}
+			$lock = @fopen( $lock_dir . 'project-' . $project_id . '-publication.lock', 'c+' );
+			if ( false === $lock || ! flock( $lock, LOCK_EX | LOCK_NB ) ) {
+				if ( is_resource( $lock ) ) {
+					fclose( $lock );
+				}
+				return new WP_Error( 'vrodos_immerse_preview_busy', 'The project is being built. Save the scene again after the build finishes.' );
+			}
+			try {
+				$inventory = get_post_meta( $project_id, self::INVENTORY_META, true );
+				if ( ! is_array( $inventory ) || absint( $inventory['projectId'] ?? 0 ) !== $project_id || ! in_array( $filename, (array) ( $inventory['clients'] ?? [] ), true ) || ! self::published_file_exists( $project_id, 'clients', $filename ) ) {
+					return true;
+				}
+				$preview = self::copy_scene_preview( $project_id, $scene_id );
+				if ( ! $preview ) {
+					return new WP_Error( 'vrodos_immerse_preview_failed', 'The scene screenshot could not be published to the Immerse page.' );
+				}
+				$inventory['scenePreviews'] = (array) ( $inventory['scenePreviews'] ?? [] );
+				$inventory['scenePreviews'][ $scene_id ] = $preview['file'];
+				$inventory['media'] = (array) ( $inventory['media'] ?? [] );
+				if ( ! in_array( $preview['file'], array_column( $inventory['media'], 'file' ), true ) ) {
+					$inventory['media'][] = $preview;
+				}
+				$updated = update_post_meta( $project_id, self::INVENTORY_META, $inventory );
+				if ( false === $updated && get_post_meta( $project_id, self::INVENTORY_META, true ) !== $inventory ) {
+					return new WP_Error( 'vrodos_immerse_preview_failed', 'The Immerse page preview could not be updated.' );
+				}
+				return true;
+			} finally {
+				flock( $lock, LOCK_UN );
+				fclose( $lock );
+			}
+		}
+		return true;
 	}
 
 	/** Upgrade published inventories when the hub is first enabled. */
@@ -165,6 +222,14 @@ final class VRodos_Immerse_Hub {
 			return false;
 		}
 		return is_file( self::published_file_path( (string) $uploads['basedir'], $project_id, $role, $filename ) );
+	}
+
+	private static function published_file_mtime( int $project_id, string $role, string $filename ): int {
+		$uploads = wp_upload_dir( null, false );
+		if ( ! empty( $uploads['error'] ) ) {
+			return 0;
+		}
+		return (int) filemtime( self::published_file_path( (string) $uploads['basedir'], $project_id, $role, $filename ) );
 	}
 
 	private static function published_file_path( string $uploads_dir, int $project_id, string $role, string $filename ): string {

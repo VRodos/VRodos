@@ -11,6 +11,7 @@ require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-standalone-exp
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-settings-merger.php';
 require_once __DIR__ . '/../class-vrodos-scene-poi-images.php';
+require_once __DIR__ . '/../class-vrodos-immerse-hub.php';
 
 class VRodos_Scene_AJAX {
 	private const SURFACE_TEXTURE_ROLE = 'surface-textures';
@@ -134,6 +135,12 @@ class VRodos_Scene_AJAX {
 		$this->cleanup_unreferenced_surface_textures( $scene_id, array_merge( $surface_texture_ids, $retained_texture_ids ) );
 		$retained_poi_ids = json_decode( wp_unslash( (string) ( $_POST['retained_poi_image_ids'] ?? '[]' ) ), true );
 		VRodos_Scene_POI_Images::cleanup( $scene_id, array_merge( $poi_image_ids, is_array( $retained_poi_ids ) ? array_map( 'absint', $retained_poi_ids ) : [] ) );
+		if ( $pending_screenshot_id ) {
+			$preview_updated = VRodos_Immerse_Hub::refresh_scene_preview( $scene_id );
+			if ( is_wp_error( $preview_updated ) ) {
+				wp_send_json_error( 'Scene saved, but its Immerse preview was not updated: ' . $preview_updated->get_error_message(), 500 );
+			}
+		}
 
 		wp_send_json_success( [
 			'scene_id' => $scene_id,

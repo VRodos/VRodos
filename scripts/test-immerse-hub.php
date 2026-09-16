@@ -25,6 +25,8 @@ $test_page_template = '';
 $test_menu_hook_removed = false;
 $test_inventory = [ 11 => [ 'schemaVersion' => 1, 'projectId' => 11, 'publishedAt' => '2026-01-01', 'clients' => [ 'Master_Client_21.html', 'Master_Client_22.html', 'Master_Client_23.html' ], 'media' => [] ] ];
 $test_preview = $test_root . '/private-preview.png';
+$test_new_preview = $test_root . '/new-private-preview.png';
+$test_thumbnail_id = 101;
 
 function absint( $value ): int { return abs( (int) $value ); }
 function trailingslashit( string $value ): string { return rtrim( $value, '/\\' ) . '/'; }
@@ -45,9 +47,9 @@ function get_post_meta( int $id, string $key, bool $single = false ) { global $t
 function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory, $test_page_template; if ( '_wp_page_template' === $key && 99 === $id ) { $test_page_template = $value; } else { $test_inventory[ $id ] = $value; } return true; }
 function wp_upload_dir( $time = null, bool $create = false ): array { global $test_root; return [ 'basedir' => $test_root, 'baseurl' => 'https://wp.test/uploads', 'error' => '' ]; }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
-function get_post_thumbnail_id( int $id ): int { return 21 === $id ? 101 : 0; }
-function wp_attachment_is_image( int $id ): bool { return 101 === $id; }
-function get_attached_file( int $id, bool $unfiltered = false ): string { global $test_preview; return $test_preview; }
+function get_post_thumbnail_id( int $id ): int { global $test_thumbnail_id; return 21 === $id ? $test_thumbnail_id : 0; }
+function wp_attachment_is_image( int $id ): bool { return in_array( $id, [ 101, 102 ], true ); }
+function get_attached_file( int $id, bool $unfiltered = false ): string { global $test_preview, $test_new_preview; return 102 === $id ? $test_new_preview : $test_preview; }
 function wp_generate_password( int $length, bool $special = true, bool $extra = false ): string { return str_repeat( 'x', $length ); }
 function wp_delete_file( string $path ): void { if ( is_file( $path ) ) { unlink( $path ); } }
 function is_page( string $slug ): bool { return 'immerse' === $slug; }
@@ -73,9 +75,10 @@ class VRodos_Path_Manager {
 }
 
 class VRodos_Storage_Manager {
-	public static function attachment_is_owned_by( int $id, string $type, int $owner ): bool { return 101 === $id && 'scene' === $type && 21 === $owner; }
+	public static function attachment_is_owned_by( int $id, string $type, int $owner ): bool { return in_array( $id, [ 101, 102 ], true ) && 'scene' === $type && 21 === $owner; }
 	public static function published_project_url( int $project_id, string $role, string $file ): string { return 'https://wp.test/uploads/vrodos/published/projects/' . $project_id . '/' . $role . '/' . $file; }
 	public static function published_project_directory( int $project_id, string $role ): string { global $test_root; $path = $test_root . '/vrodos/published/projects/' . $project_id . '/' . $role; if ( ! is_dir( $path ) ) { mkdir( $path, 0777, true ); } return trailingslashit( $path ); }
+	public static function temporary_directory( string $operation, string $token ): string { global $test_root; $path = $test_root . '/private/' . $operation . '/' . $token; if ( ! is_dir( $path ) ) { mkdir( $path, 0777, true ); } return trailingslashit( $path ); }
 }
 
 require_once dirname( __DIR__ ) . '/includes/class-vrodos-immerse-hub.php';
@@ -98,6 +101,17 @@ $groups = VRodos_Immerse_Hub::catalog();
 check( 1 === count( $groups ) && 1 === count( $groups[0]['scenes'] ), 'Catalog included a missing or detached scene.' );
 check( 'https://wp.test/uploads/vrodos/published/projects/11/clients/Master_Client_21.html' === $groups[0]['scenes'][0]['url'], 'Single-player scene used the wrong public URL.' );
 check( '' !== $groups[0]['scenes'][0]['preview'], 'Published preview is missing from the card.' );
+$original_preview = $groups[0]['scenes'][0]['preview'];
+$original_build_time = $groups[0]['scenes'][0]['builtAt'];
+check( filemtime( $clients . 'Master_Client_21.html' ) === $original_build_time, 'Scene build time did not come from its published client.' );
+file_put_contents( $test_new_preview, 'new preview image bytes' );
+$test_thumbnail_id = 102;
+check( true === VRodos_Immerse_Hub::refresh_scene_preview( 21 ), 'Saving a new screenshot did not refresh the published preview.' );
+$groups = VRodos_Immerse_Hub::catalog();
+check( $original_preview !== $groups[0]['scenes'][0]['preview'], 'Immerse card still uses the old screenshot.' );
+check( $original_build_time === $groups[0]['scenes'][0]['builtAt'] && '2026-01-01' === $test_inventory[11]['publishedAt'], 'Screenshot save changed the latest build time.' );
+check( true === VRodos_Immerse_Hub::refresh_scene_preview( 22 ), 'Unbuilt scene attempted to publish an Immerse preview.' );
+check( true === VRodos_Immerse_Hub::refresh_scene_preview( 23 ), 'Detached scene changed an Immerse preview.' );
 
 $test_inventory[11]['runtimeMode'] = 'networked';
 $groups = VRodos_Immerse_Hub::catalog();
@@ -138,7 +152,13 @@ check( str_ends_with( $pages_manager->view_project_template( 'theme-page.php' ),
 unlink( $clients . 'Master_Client_21.html' );
 unlink( $clients . 'Master_Client_23.html' );
 unlink( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) . $test_inventory[11]['scenePreviews'][21] );
+unlink( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) . basename( $original_preview ) );
 unlink( $test_preview );
+unlink( $test_new_preview );
+unlink( $test_root . '/private/compiler-locks/shared/project-11-publication.lock' );
+rmdir( $test_root . '/private/compiler-locks/shared' );
+rmdir( $test_root . '/private/compiler-locks' );
+rmdir( $test_root . '/private' );
 rmdir( $clients );
 rmdir( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) );
 rmdir( dirname( rtrim( $clients, '/' ) ) );
