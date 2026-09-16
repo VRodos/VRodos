@@ -103,7 +103,13 @@ check( 'https://wp.test/uploads/vrodos/published/projects/11/clients/Master_Clie
 check( '' !== $groups[0]['scenes'][0]['preview'], 'Published preview is missing from the card.' );
 $original_preview = $groups[0]['scenes'][0]['preview'];
 $original_build_time = $groups[0]['scenes'][0]['builtAt'];
-check( filemtime( $clients . 'Master_Client_21.html' ) === $original_build_time, 'Scene build time did not come from its published client.' );
+check( strtotime( '2026-01-01 UTC' ) === $original_build_time, 'Scene build time did not use the recorded publication time in UTC.' );
+touch( $clients . 'Master_Client_21.html', strtotime( '2026-09-16 UTC' ) );
+clearstatcache();
+check( $original_build_time === VRodos_Immerse_Hub::catalog()[0]['scenes'][0]['builtAt'], 'Copying a published file changed its displayed build time.' );
+$test_inventory[11]['publishedAt'] = '2026-09-16 10:39:00';
+check( strtotime( '2026-09-16 10:39:00 UTC' ) === VRodos_Immerse_Hub::catalog()[0]['scenes'][0]['builtAt'], 'A newer completed build did not update the displayed build time.' );
+$test_inventory[11]['publishedAt'] = '2026-01-01';
 file_put_contents( $test_new_preview, 'new preview image bytes' );
 $test_thumbnail_id = 102;
 check( true === VRodos_Immerse_Hub::refresh_scene_preview( 21 ), 'Saving a new screenshot did not refresh the published preview.' );

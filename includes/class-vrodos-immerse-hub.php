@@ -62,6 +62,9 @@ final class VRodos_Immerse_Hub {
 			if ( ! in_array( $mode, [ 'single-player', 'networked' ], true ) || ! in_array( $profile, [ 'desktop', 'headset', 'pc-rendered-vr' ], true ) ) {
 				continue;
 			}
+			// Every client in this inventory is published together by the project build.
+			$published_at = (string) ( $inventory['publishedAt'] ?? '' );
+			$built_at = '' !== $published_at ? (int) strtotime( $published_at . ' UTC' ) : 0;
 			$scenes = [];
 			foreach ( $inventory['clients'] as $filename ) {
 				if ( ! is_string( $filename ) || ! preg_match( '/^Master_Client_([1-9][0-9]*)\.html$/', $filename, $matches ) ) {
@@ -86,7 +89,7 @@ final class VRodos_Immerse_Hub {
 					'title' => get_the_title( $scene_id ),
 					'url' => is_wp_error( $link ) ? '' : (string) $link,
 					'preview' => $preview,
-					'builtAt' => self::published_file_mtime( $project_id, 'clients', $filename ),
+					'builtAt' => $built_at,
 					'profile' => $profile,
 					'mode' => $mode,
 				];
@@ -222,14 +225,6 @@ final class VRodos_Immerse_Hub {
 			return false;
 		}
 		return is_file( self::published_file_path( (string) $uploads['basedir'], $project_id, $role, $filename ) );
-	}
-
-	private static function published_file_mtime( int $project_id, string $role, string $filename ): int {
-		$uploads = wp_upload_dir( null, false );
-		if ( ! empty( $uploads['error'] ) ) {
-			return 0;
-		}
-		return (int) filemtime( self::published_file_path( (string) $uploads['basedir'], $project_id, $role, $filename ) );
 	}
 
 	private static function published_file_path( string $uploads_dir, int $project_id, string $role, string $filename ): string {
