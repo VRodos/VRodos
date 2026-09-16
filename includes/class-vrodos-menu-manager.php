@@ -26,7 +26,36 @@ class VRodos_Menu_Manager {
 
 		// Backend Menu Hooks
 		add_action( 'admin_menu', $this->vrodos_plugin_menu(...) );
+		add_action( 'admin_bar_menu', $this->add_projects_manager_admin_bar_link(...), 80 );
 		add_filter( 'parent_file', $this->vrodos_correct_admin_menu_highlight(...) );
+	}
+
+	/**
+	 * Add a shortcut to the Projects Manager to the WordPress admin bar.
+	 */
+	public function add_projects_manager_admin_bar_link( WP_Admin_Bar $admin_bar ): void {
+		if ( ! VRodos_Immerse_Access_Manager::can_use_management_pages() ) {
+			return;
+		}
+
+		$projects_pages = VRodos_Core_Manager::vrodos_getEditpage( 'allgames' );
+		if ( empty( $projects_pages[0]->ID ) ) {
+			return;
+		}
+
+		$admin_bar->add_node(
+			[
+				'id'    => 'vrodos-projects-manager',
+				'title' => sprintf(
+					'<img src="%s" alt="" width="20" height="20" style="display:inline-block;margin-right:6px;vertical-align:middle;">VRodos',
+					esc_url( VRodos_Path_Manager::image_url( 'ui/vrodos_icon_20_w.png' ) )
+				),
+				'href'  => get_permalink( $projects_pages[0]->ID ),
+				'meta'  => [
+					'title' => __( 'VRodos Projects Manager' ),
+				],
+			]
+		);
 	}
 
 	/**
