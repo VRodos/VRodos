@@ -2990,8 +2990,11 @@ ${STOCHASTIC_GLSL}`).replace(
       texture.colorSpace = THREE.SRGBColorSpace;
     }
     if (!texture.isVideoTexture && typeof options.maxAnisotropy === "number" && options.maxAnisotropy > 0) {
-      const targetAnisotropy = options.renderQuality === "high" ? Math.min(options.maxAnisotropy, 16) : Math.min(options.maxAnisotropy, 8);
-      texture.anisotropy = Math.max(texture.anisotropy || 0, targetAnisotropy);
+      const targetAnisotropy = Math.min(
+        options.maxAnisotropy,
+        options.headsetProfile || options.renderQuality !== "high" ? 8 : 16
+      );
+      texture.anisotropy = options.headsetProfile ? targetAnisotropy : Math.max(texture.anisotropy || 0, targetAnisotropy);
     }
     if (!texture.isVideoTexture) {
       if (typeof THREE.LinearFilter !== "undefined") {
@@ -7519,6 +7522,7 @@ ${STOCHASTIC_GLSL}`).replace(
         const options = {
           renderQuality: this.data.renderQuality || "standard",
           maxAnisotropy,
+          headsetProfile: typeof this.isVrRuntimeHeadsetProfile === "function" && this.isVrRuntimeHeadsetProfile(),
           reflectionsEnabled,
           reflectionProfile: this.data.reflectionProfile || "balanced",
           reflectionSource,
@@ -11417,7 +11421,7 @@ ${shader.fragmentShader}` : withUniform;
       copyPresentedAtmosphereDirectionDiagnostics(self, authoredSunDirection, presented.localSunDirection);
       return presented;
     }
-    H.updatePmndrsHorizonSun = function() {
+    H.updatePmndrsHorizonSun = function(options) {
       if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== "pmndrs" || shouldUseVrBaselineHorizon(this) || shouldUseVrTakramLightsOnly(this)) {
         removePmndrsAtmosphereSky(this);
         if (shouldUseVrTakramLightsOnly(this)) {
@@ -11428,6 +11432,19 @@ ${shader.fragmentShader}` : withUniform;
       }
       const atmosphereRuntime = getAtmosphereRuntime(this);
       if (atmosphereRuntime) atmosphereRuntime.cleanupLegacySky(removeLegacySunSkyEntitiesForPmndrs);
+      const fixedHeadsetSun = atmosphereRuntime && typeof this.isVrRuntimeHeadsetProfile === "function" && this.isVrRuntimeHeadsetProfile() && typeof this.isPmndrsDayNightCycleActive === "function" && !this.isPmndrsDayNightCycleActive() && this._pmndrsSunSpriteActive !== true && this._pmndrsCloudSunDiskSpriteActive !== true && !(this._pmndrsCloudsDiagnostics && this._pmndrsCloudsDiagnostics.cloudsActive);
+      const atmosphereState = atmosphereRuntime && atmosphereRuntime.state;
+      const presentedYaw = fixedHeadsetSun ? getImmersiveRenderYawDeg() : null;
+      const immersivePresentation = fixedHeadsetSun && typeof this.isDirectVrPresentationActive === "function" ? this.isDirectVrPresentationActive() : false;
+      const staticFrame = atmosphereRuntime && atmosphereRuntime.staticHeadsetSunFrame;
+      if (options && options.poseOnly && fixedHeadsetSun && staticFrame && staticFrame.data === this.data && staticFrame.state === atmosphereState && staticFrame.yaw === presentedYaw && staticFrame.immersive === immersivePresentation && atmosphereState && atmosphereState.ready && atmosphereState.skyMesh && atmosphereState.skyMesh.visible && atmosphereState.skyMesh.parent === this.el.object3D) {
+        if (typeof this.syncPresentedShadowLightTransforms === "function") {
+          this.syncPresentedShadowLightTransforms();
+        }
+        applyPmndrsSunOcclusion(this, staticFrame.sunDirection, staticFrame.sunDistance);
+        return;
+      }
+      if (atmosphereRuntime) atmosphereRuntime.staticHeadsetSunFrame = null;
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
       if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const presentedAtmosphereConfig = getPresentedPmndrsAtmosphereConfig(this, atmosphereConfig);
@@ -11443,13 +11460,23 @@ ${shader.fragmentShader}` : withUniform;
             this._pmndrsSunSpriteActive = false;
           }
         }
-        ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+        const skyReady = ensurePmndrsAtmosphereSky(this, atmosphereConfig);
         syncPresentedTakramLightDirections(this, atmosphereConfig);
         applyPmndrsSunOcclusion(
           this,
           presentedAtmosphereConfig.localSunDirection || presentedAtmosphereConfig.sunDirection,
           presentedAtmosphereConfig.sunDistance || 5200
         );
+        if (fixedHeadsetSun && skyReady && atmosphereState && atmosphereState.ready) {
+          atmosphereRuntime.staticHeadsetSunFrame = {
+            data: this.data,
+            state: atmosphereState,
+            yaw: presentedYaw,
+            immersive: immersivePresentation,
+            sunDirection: (presentedAtmosphereConfig.localSunDirection || presentedAtmosphereConfig.sunDirection).clone(),
+            sunDistance: presentedAtmosphereConfig.sunDistance || 5200
+          };
+        }
         return;
       }
       const sunEl = document.getElementById("vrodos-pmndrs-sun");

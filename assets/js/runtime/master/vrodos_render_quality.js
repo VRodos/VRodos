@@ -140,6 +140,7 @@
             const options = {
                 renderQuality: this.data.renderQuality || 'standard',
                 maxAnisotropy,
+                headsetProfile: typeof this.isVrRuntimeHeadsetProfile === 'function' && this.isVrRuntimeHeadsetProfile(),
                 reflectionsEnabled,
                 reflectionProfile: this.data.reflectionProfile || 'balanced',
                 reflectionSource,

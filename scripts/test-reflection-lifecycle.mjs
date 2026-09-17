@@ -220,6 +220,34 @@ assert.equal(smooth.settings._pmndrsRuntimeLightSmoothValues, undefined);
 const external = new Three.Texture(); smooth.scene.environment = external;
 smooth.owner.remove(); assert.equal(smooth.scene.environment, external, 'do not clear another owner environment');
 
+const fixedHdr = fixture();
+const fixedTextures = [new Three.Texture(), new Three.Texture()];
+fixedHdr.scene.environment = fixedTextures[0];
+fixedHdr.settings.isVrRuntimeHeadsetProfile = () => true;
+fixedHdr.settings.isPmndrsDayNightCycleActive = () => false;
+fixedHdr.settings._vrodosReflectionIntensityMaterials = [];
+let fixedIntensityUpdates = 0;
+fixedHdr.settings.updateReflectionEnvironmentIntensity = () => { fixedIntensityUpdates++; };
+fixedHdr.owner.tick(1000); fixedHdr.owner.tick(1100);
+assert.equal(fixedIntensityUpdates, 1, 'fixed headset HDR intensity is applied once');
+fixedHdr.settings._vrodosReflectionIntensityMaterials = [];
+fixedHdr.owner.tick(1200);
+assert.equal(fixedIntensityUpdates, 2, 'newly profiled materials receive intensity');
+fixedHdr.scene.environment = fixedTextures[1];
+fixedHdr.owner.tick(1300);
+assert.equal(fixedIntensityUpdates, 3, 'a replacement HDR environment refreshes intensity');
+fixedHdr.settings.data = { ...fixedHdr.settings.data };
+fixedHdr.owner.tick(1400);
+assert.equal(fixedIntensityUpdates, 4, 'scene settings changes refresh fixed intensity');
+fixedHdr.settings._pmndrsCloudsDiagnostics = { cloudsActive: true };
+fixedHdr.owner.tick(1500); fixedHdr.owner.tick(1600);
+assert.equal(fixedIntensityUpdates, 6, 'active clouds retain per-frame intensity updates');
+fixedHdr.settings._pmndrsCloudsDiagnostics.cloudsActive = false;
+fixedHdr.owner.tick(1700); fixedHdr.owner.tick(1800);
+assert.equal(fixedIntensityUpdates, 7, 'static updates resume after clouds stop');
+fixedHdr.owner.remove();
+fixedTextures.forEach(texture => texture.dispose());
+
 // Exercise the authored settings teardown, including the component-map removal order.
 const settingsSource = readFileSync(new URL('../assets/js/runtime/master/components/vrodos_scene_settings.component.js', import.meta.url), 'utf8');
 const ast = parse(settingsSource, { ecmaVersion: 'latest', range: true });

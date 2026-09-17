@@ -1495,7 +1495,7 @@
         return presented;
     }
 
-    H.updatePmndrsHorizonSun = function () {
+    H.updatePmndrsHorizonSun = function (options) {
         if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== 'pmndrs' || shouldUseVrBaselineHorizon(this) || shouldUseVrTakramLightsOnly(this)) {
             removePmndrsAtmosphereSky(this);
             if (shouldUseVrTakramLightsOnly(this)) {
@@ -1507,6 +1507,29 @@
 
         const atmosphereRuntime = getAtmosphereRuntime(this);
         if (atmosphereRuntime) atmosphereRuntime.cleanupLegacySky(removeLegacySunSkyEntitiesForPmndrs);
+
+        const fixedHeadsetSun = atmosphereRuntime &&
+            typeof this.isVrRuntimeHeadsetProfile === 'function' && this.isVrRuntimeHeadsetProfile() &&
+            typeof this.isPmndrsDayNightCycleActive === 'function' && !this.isPmndrsDayNightCycleActive() &&
+            this._pmndrsSunSpriteActive !== true && this._pmndrsCloudSunDiskSpriteActive !== true &&
+            !(this._pmndrsCloudsDiagnostics && this._pmndrsCloudsDiagnostics.cloudsActive);
+        const atmosphereState = atmosphereRuntime && atmosphereRuntime.state;
+        const presentedYaw = fixedHeadsetSun ? getImmersiveRenderYawDeg() : null;
+        const immersivePresentation = fixedHeadsetSun && typeof this.isDirectVrPresentationActive === 'function'
+            ? this.isDirectVrPresentationActive() : false;
+        const staticFrame = atmosphereRuntime && atmosphereRuntime.staticHeadsetSunFrame;
+        if (options && options.poseOnly && fixedHeadsetSun && staticFrame &&
+            staticFrame.data === this.data && staticFrame.state === atmosphereState &&
+            staticFrame.yaw === presentedYaw && staticFrame.immersive === immersivePresentation &&
+            atmosphereState && atmosphereState.ready && atmosphereState.skyMesh &&
+            atmosphereState.skyMesh.visible && atmosphereState.skyMesh.parent === this.el.object3D) {
+            if (typeof this.syncPresentedShadowLightTransforms === 'function') {
+                this.syncPresentedShadowLightTransforms();
+            }
+            applyPmndrsSunOcclusion(this, staticFrame.sunDirection, staticFrame.sunDistance);
+            return;
+        }
+        if (atmosphereRuntime) atmosphereRuntime.staticHeadsetSunFrame = null;
 
         const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
@@ -1523,13 +1546,23 @@
                     this._pmndrsSunSpriteActive = false;
                 }
             }
-            ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+            const skyReady = ensurePmndrsAtmosphereSky(this, atmosphereConfig);
             syncPresentedTakramLightDirections(this, atmosphereConfig);
             applyPmndrsSunOcclusion(
                 this,
                 presentedAtmosphereConfig.localSunDirection || presentedAtmosphereConfig.sunDirection,
                 presentedAtmosphereConfig.sunDistance || 5200
             );
+            if (fixedHeadsetSun && skyReady && atmosphereState && atmosphereState.ready) {
+                atmosphereRuntime.staticHeadsetSunFrame = {
+                    data: this.data,
+                    state: atmosphereState,
+                    yaw: presentedYaw,
+                    immersive: immersivePresentation,
+                    sunDirection: (presentedAtmosphereConfig.localSunDirection || presentedAtmosphereConfig.sunDirection).clone(),
+                    sunDistance: presentedAtmosphereConfig.sunDistance || 5200
+                };
+            }
             return;
         }
 
