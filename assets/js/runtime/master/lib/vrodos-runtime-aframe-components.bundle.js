@@ -1296,7 +1296,10 @@
         });
       },
       invalidateLegacySkyCleanup: function() {
-        if (!this.removed) this.legacySkyCleanupDirty = true;
+        if (!this.removed) {
+          this.legacySkyCleanupDirty = true;
+          this.staticHeadsetSunFrame = null;
+        }
       },
       cleanupLegacySky: function(cleanup) {
         if (this.removed || !this.legacySkyCleanupDirty) return;
@@ -1421,6 +1424,7 @@
       },
       disposeResources: function() {
         this.cancelVisualRefreshes();
+        this.staticHeadsetSunFrame = null;
         const state = this.state;
         if (!state) return;
         try {
@@ -1454,7 +1458,7 @@
           return;
         }
         settings._pmndrsTickTimeMs = typeof time === "number" ? time : null;
-        settings.updatePmndrsHorizonSun();
+        settings.updatePmndrsHorizonSun({ poseOnly: true });
         if (typeof settings.updatePmndrsDayNightCycleFrame === "function") {
           settings.updatePmndrsDayNightCycleFrame(time);
         }
@@ -1482,6 +1486,7 @@
       remove: function() {
         if (this.removed) return;
         this.removed = true;
+        this.staticHeadsetHdrIntensity = null;
         const environment = this.el.object3D && this.el.object3D.environment;
         const ownsEnvironment = [this._envMapRenderTarget, this._sceneProbePmremTarget, this._takramSkyPmremTarget].some((target) => target && target.texture === environment);
         if (ownsEnvironment) this.el.object3D.environment = null;
@@ -1505,8 +1510,18 @@
         }
         VRODOSMaster.Reflections.bind(this, settings);
         const effectiveReflectionSource = settings.getEffectiveReflectionSource();
-        if (typeof settings.updateReflectionEnvironmentIntensity === "function") {
+        const staticHeadsetHdr = effectiveReflectionSource === "hdr" && typeof settings.isVrRuntimeHeadsetProfile === "function" && settings.isVrRuntimeHeadsetProfile() && typeof settings.isPmndrsDayNightCycleActive === "function" && !settings.isPmndrsDayNightCycleActive() && !(settings._pmndrsCloudsDiagnostics && settings._pmndrsCloudsDiagnostics.cloudsActive);
+        const staticIntensity = this.staticHeadsetHdrIntensity;
+        const intensityUnchanged = staticHeadsetHdr && staticIntensity && staticIntensity.data === settings.data && staticIntensity.environment === this.el.object3D.environment && staticIntensity.materials === settings._vrodosReflectionIntensityMaterials;
+        if (!intensityUnchanged && typeof settings.updateReflectionEnvironmentIntensity === "function") {
           settings.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
+        }
+        if (!intensityUnchanged) {
+          this.staticHeadsetHdrIntensity = staticHeadsetHdr ? {
+            data: settings.data,
+            environment: this.el.object3D.environment,
+            materials: settings._vrodosReflectionIntensityMaterials
+          } : null;
         }
         if (effectiveReflectionSource === "takram-sky") {
           if (typeof settings.updateTakramSkyEnvironment === "function") {

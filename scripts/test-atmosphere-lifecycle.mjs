@@ -226,10 +226,46 @@ assert.equal(integrated.settings._pmndrsAtmosphereState, null);
 integrated.owner.remove();
 assert.equal(helpers.ensurePmndrsAtmosphereResources.call(integrated.settings), null);
 const ticked = fixture(); const ticks = [];
-ticked.settings.updatePmndrsHorizonSun = () => ticks.push('sun');
+ticked.settings.updatePmndrsHorizonSun = options => ticks.push(options.poseOnly ? 'pose-only' : 'full');
 ticked.settings.updatePmndrsDayNightCycleFrame = time => ticks.push(time);
-ticked.owner.tick(250); assert.deepEqual(ticks, ['sun', 250]); assert.equal(ticked.settings._pmndrsTickTimeMs, 250);
+ticked.owner.tick(250); assert.deepEqual(ticks, ['pose-only', 250]); assert.equal(ticked.settings._pmndrsTickTimeMs, 250);
 ticked.owner.remove();
+const fixedSun = fixture();
+fixedSun.owner.legacySkyCleanupDirty = false;
+fixedSun.settings.data = { selChoice: '0', postFXEngine: 'pmndrs', vrRuntimeProfile: 'headset' };
+fixedSun.settings.isVrRuntimeHeadsetProfile = () => true;
+fixedSun.settings.isPmndrsDayNightCycleActive = () => false;
+fixedSun.settings.isDirectVrPresentationActive = () => false;
+fixedSun.settings.syncPresentedShadowLightTransforms = () => { fixedSun.shadowSyncs = (fixedSun.shadowSyncs || 0) + 1; };
+fixedSun.settings.getPmndrsAtmosphereConfig = () => { fixedSun.configReads = (fixedSun.configReads || 0) + 1; return null; };
+const fixedState = { ready: true, skyMesh: { visible: true, parent: fixedSun.el.object3D } };
+fixedSun.owner.state = fixedState;
+fixedSun.owner.staticHeadsetSunFrame = {
+    data: fixedSun.settings.data, state: fixedState, yaw: null, immersive: false,
+    sunDirection: new THREE.Vector3(0, 1, 0), sunDistance: 5200
+};
+helpers.updatePmndrsHorizonSun.call(fixedSun.settings, { poseOnly: true });
+assert.equal(fixedSun.configReads || 0, 0, 'fixed headset sky avoids rebuilding authored configuration each frame');
+assert.equal(fixedSun.shadowSyncs, 1, 'navigation shadow transforms still update on the fast path');
+fixedSun.settings.data = { ...fixedSun.settings.data };
+helpers.updatePmndrsHorizonSun.call(fixedSun.settings, { poseOnly: true });
+assert.equal(fixedSun.configReads, 1, 'a changed scene configuration uses the full atmosphere path');
+const getElementById = context.document.getElementById;
+const navigation = { immersiveRenderYaw: 0 };
+context.document.getElementById = id => id === 'player'
+    ? { components: { 'custom-movement': navigation } } : getElementById(id);
+fixedSun.owner.staticHeadsetSunFrame = {
+    data: fixedSun.settings.data, state: fixedState, yaw: 0, immersive: false,
+    sunDirection: new THREE.Vector3(0, 1, 0), sunDistance: 5200
+};
+helpers.updatePmndrsHorizonSun.call(fixedSun.settings, { poseOnly: true });
+assert.equal(fixedSun.configReads, 1);
+navigation.immersiveRenderYaw = Math.PI / 2;
+helpers.updatePmndrsHorizonSun.call(fixedSun.settings, { poseOnly: true });
+assert.equal(fixedSun.configReads, 2, 'thumbstick yaw refreshes the presented sun direction');
+context.document.getElementById = getElementById;
+fixedSun.owner.state = null;
+fixedSun.owner.remove();
 // Execute the authored scene-settings teardown to verify removal reaches the owner.
 const sceneSource = readFileSync(new URL('../assets/js/runtime/master/components/vrodos_scene_settings.component.js', import.meta.url), 'utf8');
 const sceneAst = parse(sceneSource, { ecmaVersion: 2022 });

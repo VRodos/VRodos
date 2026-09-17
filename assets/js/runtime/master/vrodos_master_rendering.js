@@ -587,10 +587,13 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
     }
 
     if (!texture.isVideoTexture && typeof options.maxAnisotropy === 'number' && options.maxAnisotropy > 0) {
-        const targetAnisotropy = options.renderQuality === 'high'
-            ? Math.min(options.maxAnisotropy, 16)
-            : Math.min(options.maxAnisotropy, 8);
-        texture.anisotropy = Math.max(texture.anisotropy || 0, targetAnisotropy);
+        const targetAnisotropy = Math.min(
+            options.maxAnisotropy,
+            options.headsetProfile || options.renderQuality !== 'high' ? 8 : 16
+        );
+        texture.anisotropy = options.headsetProfile
+            ? targetAnisotropy
+            : Math.max(texture.anisotropy || 0, targetAnisotropy);
     }
 
     if (!texture.isVideoTexture) {
