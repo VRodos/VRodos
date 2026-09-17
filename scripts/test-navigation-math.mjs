@@ -109,6 +109,19 @@ function createMovementHarness(options = {}) {
 
 {
     const nav = createMovementHarness();
+    const refreshes = [];
+    nav.requestShadowMapRefresh = (reason) => refreshes.push(reason);
+    nav.getSceneSettings = () => ({ vrRuntimeProfile: 'headset' });
+    nav.handleThumbstickEnd({ currentTarget: nav.thumbL });
+    assert(refreshes.length === 0, 'headset thumbstick release must keep the static shadow map cached');
+
+    nav.getSceneSettings = () => ({ vrRuntimeProfile: 'pc-rendered-vr' });
+    nav.handleThumbstickEnd({ currentTarget: nav.thumbL });
+    assert(refreshes.length === 1 && refreshes[0] === 'immersive-input-settle', 'PC-rendered VR retains its shadow refresh policy');
+}
+
+{
+    const nav = createMovementHarness();
     nav.handleThumbstickMove({
         currentTarget: nav.thumbL,
         detail: { x: 0, y: -1 }

@@ -18,6 +18,7 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 - A-Frame/WebXR owns the XR session, HMD and controller poses, controller raycasters, and stereo render loop.
 - `#player` remains an unpositioned tracking rig. Authored camera placement remains on `#cameraA`.
 - `custom-movement` owns only virtual navigation and moves/rotates `#vrodos-authored-world` in immersive XR.
+- With a fixed authored sun, standalone headset locomotion keeps the static shadow map cached. Thumbstick release must not request a new shadow render; scene/model setup can still refresh the map when shadow casters change.
 - Freshly recompile representative scenes. Do not add per-root or old-layout fallbacks for generated clients.
 - VR Headset Full uses the accepted native XR target baseline (2026-09-17): existing headset-layer MSAA, no immersive composer/SMAA passes, direct ACES Filmic/sRGB Takram output, and sky after opaque geometry. Takram stars follow the sky with the same output transform. Geometry, PBR materials and quality float atmosphere resources are preserved. Inline rendering and desktop/PCVR keep their composer behavior.
 - The compiler locks render quality High, Takram quality, ACES Filmic, PMNDRS AA `none`, framebuffer scale 1.0 and foveation 0.5 across every scene. Saved metadata and legacy composite settings cannot override these values. The build UI has no headset Stereo Post-FX toggle or tone-mapping selector. Object quality, sky time and exposure remain authored choices.

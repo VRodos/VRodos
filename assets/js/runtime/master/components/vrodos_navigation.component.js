@@ -1494,7 +1494,7 @@ AFRAME.registerComponent('custom-movement', {
             this.rightThumbRawInput.y = 0;
             this.resetImmersiveTurnSmoothing('thumbstick-end');
         }
-        if (this.isImmersiveXrPresenting()) {
+        if (this.isImmersiveXrPresenting() && !this.isHeadsetRuntimeProfile(this.getSceneSettings())) {
             this.requestShadowMapRefresh('immersive-input-settle', { deferMs: 140 });
         }
     },
@@ -1657,7 +1657,7 @@ AFRAME.registerComponent('custom-movement', {
     getSceneSettingsComponent: function () {
         return this.sceneEl && this.sceneEl.components ? this.sceneEl.components['scene-settings'] : null;
     },
-    isHeadsetCollisionProfile: function (settings) {
+    isHeadsetRuntimeProfile: function (settings) {
         const component = this.getSceneSettingsComponent();
         if (component && typeof component.isVrRuntimeHeadsetProfile === 'function') {
             return component.isVrRuntimeHeadsetProfile();
@@ -1667,7 +1667,7 @@ AFRAME.registerComponent('custom-movement', {
         return profile === 'headset';
     },
     applyCollisionBudgetForSettings: function (settings) {
-        const headsetProfile = this.isHeadsetCollisionProfile(settings);
+        const headsetProfile = this.isHeadsetRuntimeProfile(settings);
         const nextProfile = headsetProfile ? 'headset' : 'desktop';
         if (this.collisionBudgetProfile === nextProfile) {
             return;
