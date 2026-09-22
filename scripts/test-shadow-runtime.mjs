@@ -114,12 +114,12 @@ const depth = terrain.mesh.customDepthMaterial;
 assert.notEqual(depth, authoredDepth);
 assert.equal(depth.polygonOffsetFactor, 4);
 assert.equal(depth.polygonOffsetUnits, 8);
-assert.equal(terrain.tracked.length, 1);
+assert.equal(terrain.owner.terrainDepthMaterials.size, 1);
 near(terrain.light.shadow.bias, -0.00012);
 near(terrain.light.shadow.normalBias, 0.032);
 terrain.component.applyShadowQualityProfile();
 assert.equal(terrain.mesh.customDepthMaterial, depth);
-assert.equal(terrain.tracked.length, 1);
+assert.equal(terrain.owner.terrainDepthMaterials.size, 1);
 flags.add('disableTerrainShadowDepthOffset');
 terrain.component.applyShadowQualityProfile();
 assert.equal(terrain.mesh.customDepthMaterial, authoredDepth);
@@ -132,6 +132,26 @@ assert.equal(terrain.mesh.customDepthMaterial, authoredDepth);
 assert.equal(terrain.mesh.castShadow, false);
 assert.equal(terrain.light.castShadow, false);
 assert.equal(terrain.component.el.renderer.shadowMap.autoUpdate, false);
+// Removal restores authored attachments even for meshes no longer in the scene.
+terrain.component.data.shadowQuality = 'high';
+terrain.component.applyShadowQualityProfile();
+terrain.scene.remove(terrain.mesh);
+let depthDisposals = 0, authoredDisposals = 0;
+depth.addEventListener('dispose', () => depthDisposals++);
+authoredDepth.addEventListener('dispose', () => authoredDisposals++);
+terrain.owner.remove(); terrain.owner.remove();
+assert.equal(terrain.mesh.customDepthMaterial, authoredDepth);
+assert.equal(depthDisposals, 1);
+assert.equal(authoredDisposals, 0);
+assert.equal(terrain.owner.terrainDepthMaterials.size, 0);
+const terrainReplacement = attachRenderProfile(terrain.component);
+terrain.scene.add(terrain.mesh);
+terrain.component.applyShadowQualityProfile();
+assert.notEqual(terrain.mesh.customDepthMaterial, depth);
+const replacementMaterial = new THREE.MeshDepthMaterial();
+terrain.mesh.customDepthMaterial = replacementMaterial;
+terrainReplacement.remove();
+assert.equal(terrain.mesh.customDepthMaterial, replacementMaterial, 'do not overwrite a newer attachment');
 
 // Fit real shadow cameras and confirm geometry corners remain inside their frustum.
 frames.clear();
@@ -151,6 +171,13 @@ assert.equal(fit.light.shadow.mapSize.x, 2048);
 assert.equal(fit.component.isStaticShadowMode(), true);
 cycle = true;
 assert.equal(fit.component.isStaticShadowMode(), false);
+const celestialFit = fixture();
+const sunDirection = new THREE.Vector3(0.3, 0.8, 0.2).normalize();
+runtime.schedulePmndrsAtmosphereShadowFit(celestialFit.component, { localSunDirection: sunDirection });
+assert.equal(celestialFit.component._pmndrsDayNightCycleShadowLastMs, now);
+assert.ok(celestialFit.owner.shadowState._pmndrsDayNightCycleLastShadowSunDirection.equals(sunDirection));
+assert.notEqual(celestialFit.owner.shadowState._pmndrsDayNightCycleLastShadowSunDirection, sunDirection);
+celestialFit.owner.remove();
 cycle = false;
 
 // Headset caps shrink existing oversized maps while desktop retains authored resolution.
@@ -398,6 +425,26 @@ assert.notEqual(owned.component._vrodosShadowFitCameraPosition, oldPosition);
 assert.equal(owned.component._vrodosNavigationShadowRefreshApplied, 1);
 assert.equal(otherOwned.component._vrodosNavigationShadowRefreshApplied, 1);
 freshOwner.remove(); otherOwned.owner.remove();
+
+// Presentation resync cannot recreate owners after removal or affect a replacement.
+const presentation = fixture();
+presentation.component.getRenderProfileOwner();
+frames.clear(); timers.clear();
+let presentationRefreshes = 0;
+presentation.owner.schedulePresentationRefresh(() => presentationRefreshes++);
+assert.deepEqual([...timers.values()].map(timer => timer.delay), [80, 240]);
+const stalePresentation = [...frames.values(), ...[...timers.values()].map(timer => timer.fn)];
+presentation.owner.remove();
+assert.equal(frames.size, 0); assert.equal(timers.size, 0);
+const replacementPresentation = attachRenderProfile(presentation.component);
+presentation.component.getRenderProfileOwner();
+stalePresentation.forEach(callback => callback());
+assert.equal(presentationRefreshes, 0);
+replacementPresentation.schedulePresentationRefresh(() => presentationRefreshes++);
+[...frames.values(), ...[...timers.values()].map(timer => timer.fn)].forEach(callback => callback());
+assert.equal(presentationRefreshes, 3);
+assert.equal(replacementPresentation.presentationRefreshes.size, 0);
+replacementPresentation.remove(); frames.clear(); timers.clear();
 
 // Debug overlay uses real diagnostics and the owner with a minimal DOM boundary.
 const overlayBody = {

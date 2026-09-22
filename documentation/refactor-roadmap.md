@@ -1,6 +1,8 @@
 # VRodos cleanup and refactoring roadmap
 
-Status: **partially implemented; authenticated editor baseline validated** (2026-09-11). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
+Status: **shadow/lighting ownership implemented; automated integration and browser teardown verified; live workflow acceptance remains open** (2026-09-22). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
+
+Current scope (2026-09-22): prioritize runtime ownership and integration acceptance. Acropolis derivative/FPS trials, temple visual optimization, and desktop profile/cloud acceptance are deferred by user direction; they are not prerequisites for this cleanup.
 
 ## A. Verification baseline
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
@@ -71,11 +73,14 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 - [x] Move shadow dirty/refresh, navigation-refresh, and adaptive-fit scratch state into `vrodos-render-profile`, preserving read-only diagnostic views.
 - [x] Track and cancel deferred adaptive shadow-fit frames/timers in `vrodos-render-profile`.
 - [x] Move shadow debug-overlay DOM creation, text updates, and cleanup into `vrodos-render-profile`.
-- [ ] Move remaining lighting/render lifecycle and scratch-state ownership to focused components.
+- [x] Move remaining shadow compatibility counters, presented-light caches, terrain depth materials, Takram light resources, celestial clock and lighting interpolation state into render-profile.
+- [x] Own delayed presentation refreshes and invalidate them on component removal.
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
 - [x] Audit and fix sun/haze material and cached-texture disposal, lights-only gradient cleanup, and cloud sun overlay teardown.
 - [ ] Audit single ownership and disposal of every GPU resource/listener.
+- [x] Audit rendering-pipeline teardown: restore terrain attachments, dispose light shadow targets, avoid duplicate composer-effect disposal, release atmosphere bindings, and unregister scene/chat/avatar listeners.
+- [x] Verify actual browser scene-settings removal/reattachment with pending presentation refreshes, released light/shadow resources, and restored atmosphere rendering (scene 8747, 2026-09-22).
 
 ## H. Measured performance
 - [x] Capture one heavy scene before/after initial runtime changes with FPS meter disabled.
@@ -85,7 +90,8 @@ Status: **partially implemented; authenticated editor baseline validated** (2026
 
 ## Validation
 - [x] Complete test suite, JS/PHP syntax, lint, build-config, generated outputs, diff checks.
-- [ ] Assessment parity; import retry/failure; optimizer replacement/deletion; read-only dashboard.
+- [x] Automated assessment parity, import retry/failure, optimizer lifecycle, and read-only dashboard contracts (2026-09-22).
+- [ ] Live WordPress assessment/import/optimizer/dashboard acceptance; automated fixtures alone do not close this gate.
 - [x] Authenticated editor selection, numeric properties, undo/redo, save/reload, and Custom desktop build polling.
 - [x] Validate scene-gizmo translation and undo in the authenticated editor.
 - [ ] Complete remaining category-specific interaction checks.
@@ -101,6 +107,19 @@ Build-config passed; lint 0 errors/245 warnings; 19 runtime tests passed. PHP pl
 VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX contracts, migration safeguards, settings globals, rendering constants, navigation math, and vendor patches. Do not remove media based only on literal-reference searches. No commits or pushes by the agent.
 
 ## Implementation log
+
+### Shadow/lighting ownership and integration checks (2026-09-22)
+
+Render-profile now owns the remaining shadow compatibility diagnostics, per-light presented-transform caches, terrain depth materials, Takram lights/shadow targets, celestial-clock state and interpolation maps. Helpers retain authored policy and mathematical behavior; settings fields are read-only views. Removed owners cannot publish deferred lighting failures or run presentation refresh callbacks. Terrain teardown restores authored material attachments without overwriting newer attachments. Light removal releases primary and orphaned secondary shadow targets.
+
+The rendering-pipeline resource audit also fixed duplicate PMNDRS effect disposal: the composer owns attached passes/effects, while partial-build resources remain explicitly released. Scene-settings registers scene-loaded, chat, avatar and global handlers with its resource registry. Atmosphere teardown releases its settings binding and rejects subsequent ticks. The broader audit of every runtime component, editor property-side-effect coordination, and live workflow checks remain open; this package does not claim those are complete.
+
+Verification: 52 runtime and 36 compiler scripts passed, with existing fixtures extended for real EffectPass disposal, removal/replacement, late promises, terrain restoration, celestial shadow state, and actual scene init/listener cleanup. PHP ZIP was enabled for test processes only; the optimizer test used the installed KTX executable outside the sandbox after sandbox PATH discovery failed. Lint: 0 errors and 253 existing warnings. Runtime syntax (246 files), catalog (88 scripts), build configuration and diff checks passed. Three generated runtime bundles changed intentionally.
+
+Browser validation used local Chrome at `http://wp.local/wp-content/uploads/vrodos/published/projects/8605/clients/Master_Client_8747.html` (1536 x 791). The rendered scene was inspected before and after actual scene-settings removal/reattachment. Removal released owner settings, light/shadow resources, terrain/presented caches and queued presentation refreshes; reattachment restored atmosphere readiness and Takram lights with no lost WebGL context or captured errors. Temporary in-page changes were confined to the test tab; no publication or authoring settings were saved.
+
+The strict automated browser matrix is not accepted: the PMNDRS scene 8747 canceled `takram-clouds/shape.bin` during loading, also reproduced with all three original HEAD bundles supplied through profiler overrides; scene 8980 canceled the same cloud request and a GLB request; scene 2309 has zero navigation targets despite matching the walkable fixture selector. No matching headset/spatial publication was available. These are existing-publication smoke results, not fresh recompilation or Quest acceptance. Local WordPress is reachable but logged out, so live import/optimizer/editor operations and the fresh Custom/Adaptive/networked/headset compile matrix need an authenticated test session. Physical Quest/Greek-controller acceptance remains open. Temporary smoke servers were stopped; no commit or push was performed.
+
 ### Verification and implementation
 
 `scripts/regression-test-catalog.mjs` explicitly owns 53 scripts: 25 runtime and 28 compiler. `scripts/run-tests.mjs` verifies coverage and launches separate processes. Existing npm entrypoints remain; ordinary checks do not rebuild tracked bundles. Formatting excludes vendor/generated files. No framework or dependency was added.

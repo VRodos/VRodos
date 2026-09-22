@@ -21,11 +21,12 @@ const context = vm.createContext({
     AFRAME: { registerComponent: (name, definition) => { components[name] = definition; }, registerSystem() {} },
     THREE, console, URLSearchParams, performance: { now: () => 1000 },
     document: { getElementById: id => elements.get(id), createElement: element, querySelector: () => null },
-    requestAnimationFrame: () => 1, setTimeout: () => 1
+    requestAnimationFrame: () => 1, setTimeout: () => 1, cancelAnimationFrame() {}, clearTimeout() {}
 });
 context.window = context;
 context.location = { search: '' };
 context.VRODOSMaster = {};
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_runtime_resources.js', import.meta.url), 'utf8'), context);
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js', import.meta.url), 'utf8'), context);
 context.VRODOS_RUNTIME_SETTINGS_CONTRACT = JSON.parse(readFileSync(new URL('../assets/runtime-settings-contract.json', import.meta.url), 'utf8'));
 for (const name of ['vrodos_runtime_settings_helpers.js', 'vrodos_celestial_clock.js', 'vrodos_moon_phase.js', 'vrodos_celestial_coordinates.js', 'vrodos_light_smoothing.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js', 'vrodos_celestial_lighting.js', 'vrodos_render_quality.js', 'vrodos_cloud_occlusion.js', 'vrodos_sun_occlusion.js', 'vrodos_sun_sprite.js', 'vrodos_gradient_sky.js', 'vrodos_atmosphere_visuals.js', 'vrodos_quality_profiles.js']) {
@@ -70,8 +71,8 @@ function fixture(initial = config()) {
     });
     const owner = Object.assign(Object.create(components['vrodos-render-profile']), { el });
     owner.init();
-    self.getRenderProfileOwner = () => { owner.bindSettings(self); return owner; };
-    return { self, scene, children, resources, setConfig: c => { activeConfig = c; }, config: () => activeConfig };
+    self.getRenderProfileOwner = () => { if (owner.removed) return null; owner.bindSettings(self); return owner; };
+    return { self, owner, scene, children, resources, setConfig: c => { activeConfig = c; }, config: () => activeConfig };
 }
 
 // Horizon gating and exact transition boundaries for both celestial lights.
@@ -161,10 +162,50 @@ near(lights.moonLight.intensity, 0);
 near(lights.sunLight.intensity, 0);
 assert.equal(lights.moonLight.castShadow, false);
 assert.ok(lights.fillLight.intensity > 0);
+let shadowDisposals = 0;
+for (const light of [lights.sunLight, lights.moonLight]) {
+    light.shadow.map = new THREE.WebGLRenderTarget(8, 8);
+    light.shadow.map.addEventListener('dispose', () => shadowDisposals++);
+}
 live.self.removePhotorealHelperLights();
+assert.equal(shadowDisposals, 2);
 assert.equal(live.self._pmndrsTakramLightSources, null);
 assert.equal(live.scene.children.length, 0);
 live.self.removePhotorealHelperLights();
+assert.equal(shadowDisposals, 2);
+
+// Owner removal releases light resources and interpolation state without late resurrection.
+apply();
+const ownedLights = live.self._pmndrsTakramLightSources;
+ownedLights.sunLight.shadow.map = new THREE.WebGLRenderTarget(8, 8);
+ownedLights.sunLight.shadow.map.addEventListener('dispose', () => shadowDisposals++);
+const priorState = live.owner.lightingState;
+assert.throws(() => { live.self._pmndrsTakramLightSources = null; }, TypeError);
+live.owner.remove(); live.owner.remove();
+assert.equal(shadowDisposals, 3);
+assert.equal(live.scene.children.length, 0);
+assert.equal(live.self._pmndrsTakramLightSources, null);
+assert.equal(live.owner.lightingState, null);
+assert.equal(apply(), false);
+const fresh = Object.assign(Object.create(components['vrodos-render-profile']), { el: live.self.el });
+fresh.init(); fresh.bindSettings(live.self);
+assert.notEqual(fresh.lightingState, priorState);
+assert.deepEqual(Object.keys(fresh.lightingState._pmndrsRuntimeLightSmoothValues), []);
+fresh.remove();
+
+// A failed pending precompute must not publish diagnostics through a removed owner.
+const pendingLight = fixture();
+let rejectPrecompute;
+pendingLight.resources.ready = false;
+pendingLight.resources.promise = new Promise((resolve, reject) => { rejectPrecompute = reject; });
+pendingLight.self._pmndrsAtmosphereState = pendingLight.resources;
+lighting.ensurePmndrsTakramHorizonLights(pendingLight.self, pendingLight.config(), 'natural', { fallback: false });
+pendingLight.owner.remove();
+rejectPrecompute(new Error('late lighting precompute'));
+await pendingLight.resources.promise.catch(() => {});
+await Promise.resolve();
+assert.equal(pendingLight.scene.children.length, 0);
+assert.equal(pendingLight.self._pmndrsTakramLightSourcesPendingError, null);
 
 // Required-texture failure and existing DOM helper path are preserved.
 const fallback = fixture();

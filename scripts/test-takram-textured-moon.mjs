@@ -66,7 +66,6 @@ for (const required of [
   'VRODOSMaster.MoonPhase.applyConfig(config',
   'config.astronomicalMoonPosition = true',
   'siderealDriftEnabled: Boolean(config && config.astronomicalMoonPosition)',
-  'VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)',
   'config.moonDirection = vta.getMoonDirectionECEF(moonDate',
   'config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection)',
   "vrodos_debug_disable_textured_moon",

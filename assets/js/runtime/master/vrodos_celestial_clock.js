@@ -1,4 +1,4 @@
-/** Accelerated celestial time; component state remains owned by scene-settings. */
+/** Accelerated celestial time; the caller supplies its lifecycle-owned clock state. */
 (function () {
     'use strict';
     const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;

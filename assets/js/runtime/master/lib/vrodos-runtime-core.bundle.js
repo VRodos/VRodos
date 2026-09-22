@@ -4594,7 +4594,7 @@ ${STOCHASTIC_GLSL}`).replace(
     }
     function getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs) {
       const now = getPmndrsRuntimeLightTimeMs(self);
-      self._pmndrsRuntimeLightSmoothTimes = self._pmndrsRuntimeLightSmoothTimes || {};
+      if (!self._pmndrsRuntimeLightSmoothTimes) self._pmndrsRuntimeLightSmoothTimes = {};
       const previous = self._pmndrsRuntimeLightSmoothTimes[key];
       self._pmndrsRuntimeLightSmoothTimes[key] = now;
       if (!smoothingMs || smoothingMs <= 0) {
@@ -4610,7 +4610,7 @@ ${STOCHASTIC_GLSL}`).replace(
       if (!isFinite(target)) {
         return 0;
       }
-      self._pmndrsRuntimeLightSmoothValues = self._pmndrsRuntimeLightSmoothValues || {};
+      if (!self._pmndrsRuntimeLightSmoothValues) self._pmndrsRuntimeLightSmoothValues = {};
       const alpha = getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs);
       if (typeof self._pmndrsRuntimeLightSmoothValues[key] !== "number") {
         self._pmndrsRuntimeLightSmoothValues[key] = typeof currentValue === "number" && isFinite(currentValue) ? currentValue : target;
@@ -4625,7 +4625,7 @@ ${STOCHASTIC_GLSL}`).replace(
       return value;
     }
     function smoothPmndrsRuntimeLightColor(self, key, targetColor, smoothingMs, currentColor) {
-      self._pmndrsRuntimeLightSmoothColors = self._pmndrsRuntimeLightSmoothColors || {};
+      if (!self._pmndrsRuntimeLightSmoothColors) self._pmndrsRuntimeLightSmoothColors = {};
       const alpha = getPmndrsRuntimeLightSmoothingAlpha(self, `${key}:color`, smoothingMs);
       const color = new THREE.Color(targetColor || "#ffffff");
       if (!self._pmndrsRuntimeLightSmoothColors[key]) {
@@ -4678,13 +4678,13 @@ ${STOCHASTIC_GLSL}`).replace(
       return normalized === "basic" ? "basic" : "pcf";
     }
     function disposeLightShadowMap(shadow) {
-      if (!shadow || !shadow.map) {
+      if (!shadow || !shadow.map && !shadow.mapPass) {
         return false;
       }
-      if (shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === "function") {
+      if (shadow.map && shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === "function") {
         shadow.map.depthTexture.dispose();
       }
-      if (typeof shadow.map.dispose === "function") {
+      if (shadow.map && typeof shadow.map.dispose === "function") {
         shadow.map.dispose();
       }
       shadow.map = null;
@@ -4941,14 +4941,17 @@ ${STOCHASTIC_GLSL}`).replace(
           return;
         }
         node.userData = node.userData || {};
-        const existingDepthMaterial = node.userData.vrodosTerrainShadowDepthMaterial || null;
+        const owner = self && self.getRenderProfileOwner();
+        if (!owner) return;
+        const entry = owner.terrainDepthMaterials.get(node);
+        const existingDepthMaterial = entry ? entry.material : null;
         const disabled = hasPmndrsDebugFlag(
           "disableTerrainShadowDepthOffset",
           "vrodos_debug_disable_terrain_shadow_depth_offset"
         );
         if (!enabled || disabled || typeof THREE.MeshDepthMaterial !== "function") {
           if (existingDepthMaterial && node.customDepthMaterial === existingDepthMaterial) {
-            node.customDepthMaterial = node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial || void 0;
+            node.customDepthMaterial = entry.previous;
           }
           return;
         }
@@ -4960,11 +4963,7 @@ ${STOCHASTIC_GLSL}`).replace(
           depthMaterial.name = "vrodosTerrainShadowDepthMaterial";
           depthMaterial.userData = depthMaterial.userData || {};
           depthMaterial.userData.vrodosTerrainShadowDepthMaterial = true;
-          node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial = node.customDepthMaterial || null;
-          node.userData.vrodosTerrainShadowDepthMaterial = depthMaterial;
-          if (self && self.runtimeResources && typeof self.runtimeResources.track === "function") {
-            self.runtimeResources.track(depthMaterial);
-          }
+          owner.terrainDepthMaterials.set(node, { material: depthMaterial, previous: node.customDepthMaterial });
         }
         const offset = getTerrainShadowDepthOffset();
         if (typeof THREE.RGBADepthPacking !== "undefined") {
@@ -5255,6 +5254,8 @@ ${STOCHASTIC_GLSL}`).replace(
         });
       }
       function schedulePmndrsAtmosphereShadowFit(self, config) {
+        const owner = self && self.getRenderProfileOwner();
+        if (!owner) return;
         if (!isPmndrsDayNightCycleEnabled(self)) {
           scheduleAdaptiveShadowFit(self);
           return;
@@ -5263,11 +5264,11 @@ ${STOCHASTIC_GLSL}`).replace(
           return;
         }
         if (!self._vrodosShadowFitLastMs) {
-          self._pmndrsDayNightCycleShadowLastMs = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+          owner.shadowState._pmndrsDayNightCycleShadowLastMs = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
           applyAdaptiveShadowFit(self, { stableFrustum: true });
         }
         if (config && config.localSunDirection) {
-          self._pmndrsDayNightCycleLastShadowSunDirection = self._pmndrsDayNightCycleLastShadowSunDirection || new THREE.Vector3();
+          owner.shadowState._pmndrsDayNightCycleLastShadowSunDirection = self._pmndrsDayNightCycleLastShadowSunDirection || new THREE.Vector3();
           self._pmndrsDayNightCycleLastShadowSunDirection.copy(config.localSunDirection);
         }
       }
@@ -5567,14 +5568,18 @@ ${STOCHASTIC_GLSL}`).replace(
         if (!force && self._vrodosShadowProgramShadowMapType === shadowMapType) {
           return false;
         }
-        self._vrodosShadowProgramShadowMapType = shadowMapType;
-        self._vrodosShadowProgramRefreshes = (self._vrodosShadowProgramRefreshes || 0) + 1;
-        self._vrodosShadowLastProgramRefreshReason = reason || "shadow-map-type";
-        self._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
+        const owner = self.getRenderProfileOwner();
+        if (!owner) return false;
+        owner.shadowState._vrodosShadowProgramShadowMapType = shadowMapType;
+        owner.shadowState._vrodosShadowProgramRefreshes = (self._vrodosShadowProgramRefreshes || 0) + 1;
+        owner.shadowState._vrodosShadowLastProgramRefreshReason = reason || "shadow-map-type";
+        owner.shadowState._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
         markShadowProgramMaterialsDirty(self);
         return true;
       }
       function refreshShadowMapResourcesForType(self, shadowMapType, force, reason) {
+        const owner = self && self.getRenderProfileOwner();
+        if (!owner) return false;
         const sceneObj = self && self.el ? self.el.object3D : null;
         if (!sceneObj) {
           return false;
@@ -5591,9 +5596,9 @@ ${STOCHASTIC_GLSL}`).replace(
         });
         if (refreshed || force) {
           if (self) {
-            self._vrodosShadowCompatibilityRefreshes = (self._vrodosShadowCompatibilityRefreshes || 0) + 1;
-            self._vrodosShadowLastCompatibilityRefreshReason = reason || (force ? "forced" : "incompatible");
-            self._vrodosShadowLastCompatibilityRefreshType = getThreeShadowMapTypeName(shadowMapType);
+            owner.shadowState._vrodosShadowCompatibilityRefreshes = (self._vrodosShadowCompatibilityRefreshes || 0) + 1;
+            owner.shadowState._vrodosShadowLastCompatibilityRefreshReason = reason || (force ? "forced" : "incompatible");
+            owner.shadowState._vrodosShadowLastCompatibilityRefreshType = getThreeShadowMapTypeName(shadowMapType);
           }
           markShadowProgramMaterialsDirty(self);
         }
@@ -5613,19 +5618,23 @@ ${STOCHASTIC_GLSL}`).replace(
         }
         const opts = options || {};
         const navigation = getImmersiveNavigationForPresentedTransforms();
-        light.userData = light.userData || {};
-        light.userData.vrodosPresentedShadowBasePosition = light.userData.vrodosPresentedShadowBasePosition || new THREE.Vector3();
-        light.userData.vrodosPresentedShadowBaseTarget = light.userData.vrodosPresentedShadowBaseTarget || new THREE.Vector3();
-        if (navigation && opts.assumeAuthored !== true) {
-          navigation.renderedToAuthoredPosition(light.position, light.userData.vrodosPresentedShadowBasePosition);
-          navigation.renderedToAuthoredPosition(light.target.position, light.userData.vrodosPresentedShadowBaseTarget);
-        } else {
-          light.userData.vrodosPresentedShadowBasePosition.copy(light.position);
-          light.userData.vrodosPresentedShadowBaseTarget.copy(light.target.position);
+        const owner = self && self.getRenderProfileOwner();
+        if (!owner) return false;
+        let cache = owner.presentedShadowLights.get(light);
+        if (!cache) {
+          cache = { position: new THREE.Vector3(), target: new THREE.Vector3(), transformCount: null };
+          owner.presentedShadowLights.set(light, cache);
         }
-        light.userData.vrodosPresentedShadowBaseCaptured = true;
+        if (navigation && opts.assumeAuthored !== true) {
+          navigation.renderedToAuthoredPosition(light.position, cache.position);
+          navigation.renderedToAuthoredPosition(light.target.position, cache.target);
+        } else {
+          cache.position.copy(light.position);
+          cache.target.copy(light.target.position);
+        }
+        cache.transformCount = null;
         if (self) {
-          self._vrodosPresentedShadowBaseCaptureCount = (self._vrodosPresentedShadowBaseCaptureCount || 0) + 1;
+          owner.shadowState._vrodosPresentedShadowBaseCaptureCount = (self._vrodosPresentedShadowBaseCaptureCount || 0) + 1;
         }
         return true;
       }
@@ -5634,6 +5643,8 @@ ${STOCHASTIC_GLSL}`).replace(
         if (!self || !navigation) {
           return false;
         }
+        const owner = self.getRenderProfileOwner();
+        if (!owner) return false;
         const transformCount = typeof navigation.immersiveRootTransformCount === "number" ? navigation.immersiveRootTransformCount : 0;
         let changed = false;
         collectDirectionalShadowLights(self).forEach((light) => {
@@ -5643,15 +5654,16 @@ ${STOCHASTIC_GLSL}`).replace(
           if (navigation.immersiveNavigationStrategy === "authored-world-container" && typeof navigation.isObjectInsideImmersiveAuthoredWorld === "function" && navigation.isObjectInsideImmersiveAuthoredWorld(light)) {
             return;
           }
-          if (!light.userData.vrodosPresentedShadowBaseCaptured) {
+          if (!owner.presentedShadowLights.has(light)) {
             capturePresentedShadowLightBase(self, light, { assumeAuthored: true });
           }
-          const basePosition = light.userData.vrodosPresentedShadowBasePosition;
-          const baseTarget = light.userData.vrodosPresentedShadowBaseTarget;
+          const cache = owner.presentedShadowLights.get(light);
+          const basePosition = cache.position;
+          const baseTarget = cache.target;
           if (!basePosition || !baseTarget) {
             return;
           }
-          if (light.userData.vrodosPresentedShadowLastTransformCount === transformCount) {
+          if (cache.transformCount === transformCount) {
             return;
           }
           navigation.authoredToRenderedPosition(basePosition, light.position);
@@ -5661,12 +5673,12 @@ ${STOCHASTIC_GLSL}`).replace(
           if (light.shadow && typeof light.shadow.updateMatrices === "function") {
             light.shadow.updateMatrices(light);
           }
-          light.userData.vrodosPresentedShadowLastTransformCount = transformCount;
+          cache.transformCount = transformCount;
           changed = true;
         });
         if (changed) {
-          self._vrodosPresentedShadowTransformCount = (self._vrodosPresentedShadowTransformCount || 0) + 1;
-          self._vrodosPresentedShadowLastNavigationTransformCount = transformCount;
+          owner.shadowState._vrodosPresentedShadowTransformCount = (self._vrodosPresentedShadowTransformCount || 0) + 1;
+          owner.shadowState._vrodosPresentedShadowLastNavigationTransformCount = transformCount;
         }
         return changed;
       }
@@ -5761,6 +5773,8 @@ ${STOCHASTIC_GLSL}`).replace(
         updateShadowPerfDebugOverlay(this);
       };
       H.applyShadowQualityProfile = function() {
+        const owner = this.getRenderProfileOwner();
+        if (!owner) return;
         const renderer = this.el.renderer;
         const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality || "medium";
         const shadowsEnabled = shadowQuality !== "off";
@@ -5768,7 +5782,7 @@ ${STOCHASTIC_GLSL}`).replace(
         const profileShadowType = "pcf";
         const useDayNightPcf = shadowsEnabled && shouldUseDayNightPcfShadowMap(this);
         const shadowTypeAttr = shadowsEnabled ? useDayNightPcf ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
-        this._vrodosShadowMapTypeReason = shadowsEnabled ? useDayNightPcf ? "day-night-pcf" : "profile" : "disabled";
+        owner.shadowState._vrodosShadowMapTypeReason = shadowsEnabled ? useDayNightPcf ? "day-night-pcf" : "profile" : "disabled";
         const runtimeShadowTypeAttr = shadowTypeAttr;
         const aframeShadowTypeAttr = getAFrameShadowComponentType(runtimeShadowTypeAttr);
         const shadowMapType = getThreeShadowMapType(runtimeShadowTypeAttr);
@@ -6731,17 +6745,7 @@ ${STOCHASTIC_GLSL}`).replace(
         }
       }
       function removePmndrsTakramLightSources(self) {
-        const state = self && self._pmndrsTakramLightSources;
-        if (!state) {
-          return;
-        }
-        ["sunLight", "skyLight", "fillLight", "ambientLight", "target", "moonLight", "moonTarget"].forEach((key) => {
-          const object = state[key];
-          if (object && object.parent) {
-            object.parent.remove(object);
-          }
-        });
-        self._pmndrsTakramLightSources = null;
+        if (self && self.renderProfileRuntime) self.renderProfileRuntime.removeLightSources();
       }
       function ensurePmndrsFallbackHorizonLights(self, config, preset) {
         const effectiveShadowQuality = typeof self.getEffectiveShadowQuality === "function" ? self.getEffectiveShadowQuality() : self.data.shadowQuality;
@@ -6773,9 +6777,11 @@ ${STOCHASTIC_GLSL}`).replace(
           return;
         }
         const opts = options || {};
-        self._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
+        const owner = self.getRenderProfileOwner();
+        if (!owner) return;
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
         atmosphereState.promise.then(() => {
-          if (!self || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
+          if (owner.removed || self.renderProfileRuntime !== owner || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
             return;
           }
           const latestConfig = self.getPmndrsAtmosphereConfig ? self.getPmndrsAtmosphereConfig() : config;
@@ -6809,7 +6815,9 @@ ${STOCHASTIC_GLSL}`).replace(
           }
           logPmndrsHorizonDiagnostic(self, "apply-horizon", latestConfig);
         }).catch((err) => {
-          self._pmndrsTakramLightSourcesPendingError = err;
+          if (!owner.removed && self.renderProfileRuntime === owner && self._pmndrsAtmosphereState === atmosphereState) {
+            owner.lightingState._pmndrsTakramLightSourcesPendingError = err;
+          }
         });
       }
       function getTakramShadowLightSignature(self, state) {
@@ -6845,9 +6853,9 @@ ${STOCHASTIC_GLSL}`).replace(
           return;
         }
         const previousSignature = self._pmndrsTakramLightShadowSignature || "";
-        self._pmndrsTakramLightShadowSignature = signature;
-        self._pmndrsTakramLightShadowSignatureReason = reason || "takram-light";
-        self._pmndrsTakramLightShadowPreviousSignature = previousSignature;
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignature = signature;
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignatureReason = reason || "takram-light";
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowPreviousSignature = previousSignature;
         const sunLight = state.sunLight || null;
         const moonLight = state.moonLight || null;
         const shadowLight = moonLight && moonLight.castShadow ? moonLight : sunLight;
@@ -6874,7 +6882,7 @@ ${STOCHASTIC_GLSL}`).replace(
           syncPresentedShadowLightTransforms(self);
           return false;
         }
-        self._pmndrsPresentedTakramLightDirectionSignature = directionSignature;
+        self.renderProfileRuntime.lightingState._pmndrsPresentedTakramLightDirectionSignature = directionSignature;
         if (sunLight && presentedConfig.sunDirection && sunLight.sunDirection) {
           sunLight.sunDirection.copy(presentedConfig.sunDirection);
           ensurePmndrsWorldToEcefMatrix(sunLight, presentedConfig);
@@ -6908,12 +6916,13 @@ ${STOCHASTIC_GLSL}`).replace(
             moonLight.updateMatrixWorld(true);
           }
         }
-        self._pmndrsTakramLightShadowSignature = getTakramShadowLightSignature(self, state);
-        self._pmndrsTakramLightShadowSignatureReason = "takram-light-direction";
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignature = getTakramShadowLightSignature(self, state);
+        self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignatureReason = "takram-light-direction";
         syncPresentedShadowLightTransforms(self);
         return true;
       }
       function ensurePmndrsTakramHorizonLights(self, config, preset, options) {
+        if (!self || !self.getRenderProfileOwner()) return false;
         if (!self || !config) {
           return false;
         }
@@ -7009,7 +7018,7 @@ ${STOCHASTIC_GLSL}`).replace(
             scene.add(moonTarget2);
           }
           state = { sunLight: sunLight2, skyLight: skyLight2, fillLight: fillLight2, ambientLight: ambientLight2, moonLight: moonLight2, target, moonTarget: moonTarget2 };
-          self._pmndrsTakramLightSources = state;
+          self.renderProfileRuntime.lightingState._pmndrsTakramLightSources = state;
         } else {
           if (state.sunLight && state.sunLight.parent !== scene) {
             scene.add(state.sunLight);
@@ -11106,7 +11115,7 @@ ${shader.fragmentShader}` : withUniform;
       if (celestialMode === "datetime" && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const frame = getPmndrsResolvedGeospatialFrame(config);
         const observerECEF = frame.position;
-        const date = dayNightCycleEnabled ? VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
+        const date = dayNightCycleEnabled ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
         const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate ? this._pmndrsDayNightCycleState.moonEffectiveDate : date;
         const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
         config.effectiveDate = date;

@@ -2,8 +2,55 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import * as THREE from 'three';
+import { Effect, EffectPass } from 'postprocessing';
+import { parse } from 'espree';
 
 const source = readFileSync(new URL('../assets/js/runtime/master/vrodos_postprocessing_pmndrs.js', import.meta.url), 'utf8');
+// Composer teardown owns attached effects exactly once; partial builds still release unattached effects.
+const disposalCounts = new Map();
+class OwnedEffect extends Effect {
+    constructor(name) { super(name, 'void mainImage(const in vec4 c, const in vec2 uv, out vec4 o) { o = c; }'); }
+    dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); super.dispose(); }
+}
+const lifecycle = vm.createContext({
+    console, disposeRuntimeResource: resource => resource?.dispose(),
+    clearPmndrsCloudLightingMaskSelection() {}, syncPmndrsCloudDependentEffects() {},
+    restoreAllPmndrsHorizonFoliageMaterials() {}, updatePmndrsAADebugOverlay() {}
+});
+const lifecycleNames = new Set(['disposePmndrsCloudLightingMaskResources', 'disposePmndrsNativeSsaoResources', 'disposePmndrsCloudEffect', 'disposePmndrsComposerResources']);
+const ast = parse(source, { ecmaVersion: 'latest', range: true });
+function loadDisposalFunctions(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'FunctionDeclaration' && lifecycleNames.has(node.id.name)) {
+        vm.runInContext(source.slice(...node.range), lifecycle);
+    }
+    for (const [key, value] of Object.entries(node)) {
+        if (key === 'range') continue;
+        if (Array.isArray(value)) value.forEach(loadDisposalFunctions);
+        else if (value && typeof value === 'object') loadDisposalFunctions(value);
+    }
+}
+loadDisposalFunctions(ast);
+for (const attached of [true, false]) {
+    const ssao = new OwnedEffect('ssao'), clouds = new OwnedEffect('clouds'), moon = new OwnedEffect('moon');
+    const effectPass = new EffectPass(new THREE.PerspectiveCamera(), ssao, clouds, moon);
+    const normal = { dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); } };
+    const mask = { dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); } };
+    let listenerRemovals = 0;
+    clouds.events = { removeEventListener() { listenerRemovals++; } };
+    const host = {
+        pmndrsNativeSsaoEffect: ssao, pmndrsNativeNormalPass: normal, pmndrsCloudsEffect: clouds,
+        pmndrsCloudLightingMaskPass: mask, pmndrsMoonCloudShaftsEffect: moon,
+        _pmndrsCloudsEffectChangeHandler() {},
+        pmndrsComposer: attached ? { passes: [normal, mask, effectPass], dispose() { this.passes.forEach(pass => pass.dispose()); } } : null
+    };
+    lifecycle.disposePmndrsComposerResources(host);
+    lifecycle.disposePmndrsComposerResources(host);
+    for (const resource of [ssao, clouds, moon, normal, mask]) assert.equal(disposalCounts.get(resource), 1);
+    assert.equal(listenerRemovals, 1);
+    assert.equal(host.pmndrsComposer, null);
+    if (!attached) { effectPass.effects = []; effectPass.dispose(); }
+}
 const start = source.indexOf('    function shouldUsePmndrsNativeHeadset(');
 const end = source.indexOf('    function isPmndrsXrStereoComposerRequested(', start);
 const context = vm.createContext({

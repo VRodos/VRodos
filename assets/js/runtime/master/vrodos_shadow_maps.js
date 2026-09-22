@@ -39,14 +39,14 @@
     }
 
     function disposeLightShadowMap(shadow) {
-        if (!shadow || !shadow.map) {
+        if (!shadow || (!shadow.map && !shadow.mapPass)) {
             return false;
         }
 
-        if (shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === 'function') {
+        if (shadow.map && shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === 'function') {
             shadow.map.depthTexture.dispose();
         }
-        if (typeof shadow.map.dispose === 'function') {
+        if (shadow.map && typeof shadow.map.dispose === 'function') {
             shadow.map.dispose();
         }
         shadow.map = null;

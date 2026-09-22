@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { parse } from 'espree';
 import { StatsCore } from '../node_modules/stats-gl/dist/core.js';
+import * as THREE from 'three';
 
 const definitions = {}, meters = [], warnings = [], calls = [];
 let failure = '', debugDisabled = false;
@@ -34,7 +35,7 @@ class Stats extends StatsCore {
         if (failure === 'dispose') throw new Error('dispose');
     }
 }
-const context = vm.createContext({ console: { warn: (...args) => warnings.push(args) }, Stats,
+const context = vm.createContext({ console: { warn: (...args) => warnings.push(args) }, Stats, THREE,
     document: { body, createElement: () => ({ style: {} }), getElementById: () => null, removeEventListener() {} },
     vrodosRuntimeDebugFlag: () => debugDisabled,
     AFRAME: { registerComponent: (name, def) => { definitions[name] = def; }, registerSystem() {} }
@@ -48,7 +49,7 @@ const ast = parse(source, { ecmaVersion: 'latest', range: true });
 const registration = ast.body.find(n => n.expression?.callee?.property?.name === 'registerComponent');
 const methods = {};
 for (const property of registration.expression.arguments[1].properties) {
-    if (['queueShadowFlush','queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
+    if (['init','queueShadowFlush','queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {
         methods[property.key.name] = vm.runInContext(`(${source.slice(...property.value.range)})`, context);
     }
 }
@@ -214,4 +215,43 @@ assert.equal(scheduledTeardown.owner.navigationShadowSettleTimer, null);
 assert.equal(shadowFrames.size, 0);
 assert.equal(scheduledTeardown.owner.shadowFlushHandle, null);
 assert.equal(timers.size, 0); assert.deepEqual(scheduledTeardown.events, []);
+// Execute actual scene initialization/removal: late loaded/chat callbacks must not survive teardown.
+function eventTarget() {
+    const listeners = new Map();
+    return {
+        addEventListener(type, callback) {
+            if (!listeners.has(type)) listeners.set(type, new Set());
+            listeners.get(type).add(callback);
+        },
+        removeEventListener(type, callback) { listeners.get(type)?.delete(callback); },
+        emit(type) { for (const callback of [...(listeners.get(type) || [])]) callback(); },
+        listenerCount: () => [...listeners.values()].reduce((sum, callbacks) => sum + callbacks.size, 0)
+    };
+}
+const globalEvents = eventTarget(), documentEvents = eventTarget();
+Object.assign(context, globalEvents);
+Object.assign(context.document, documentEvents);
+const privateChat = eventTarget(), publicChat = eventTarget();
+context.document.getElementById = id => ({ 'private-chat-button': privateChat, 'public-chat-button': publicChat }[id] || null);
+context.document.querySelector = () => null;
+context.vrodosApplyActiveDesktopPerformanceProfile = () => {};
+context.VRODOSSceneSettingsMaster = context.VRODOSMaster;
+for (let iteration = 0; iteration < 2; iteration++) {
+    const mounted = fixture('0');
+    Object.assign(mounted.el, eventTarget(), { querySelectorAll: () => [], querySelector: () => null });
+    mounted.settings.data.selChoice = '4';
+    for (const name of ['ensureRuntimePipelineComponents','initializeHardwareDiagnostics','markSceneCollectionsDirty','markShadowDirty','applyVrRenderBudgetPolicy','captureXrExitRestoreBaseline','clearXrExitRestoreTimers','clearXrExitSessionAttachTimers','detachXrExitSessionEndListener','disposeHardwareDiagnostics','disablePostProcessing','disablePmndrsPostProcessing','handleXrEnter','handleXrExit','handleXrSessionEnd','handleXrExitResumeSignal']) mounted.settings[name] = () => {};
+    mounted.settings.init();
+    mounted.el.emit('loaded');
+    assert.equal(privateChat.listenerCount(), 1);
+    assert.equal(publicChat.listenerCount(), 1);
+    mounted.settings.remove(); mounted.settings.remove();
+    assert.equal(mounted.el.listenerCount(), 0);
+    assert.equal(globalEvents.listenerCount(), 0);
+    assert.equal(documentEvents.listenerCount(), 0);
+    assert.equal(privateChat.listenerCount(), 0);
+    assert.equal(publicChat.listenerCount(), 0);
+    mounted.el.emit('loaded');
+    assert.equal(privateChat.listenerCount(), 0);
+}
 console.log('Render-profile FPS and quality-refresh lifecycle, coalescing, cancellation, and teardown tests passed.');

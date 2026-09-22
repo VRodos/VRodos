@@ -3400,12 +3400,12 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         return selectedCount;
     }
 
-    function disposePmndrsCloudLightingMaskResources(self) {
+    function disposePmndrsCloudLightingMaskResources(self, dispose = disposeRuntimeResource) {
         if (!self) {
             return;
         }
         clearPmndrsCloudLightingMaskSelection(self);
-        disposeRuntimeResource(self.pmndrsCloudLightingMaskPass);
+        dispose(self.pmndrsCloudLightingMaskPass);
         self.pmndrsCloudLightingMaskPass = null;
         self._pmndrsCloudLightingMaskSelectedCount = 0;
     }
@@ -4086,14 +4086,14 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         return (shouldEnablePmndrsAerialPerspective(self) ? 'atmosphere:world-aerial' : 'atmosphere:world-sky') + altitudeMode;
     }
 
-    function disposePmndrsNativeSsaoResources(self, forceNormalPass) {
+    function disposePmndrsNativeSsaoResources(self, forceNormalPass, dispose = disposeRuntimeResource) {
         if (!self) {
             return;
         }
 
-        disposeRuntimeResource(self.pmndrsNativeSsaoEffect);
+        dispose(self.pmndrsNativeSsaoEffect);
         if (forceNormalPass || !(self._pmndrsNativeNormalPassReason || '').includes('cloud-aerial')) {
-            disposeRuntimeResource(self.pmndrsNativeNormalPass);
+            dispose(self.pmndrsNativeNormalPass);
             self.pmndrsNativeNormalPass = null;
             self._pmndrsNativeNormalPassResolutionScale = 0;
             self._pmndrsNativeNormalPassReason = '';
@@ -4101,7 +4101,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         self.pmndrsNativeSsaoEffect = null;
     }
 
-    function disposePmndrsCloudEffect(self) {
+    function disposePmndrsCloudEffect(self, dispose = disposeRuntimeResource) {
         if (!self) {
             return;
         }
@@ -4109,7 +4109,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (self.pmndrsCloudsEffect && self._pmndrsCloudsEffectChangeHandler && self.pmndrsCloudsEffect.events && typeof self.pmndrsCloudsEffect.events.removeEventListener === 'function') {
             self.pmndrsCloudsEffect.events.removeEventListener('change', self._pmndrsCloudsEffectChangeHandler);
         }
-        disposeRuntimeResource(self.pmndrsCloudsEffect);
+        dispose(self.pmndrsCloudsEffect);
         self.pmndrsCloudsEffect = null;
         self._pmndrsCloudsEffectChangeHandler = null;
         syncPmndrsCloudDependentEffects(self, 'cloud-dispose');
@@ -4120,10 +4120,22 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return;
         }
 
-        disposePmndrsNativeSsaoResources(self, true);
-        disposePmndrsCloudEffect(self);
-        disposePmndrsCloudLightingMaskResources(self);
-        disposeRuntimeResource(self.pmndrsMoonCloudShaftsEffect);
+        // Composer.dispose owns its passes, and EffectPass.dispose owns its effects.
+        // Only dispose unattached resources here (including partially built effects).
+        const attached = new Set();
+        if (self.pmndrsComposer) {
+            self.pmndrsComposer.passes.forEach((pass) => {
+                attached.add(pass);
+                if (pass.effects) pass.effects.forEach(effect => attached.add(effect));
+            });
+        }
+        const disposeUnattached = resource => {
+            if (!attached.has(resource)) disposeRuntimeResource(resource);
+        };
+        disposePmndrsNativeSsaoResources(self, true, disposeUnattached);
+        disposePmndrsCloudEffect(self, disposeUnattached);
+        disposePmndrsCloudLightingMaskResources(self, disposeUnattached);
+        disposeUnattached(self.pmndrsMoonCloudShaftsEffect);
         self.pmndrsMoonCloudShaftsEffect = null;
 
         if (self.pmndrsComposer) {

@@ -1124,7 +1124,7 @@
             const frame = getPmndrsResolvedGeospatialFrame(config);
             const observerECEF = frame.position;
             const date = dayNightCycleEnabled
-                ? VRODOSMaster.CelestialClock.effectiveDate(this, getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)
+                ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)
                 : getPmndrsDateObject(celestialDate, celestialUtcTime);
             const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate
                 ? this._pmndrsDayNightCycleState.moonEffectiveDate

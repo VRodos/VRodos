@@ -8,7 +8,7 @@
 
     function getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs) {
         const now = getPmndrsRuntimeLightTimeMs(self);
-        self._pmndrsRuntimeLightSmoothTimes = self._pmndrsRuntimeLightSmoothTimes || {};
+        if (!self._pmndrsRuntimeLightSmoothTimes) self._pmndrsRuntimeLightSmoothTimes = {};
         const previous = self._pmndrsRuntimeLightSmoothTimes[key];
         self._pmndrsRuntimeLightSmoothTimes[key] = now;
         if (!smoothingMs || smoothingMs <= 0) {
@@ -27,7 +27,7 @@
             return 0;
         }
 
-        self._pmndrsRuntimeLightSmoothValues = self._pmndrsRuntimeLightSmoothValues || {};
+        if (!self._pmndrsRuntimeLightSmoothValues) self._pmndrsRuntimeLightSmoothValues = {};
         const alpha = getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs);
         if (typeof self._pmndrsRuntimeLightSmoothValues[key] !== 'number') {
             self._pmndrsRuntimeLightSmoothValues[key] = typeof currentValue === 'number' && isFinite(currentValue)
@@ -46,7 +46,7 @@
     }
 
     function smoothPmndrsRuntimeLightColor(self, key, targetColor, smoothingMs, currentColor) {
-        self._pmndrsRuntimeLightSmoothColors = self._pmndrsRuntimeLightSmoothColors || {};
+        if (!self._pmndrsRuntimeLightSmoothColors) self._pmndrsRuntimeLightSmoothColors = {};
         const alpha = getPmndrsRuntimeLightSmoothingAlpha(self, `${key}:color`, smoothingMs);
         const color = new THREE.Color(targetColor || '#ffffff');
 

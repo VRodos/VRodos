@@ -915,7 +915,35 @@
         this.fpsStatsPending = false;
         this.fpsStatsEpoch = 0;
         this._vrodosShadowPerfOverlay = null;
+        this.terrainDepthMaterials = /* @__PURE__ */ new Map();
+        this.presentedShadowLights = /* @__PURE__ */ new Map();
+        this.lightingState = {
+          _pmndrsTakramLightSources: null,
+          _pmndrsTakramLightSourcesPendingPromise: null,
+          _pmndrsTakramLightSourcesPendingError: null,
+          _pmndrsTakramLightShadowSignature: null,
+          _pmndrsTakramLightShadowSignatureReason: null,
+          _pmndrsTakramLightShadowPreviousSignature: null,
+          _pmndrsPresentedTakramLightDirectionSignature: null,
+          _pmndrsDayNightCycleState: null,
+          _pmndrsRuntimeLightSmoothValues: {},
+          _pmndrsRuntimeLightSmoothColors: {},
+          _pmndrsRuntimeLightSmoothTimes: {}
+        };
         this.shadowState = {
+          _vrodosShadowProgramShadowMapType: null,
+          _vrodosShadowProgramRefreshes: 0,
+          _vrodosShadowLastProgramRefreshReason: null,
+          _vrodosShadowLastProgramRefreshType: null,
+          _vrodosShadowCompatibilityRefreshes: 0,
+          _vrodosShadowLastCompatibilityRefreshReason: null,
+          _vrodosShadowLastCompatibilityRefreshType: null,
+          _vrodosPresentedShadowBaseCaptureCount: 0,
+          _vrodosPresentedShadowTransformCount: 0,
+          _vrodosPresentedShadowLastNavigationTransformCount: null,
+          _vrodosShadowMapTypeReason: null,
+          _pmndrsDayNightCycleShadowLastMs: 0,
+          _pmndrsDayNightCycleLastShadowSunDirection: null,
           _vrodosAdaptiveShadowCenter: null,
           _vrodosShadowFitLastMs: null,
           _vrodosNavigationShadowRefreshLastSkippedReason: null,
@@ -942,6 +970,7 @@
         this.navigationShadowSettleEpoch = 0;
         this.adaptiveShadowFitFrames = /* @__PURE__ */ new Set();
         this.adaptiveShadowFitTimers = /* @__PURE__ */ new Set();
+        this.presentationRefreshes = /* @__PURE__ */ new Set();
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
@@ -955,6 +984,14 @@
             configurable: true,
             get: function() {
               return this.renderProfileRuntime ? this.renderProfileRuntime.shadowState[field] : null;
+            }
+          });
+        });
+        Object.keys(this.lightingState).forEach((field) => {
+          Object.defineProperty(settings, field, {
+            configurable: true,
+            get: function() {
+              return this.renderProfileRuntime ? this.renderProfileRuntime.lightingState[field] : null;
             }
           });
         });
@@ -983,14 +1020,61 @@
         this.adaptiveShadowFitTimers.forEach((handle) => clearTimeout(handle));
         this.adaptiveShadowFitFrames.clear();
         this.adaptiveShadowFitTimers.clear();
+        this.presentationRefreshes.forEach(({ kind, handle }) => {
+          if (kind === "frame") cancelAnimationFrame(handle);
+          else clearTimeout(handle);
+        });
+        this.presentationRefreshes.clear();
         if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
           this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
         }
         this._vrodosShadowPerfOverlay = null;
         this.disableFPSMeter();
+        if (this.settings && this.settings.renderProfileRuntime === this && typeof this.settings.removePhotorealHelperLights === "function") {
+          this.settings.removePhotorealHelperLights();
+        }
+        this.removeLightSources();
+        this.lightingState = null;
+        this.terrainDepthMaterials.forEach(({ material, previous }, mesh) => {
+          if (mesh.customDepthMaterial === material) mesh.customDepthMaterial = previous;
+          material.dispose();
+        });
+        this.terrainDepthMaterials.clear();
+        this.presentedShadowLights.clear();
         this.shadowState = null;
         if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
         this.settings = null;
+      },
+      getLightingState: function() {
+        if (this.removed) return null;
+        this.lightingState._pmndrsTickTimeMs = this.settings._pmndrsTickTimeMs;
+        return this.lightingState;
+      },
+      removeLightSources: function() {
+        const state = this.lightingState && this.lightingState._pmndrsTakramLightSources;
+        if (!state) return;
+        ["sunLight", "skyLight", "fillLight", "ambientLight", "target", "moonLight", "moonTarget"].forEach((key) => {
+          const object = state[key];
+          if (object && object.shadow) VRODOSMaster.ShadowMaps.dispose(object.shadow);
+          if (object && object.parent) object.parent.remove(object);
+        });
+        this.lightingState._pmndrsTakramLightSources = null;
+        this.lightingState._pmndrsPresentedTakramLightDirectionSignature = null;
+      },
+      schedulePresentationRefresh: function(callback) {
+        if (this.removed) return;
+        const schedule = (kind, delay) => {
+          const pending = { kind, handle: null };
+          const run = () => {
+            this.presentationRefreshes.delete(pending);
+            if (!this.removed && this.settings.renderProfileRuntime === this) callback();
+          };
+          pending.handle = kind === "frame" ? requestAnimationFrame(run) : setTimeout(run, delay);
+          this.presentationRefreshes.add(pending);
+        };
+        if (typeof requestAnimationFrame === "function") schedule("frame");
+        schedule("timeout", 80);
+        schedule("timeout", 240);
       },
       ensureShadowPerfDebugOverlay: function() {
         if (this.removed || typeof document === "undefined") {
@@ -1282,7 +1366,7 @@
         this.el.addEventListener("componentinitialized", this.handleLegacySkySettingsChange, true);
       },
       bindSettings: function(settings, removeVisuals, disposeAuxiliaryVisuals) {
-        if (this.settings === settings) return;
+        if (this.settings === settings || this.removed) return;
         this.settings = settings;
         this.invalidateLegacySkyCleanup();
         this.removeVisuals = removeVisuals;
@@ -1291,7 +1375,7 @@
         Object.defineProperty(settings, "_pmndrsAtmosphereState", {
           configurable: true,
           get: function() {
-            return this.atmosphereRuntime.state;
+            return this.atmosphereRuntime ? this.atmosphereRuntime.state : null;
           }
         });
       },
@@ -1435,6 +1519,7 @@
         }
       },
       remove: function() {
+        if (this.removed) return;
         this.removed = true;
         this.legacySkyCleanupDirty = false;
         this.el.removeEventListener("object3dset", this.handleLegacySkyObjectSet, true);
@@ -1446,6 +1531,7 @@
           try {
             if (this.settings) this.disposeAuxiliaryVisuals(this.settings);
           } finally {
+            if (this.settings && this.settings.atmosphereRuntime === this) this.settings.atmosphereRuntime = null;
             this.settings = null;
             this.removeVisuals = null;
             this.disposeAuxiliaryVisuals = null;
@@ -1454,7 +1540,7 @@
       },
       tick: function(time) {
         const settings = sceneSettings(this.el);
-        if (!settings) {
+        if (!settings || this.removed) {
           return;
         }
         settings._pmndrsTickTimeMs = typeof time === "number" ? time : null;
@@ -3250,11 +3336,8 @@
         self.updatePmndrsHorizonSun();
         self.publishRuntimeFeatureState("presentation-resync");
       };
-      if (typeof requestAnimationFrame === "function") {
-        requestAnimationFrame(resync);
-      }
-      setTimeout(resync, 80);
-      setTimeout(resync, 240);
+      const owner = this.getRenderProfileOwner();
+      if (owner) owner.schedulePresentationRefresh(resync);
     },
     normalizeXrExitEnabledValue: function(value, fallback) {
       if (value === void 0 || value === null || value === "") {
@@ -4055,9 +4138,10 @@
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function() {
+      this.removed = false;
       vrodosApplyActiveDesktopPerformanceProfile(this);
       this.ensureRuntimePipelineComponents();
-      this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry() : null;
+      this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources.createRegistry();
       this.handleQualityModelLoad = function() {
         const atmosphere = this.el.components["vrodos-atmosphere"];
         if (atmosphere) atmosphere.invalidateLegacySkyCleanup();
@@ -4133,11 +4217,7 @@
       this._whiteSAOTexture = null;
       this._blackSSRTexture = null;
       this._pmndrsTickTimeMs = null;
-      this._pmndrsDayNightCycleState = null;
-      this._pmndrsDayNightCycleShadowLastMs = 0;
-      this._pmndrsRuntimeLightSmoothValues = {};
-      this._pmndrsRuntimeLightSmoothColors = {};
-      this._pmndrsRuntimeLightSmoothTimes = {};
+      this.getRenderProfileOwner();
       this._vrodosReflectionIntensityMaterials = [];
       this._runtimeFeatureState = null;
       this._runtimeFeatureStateLastPublishMs = 0;
@@ -4155,21 +4235,21 @@
       this._xrExitRestoreTriggers = [];
       this._xrExitRestoreDiagnostics = null;
       this.initializeHardwareDiagnostics();
-      window.addEventListener("resize", this.handleResize);
-      window.addEventListener("focus", this.handleXrExitResumeSignal);
-      window.addEventListener("pageshow", this.handleXrExitResumeSignal);
-      document.addEventListener("visibilitychange", this.handleXrExitResumeSignal);
-      document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
-      document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
-      document.addEventListener("mozfullscreenchange", this.handlePresentationModeChange);
-      document.addEventListener("MSFullscreenChange", this.handlePresentationModeChange);
-      this.el.addEventListener("child-attached", this.handleSceneMutation);
-      this.el.addEventListener("child-detached", this.handleSceneMutation);
-      this.el.addEventListener("loaded", () => {
+      this.runtimeResources.listen(window, "resize", this.handleResize);
+      this.runtimeResources.listen(window, "focus", this.handleXrExitResumeSignal);
+      this.runtimeResources.listen(window, "pageshow", this.handleXrExitResumeSignal);
+      this.runtimeResources.listen(document, "visibilitychange", this.handleXrExitResumeSignal);
+      this.runtimeResources.listen(document, "fullscreenchange", this.handlePresentationModeChange);
+      this.runtimeResources.listen(document, "webkitfullscreenchange", this.handlePresentationModeChange);
+      this.runtimeResources.listen(document, "mozfullscreenchange", this.handlePresentationModeChange);
+      this.runtimeResources.listen(document, "MSFullscreenChange", this.handlePresentationModeChange);
+      this.runtimeResources.listen(this.el, "child-attached", this.handleSceneMutation);
+      this.runtimeResources.listen(this.el, "child-detached", this.handleSceneMutation);
+      this.runtimeResources.listen(this.el, "loaded", () => {
         this.markSceneCollectionsDirty();
         const privateChatBtn = document.getElementById("private-chat-button");
         if (privateChatBtn) {
-          privateChatBtn.addEventListener("click", () => {
+          this.runtimeResources.listen(privateChatBtn, "click", () => {
             const event = new CustomEvent("chat-selected", { "detail": "private" });
             document.dispatchEvent(event);
             if (typeof window.gtag === "function") window.gtag("event", "chat_private_tab_selected");
@@ -4177,7 +4257,7 @@
         }
         const publicChatBtn = document.getElementById("public-chat-button");
         if (publicChatBtn) {
-          publicChatBtn.addEventListener("click", () => {
+          this.runtimeResources.listen(publicChatBtn, "click", () => {
             const event = new CustomEvent("chat-selected", { "detail": "public" });
             document.dispatchEvent(event);
             if (typeof window.gtag === "function") window.gtag("event", "chat_public_tab_selected");
@@ -4209,7 +4289,7 @@
           };
           const settings = sceneContainer.getAttribute("scene-settings");
           if (settings && vrodosRuntimeTruthy(settings.avatar_enabled)) {
-            avatarDialog.addEventListener("close", closeAvatarDialogListener);
+            this.runtimeResources.listen(avatarDialog, "close", closeAvatarDialogListener);
             if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === "function") {
               window.VRODOSMasterUI.showDialog(avatarDialog);
             } else if (typeof avatarDialog.showModal === "function") {
@@ -4223,9 +4303,9 @@
         this.markShadowDirty("scene-loaded");
         this.applyVrRenderBudgetPolicy("scene-loaded");
       });
-      this.el.addEventListener("model-loaded", this.handleQualityModelLoad);
-      this.el.addEventListener("enter-vr", this.handleXrEnter);
-      this.el.addEventListener("exit-vr", this.handleXrExit);
+      this.runtimeResources.listen(this.el, "model-loaded", this.handleQualityModelLoad);
+      this.runtimeResources.listen(this.el, "enter-vr", this.handleXrEnter);
+      this.runtimeResources.listen(this.el, "exit-vr", this.handleXrExit);
       const cam = document.querySelector("#cameraA");
       if (cam) {
         if (this.data.pr_type !== "vrexpo_games") {
@@ -4327,19 +4407,13 @@
       this.publishRuntimeFeatureState("init");
     },
     remove: function() {
-      this.el.removeEventListener("model-loaded", this.handleQualityModelLoad);
-      this.el.removeEventListener("child-attached", this.handleSceneMutation);
-      this.el.removeEventListener("child-detached", this.handleSceneMutation);
-      this.el.removeEventListener("enter-vr", this.handleXrEnter);
-      this.el.removeEventListener("exit-vr", this.handleXrExit);
-      window.removeEventListener("resize", this.handleResize);
-      window.removeEventListener("focus", this.handleXrExitResumeSignal);
-      window.removeEventListener("pageshow", this.handleXrExitResumeSignal);
-      document.removeEventListener("visibilitychange", this.handleXrExitResumeSignal);
-      document.removeEventListener("fullscreenchange", this.handlePresentationModeChange);
-      document.removeEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
-      document.removeEventListener("mozfullscreenchange", this.handlePresentationModeChange);
-      document.removeEventListener("MSFullscreenChange", this.handlePresentationModeChange);
+      if (this.removed) return;
+      this.removed = true;
+      this.disposeHardwareDiagnostics();
+      if (this.runtimeResources) {
+        this.runtimeResources.disposeAll();
+        this.runtimeResources = null;
+      }
       this.clearXrExitRestoreTimers();
       this.clearXrExitSessionAttachTimers();
       this.detachXrExitSessionEndListener();
@@ -4348,17 +4422,9 @@
       this.el.removeAttribute("vrodos-atmosphere");
       this.el.removeAttribute("vrodos-reflections");
       this.el.removeAttribute("vrodos-render-profile");
-      this.removePhotorealHelperLights();
       const manualSun = document.getElementById("default-sun");
       if (manualSun && manualSun.parentNode) {
         manualSun.parentNode.removeChild(manualSun);
-      }
-      if (this.runtimeResources) {
-        this.disposeHardwareDiagnostics();
-        this.runtimeResources.disposeAll();
-        this.runtimeResources = null;
-      } else {
-        this.disposeHardwareDiagnostics();
       }
     }
   });

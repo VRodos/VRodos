@@ -164,6 +164,10 @@ Runtime helpers should use `window.VRODOSMaster.RuntimeResources` for resources 
 
 Removing an object from the scene is not cleanup; obsolete GPU resources still need `dispose()` through the owning lifecycle path.
 
+`vrodos-render-profile` owns shadow compatibility counters, per-light presented-transform caches, terrain depth materials, Takram light objects/shadow targets, celestial-clock state, and light interpolation state. Scene-settings exposes read-only state views. Removal restores only depth-material attachments still owned by the component, preserves authored/replacement materials, cancels presentation refresh frames and 80/240 ms timers, and rejects late lighting promises. Atmosphere removal releases its settings binding and ignores later ticks.
+
+The scene-settings resource registry owns its window/document/scene, chat-button and avatar-dialog listeners, including the scene-loaded callback. Teardown detaches them before removing the rendering owners. PMNDRS composers own attached passes and effects; VRodos explicitly disposes only unattached partial-build resources, removing cloud listeners before composer disposal. Do not dispose the same effect both directly and through its EffectPass.
+
 ## 3a. Debug And Profiling Hooks
 
 Use the CDP profiler for repeatable timing and resource captures:

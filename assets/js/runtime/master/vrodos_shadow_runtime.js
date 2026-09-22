@@ -1,5 +1,5 @@
 /** Shadow roles, terrain stabilization, fitting, refresh scheduling, and diagnostics.
- * Scene component state and lifecycle remain owned by the existing host.
+ * Render-profile owns shadow state/resources; scene-settings supplies policy and delegates.
  */
 (function () {
     VRODOSMaster.ShadowRuntime = Object.freeze({ create });
@@ -301,7 +301,10 @@
             }
 
             node.userData = node.userData || {};
-            const existingDepthMaterial = node.userData.vrodosTerrainShadowDepthMaterial || null;
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return;
+            const entry = owner.terrainDepthMaterials.get(node);
+            const existingDepthMaterial = entry ? entry.material : null;
             const disabled = hasPmndrsDebugFlag(
                 'disableTerrainShadowDepthOffset',
                 'vrodos_debug_disable_terrain_shadow_depth_offset'
@@ -309,7 +312,7 @@
 
             if (!enabled || disabled || typeof THREE.MeshDepthMaterial !== 'function') {
                 if (existingDepthMaterial && node.customDepthMaterial === existingDepthMaterial) {
-                    node.customDepthMaterial = node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial || undefined;
+                    node.customDepthMaterial = entry.previous;
                 }
                 return;
             }
@@ -322,11 +325,7 @@
                 depthMaterial.name = 'vrodosTerrainShadowDepthMaterial';
                 depthMaterial.userData = depthMaterial.userData || {};
                 depthMaterial.userData.vrodosTerrainShadowDepthMaterial = true;
-                node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial = node.customDepthMaterial || null;
-                node.userData.vrodosTerrainShadowDepthMaterial = depthMaterial;
-                if (self && self.runtimeResources && typeof self.runtimeResources.track === 'function') {
-                    self.runtimeResources.track(depthMaterial);
-                }
+                owner.terrainDepthMaterials.set(node, { material: depthMaterial, previous: node.customDepthMaterial });
             }
 
             const offset = getTerrainShadowDepthOffset();
@@ -670,6 +669,8 @@
         }
 
         function schedulePmndrsAtmosphereShadowFit(self, config) {
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return;
             if (!isPmndrsDayNightCycleEnabled(self)) {
                 scheduleAdaptiveShadowFit(self);
                 return;
@@ -680,11 +681,11 @@
             }
 
             if (!self._vrodosShadowFitLastMs) {
-                self._pmndrsDayNightCycleShadowLastMs = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+                owner.shadowState._pmndrsDayNightCycleShadowLastMs = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
                 applyAdaptiveShadowFit(self, { stableFrustum: true });
             }
             if (config && config.localSunDirection) {
-                self._pmndrsDayNightCycleLastShadowSunDirection = self._pmndrsDayNightCycleLastShadowSunDirection || new THREE.Vector3();
+                owner.shadowState._pmndrsDayNightCycleLastShadowSunDirection = self._pmndrsDayNightCycleLastShadowSunDirection || new THREE.Vector3();
                 self._pmndrsDayNightCycleLastShadowSunDirection.copy(config.localSunDirection);
             }
         }
@@ -1074,15 +1075,19 @@
                 return false;
             }
 
-            self._vrodosShadowProgramShadowMapType = shadowMapType;
-            self._vrodosShadowProgramRefreshes = (self._vrodosShadowProgramRefreshes || 0) + 1;
-            self._vrodosShadowLastProgramRefreshReason = reason || 'shadow-map-type';
-            self._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
+            const owner = self.getRenderProfileOwner();
+            if (!owner) return false;
+            owner.shadowState._vrodosShadowProgramShadowMapType = shadowMapType;
+            owner.shadowState._vrodosShadowProgramRefreshes = (self._vrodosShadowProgramRefreshes || 0) + 1;
+            owner.shadowState._vrodosShadowLastProgramRefreshReason = reason || 'shadow-map-type';
+            owner.shadowState._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
             markShadowProgramMaterialsDirty(self);
             return true;
         }
 
         function refreshShadowMapResourcesForType(self, shadowMapType, force, reason) {
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return false;
             const sceneObj = self && self.el ? self.el.object3D : null;
             if (!sceneObj) {
                 return false;
@@ -1101,9 +1106,9 @@
 
             if (refreshed || force) {
                 if (self) {
-                    self._vrodosShadowCompatibilityRefreshes = (self._vrodosShadowCompatibilityRefreshes || 0) + 1;
-                    self._vrodosShadowLastCompatibilityRefreshReason = reason || (force ? 'forced' : 'incompatible');
-                    self._vrodosShadowLastCompatibilityRefreshType = getThreeShadowMapTypeName(shadowMapType);
+                    owner.shadowState._vrodosShadowCompatibilityRefreshes = (self._vrodosShadowCompatibilityRefreshes || 0) + 1;
+                    owner.shadowState._vrodosShadowLastCompatibilityRefreshReason = reason || (force ? 'forced' : 'incompatible');
+                    owner.shadowState._vrodosShadowLastCompatibilityRefreshType = getThreeShadowMapTypeName(shadowMapType);
                 }
                 markShadowProgramMaterialsDirty(self);
             }
@@ -1128,21 +1133,25 @@
 
             const opts = options || {};
             const navigation = getImmersiveNavigationForPresentedTransforms();
-            light.userData = light.userData || {};
-            light.userData.vrodosPresentedShadowBasePosition = light.userData.vrodosPresentedShadowBasePosition || new THREE.Vector3();
-            light.userData.vrodosPresentedShadowBaseTarget = light.userData.vrodosPresentedShadowBaseTarget || new THREE.Vector3();
-
-            if (navigation && opts.assumeAuthored !== true) {
-                navigation.renderedToAuthoredPosition(light.position, light.userData.vrodosPresentedShadowBasePosition);
-                navigation.renderedToAuthoredPosition(light.target.position, light.userData.vrodosPresentedShadowBaseTarget);
-            } else {
-                light.userData.vrodosPresentedShadowBasePosition.copy(light.position);
-                light.userData.vrodosPresentedShadowBaseTarget.copy(light.target.position);
+            const owner = self && self.getRenderProfileOwner();
+            if (!owner) return false;
+            let cache = owner.presentedShadowLights.get(light);
+            if (!cache) {
+                cache = { position: new THREE.Vector3(), target: new THREE.Vector3(), transformCount: null };
+                owner.presentedShadowLights.set(light, cache);
             }
 
-            light.userData.vrodosPresentedShadowBaseCaptured = true;
+            if (navigation && opts.assumeAuthored !== true) {
+                navigation.renderedToAuthoredPosition(light.position, cache.position);
+                navigation.renderedToAuthoredPosition(light.target.position, cache.target);
+            } else {
+                cache.position.copy(light.position);
+                cache.target.copy(light.target.position);
+            }
+
+            cache.transformCount = null;
             if (self) {
-                self._vrodosPresentedShadowBaseCaptureCount = (self._vrodosPresentedShadowBaseCaptureCount || 0) + 1;
+                owner.shadowState._vrodosPresentedShadowBaseCaptureCount = (self._vrodosPresentedShadowBaseCaptureCount || 0) + 1;
             }
             return true;
         }
@@ -1153,6 +1162,8 @@
                 return false;
             }
 
+            const owner = self.getRenderProfileOwner();
+            if (!owner) return false;
             const transformCount = typeof navigation.immersiveRootTransformCount === 'number'
                 ? navigation.immersiveRootTransformCount
                 : 0;
@@ -1170,17 +1181,18 @@
                     return;
                 }
 
-                if (!light.userData.vrodosPresentedShadowBaseCaptured) {
+                if (!owner.presentedShadowLights.has(light)) {
                     capturePresentedShadowLightBase(self, light, { assumeAuthored: true });
                 }
 
-                const basePosition = light.userData.vrodosPresentedShadowBasePosition;
-                const baseTarget = light.userData.vrodosPresentedShadowBaseTarget;
+                const cache = owner.presentedShadowLights.get(light);
+                const basePosition = cache.position;
+                const baseTarget = cache.target;
                 if (!basePosition || !baseTarget) {
                     return;
                 }
 
-                if (light.userData.vrodosPresentedShadowLastTransformCount === transformCount) {
+                if (cache.transformCount === transformCount) {
                     return;
                 }
 
@@ -1191,13 +1203,13 @@
                 if (light.shadow && typeof light.shadow.updateMatrices === 'function') {
                     light.shadow.updateMatrices(light);
                 }
-                light.userData.vrodosPresentedShadowLastTransformCount = transformCount;
+                cache.transformCount = transformCount;
                 changed = true;
             });
 
             if (changed) {
-                self._vrodosPresentedShadowTransformCount = (self._vrodosPresentedShadowTransformCount || 0) + 1;
-                self._vrodosPresentedShadowLastNavigationTransformCount = transformCount;
+                owner.shadowState._vrodosPresentedShadowTransformCount = (self._vrodosPresentedShadowTransformCount || 0) + 1;
+                owner.shadowState._vrodosPresentedShadowLastNavigationTransformCount = transformCount;
             }
             return changed;
         }
@@ -1317,6 +1329,8 @@
         };
 
         H.applyShadowQualityProfile = function () {
+            const owner = this.getRenderProfileOwner();
+            if (!owner) return;
             const renderer = this.el.renderer;
             const shadowQuality = typeof this.getEffectiveShadowQuality === 'function'
                 ? this.getEffectiveShadowQuality()
@@ -1328,7 +1342,7 @@
             const shadowTypeAttr = shadowsEnabled
                 ? (useDayNightPcf ? 'pcf' : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType))
                 : 'pcf';
-            this._vrodosShadowMapTypeReason = shadowsEnabled
+            owner.shadowState._vrodosShadowMapTypeReason = shadowsEnabled
                 ? (useDayNightPcf ? 'day-night-pcf' : 'profile')
                 : 'disabled';
             const runtimeShadowTypeAttr = shadowTypeAttr;

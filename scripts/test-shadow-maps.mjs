@@ -49,13 +49,13 @@ assert.equal(shadow.needsUpdate, true);
 assert.equal(maps.dispose(shadow), false);
 assert.equal(events.length, 4);
 
-// Preserve existing early-return behavior for a pass without a primary map.
+// Teardown also releases a remaining pass when the primary map was already released.
 const orphanPass = resource('orphan');
 const noMap = { map: null, mapPass: orphanPass, needsUpdate: false };
-assert.equal(maps.dispose(noMap), false);
-assert.equal(noMap.mapPass, orphanPass);
-assert.equal(noMap.needsUpdate, false);
-assert.equal(events.length, 4);
+assert.equal(maps.dispose(noMap), true);
+assert.equal(noMap.mapPass, null);
+assert.equal(noMap.needsUpdate, true);
+assert.deepEqual(events.slice(-2), ['orphan:depth', 'orphan:target']);
 assert.equal(maps.dispose(null), false);
 assert.equal(maps.dispose({}), false);
 // Optional disposal methods are tolerated without retaining target references.

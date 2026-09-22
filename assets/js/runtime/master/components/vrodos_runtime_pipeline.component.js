@@ -21,7 +21,35 @@
             this.fpsStatsPending = false;
             this.fpsStatsEpoch = 0;
             this._vrodosShadowPerfOverlay = null;
+            this.terrainDepthMaterials = new Map();
+            this.presentedShadowLights = new Map();
+            this.lightingState = {
+                _pmndrsTakramLightSources: null,
+                _pmndrsTakramLightSourcesPendingPromise: null,
+                _pmndrsTakramLightSourcesPendingError: null,
+                _pmndrsTakramLightShadowSignature: null,
+                _pmndrsTakramLightShadowSignatureReason: null,
+                _pmndrsTakramLightShadowPreviousSignature: null,
+                _pmndrsPresentedTakramLightDirectionSignature: null,
+                _pmndrsDayNightCycleState: null,
+                _pmndrsRuntimeLightSmoothValues: {},
+                _pmndrsRuntimeLightSmoothColors: {},
+                _pmndrsRuntimeLightSmoothTimes: {}
+            };
             this.shadowState = {
+                _vrodosShadowProgramShadowMapType: null,
+                _vrodosShadowProgramRefreshes: 0,
+                _vrodosShadowLastProgramRefreshReason: null,
+                _vrodosShadowLastProgramRefreshType: null,
+                _vrodosShadowCompatibilityRefreshes: 0,
+                _vrodosShadowLastCompatibilityRefreshReason: null,
+                _vrodosShadowLastCompatibilityRefreshType: null,
+                _vrodosPresentedShadowBaseCaptureCount: 0,
+                _vrodosPresentedShadowTransformCount: 0,
+                _vrodosPresentedShadowLastNavigationTransformCount: null,
+                _vrodosShadowMapTypeReason: null,
+                _pmndrsDayNightCycleShadowLastMs: 0,
+                _pmndrsDayNightCycleLastShadowSunDirection: null,
                 _vrodosAdaptiveShadowCenter: null,
                 _vrodosShadowFitLastMs: null,
                 _vrodosNavigationShadowRefreshLastSkippedReason: null,
@@ -48,6 +76,7 @@
             this.navigationShadowSettleEpoch = 0;
             this.adaptiveShadowFitFrames = new Set();
             this.adaptiveShadowFitTimers = new Set();
+            this.presentationRefreshes = new Set();
             this.queuedQualityRefreshId = null;
             this.pendingQualityRefreshWaitForSettle = false;
             this.removed = false;
@@ -60,6 +89,12 @@
                 Object.defineProperty(settings, field, {
                     configurable: true,
                     get: function () { return this.renderProfileRuntime ? this.renderProfileRuntime.shadowState[field] : null; }
+                });
+            });
+            Object.keys(this.lightingState).forEach((field) => {
+                Object.defineProperty(settings, field, {
+                    configurable: true,
+                    get: function () { return this.renderProfileRuntime ? this.renderProfileRuntime.lightingState[field] : null; }
                 });
             });
             ['fpsStats', 'fpsStatsRoot', 'fpsStatsPending', '_vrodosShadowPerfOverlay'].forEach((field) => {
@@ -85,14 +120,61 @@
             this.adaptiveShadowFitTimers.forEach(handle => clearTimeout(handle));
             this.adaptiveShadowFitFrames.clear();
             this.adaptiveShadowFitTimers.clear();
+            this.presentationRefreshes.forEach(({ kind, handle }) => {
+                if (kind === 'frame') cancelAnimationFrame(handle);
+                else clearTimeout(handle);
+            });
+            this.presentationRefreshes.clear();
             if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
                 this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
             }
             this._vrodosShadowPerfOverlay = null;
             this.disableFPSMeter();
+            if (this.settings && this.settings.renderProfileRuntime === this && typeof this.settings.removePhotorealHelperLights === 'function') {
+                this.settings.removePhotorealHelperLights();
+            }
+            this.removeLightSources();
+            this.lightingState = null;
+            this.terrainDepthMaterials.forEach(({ material, previous }, mesh) => {
+                if (mesh.customDepthMaterial === material) mesh.customDepthMaterial = previous;
+                material.dispose();
+            });
+            this.terrainDepthMaterials.clear();
+            this.presentedShadowLights.clear();
             this.shadowState = null;
             if (this.settings && this.settings.renderProfileRuntime === this) this.settings.renderProfileRuntime = null;
             this.settings = null;
+        },
+        getLightingState: function () {
+            if (this.removed) return null;
+            this.lightingState._pmndrsTickTimeMs = this.settings._pmndrsTickTimeMs;
+            return this.lightingState;
+        },
+        removeLightSources: function () {
+            const state = this.lightingState && this.lightingState._pmndrsTakramLightSources;
+            if (!state) return;
+            ['sunLight', 'skyLight', 'fillLight', 'ambientLight', 'target', 'moonLight', 'moonTarget'].forEach((key) => {
+                const object = state[key];
+                if (object && object.shadow) VRODOSMaster.ShadowMaps.dispose(object.shadow);
+                if (object && object.parent) object.parent.remove(object);
+            });
+            this.lightingState._pmndrsTakramLightSources = null;
+            this.lightingState._pmndrsPresentedTakramLightDirectionSignature = null;
+        },
+        schedulePresentationRefresh: function (callback) {
+            if (this.removed) return;
+            const schedule = (kind, delay) => {
+                const pending = { kind, handle: null };
+                const run = () => {
+                    this.presentationRefreshes.delete(pending);
+                    if (!this.removed && this.settings.renderProfileRuntime === this) callback();
+                };
+                pending.handle = kind === 'frame' ? requestAnimationFrame(run) : setTimeout(run, delay);
+                this.presentationRefreshes.add(pending);
+            };
+            if (typeof requestAnimationFrame === 'function') schedule('frame');
+            schedule('timeout', 80);
+            schedule('timeout', 240);
         },
         ensureShadowPerfDebugOverlay: function () {
             if (this.removed || typeof document === 'undefined') {
@@ -413,7 +495,7 @@
             this.el.addEventListener('componentinitialized', this.handleLegacySkySettingsChange, true);
         },
         bindSettings: function (settings, removeVisuals, disposeAuxiliaryVisuals) {
-            if (this.settings === settings) return;
+            if (this.settings === settings || this.removed) return;
             this.settings = settings;
             this.invalidateLegacySkyCleanup();
             this.removeVisuals = removeVisuals;
@@ -421,7 +503,7 @@
             settings.atmosphereRuntime = this;
             Object.defineProperty(settings, '_pmndrsAtmosphereState', {
                 configurable: true,
-                get: function () { return this.atmosphereRuntime.state; }
+                get: function () { return this.atmosphereRuntime ? this.atmosphereRuntime.state : null; }
             });
         },
         invalidateLegacySkyCleanup: function () {
@@ -560,6 +642,7 @@
             }
         },
         remove: function () {
+            if (this.removed) return;
             this.removed = true;
             this.legacySkyCleanupDirty = false;
             this.el.removeEventListener('object3dset', this.handleLegacySkyObjectSet, true);
@@ -571,6 +654,7 @@
                 try {
                     if (this.settings) this.disposeAuxiliaryVisuals(this.settings);
                 } finally {
+                    if (this.settings && this.settings.atmosphereRuntime === this) this.settings.atmosphereRuntime = null;
                     this.settings = null;
                     this.removeVisuals = null;
                     this.disposeAuxiliaryVisuals = null;
@@ -580,7 +664,7 @@
 
         tick: function (time) {
             const settings = sceneSettings(this.el);
-            if (!settings) {
+            if (!settings || this.removed) {
                 return;
             }
 

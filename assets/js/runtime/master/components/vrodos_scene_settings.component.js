@@ -2205,11 +2205,8 @@ AFRAME.registerComponent('scene-settings', {
             self.publishRuntimeFeatureState('presentation-resync');
         };
 
-        if (typeof requestAnimationFrame === 'function') {
-            requestAnimationFrame(resync);
-        }
-        setTimeout(resync, 80);
-        setTimeout(resync, 240);
+        const owner = this.getRenderProfileOwner();
+        if (owner) owner.schedulePresentationRefresh(resync);
     },
     normalizeXrExitEnabledValue: function (value, fallback) {
         if (value === undefined || value === null || value === '') {
@@ -3085,11 +3082,10 @@ AFRAME.registerComponent('scene-settings', {
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function () {
+        this.removed = false;
         vrodosApplyActiveDesktopPerformanceProfile(this);
         this.ensureRuntimePipelineComponents();
-        this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry
-            ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry()
-            : null;
+        this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources.createRegistry();
         this.handleQualityModelLoad = function () {
             const atmosphere = this.el.components['vrodos-atmosphere'];
             if (atmosphere) atmosphere.invalidateLegacySkyCleanup();
@@ -3165,11 +3161,7 @@ AFRAME.registerComponent('scene-settings', {
         this._whiteSAOTexture = null;
         this._blackSSRTexture = null;
         this._pmndrsTickTimeMs = null;
-        this._pmndrsDayNightCycleState = null;
-        this._pmndrsDayNightCycleShadowLastMs = 0;
-        this._pmndrsRuntimeLightSmoothValues = {};
-        this._pmndrsRuntimeLightSmoothColors = {};
-        this._pmndrsRuntimeLightSmoothTimes = {};
+        this.getRenderProfileOwner();
         this._vrodosReflectionIntensityMaterials = [];
         this._runtimeFeatureState = null;
         this._runtimeFeatureStateLastPublishMs = 0;
@@ -3187,23 +3179,23 @@ AFRAME.registerComponent('scene-settings', {
         this._xrExitRestoreTriggers = [];
         this._xrExitRestoreDiagnostics = null;
         this.initializeHardwareDiagnostics();
-        window.addEventListener('resize', this.handleResize);
-        window.addEventListener('focus', this.handleXrExitResumeSignal);
-        window.addEventListener('pageshow', this.handleXrExitResumeSignal);
-        document.addEventListener('visibilitychange', this.handleXrExitResumeSignal);
-        document.addEventListener('fullscreenchange', this.handlePresentationModeChange);
-        document.addEventListener('webkitfullscreenchange', this.handlePresentationModeChange);
-        document.addEventListener('mozfullscreenchange', this.handlePresentationModeChange);
-        document.addEventListener('MSFullscreenChange', this.handlePresentationModeChange);
-        this.el.addEventListener('child-attached', this.handleSceneMutation);
-        this.el.addEventListener('child-detached', this.handleSceneMutation);
+        this.runtimeResources.listen(window, 'resize', this.handleResize);
+        this.runtimeResources.listen(window, 'focus', this.handleXrExitResumeSignal);
+        this.runtimeResources.listen(window, 'pageshow', this.handleXrExitResumeSignal);
+        this.runtimeResources.listen(document, 'visibilitychange', this.handleXrExitResumeSignal);
+        this.runtimeResources.listen(document, 'fullscreenchange', this.handlePresentationModeChange);
+        this.runtimeResources.listen(document, 'webkitfullscreenchange', this.handlePresentationModeChange);
+        this.runtimeResources.listen(document, 'mozfullscreenchange', this.handlePresentationModeChange);
+        this.runtimeResources.listen(document, 'MSFullscreenChange', this.handlePresentationModeChange);
+        this.runtimeResources.listen(this.el, 'child-attached', this.handleSceneMutation);
+        this.runtimeResources.listen(this.el, 'child-detached', this.handleSceneMutation);
         // Event - When scene is loaded
-        this.el.addEventListener("loaded", () => {
+        this.runtimeResources.listen(this.el, "loaded", () => {
             this.markSceneCollectionsDirty();
 
             const privateChatBtn = document.getElementById("private-chat-button");
             if (privateChatBtn) {
-                privateChatBtn.addEventListener("click", () => {
+                this.runtimeResources.listen(privateChatBtn, "click", () => {
                     const event = new CustomEvent('chat-selected', { "detail": "private" });
                     document.dispatchEvent(event);
                     if (typeof window.gtag === 'function') window.gtag('event', 'chat_private_tab_selected');
@@ -3212,7 +3204,7 @@ AFRAME.registerComponent('scene-settings', {
 
             const publicChatBtn = document.getElementById("public-chat-button");
             if (publicChatBtn) {
-                publicChatBtn.addEventListener("click", () => {
+                this.runtimeResources.listen(publicChatBtn, "click", () => {
                     const event = new CustomEvent('chat-selected', { "detail": "public" });
                     document.dispatchEvent(event);
                     if (typeof window.gtag === 'function') window.gtag('event', 'chat_public_tab_selected');
@@ -3248,7 +3240,7 @@ AFRAME.registerComponent('scene-settings', {
 
                 const settings = sceneContainer.getAttribute("scene-settings");
                 if (settings && vrodosRuntimeTruthy(settings.avatar_enabled)) {
-                    avatarDialog.addEventListener('close', closeAvatarDialogListener);
+                    this.runtimeResources.listen(avatarDialog, 'close', closeAvatarDialogListener);
                     if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
                         window.VRODOSMasterUI.showDialog(avatarDialog);
                     } else if (typeof avatarDialog.showModal === 'function') {
@@ -3263,10 +3255,10 @@ AFRAME.registerComponent('scene-settings', {
             this.markShadowDirty('scene-loaded');
             this.applyVrRenderBudgetPolicy('scene-loaded');
         });
-        this.el.addEventListener('model-loaded', this.handleQualityModelLoad);
+        this.runtimeResources.listen(this.el, 'model-loaded', this.handleQualityModelLoad);
 
-        this.el.addEventListener("enter-vr", this.handleXrEnter);
-        this.el.addEventListener("exit-vr", this.handleXrExit);
+        this.runtimeResources.listen(this.el, "enter-vr", this.handleXrEnter);
+        this.runtimeResources.listen(this.el, "exit-vr", this.handleXrExit);
 
         const cam = document.querySelector("#cameraA");
         if (cam) {
@@ -3374,19 +3366,13 @@ AFRAME.registerComponent('scene-settings', {
         this.publishRuntimeFeatureState('init');
     },
     remove: function () {
-        this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
-        this.el.removeEventListener('child-attached', this.handleSceneMutation);
-        this.el.removeEventListener('child-detached', this.handleSceneMutation);
-        this.el.removeEventListener("enter-vr", this.handleXrEnter);
-        this.el.removeEventListener("exit-vr", this.handleXrExit);
-        window.removeEventListener('resize', this.handleResize);
-        window.removeEventListener('focus', this.handleXrExitResumeSignal);
-        window.removeEventListener('pageshow', this.handleXrExitResumeSignal);
-        document.removeEventListener('visibilitychange', this.handleXrExitResumeSignal);
-        document.removeEventListener('fullscreenchange', this.handlePresentationModeChange);
-        document.removeEventListener('webkitfullscreenchange', this.handlePresentationModeChange);
-        document.removeEventListener('mozfullscreenchange', this.handlePresentationModeChange);
-        document.removeEventListener('MSFullscreenChange', this.handlePresentationModeChange);
+        if (this.removed) return;
+        this.removed = true;
+        this.disposeHardwareDiagnostics();
+        if (this.runtimeResources) {
+            this.runtimeResources.disposeAll();
+            this.runtimeResources = null;
+        }
         this.clearXrExitRestoreTimers();
         this.clearXrExitSessionAttachTimers();
         this.detachXrExitSessionEndListener();
@@ -3395,17 +3381,9 @@ AFRAME.registerComponent('scene-settings', {
         this.el.removeAttribute('vrodos-atmosphere');
         this.el.removeAttribute('vrodos-reflections');
         this.el.removeAttribute('vrodos-render-profile');
-        this.removePhotorealHelperLights();
         const manualSun = document.getElementById('default-sun');
         if (manualSun && manualSun.parentNode) {
             manualSun.parentNode.removeChild(manualSun);
-        }
-        if (this.runtimeResources) {
-            this.disposeHardwareDiagnostics();
-            this.runtimeResources.disposeAll();
-            this.runtimeResources = null;
-        } else {
-            this.disposeHardwareDiagnostics();
         }
     }
 });

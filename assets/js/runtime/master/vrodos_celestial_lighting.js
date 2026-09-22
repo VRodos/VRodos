@@ -1,5 +1,5 @@
 /** Celestial lighting profiles, exposure, helper lights, and Takram light synchronization.
- * Existing component state and resource lifecycle remain on the host.
+ * Render-profile owns light resources and state; scene-settings supplies authored policy.
  */
 (function () {
     VRODOSMaster.CelestialLighting = Object.freeze({ create });
@@ -961,19 +961,7 @@
         }
 
         function removePmndrsTakramLightSources(self) {
-            const state = self && self._pmndrsTakramLightSources;
-            if (!state) {
-                return;
-            }
-
-            ['sunLight', 'skyLight', 'fillLight', 'ambientLight', 'target', 'moonLight', 'moonTarget'].forEach((key) => {
-                const object = state[key];
-                if (object && object.parent) {
-                    object.parent.remove(object);
-                }
-            });
-
-            self._pmndrsTakramLightSources = null;
+            if (self && self.renderProfileRuntime) self.renderProfileRuntime.removeLightSources();
         }
 
         function ensurePmndrsFallbackHorizonLights(self, config, preset) {
@@ -1016,9 +1004,11 @@
             }
 
             const opts = options || {};
-            self._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
+            const owner = self.getRenderProfileOwner();
+            if (!owner) return;
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
             atmosphereState.promise.then(() => {
-                if (!self || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
+                if (owner.removed || self.renderProfileRuntime !== owner || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
                     return;
                 }
 
@@ -1055,7 +1045,9 @@
                 }
                 logPmndrsHorizonDiagnostic(self, 'apply-horizon', latestConfig);
             }).catch((err) => {
-                self._pmndrsTakramLightSourcesPendingError = err;
+                if (!owner.removed && self.renderProfileRuntime === owner && self._pmndrsAtmosphereState === atmosphereState) {
+                    owner.lightingState._pmndrsTakramLightSourcesPendingError = err;
+                }
             });
         }
 
@@ -1101,9 +1093,9 @@
             }
 
             const previousSignature = self._pmndrsTakramLightShadowSignature || '';
-            self._pmndrsTakramLightShadowSignature = signature;
-            self._pmndrsTakramLightShadowSignatureReason = reason || 'takram-light';
-            self._pmndrsTakramLightShadowPreviousSignature = previousSignature;
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignature = signature;
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignatureReason = reason || 'takram-light';
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowPreviousSignature = previousSignature;
 
             const sunLight = state.sunLight || null;
             const moonLight = state.moonLight || null;
@@ -1136,7 +1128,7 @@
                 syncPresentedShadowLightTransforms(self);
                 return false;
             }
-            self._pmndrsPresentedTakramLightDirectionSignature = directionSignature;
+            self.renderProfileRuntime.lightingState._pmndrsPresentedTakramLightDirectionSignature = directionSignature;
 
             if (sunLight && presentedConfig.sunDirection && sunLight.sunDirection) {
                 sunLight.sunDirection.copy(presentedConfig.sunDirection);
@@ -1174,13 +1166,14 @@
                 }
             }
 
-            self._pmndrsTakramLightShadowSignature = getTakramShadowLightSignature(self, state);
-            self._pmndrsTakramLightShadowSignatureReason = 'takram-light-direction';
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignature = getTakramShadowLightSignature(self, state);
+            self.renderProfileRuntime.lightingState._pmndrsTakramLightShadowSignatureReason = 'takram-light-direction';
             syncPresentedShadowLightTransforms(self);
             return true;
         }
 
         function ensurePmndrsTakramHorizonLights(self, config, preset, options) {
+            if (!self || !self.getRenderProfileOwner()) return false;
             if (!self || !config) {
                 return false;
             }
@@ -1295,7 +1288,7 @@
                     scene.add(moonTarget);
                 }
                 state = { sunLight, skyLight, fillLight, ambientLight, moonLight, target, moonTarget };
-                self._pmndrsTakramLightSources = state;
+                self.renderProfileRuntime.lightingState._pmndrsTakramLightSources = state;
             } else {
                 if (state.sunLight && state.sunLight.parent !== scene) {
                     scene.add(state.sunLight);
