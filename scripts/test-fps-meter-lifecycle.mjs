@@ -47,6 +47,9 @@ for (const file of ['vrodos_runtime_resources.js', 'components/vrodos_runtime_pi
 const source = readFileSync(new URL('../assets/js/runtime/master/components/vrodos_scene_settings.component.js', import.meta.url), 'utf8');
 const ast = parse(source, { ecmaVersion: 'latest', range: true });
 const registration = ast.body.find(n => n.expression?.callee?.property?.name === 'registerComponent');
+const dependencies = registration.expression.arguments[1].properties.find(property => property.key.name === 'dependencies');
+assert.ok(dependencies?.value.elements.some(element => element.value === 'vrodos-render-profile'),
+    'scene-settings must initialize its lighting/shadow owner before the first day/night sky configuration');
 const methods = {};
 for (const property of registration.expression.arguments[1].properties) {
     if (['init','queueShadowFlush','queueQualityRefresh','isFPSMeterRequested','shouldShowFPSMeter','getRenderProfileOwner','queueFPSMeterEnable','enableFPSMeter','disableFPSMeter','syncFPSMeterState','remove'].includes(property.key.name)) {

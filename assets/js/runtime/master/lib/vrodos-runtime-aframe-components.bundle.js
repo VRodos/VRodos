@@ -1831,6 +1831,8 @@
     return schema;
   }
   AFRAME.registerComponent("scene-settings", {
+    // Lighting and shadow state must exist before initial sky configuration.
+    dependencies: ["vrodos-render-profile"],
     schema: Object.assign({
       color: { type: "string", default: "#ffffff" },
       pr_type: { type: "string", default: "default" },
@@ -1850,6 +1852,7 @@
       aaQuality: { type: "string", default: "balanced" },
       fpsMeterEnabled: { type: "string", default: "0" },
       vrRuntimeProfile: { type: "string", default: vrodosSceneSettingDefault("vrRuntimeProfile", "desktop") },
+      vrHeadsetAssetQuality: { type: "string", default: vrodosSceneSettingDefault("vrHeadsetAssetQuality", "low") },
       vrFramebufferScale: { type: "string", default: vrodosSceneSettingDefault("vrFramebufferScale", "0") },
       vrFoveationStrength: { type: "string", default: vrodosSceneSettingDefault("vrFoveationStrength", "-1") },
       vrHeadsetStereoPostFxEnabled: { type: "string", default: vrodosSceneSettingDefault("vrHeadsetStereoPostFxEnabled", "0") },

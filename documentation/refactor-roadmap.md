@@ -4,6 +4,8 @@ Status: **shadow/lighting ownership implemented; automated integration and brows
 
 Current scope (2026-09-22): prioritize runtime ownership and integration acceptance. Acropolis derivative/FPS trials, temple visual optimization, and desktop profile/cloud acceptance are deferred by user direction; they are not prerequisites for this cleanup.
 
+Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `vrodos-render-profile`, so the lighting/clock owner exists before the initial day/night sky configuration. The schema also accepts the compiled `vrHeadsetAssetQuality` field. Local compiled scene 8980 passed first-load and resize checks with day/night enabled after bypassing cached bundles; atmosphere and clock initialized without runtime errors. The remaining duplicate Three warning was traced to the Immersive Web Emulator extension's r184 import before A-Frame r185; VRodos and A-Frame share their r185 instance. Recompile published scenes to refresh bundle cache keys when deploying this fix.
+
 ## A. Verification baseline
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
 - [x] Separate verification from generated builds; scope formatting to authored source.
