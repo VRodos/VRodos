@@ -20,8 +20,7 @@
             arePmndrsDayNightCycleDynamicShadowsEnabled,
             getAdaptiveShadowCenter,
             syncPresentedShadowLightTransforms,
-            getTerrainSafeContactShadowSettings,
-            sanitizePhotorealHelperLightAttributes
+            getTerrainSafeContactShadowSettings
         } = shadow;
         const {
             lerpNumber,
@@ -972,7 +971,7 @@
             const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
             const directVisibility = getPmndrsDirectLightVisibility(config, helperConfig.useMoonDirection);
             const keyIntensity = helperConfig.keyIntensity * directVisibility;
-            const castShadow = 'false';
+            const castShadow = effectiveShadowQuality !== 'off';
             const fallbackFillIntensity = getPmndrsFallbackAmbientFillIntensity(helperConfig, config);
             const keyDirection = helperConfig.useMoonDirection
                 ? (config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection)
@@ -1679,7 +1678,7 @@
         }
 
         H.ensurePhotorealHelperLight = function (id, attributes, position) {
-            const safeAttributes = sanitizePhotorealHelperLightAttributes(attributes);
+            const safeAttributes = String(attributes || '');
             let lightEl = document.getElementById(id);
             let changed = false;
             if (!lightEl) {

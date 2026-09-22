@@ -374,6 +374,11 @@ function ensureWalkableSurfacePropertiesSection() {
     section.innerHTML =
         '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Walkable Surface</div>' +
         '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<div id="walkableSurfaceTypeControls">' +
+        '<label for="walkableSurfaceTypeSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Surface Type</label>' +
+        '<select id="walkableSurfaceTypeSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="terrain">Terrain</option><option value="building">Building</option></select>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Building lets walls and ceilings cast shadows and preserves the imported materials. Keep Shadow Role and Material Role on Auto to use these defaults. Shadows must be enabled in the scene.</div></div>' +
         '<label for="walkableBehaviorSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Walking Behavior</label>' +
         '<select id="walkableBehaviorSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
         '<option value="precise">Precise</option>' +
@@ -384,6 +389,9 @@ function ensureWalkableSurfacePropertiesSection() {
 
     container.appendChild(section);
 
+    document.getElementById('walkableSurfaceTypeSelect').addEventListener('change', function () {
+        vrodosCommitObjectControlsProperty('walkableSurfaceType', this.value === 'building' ? 'building' : 'terrain');
+    });
     const select = document.getElementById('walkableBehaviorSelect');
     if (select) {
         select.addEventListener('change', () => {
@@ -405,6 +413,9 @@ function ensureWalkableSurfacePropertiesSection() {
 function displayWalkableSurfaceProperties(object) {
     const section = ensureWalkableSurfacePropertiesSection();
     if (!section || !object) return;
+
+    document.getElementById('walkableSurfaceTypeControls').style.display = object.category_slug === 'primitive-plane' ? 'none' : 'block';
+    document.getElementById('walkableSurfaceTypeSelect').value = object.walkableSurfaceType === 'building' ? 'building' : 'terrain';
 
     const select = document.getElementById('walkableBehaviorSelect');
     const currentBehavior = vrodosNormalizeWalkableBehavior(object.walkableBehavior);

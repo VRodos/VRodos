@@ -630,8 +630,10 @@ function vrodosGetExplicitMaterialOverrides(entityEl) {
     if (entityEl.getAttribute) {
         overrides.vrodosMaterialRole = entityEl.getAttribute('data-vrodos-material-role') || 'auto';
         overrides.vrodosTerrainMaterialCandidate =
-            entityEl.hasAttribute('data-vrodos-navmesh') ||
-            entityEl.getAttribute('data-vrodos-collision-category') === 'walkable-surface';
+            entityEl.getAttribute('data-vrodos-walkable-type') !== 'building' && (
+                entityEl.hasAttribute('data-vrodos-navmesh') ||
+                entityEl.getAttribute('data-vrodos-collision-category') === 'walkable-surface'
+            );
     }
 
     return overrides;

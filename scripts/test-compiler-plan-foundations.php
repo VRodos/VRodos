@@ -300,6 +300,27 @@ if ( class_exists( 'DOMDocument' ) ) {
 		[ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $scene ]
 	);
 	$poi_dom = new DOMDocument( '1.0', 'UTF-8' );
+	foreach ( [ 'terrain', 'building', 'invalid' ] as $surface_type ) {
+		foreach ( [ 'auto', 'receiver', 'none' ] as $shadow_override ) {
+			$building_dom = new DOMDocument( '1.0', 'UTF-8' );
+			$building_scene = $building_dom->createElement( 'a-scene' );
+			$building_dom->appendChild( $building_scene );
+			$building_assets = $building_dom->createElement( 'a-assets' );
+			$building_scene->appendChild( $building_assets );
+			$renderer->render_scene_objects( $building_dom, $building_scene, $building_assets, [ 'room' => (object) [
+				'category_slug' => 'walkable-surface', 'asset_id' => 710, 'glb_path' => '/room.glb',
+				'walkableSurfaceType' => $surface_type, 'vrodosShadowRole' => $shadow_override,
+				'compiledCollisionEnabled' => true,
+				'position' => [ 0, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+			] ], 1, 42 );
+			$building_entity = ( new DOMXPath( $building_dom ) )->query( '//*[@data-vrodos-asset-id="710"]' )->item( 0 );
+			$expected_type = 'building' === $surface_type ? 'building' : 'terrain';
+			$expected_shadow = 'auto' === $shadow_override ? ( 'building' === $surface_type ? 'caster-receiver' : 'receiver' ) : $shadow_override;
+			vrodos_foundation_assert( $expected_type === $building_entity->getAttribute( 'data-vrodos-walkable-type' ), 'walkable classification is explicit and defaults to terrain' );
+			vrodos_foundation_assert( $expected_shadow === $building_entity->getAttribute( 'data-vrodos-shadow-role' ), 'buildings block sun while terrain and authored overrides retain their policy' );
+			vrodos_foundation_assert( 'navmesh' === $building_entity->getAttribute( 'data-vrodos-collision-role' ), 'building classification retains walking collision' );
+		}
+	}
 	$poi_scene = $poi_dom->createElement( 'a-scene' );
 	$poi_dom->appendChild( $poi_scene );
 	$poi_assets = $poi_dom->createElement( 'a-assets' );

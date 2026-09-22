@@ -218,6 +218,11 @@ assert.ok(fallback.children.length > 0);
 const childCount = fallback.children.length;
 lighting.ensurePmndrsTakramHorizonLights(fallback.self, fallback.config(), 'natural');
 assert.equal(fallback.children.length, childCount);
+const fallbackKey = fallback.children.find(child => child.id === 'vrodos-pmndrs-horizon-key-light');
+assert.match(fallbackKey.getAttribute('light'), /castShadow: true/, 'fallback sun blocks at opaque ceilings');
+fallback.self.data.shadowQuality = 'off';
+lighting.ensurePmndrsTakramHorizonLights(fallback.self, fallback.config(), 'natural');
+assert.match(fallbackKey.getAttribute('light'), /castShadow: false/, 'shadow-off policy remains explicit');
 fallback.self.removePhotorealHelperLights();
 assert.equal(fallback.children.length, 0);
 

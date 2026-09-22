@@ -130,6 +130,8 @@ VR Headset Full compilation fixes High rendering, quality Takram resources, ACES
 
 Lighting/shadow ownership:
 
+- Walkable GLB placements use explicit `walkableSurfaceType` (`terrain` default or `building`), emitted as `data-vrodos-walkable-type`. Auto building shadows cast and receive; Auto terrain shadows remain receiver-only. Buildings keep authored PBR under Material Role Auto and skip terrain depth offsets. Preserve explicit shadow/material overrides. Managed fallback directional lights must cast when shadows are enabled, and constant clear transmission glass must not become an opaque shadow or sun-visibility blocker. See `RENDERING_PIPELINE.md` for ambient/IBL limits.
+
 - Enabled GLB decorations use source-bounds box collision globally, across every profile and runtime target. Only their invisible box enters the collision world; visual collision does not protect decoration geometry from profile simplification. Walkable surfaces and explicit collision proxies retain mesh geometry protection. Source bounds and the bounds-centering offset are asset-owned and shared across derivatives; never recompute a decoration origin or collider from simplified geometry. Explicit collision-disabled settings remain disabled. Boxes conservatively block openings inside concave decorations.
 
 - `RENDERING_PIPELINE.md` is the canonical current reference for PMNDRS/Takram day-night lighting, adaptive directional shadows, terrain self-shadow stabilization, and emissive/readability handling.

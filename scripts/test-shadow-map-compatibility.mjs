@@ -432,7 +432,7 @@ helpers.applyShadowQualityProfile.call(defaultRole.component);
 assert(defaultRole.mesh.castShadow === true, "caster-receiver meshes should cast shadows by default");
 assert(defaultRole.mesh.receiveShadow === true, "caster-receiver meshes should receive shadows by default");
 assert(defaultRole.light.castShadow === true, "managed shadow lights should cast shadows by default");
-assert(defaultRole.helperLight.castShadow === false, "photoreal helper lights should not cast shadows by default");
+assert(defaultRole.helperLight.castShadow === true, "photoreal directional lights must respect opaque roofs");
 assert(defaultRole.authoredLight.castShadow === true, "authored shadow lights should cast shadows by default");
 
 console.log("Shadow map compatibility tests passed.");

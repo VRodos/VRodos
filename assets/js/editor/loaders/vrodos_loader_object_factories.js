@@ -706,6 +706,7 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
             : object.compiledCollisionEnabled,
         resource
     );
+    object.walkableSurfaceType = resource.walkableSurfaceType === 'building' ? 'building' : 'terrain';
     object.vrodosShadowRole = ['auto', 'caster-receiver', 'receiver', 'none'].includes(String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole || '').toLowerCase())
         ? String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole).toLowerCase()
         : 'auto';

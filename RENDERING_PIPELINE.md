@@ -398,13 +398,13 @@ Runtime dirty events call `markShadowDirty(reason)` and are flushed through a de
 The compiler emits semantic shadow roles so runtime profiles can exclude non-visual helpers while keeping visible authored content realistic:
 
 - GLB world/solid geometry: `data-vrodos-shadow-role="caster-receiver"` by default.
-- Walkable/navmesh geometry: `receiver` plus `data-vrodos-shadow-receiver-only`, so large ground surfaces receive shadows without self-shadow banding.
+- Walkable GLBs expose a placement-owned **Surface Type: Terrain / Building** setting (`walkableSurfaceType`). Terrain remains the default: `receiver` plus `data-vrodos-shadow-receiver-only`, so large ground surfaces receive shadows without self-shadow banding. Building emits `data-vrodos-walkable-type="building"` and defaults to `caster-receiver`, allowing opaque ceilings and walls to block direct sun/moon light. Explicit Shadow Role overrides still win. Buildings retain authored PBR materials under Material Role Auto and do not receive terrain depth offsets. Walking collision is unchanged. Save and recompile after changing the type.
 - Image planes, video planes, audio markers, 3D text/POI panels, and POI trigger buttons: `caster-receiver` by default.
 - Collision proxies and hidden blockers: `none`.
 
 Receiver-only shadows are an explicit optimization path for surfaces that should not self-cast. Legacy compiled non-navmesh entities that still carry `data-vrodos-shadow-role="receiver"` are upgraded to caster/receivers at runtime unless they also carry `data-vrodos-shadow-receiver-only`.
 
-Point and spot lights only cast shadows when authored to do so. Editor/authored lights keep their PCF shadow intent. Takram sun/moon lights are VRodos-managed PCF shadow sources, but only the dominant celestial source owns the active directional shadow map: sun by day and moon by night. Runtime-injected photoreal fallback/fill lights tagged with `data-vrodos-photoreal-light`, such as `vrodos-pmndrs-horizon-key-light` and `vrodos-photoreal-key-light`, are readability lights only and must not allocate shadow maps.
+Point and spot lights only cast shadows when authored to do so. Editor/authored lights keep their PCF shadow intent. Takram sun/moon lights are VRodos-managed PCF shadow sources, but only the dominant celestial source owns the active directional shadow map: sun by day and moon by night. Runtime-injected directional lights tagged with `data-vrodos-photoreal-light`, including `vrodos-pmndrs-horizon-key-light` and `vrodos-photoreal-key-light`, also cast shadows when scene shadows are enabled; their ambient fill does not allocate a shadow map. Constant clear transmission materials (`transmission >= 0.95`, without a transmission map) do not cast opaque shadows or block sun visibility rays. Alpha-cutout and mixed opaque materials retain casting. This approximates clear glass transmission without colored or refractive caustics. Shadow maps block direct light; ambient/IBL fill still requires baked occlusion or lighting for physically accurate interiors.
 
 ### Directional shadow precision
 

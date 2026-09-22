@@ -1393,7 +1393,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		if ( $cat === 'walkable-surface' ) {
 			$class .= ' vrodos-navmesh';
-			$shadow_role = 'receiver';
+			$walkable_type = ( $obj->walkableSurfaceType ?? '' ) === 'building' ? 'building' : 'terrain';
+			$entity->setAttribute( 'data-vrodos-walkable-type', $walkable_type );
+			$shadow_role = 'building' === $walkable_type ? 'caster-receiver' : 'receiver';
 			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
 			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
 			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );

@@ -141,7 +141,7 @@
         }
 
         function isTerrainShadowEntity(entityEl) {
-            return Boolean(entityEl && (
+            return Boolean(entityEl && entityEl.getAttribute('data-vrodos-walkable-type') !== 'building' && (
                 isNavmeshShadowEntity(entityEl) ||
                 entityEl.getAttribute('data-vrodos-collision-category') === 'walkable-surface' ||
                 entityEl.getAttribute('data-vrodos-material-role') === 'terrain-matte'
@@ -160,7 +160,7 @@
             }
 
             if (isNavmeshShadowEntity(entityEl) && entityEl.getAttribute('data-vrodos-shadow-role-authored') !== 'true') {
-                return 'receiver';
+                return entityEl.getAttribute('data-vrodos-walkable-type') === 'building' ? 'caster-receiver' : 'receiver';
             }
 
             const authoredRole = normalizeShadowRole(entityEl.getAttribute('data-vrodos-shadow-role'));
@@ -218,12 +218,6 @@
             );
         }
 
-        function isVrodosPhotorealHelperLight(node) {
-            return Boolean(node && objectEntityChainHas(node, (entityEl) => (
-                entityEl.hasAttribute('data-vrodos-photoreal-light')
-            )));
-        }
-
         function getMaterialList(material) {
             if (!material) {
                 return [];
@@ -244,6 +238,11 @@
                 const opacity = typeof entry.opacity === 'number' ? entry.opacity : 1;
                 const alphaTest = typeof entry.alphaTest === 'number' ? entry.alphaTest : 0;
                 if (entry.visible === false) {
+                    return false;
+                }
+                // Clear glTF transmission glass has opacity 1. It must not become
+                // an opaque blocker in the direct-light map or sun visibility rays.
+                if (entry.transmission >= 0.95 && !entry.transmissionMap) {
                     return false;
                 }
                 return !entry.transparent || opacity >= 0.98 || alphaTest >= 0.1;
@@ -709,10 +708,6 @@
                 self.data.shadowQuality !== 'off' &&
                 !hasPmndrsDebugFlag('disablePmndrsDayNightCycleDynamicShadows', 'vrodos_debug_disable_day_night_dynamic_shadows')
             );
-        }
-
-        function sanitizePhotorealHelperLightAttributes(attributes) {
-            return String(attributes || '').replace(/castShadow\s*:\s*true/gi, 'castShadow: false');
         }
 
         function isPmndrsTakramHorizonRequested(self) {
@@ -1385,21 +1380,19 @@
                     }
 
                     const shadowRole = getObjectShadowRole(node);
-                    node.castShadow = shadowsEnabled && shadowRole !== 'receiver' && shadowRole !== 'none';
+                    node.castShadow = shadowsEnabled && shadowRole !== 'receiver' && shadowRole !== 'none' && isShadowEligibleMaterial(node.material);
                     node.receiveShadow = shadowsEnabled && shadowRole !== 'none';
                     syncTerrainShadowDepthMaterial(this, node, node.castShadow && isTerrainSelfShadowCasterMesh(node));
                 }
 
                 if (node.isDirectionalLight || node.isSpotLight || node.isPointLight) {
                     node.userData = node.userData || {};
-                    const isPhotorealHelperLight = isVrodosPhotorealHelperLight(node);
                     const isVrodosManagedLight = isVrodosManagedShadowLight(node);
                     const previousCastShadow = node.castShadow === true;
                     if (typeof node.userData.vrodosAuthoredCastShadow === 'undefined') {
                         node.userData.vrodosAuthoredCastShadow = node.castShadow === true;
                     }
                     node.castShadow = shadowsEnabled &&
-                        !isPhotorealHelperLight &&
                         (isVrodosManagedLight || node.userData.vrodosAuthoredCastShadow === true);
 
                     if (!node.shadow) {
@@ -1532,7 +1525,6 @@
             getAdaptiveShadowCenter,
             schedulePmndrsAtmosphereShadowFit,
             arePmndrsDayNightCycleDynamicShadowsEnabled,
-            sanitizePhotorealHelperLightAttributes,
             isPmndrsTakramHorizonRequested,
             vectorToRoundedArray,
             vectorToSignature,

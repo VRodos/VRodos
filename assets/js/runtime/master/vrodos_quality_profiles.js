@@ -1763,7 +1763,7 @@
         }
 
         const keyShadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
-        const castShadow = 'false';
+        const castShadow = shadowEnabled;
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',

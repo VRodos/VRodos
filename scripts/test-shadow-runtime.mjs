@@ -153,6 +153,40 @@ terrain.mesh.customDepthMaterial = replacementMaterial;
 terrainReplacement.remove();
 assert.equal(terrain.mesh.customDepthMaterial, replacementMaterial, 'do not overwrite a newer attachment');
 
+// A whole walkable building blocks sunlight without terrain depth/material policy.
+const building = fixture();
+building.mesh.el = entity({ 'data-vrodos-navmesh': 'true', 'data-vrodos-walkable-type': 'building' });
+building.light.userData = {};
+building.light.el = entity({ 'data-vrodos-photoreal-light': 'true' });
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, true);
+assert.equal(building.mesh.receiveShadow, true);
+assert.equal(building.mesh.customDepthMaterial, undefined, 'buildings do not use terrain polygon offset');
+assert.equal(building.light.castShadow, true, 'fallback sunlight must cast shadows');
+building.mesh.material = new THREE.MeshPhysicalMaterial({ transmission: 1 });
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, false, 'clear transmission glass lets sunlight through');
+assert.equal(building.mesh.receiveShadow, true);
+building.mesh.material.transmissionMap = new THREE.Texture();
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, true, 'a transmission map may contain opaque regions');
+building.mesh.material = new THREE.MeshStandardMaterial({ transparent: true, opacity: 1, alphaTest: 0.5 });
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, true, 'alpha-cutout foliage retains shadows');
+building.mesh.material = [new THREE.MeshPhysicalMaterial({ transmission: 1 }), new THREE.MeshStandardMaterial()];
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, true, 'mixed meshes retain opaque blockers');
+building.mesh.el = entity({ 'data-vrodos-navmesh': 'true', 'data-vrodos-walkable-type': 'terrain' });
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, false, 'outdoor terrain stays receive-only by default');
+building.mesh.el = entity({ 'data-vrodos-navmesh': 'true', 'data-vrodos-walkable-type': 'building', 'data-vrodos-shadow-role-authored': 'true', 'data-vrodos-shadow-role': 'none' });
+building.component.applyShadowQualityProfile();
+assert.equal(building.mesh.castShadow, false, 'explicit shadow overrides still win');
+building.component.data.shadowQuality = 'off';
+building.component.applyShadowQualityProfile();
+assert.equal(building.light.castShadow, false);
+building.owner.remove();
+
 // Fit real shadow cameras and confirm geometry corners remain inside their frustum.
 frames.clear();
 const fit = fixture();
