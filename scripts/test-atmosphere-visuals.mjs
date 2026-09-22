@@ -54,7 +54,7 @@ const api = context.VRODOSMaster.AtmosphereVisuals.create({
     cloud: { roundPmndrsCloudSunOcclusionDiagnostic: x => x, getPmndrsCloudSunOcclusionState: () => ({}),
         getPmndrsCloudMoonOcclusionState: () => ({ cloudMoonDiscVisibility: 0.5 }), PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS: 0 },
     shadow: { vectorToRoundedArray: v => v?.toArray(), applyPmndrsSunOcclusion: () => 1 },
-    host: { scheduleAtmosphereVisualRefresh: (_self, callback) => visualScheduler.scheduleVisualRefresh(callback), smoothPmndrsRuntimeLightValue: context.VRODOSMaster.LightSmoothing.value,
+    host: { bindAtmosphereVisualOwner: () => visualScheduler, scheduleAtmosphereVisualRefresh: (_self, callback) => visualScheduler.scheduleVisualRefresh(callback), smoothPmndrsRuntimeLightValue: context.VRODOSMaster.LightSmoothing.value,
         clamp01: x => Math.max(0, Math.min(1, x)), getPmndrsResolvedGeospatialFrame: () => null,
         hasPmndrsDebugFlag: name => flags.has(name), readPmndrsDebugNumber: (_a, _b, fallback) => fallback,
         readPmndrsAtmosphereBool: (_s, _key, fallback) => fallback, getRuntimeNowMs: () => now,

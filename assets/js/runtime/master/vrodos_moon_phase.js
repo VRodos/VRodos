@@ -12,8 +12,8 @@
         'waning-gibbous': 45
     });
 
-    function buildPmndrsMoonDirection(sunDirection) {
-        return sunDirection.clone().multiplyScalar(-1).normalize();
+    function buildPmndrsMoonDirection(sunDirection, target = new THREE.Vector3()) {
+        return target.copy(sunDirection).multiplyScalar(-1).normalize();
     }
 
     function normalizePmndrsMoonPhase(value) {
@@ -36,8 +36,8 @@
         return Math.max(0, Math.min(1, (1 - config.sunDirection.dot(config.moonDirection)) * 0.5));
     }
 
-    function getPmndrsStableMoonNorth(moonDirection) {
-        const north = new THREE.Vector3(0, 1, 0);
+    function getPmndrsStableMoonNorth(moonDirection, north = new THREE.Vector3()) {
+        north.set(0, 1, 0);
         north.addScaledVector(moonDirection, -north.dot(moonDirection));
         if (north.lengthSq() < 1e-6) {
             north.set(0, 0, 1).addScaledVector(moonDirection, -moonDirection.z);
@@ -45,14 +45,18 @@
         return north.normalize();
     }
 
-    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection) {
-        const center = moonDirection.clone().normalize();
-        const north = getPmndrsStableMoonNorth(center);
-        const east = north.clone().cross(center).normalize();
-        return new THREE.Matrix4().makeBasis(center, east, north);
+    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection, scratch) {
+        const center = scratch.center.copy(moonDirection).normalize();
+        const north = getPmndrsStableMoonNorth(center, scratch.north);
+        const east = scratch.east.copy(north).cross(center).normalize();
+        return scratch.orientation.makeBasis(center, east, north);
     }
 
     function applyPmndrsMoonPhaseConfig(config, vta) {
+        const scratch = config._moonPhaseScratch || (config._moonPhaseScratch = {
+            center: new THREE.Vector3(), north: new THREE.Vector3(), east: new THREE.Vector3(),
+            light: new THREE.Vector3(), orientation: new THREE.Matrix4(), inertial: new THREE.Matrix4()
+        });
         const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
         const astronomicalPosition = config.celestialMode === 'datetime' && config.astronomicalMoonPosition === true;
         const astronomicalAuto = authoredPhase === 'auto' && astronomicalPosition;
@@ -63,11 +67,11 @@
         // Moon drifts against the sidereal star field. Named phases only replace
         // illumination in that mode. Manual/preset scenes remain night-anchored.
         if (!astronomicalPosition) {
-            config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
-            config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
+            config.moonDirection = buildPmndrsMoonDirection(config.sunDirection, config.moonDirection);
+            config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection, config.localMoonDirection);
         }
 
-        const lightDirection = config.moonDirection.clone().normalize();
+        const lightDirection = scratch.light.copy(config.moonDirection).normalize();
         let effectivePhase = authoredPhase;
 
         if (astronomicalAuto) {
@@ -78,21 +82,21 @@
             phaseAngleDeg = authoredPhase === 'auto' ? 0 : PMNDRS_MOON_PHASE_ANGLES_DEG[authoredPhase];
             illumination = getPmndrsMoonPhaseIlluminationFromAngle(phaseAngleDeg);
             lightDirection.applyAxisAngle(
-                getPmndrsStableMoonNorth(config.moonDirection),
+                getPmndrsStableMoonNorth(config.moonDirection, scratch.north),
                 THREE.MathUtils.degToRad(phaseAngleDeg)
             ).normalize();
             effectivePhase = authoredPhase === 'auto' ? 'full' : authoredPhase;
         }
 
         let orientationMode = 'stable-north-up';
-        let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
+        let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection, scratch);
         const moonEffectiveDate = config.moonEffectiveDate || config.effectiveDate;
         const moonInertialToECEFMatrix = config.moonInertialToECEFMatrix || config.inertialToECEFMatrix;
         if (config.celestialMode === 'datetime' && moonEffectiveDate && moonInertialToECEFMatrix &&
             vta && typeof vta.getMoonFixedToECIRotationMatrix === 'function') {
-            moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
+            moonFixedToECEFMatrix = scratch.orientation.multiplyMatrices(
                 moonInertialToECEFMatrix,
-                vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, new THREE.Matrix4())
+                vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, scratch.inertial)
             );
             orientationMode = 'moon-fixed-date-time';
         }

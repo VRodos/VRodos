@@ -148,6 +148,7 @@
                 shadowAwareReflections,
                 reflectionIntensityScale,
                 ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
+                textureQualityApplied: new WeakMap(),
                 environmentMap: sceneObj ? (sceneObj.environment || null) : null
             };
             const enhancedMaterials = typeof WeakSet !== 'undefined' ? new WeakSet() : null;

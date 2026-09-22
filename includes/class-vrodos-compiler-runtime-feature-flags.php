@@ -53,6 +53,17 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		return false;
 	}
 
+	public function has_assessment_content( $scene_json ): bool {
+		$policy = new VRodos_Compiler_Entity_Policy();
+		foreach ( $this->scene_objects( $scene_json ) as $object ) {
+			if ( 'assessment' === $policy->effective_category( $object ) ||
+				'' !== $this->first_non_empty_string( $object, [ 'assessment_group', 'assessment_type', 'assessment_content', 'immerse_cefr_levels' ] ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private function scene_objects( $scene_json ): array {
 		$objects = [];
 		$source  = is_object( $scene_json ) ? ( $scene_json->objects ?? null ) : null;

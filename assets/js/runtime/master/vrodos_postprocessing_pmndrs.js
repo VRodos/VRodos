@@ -2897,31 +2897,32 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         ));
     }
 
-    function installPmndrsNormalPassVisibilityFilter(normalPass) {
+    function installPmndrsNormalPassVisibilityFilter(normalPass, self) {
         if (!normalPass || typeof normalPass.render !== 'function' || normalPass._vrodosVisibilityFilterInstalled) {
             return;
         }
 
         const originalRender = normalPass.render;
+        const hiddenObjects = [];
+        const previousVisibility = [];
         normalPass.render = function () {
-            const normalScene = this.renderPass && this.renderPass.scene;
-            const hiddenObjects = [];
-
-            if (normalScene && typeof normalScene.traverse === 'function') {
-                normalScene.traverse((node) => {
+            const exclusions = self.el.components?.['vrodos-atmosphere']?.normalPassExclusions;
+            if (exclusions) {
+                for (const node of exclusions.keys()) {
                     if (node.visible !== false && isPmndrsNormalPassExcludedObject(node)) {
                         hiddenObjects.push(node);
+                        previousVisibility.push(node.visible);
                         node.visible = false;
                     }
-                });
+                }
             }
 
             try {
                 return originalRender.apply(this, arguments);
             } finally {
-                hiddenObjects.forEach((node) => {
-                    node.visible = true;
-                });
+                for (let i = 0; i < hiddenObjects.length; i++) hiddenObjects[i].visible = previousVisibility[i];
+                hiddenObjects.length = 0;
+                previousVisibility.length = 0;
             }
         };
         normalPass._vrodosVisibilityFilterInstalled = true;
@@ -2932,7 +2933,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return null;
         }
         if (self.pmndrsNativeNormalPass) {
-            installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
+            installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
             if (reason && self._pmndrsNativeNormalPassReason && self._pmndrsNativeNormalPassReason.indexOf(reason) === -1) {
                 self._pmndrsNativeNormalPassReason = `${self._pmndrsNativeNormalPassReason}+${reason}`;
             }
@@ -2946,7 +2947,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             self.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, {
                 resolutionScale: normalPassResolutionScale
             });
-            installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
+            installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
             composer.addPass(self.pmndrsNativeNormalPass);
             self._pmndrsNativeNormalPassResolutionScale = normalPassResolutionScale;
             self._pmndrsNativeNormalPassReason = reason || 'unknown';

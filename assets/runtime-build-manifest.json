@@ -15,8 +15,7 @@
         "scene-components",
         "poi",
         "media",
-        "audio",
-        "assessment"
+        "audio"
       ],
       "sourceFiles": [
         "assets/js/runtime/master/vrodos_runtime_resources.js",
@@ -29,7 +28,29 @@
         "assets/js/runtime/components/audio_component.js",
         "assets/js/runtime/components/video_component.js",
         "assets/js/runtime/components/vrodos_hypnotic_hover.component.js",
-        "assets/js/runtime/components/vrodos_camera_start.component.js",
+        "assets/js/runtime/components/vrodos_camera_start.component.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "assessment-runtime": {
+      "id": "assessment-runtime",
+      "label": "Assessment and CEFR runtime",
+      "type": "script",
+      "file": "vrodos-runtime-assessment.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-assessment.bundle.js",
+      "order": 11,
+      "dependencies": [
+        "scene-components"
+      ],
+      "features": [
+        "assessment",
+        "cefr",
+        "assessment-results"
+      ],
+      "activationCapabilities": [
+        "assessment"
+      ],
+      "sourceFiles": [
         "assets/js/runtime/assessment/assessment-utils.js",
         "assets/js/runtime/assessment/assessment-session-runtime.js",
         "assets/js/runtime/assessment/assessment-cefr-runtime.js",
@@ -83,6 +104,7 @@
         "networking"
       ],
       "sourceFiles": [
+        "assets/js/runtime/components/vrodos_chat_occupancy.system.js",
         "assets/js/runtime/components/chat_component.js",
         "assets/js/runtime/components/chat_poi_component.js",
         "assets/js/runtime/components/indicator_component.js"

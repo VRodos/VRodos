@@ -29,6 +29,8 @@ function parseArgs(argv) {
         spector: false,
         spectorOutput: '',
         disableFpsMeter: false,
+        runtimeCounters: false,
+        screenshot: '',
         navProfile: false,
         navProfileMs: 3000,
         navProfileInput: { x: 0, y: -1 },
@@ -112,6 +114,12 @@ function parseArgs(argv) {
             case '--disable-fps-meter':
                 options.disableFpsMeter = true;
                 break;
+            case '--runtime-counters':
+                options.runtimeCounters = true;
+                break;
+            case '--screenshot':
+                options.screenshot = nextValue() || '';
+                break;
             case '--nav-profile':
                 options.navProfile = true;
                 break;
@@ -165,6 +173,8 @@ function printHelp() {
 Options:
   --url URL               Project-scoped published client URL. May also use VRODOS_PROFILE_URL.
   --output PATH           Write the full JSON capture to PATH.
+  --runtime-counters      Sample CPU tick/render duration, traversals, uploads, and allocations after warmup.
+  --screenshot PATH       Save a PNG of the rendered scene.
   --frames N              Number of requestAnimationFrame deltas to sample. Default: 240.
   --warmup-ms N           Warmup time after page load before sampling. Default: 5000.
   --trace-ms N            DevTools trace duration in ms. Default: 3000.
@@ -1965,17 +1975,59 @@ async function run() {
             await delay(options.warmupMs);
         }
 
+        if (options.runtimeCounters) {
+            await cdp.send('HeapProfiler.startSampling', { samplingInterval: 32768 });
+            await evaluate(cdp, `(() => {
+                const scene = document.querySelector('a-scene');
+                const stats = { sceneTraversals: 0, sceneMatrixUpdates: 0, textureUploads: 0, tickMs: [], renderMs: [] };
+                const restores = [];
+                const wrap = (owner, key, counter, durations) => {
+                    const original = owner[key];
+                    owner[key] = function (...args) {
+                        const start = durations ? performance.now() : 0;
+                        if (counter) stats[counter]++;
+                        try { return original.apply(this, args); }
+                        finally { if (durations) stats[durations].push(performance.now() - start); }
+                    };
+                    restores.push(() => { owner[key] = original; });
+                };
+                wrap(scene.object3D, 'traverse', 'sceneTraversals');
+                wrap(scene.object3D, 'updateMatrixWorld', 'sceneMatrixUpdates');
+                wrap(scene, 'tick', null, 'tickMs');
+                wrap(scene.renderer, 'render', null, 'renderMs');
+                const gl = scene.renderer.getContext();
+                for (const key of ['texImage2D', 'texSubImage2D', 'compressedTexImage2D', 'compressedTexSubImage2D']) wrap(gl, key, 'textureUploads');
+                window.__vrodosProfileCounters = { stats, restore: () => restores.forEach(restore => restore()) };
+            })()`);
+        }
         const beforeMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const sceneBefore = await captureSceneSnapshot(cdp);
         const tracePromise = collectTrace(cdp, options.traceMs, options.timeoutMs);
         const frameSample = await sampleFrames(cdp, options.frames);
         const trace = await tracePromise;
+        let runtimeCounters = null;
+        if (options.runtimeCounters) {
+            runtimeCounters = await evaluate(cdp, `(() => {
+                const counters = window.__vrodosProfileCounters;
+                counters.restore(); delete window.__vrodosProfileCounters;
+                return counters.stats;
+            })()`);
+            const allocationProfile = (await cdp.send('HeapProfiler.stopSampling')).profile;
+            const allocatedBytes = node => (node.selfSize || 0) + (node.children || []).reduce((sum, child) => sum + allocatedBytes(child), 0);
+            runtimeCounters.sampledAllocationBytes = allocatedBytes(allocationProfile.head);
+            for (const key of ['tickMs', 'renderMs']) runtimeCounters[key] = summarizeFrameDeltas(runtimeCounters[key]);
+        }
         const navigationProfile = options.navProfile
             ? await captureNavigationProfile(cdp, options.navProfileMs, options.navProfileInput, options.navProfilePitchDeg)
             : null;
         const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const scene = await captureSceneSnapshot(cdp);
         const resources = await captureResources(cdp);
+        if (options.screenshot) {
+            const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png' });
+            await mkdir(path.dirname(path.resolve(options.screenshot)), { recursive: true });
+            await writeFile(options.screenshot, Buffer.from(screenshot.data, 'base64'));
+        }
         runtimeOverrides.resourceOverrides = summarizeResourceOverrides(resourceOverrides, resourceOverrideEvents);
         let spector = {
             enabled: false
@@ -2030,6 +2082,7 @@ async function run() {
             },
             trace,
             navigationProfile,
+            runtimeCounters,
             resources,
             spector,
             performanceMetrics: {

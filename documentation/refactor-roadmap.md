@@ -7,10 +7,40 @@ Current scope (2026-09-22): prioritize runtime ownership and integration accepta
 Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `vrodos-render-profile`, so the lighting/clock owner exists before the initial day/night sky configuration. The schema also accepts the compiled `vrHeadsetAssetQuality` field. Local compiled scene 8980 passed first-load and resize checks with day/night enabled after bypassing cached bundles; atmosphere and clock initialized without runtime errors. The remaining duplicate Three warning was traced to the Immersive Web Emulator extension's older Three import before A-Frame; VRodos and A-Frame share their r185 instance. Recompile published scenes to refresh bundle cache keys when deploying this fix.
 
 ## A. Verification baseline
+
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
 - [x] Separate verification from generated builds; scope formatting to authored source.
 - [x] Replace affected brittle assertions when refactoring their logic; retain vendor/provenance checks.
 - [ ] Audit regression value and overlap: consolidate duplicate fixtures and replace implementation-text checks where they do not protect a distinct contract; prioritize behavior and meaningful failure detection over script count.
+
+### Compiled-runtime performance follow-up (2026-09-22)
+
+- [x] Idempotent texture/material refreshes, per-refresh shared texture deduplication, and value-versus-program invalidation.
+- [x] Render-profile-owned atmosphere configuration and reusable celestial objects; frame/settings invalidation of calibrated lighting and star rotation.
+- [x] Atmosphere-owned normal-pass exclusions with detach/removal cleanup and exception-safe visibility restoration.
+- [x] Targeted camera ancestor updates; retained marker vectors and throttled diagnostic text; allocation-free navigation diagnostic dispatch when disabled.
+- [x] Scene-level multiplayer occupancy with player lifecycle membership and shared capacity/availability policy.
+- [x] Optional assessment chunk with recursive assessment/CEFR and resolved result-delivery capability selection, independent POI spatial UI, and standalone-export coverage.
+- [x] Behavioral acceptance coverage for repeated texture/material versions, changed celestial inputs/frames, normal-pass restoration, transformed cameras, occupancy, and build-target/profile chunk selection.
+- [ ] Live WordPress recompilation and published-client rollout: local WordPress was unreachable after the laptop restart. Temporary browser assembly validates rebuilt resources without changing published artifacts.
+- [ ] Physical Quest and live multi-client/network interaction validation. Automated lifecycle/XR-exit/assessment regressions do not substitute for device testing.
+
+Browser comparison uses `scripts/profile-master-client.mjs --disable-fps-meter --runtime-counters --screenshot <path>` with identical warmup, scene, viewport, and frame count. Counters sample scene traversal/matrix calls, WebGL texture upload calls, CPU tick/render submission duration, and sampled heap allocations after warmup. Allocation sampling and counters add overhead to both runs; these measurements are diagnostic, not a hardware-independent speed guarantee. The helper closes its browser; the comparison harness must also close its temporary server.
+
+Verification result: `npm run build:runtime` and `npm run check:runtime` passed (53 runtime and 36 compiler scripts; ESLint: zero errors, 247 warnings). The local PHP CLI needed its already-installed ZIP extension enabled through a temporary `PHPRC` configuration; no machine-wide PHP settings changed. Additional target fixtures cover Custom/Adaptive tiers, headset, PC-rendered VR, networking, recursive assessment/CEFR content, result delivery, and standalone export.
+
+Scene 8980 was compared using original Git bundles versus rebuilt bundles through a temporary loopback server. The updated assembly included the result-delivery assessment chunk and fresh bundle query keys. The CEFR prompt rendered in both runs; the isolated visual fixture exercised its controls with result submission disabled. With celestial time fixed, a 20-second warmup and 240 sampled frames at 1280×720/DPR 1 (renderer DPR 1.25) on RTX 3050 Ti produced:
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Frame interval p50 / p95 | 16.7 / 16.8 ms | 16.7 / 16.8 ms |
+| CPU scene tick mean / p95 | 0.564 / 0.900 ms | 0.488 / 0.700 ms |
+| Full-scene traversal calls during capture | 248 | 6 |
+| Texture upload calls during settled capture | 0 | 0 |
+| Sampled heap allocation bytes | 132,700 | 490,196 |
+| Encoded startup bytes, delivery-enabled scene | 31,787,815 | 31,794,965 |
+
+The static screenshots preserve architecture, lighting, shadows, media, and scene geometry; animated markers/video differ with capture time. Both runs had no runtime exceptions, one existing compile-diagnostics warning, and the existing canceled cloud `shape.bin` request. Dynamic day/night samples also ran without exceptions, but timing and allocation samples varied and do not establish a general allocation/FPS improvement. Result-enabled scenes retain assessment code and gain one request; scenes without assessment/CEFR/results omit its 223,460-byte bundle. The early scene-components bundle fell from 351,532 to 128,002 bytes (gzip: 68,159 to 25,698 bytes). Browser navigation, late model loading, and automated removal/reattachment, assessment, fullscreen and XR-exit regressions passed within their fixture limits. Published WordPress recompilation, live result delivery/multiplayer, and physical Quest/fullscreen/XR interaction remain unverified. All temporary verification servers were stopped.
 
 ## B. Built-in media
 - [x] Reproducibly resize speaker and assessment textures to 1024px without changing formats, geometry, materials, or public paths.

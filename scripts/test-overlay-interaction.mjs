@@ -6,7 +6,8 @@ import { parse } from 'espree';
 const manifest = JSON.parse(readFileSync(new URL('../assets/runtime-build-manifest.json', import.meta.url), 'utf8'));
 const files = manifest.chunks['scene-components'].sourceFiles;
 const overlayIndex = files.indexOf('assets/js/runtime/vrodos_runtime_overlay.js');
-assert(overlayIndex >= 0 && overlayIndex < files.indexOf('assets/js/runtime/assessment/assessment-overlay-runtime.js'),
+assert(overlayIndex >= 0 && manifest.chunks['assessment-runtime'].dependencies.includes('scene-components') &&
+    manifest.chunks['assessment-runtime'].sourceFiles.includes('assets/js/runtime/assessment/assessment-overlay-runtime.js'),
     'The required shared overlay must load before assessment interaction code.');
 
 const source = readFileSync(new URL('../assets/js/runtime/vrodos_runtime_overlay.js', import.meta.url), 'utf8');

@@ -111,4 +111,47 @@ assert.ok(subscriptions.has('dispose-room'));
 chat.dispose();
 assert.equal(subscriptions.size, 0);
 
-console.log('Network chat runtime tests passed.');
+// Membership changes drive every POI without a polling tick or DOM recount.
+let occupancyDefinition;
+const occupancyContext = vm.createContext({ window, document, console,
+  CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
+  AFRAME: { registerSystem: (_name, definition) => { occupancyDefinition = definition; } }
+});
+vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master/vrodos_runtime_resources.js'), 'utf8'), occupancyContext);
+vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/components/vrodos_chat_occupancy.system.js'), 'utf8'), occupancyContext);
+const scene = new EventTargetStub();
+let members = [];
+scene.querySelectorAll = () => members.map(player => player.el);
+const occupancy = Object.assign(Object.create(occupancyDefinition), { el: scene });
+occupancy.init();
+const events = [];
+const poi = { emit: (_name, state) => events.push(state) };
+occupancy.registerChat(poi, 'room', 2);
+const player = (networkId, owner) => {
+  const el = new ElementStub({ networked: { networkId, owner } });
+  el.sceneEl = scene;
+  const component = { el, data: { currentPrivateChat: 'room' } };
+  el.components = { 'player-info': component };
+  members.push(component);
+  return component;
+};
+const local = player('local', 'me'), remote = player('remote', 'peer');
+occupancy.updatePlayer(local); occupancy.updatePlayer(remote); occupancy.updatePlayer(remote);
+assert.equal(occupancy.occupancy('room'), 2, 'local and remote membership are counted once');
+assert.deepEqual(events, ['available', 'available', 'full']);
+remote.data.currentPrivateChat = 'other'; occupancy.updatePlayer(remote);
+assert.equal(occupancy.occupancy('room'), 1); assert.equal(occupancy.occupancy('other'), 1);
+document.body.dispatchEvent({ type: 'entityRemoved', detail: {} });
+assert.equal(occupancy.occupancy('room'), 1, 'unidentified removal must not remove local membership');
+document.body.dispatchEvent({ type: 'clientDisconnected', detail: { clientId: 'peer' } });
+assert.equal(occupancy.occupancy('other'), 0);
+members = [local]; occupancy.reconcile();
+assert.equal(occupancy.occupancy('room'), 1);
+assert.equal(occupancy.normalizeCapacity(-1), Number.MAX_SAFE_INTEGER);
+assert.equal(occupancy.normalizeCapacity(0), 2);
+occupancy.unregisterPlayer(local); occupancy.unregisterPlayer(local);
+assert.equal(occupancy.occupancy('room'), 0);
+occupancy.unregisterChat(poi); occupancy.remove();
+assert.equal(occupancy.players.size, 0); assert.equal(occupancy.chats.size, 0);
+assert.equal([...scene.listeners.values()].some(listeners => listeners.size), false);
+console.log('Network chat runtime and shared occupancy tests passed.');

@@ -36,12 +36,9 @@
         console.warn('[VRodos] chat-poi disabled because the chat drawer is incomplete.');
         return;
       }
-      this.maxParticipants = Number(this.data.num_participants);
-      if (this.maxParticipants === -1) {
-        this.maxParticipants = Number.MAX_SAFE_INTEGER;
-      } else if (!Number.isFinite(this.maxParticipants) || this.maxParticipants < 1) {
-        this.maxParticipants = 2;
-      }
+      this.occupancySystem = this.el.sceneEl.systems['vrodos-chat-occupancy'];
+      this.maxParticipants = this.occupancySystem.normalizeCapacity(this.data.num_participants);
+      this.occupancySystem.registerChat(this.el, this.privateChatId(), this.data.num_participants);
 
       this.el.setAttribute('isActive', 'false');
       this.el.setAttribute('currentState', this.isPublicEnabled() ? 'public' : 'private');
@@ -53,13 +50,6 @@
       this.bind(scene, 'exit-vr', () => this.el.classList.add('raycastable'));
       this.bind(this.el, 'click', (event) => this.handleClick(event));
       this.bind(document, 'chat-selected', (event) => this.handleChatSelected(event));
-      this.bind(document, 'entityCreated', () => this.emitAvailabilityChange());
-      this.bind(document.body, 'entityRemoved', () => this.emitAvailabilityChange());
-      this.bind(document.body, 'clientDisconnected', () => this.emitAvailabilityChange());
-      this.bind(document.body, 'connected', () => this.emitAvailabilityChange());
-      this.bind(document, 'componentchanged', (event) => {
-        if (event.detail?.name === 'player-info') this.emitAvailabilityChange();
-      });
       this.bind(this.exitButton, 'click', () => this.exitPrivateChat(), true);
     },
 
@@ -87,22 +77,11 @@
     },
 
     occupancy() {
-      const chatId = this.privateChatId();
-      return Array.from(document.querySelectorAll('[player-info]')).filter((player) => {
-        const data = player.components?.['player-info']?.data || player.getAttribute('player-info');
-        return data?.currentPrivateChat === chatId;
-      }).length;
+      return this.occupancySystem.occupancy(this.privateChatId());
     },
 
     emitAvailabilityChange() {
-      const occupancy = this.occupancy();
-      const isFull = this.maxParticipants !== Number.MAX_SAFE_INTEGER && occupancy >= this.maxParticipants;
-      this.el.emit('chat-availability-change', isFull ? 'full' : 'available', false);
-      document.dispatchEvent(
-        new CustomEvent('chat-occupancy-changed', {
-          detail: { chatId: this.privateChatId(), occupancy, maxParticipants: this.maxParticipants, isFull }
-        })
-      );
+      this.occupancySystem.publish(this.el);
     },
 
     setPrivateButtonVisible(visible) {
@@ -266,6 +245,7 @@
     },
 
     remove() {
+      this.occupancySystem?.unregisterChat(this.el);
       this.stopPrivateChannel();
       const camera = document.getElementById('cameraA');
       const player = camera?.getAttribute('player-info');

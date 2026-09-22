@@ -2438,28 +2438,31 @@ ${uniform}`
     function isPmndrsNormalPassExcludedObject(node) {
       return Boolean(node && node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsAtmosphereStars || node.userData.vrodosPmndrsAtmosphereMoon || node.userData.vrodosVrTakramLightsOnlySky || node.userData.vrodosPmndrsLegacySuppressed));
     }
-    function installPmndrsNormalPassVisibilityFilter(normalPass) {
+    function installPmndrsNormalPassVisibilityFilter(normalPass, self) {
       if (!normalPass || typeof normalPass.render !== "function" || normalPass._vrodosVisibilityFilterInstalled) {
         return;
       }
       const originalRender = normalPass.render;
+      const hiddenObjects = [];
+      const previousVisibility = [];
       normalPass.render = function() {
-        const normalScene = this.renderPass && this.renderPass.scene;
-        const hiddenObjects = [];
-        if (normalScene && typeof normalScene.traverse === "function") {
-          normalScene.traverse((node) => {
+        var _a, _b;
+        const exclusions = (_b = (_a = self.el.components) == null ? void 0 : _a["vrodos-atmosphere"]) == null ? void 0 : _b.normalPassExclusions;
+        if (exclusions) {
+          for (const node of exclusions.keys()) {
             if (node.visible !== false && isPmndrsNormalPassExcludedObject(node)) {
               hiddenObjects.push(node);
+              previousVisibility.push(node.visible);
               node.visible = false;
             }
-          });
+          }
         }
         try {
           return originalRender.apply(this, arguments);
         } finally {
-          hiddenObjects.forEach((node) => {
-            node.visible = true;
-          });
+          for (let i = 0; i < hiddenObjects.length; i++) hiddenObjects[i].visible = previousVisibility[i];
+          hiddenObjects.length = 0;
+          previousVisibility.length = 0;
         }
       };
       normalPass._vrodosVisibilityFilterInstalled = true;
@@ -2469,7 +2472,7 @@ ${uniform}`
         return null;
       }
       if (self.pmndrsNativeNormalPass) {
-        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
+        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
         if (reason && self._pmndrsNativeNormalPassReason && self._pmndrsNativeNormalPassReason.indexOf(reason) === -1) {
           self._pmndrsNativeNormalPassReason = `${self._pmndrsNativeNormalPassReason}+${reason}`;
         }
@@ -2480,7 +2483,7 @@ ${uniform}`
         self.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, {
           resolutionScale: normalPassResolutionScale
         });
-        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
+        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
         composer.addPass(self.pmndrsNativeNormalPass);
         self._pmndrsNativeNormalPassResolutionScale = normalPassResolutionScale;
         self._pmndrsNativeNormalPassReason = reason || "unknown";

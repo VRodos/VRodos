@@ -1031,7 +1031,7 @@
         };
     };
 
-    H.getPmndrsAtmosphereConfig = function () {
+    function buildPmndrsAtmosphereConfig() {
         if (!this || !this.data) {
             return null;
         }
@@ -1115,17 +1115,25 @@
             applyPmndrsTakramLocalHorizonConstraints(this, config);
         }
 
-        config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
-        config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
-        config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config);
-        config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
+        config.baseDate = getPmndrsDateObject(celestialDate, celestialUtcTime);
+        return config;
+    }
+
+    function updatePmndrsCelestialConfig(config) {
+        const { celestialMode, dayNightCycleEnabled, dayNightCycleDurationMinutes } = config;
+        config._calibratedCelestialLightingProfile = null;
+        config._starsLocalRotationMatrix = null;
+        config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg, config.localSunDirection);
+        config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection, config.localMoonDirection);
+        config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config, config.sunDirection);
+        config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection, config.moonDirection);
 
         if (celestialMode === 'datetime' && window.VRODOS_TAKRAM_ATMOSPHERE) {
             const frame = getPmndrsResolvedGeospatialFrame(config);
             const observerECEF = frame.position;
             const date = dayNightCycleEnabled
-                ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes)
-                : getPmndrsDateObject(celestialDate, celestialUtcTime);
+                ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), config.baseDate, dayNightCycleDurationMinutes)
+                : config.baseDate;
             const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate
                 ? this._pmndrsDayNightCycleState.moonEffectiveDate
                 : date;
@@ -1134,27 +1142,69 @@
             config.moonEffectiveDate = moonDate;
 
             if (typeof vta.getSunDirectionECEF === 'function') {
-                config.sunDirection = vta.getSunDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
-                config.localSunDirection = ecefDirectionToPmndrsLocal(config.sunDirection, frame);
+                config.sunDirection = vta.getSunDirectionECEF(date, config.sunDirection, observerECEF).normalize();
+                config.localSunDirection = ecefDirectionToPmndrsLocal(config.sunDirection, frame, config.localSunDirection);
                 applyLocalDirectionAngles(config);
             }
             if (typeof vta.getMoonDirectionECEF === 'function') {
-                config.moonDirection = vta.getMoonDirectionECEF(moonDate, new THREE.Vector3(), observerECEF).normalize();
-                config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame);
+                config.moonDirection = vta.getMoonDirectionECEF(moonDate, config.moonDirection, observerECEF).normalize();
+                config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame, config.localMoonDirection);
                 config.astronomicalMoonPosition = true;
             } else {
-                config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
-                config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
+                config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection, config.moonDirection);
+                config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection, config.localMoonDirection);
                 config.astronomicalMoonPosition = false;
             }
             if (typeof vta.getECIToECEFRotationMatrix === 'function') {
-                config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, new THREE.Matrix4());
-                config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, new THREE.Matrix4());
+                config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, config.inertialToECEFMatrix || new THREE.Matrix4());
+                config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, config.moonInertialToECEFMatrix || new THREE.Matrix4());
             }
         }
         VRODOSMaster.MoonPhase.applyConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
-        syncPmndrsTakramHorizonState(this, config);
         return config;
+    }
+
+    H.getPmndrsAtmosphereConfig = function () {
+        if (!this || !this.data) return null;
+        const owner = this.getRenderProfileOwner();
+        if (!owner || owner.removed) return null;
+        const quality = this.getPmndrsAtmosphereQuality ? this.getPmndrsAtmosphereQuality() : this.data.pmndrsAtmosphereQuality;
+        const horizonPreset = this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural';
+        const physicalLights = shouldUsePmndrsTakramPhysicalHorizonLights();
+        const vendor = window.VRODOS_TAKRAM_ATMOSPHERE;
+        let cache = owner.atmosphereConfigCache;
+        let changed = !cache || cache.quality !== quality || cache.horizonPreset !== horizonPreset ||
+            cache.physicalLights !== physicalLights || cache.vendor !== vendor;
+        // Compare primitive schema inputs without allocating a serialization/key
+        // array. This also observes synchronous author/debug changes to data.
+        if (!changed) {
+            for (const key in this.data) {
+                if (cache.inputs[key] !== this.data[key]) { changed = true; break; }
+            }
+            if (!changed) {
+                for (const key in cache.inputs) {
+                    if (!(key in this.data)) { changed = true; break; }
+                }
+            }
+        }
+        if (changed) {
+            cache = owner.atmosphereConfigCache = {
+                inputs: { ...this.data }, quality, horizonPreset, physicalLights, vendor,
+                config: buildPmndrsAtmosphereConfig.call(this), time: null, initialized: false
+            };
+        }
+        const sceneTime = this.el && this.el.time;
+        const time = typeof sceneTime === 'number' ? sceneTime : this._pmndrsTickTimeMs;
+        if (!cache.initialized || (cache.config.dayNightCycleEnabled &&
+            (typeof time !== 'number' || cache.time !== time))) {
+            if (typeof time === 'number') this._pmndrsTickTimeMs = time;
+            updatePmndrsCelestialConfig.call(this, cache.config);
+            cache.time = time;
+            cache.initialized = true;
+        }
+        // Readiness diagnostics change asynchronously even with a static sky.
+        syncPmndrsTakramHorizonState(this, cache.config);
+        return cache.config;
     };
 
     H.isPmndrsDayNightCycleActive = function () {

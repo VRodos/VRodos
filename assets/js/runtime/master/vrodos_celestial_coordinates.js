@@ -4,11 +4,11 @@
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const clampPmndrsNumber = VRODOSMaster.RuntimeSettings.clampNumber;
 
-    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
+    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg, target = new THREE.Vector3()) {
         const elevation = THREE.MathUtils.degToRad(elevationDeg);
         const azimuth = THREE.MathUtils.degToRad(azimuthDeg);
         const cosElevation = Math.cos(elevation);
-        return new THREE.Vector3(
+        return target.set(
             Math.sin(azimuth) * cosElevation,
             Math.sin(elevation),
             -Math.cos(azimuth) * cosElevation
@@ -81,22 +81,22 @@
         return config._resolvedGeospatialFrame;
     }
 
-    function ecefDirectionToPmndrsLocal(direction, frame) {
+    function ecefDirectionToPmndrsLocal(direction, frame, target = new THREE.Vector3()) {
         if (!direction || !frame) {
-            return direction ? direction.clone().normalize() : new THREE.Vector3(0, 1, 0);
+            return direction ? target.copy(direction).normalize() : target.set(0, 1, 0);
         }
-        return new THREE.Vector3(
+        return target.set(
             direction.dot(frame.east),
             direction.dot(frame.up),
             direction.dot(frame.south)
         ).normalize();
     }
 
-    function localDirectionToPmndrsEcef(localDirection, frame) {
+    function localDirectionToPmndrsEcef(localDirection, frame, target = new THREE.Vector3()) {
         if (!localDirection || !frame) {
-            return new THREE.Vector3(0, 1, 0);
+            return target.set(0, 1, 0);
         }
-        return new THREE.Vector3()
+        return target.set(0, 0, 0)
             .addScaledVector(frame.east, localDirection.x)
             .addScaledVector(frame.up, localDirection.y)
             .addScaledVector(frame.south, localDirection.z)
@@ -112,20 +112,20 @@
         config.sunAzimuthDeg = THREE.MathUtils.radToDeg(Math.atan2(local.x, -local.z));
     }
 
-    function buildPmndrsEcefSunDirection(localSunDirection, config) {
+    function buildPmndrsEcefSunDirection(localSunDirection, config, target = new THREE.Vector3()) {
         if (!localSunDirection) {
-            return new THREE.Vector3(0, 1, 0);
+            return target.set(0, 1, 0);
         }
 
         const frame = getPmndrsGeospatialFrame(config);
         if (frame) {
-            return localDirectionToPmndrsEcef(localSunDirection, frame);
+            return localDirectionToPmndrsEcef(localSunDirection, frame, target);
         }
 
         // VRodos authored worlds use X=east, Y=up, Z=south so that -Z is the
         // natural forward/north-ish direction. Takram expects sunDirection in
         // ECEF space, so we mirror X/Z into the default fixed frame anchored below.
-        return new THREE.Vector3(
+        return target.set(
             -localSunDirection.x,
             localSunDirection.y,
             -localSunDirection.z

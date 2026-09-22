@@ -77,6 +77,7 @@
             this.adaptiveShadowFitFrames = new Set();
             this.adaptiveShadowFitTimers = new Set();
             this.presentationRefreshes = new Set();
+            this.atmosphereConfigCache = null;
             this.queuedQualityRefreshId = null;
             this.pendingQualityRefreshWaitForSettle = false;
             this.removed = false;
@@ -134,6 +135,7 @@
                 this.settings.removePhotorealHelperLights();
             }
             this.removeLightSources();
+            this.atmosphereConfigCache = null;
             this.lightingState = null;
             this.terrainDepthMaterials.forEach(({ material, previous }, mesh) => {
                 if (mesh.customDepthMaterial === material) mesh.customDepthMaterial = previous;
@@ -480,6 +482,7 @@
             this.settings = null;
             this.visualRefreshes = new Set();
             this.visualRefreshEpoch = 0;
+            this.normalPassExclusions = new Map();
             this.removed = false;
             this.legacySkyCleanupDirty = true;
             this.handleLegacySkyObjectSet = this.invalidateLegacySkyCleanup.bind(this);
@@ -505,6 +508,15 @@
                 configurable: true,
                 get: function () { return this.atmosphereRuntime ? this.atmosphereRuntime.state : null; }
             });
+        },
+        registerNormalPassExclusion: function (object) {
+            if (this.removed || this.normalPassExclusions.has(object)) return;
+            const unregister = () => {
+                object.removeEventListener('removed', unregister);
+                this.normalPassExclusions.delete(object);
+            };
+            this.normalPassExclusions.set(object, unregister);
+            object.addEventListener('removed', unregister);
         },
         invalidateLegacySkyCleanup: function () {
             if (!this.removed) {
@@ -645,6 +657,8 @@
             if (this.removed) return;
             this.removed = true;
             this.legacySkyCleanupDirty = false;
+            this.normalPassExclusions.forEach((unregister) => unregister());
+            this.normalPassExclusions.clear();
             this.el.removeEventListener('object3dset', this.handleLegacySkyObjectSet, true);
             this.el.removeEventListener('componentchanged', this.handleLegacySkySettingsChange, true);
             this.el.removeEventListener('componentinitialized', this.handleLegacySkySettingsChange, true);

@@ -676,4 +676,19 @@ for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
         }
     }
 }
+// A screen-center ray needs fresh camera ancestors, without forcing unrelated
+// scene subtrees or rebuilding A-Frame's projection.
+const transformScene = new THREE.Scene(), cameraParent = new THREE.Group();
+const transformCamera = new THREE.PerspectiveCamera();
+const untouched = new THREE.Object3D();
+transformScene.add(cameraParent, untouched); cameraParent.add(transformCamera);
+transformScene.position.set(2, 0, 3); cameraParent.position.set(4, 5, 6);
+transformCamera.position.set(1, 2, 3);
+untouched.updateMatrixWorld = () => { throw new Error('unrelated subtree updated'); };
+transformCamera.updateProjectionMatrix = () => { throw new Error('projection rebuilt without a parameter change'); };
+movementDefinition.updateFlyCameraWorldMatrix.call({}, { sceneEl: { object3D: transformScene } }, transformCamera);
+const actualCameraPosition = new THREE.Vector3().setFromMatrixPosition(transformCamera.matrixWorld);
+assertNear(actualCameraPosition.x, 7, 'transformed camera X');
+assertNear(actualCameraPosition.y, 7, 'transformed camera Y');
+assertNear(actualCameraPosition.z, 12, 'transformed camera Z');
 console.log("navigation math tests passed");

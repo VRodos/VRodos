@@ -239,6 +239,7 @@ final class VRodos_Compiler_Target_Assembler {
 			$scene_id,
 			[
 				'scene_loader'            => true,
+				'runtime_context'         => $target->scene->runtime_context,
 				'resolved_scene_settings' => $settings,
 				'compile_diagnostics'     => $diagnostics,
 				'render_options'          => [ 'showPawnPositions' => $show_pawn_positions ],
@@ -377,6 +378,7 @@ final class VRodos_Compiler_Target_Assembler {
 			$project_id,
 			$scene_id,
 			[
+				'runtime_context'         => $target->scene->runtime_context,
 				'resolved_scene_settings' => $settings,
 				'compile_diagnostics'     => $diagnostics,
 				'render_options'          => [ 'showPawnPositions' => $show_pawn_positions ],

@@ -40,4 +40,44 @@ video.minFilter = Three.LinearFilter;
 apply(video, quality, true);
 assert.equal(video.generateMipmaps, false);
 assert.equal(video.minFilter, Three.LinearFilter);
+for (const texture of [image, normal, headsetColor, video]) {
+    const options = texture === normal || texture === headsetColor ? { ...quality, headsetProfile: true } : quality;
+    const version = texture.version;
+    apply(texture, options, texture !== normal);
+    apply(texture, options, texture !== normal);
+    assert.equal(texture.version, version, 'unchanged texture policy must not schedule another upload');
+}
+const oldVersion = image.version;
+apply(image, { ...quality, headsetProfile: true, maxAnisotropy: 4 }, true);
+assert.equal(image.version, oldVersion + 1, 'changed sampler policy schedules one upload');
+const shared = new Three.Texture();
+const refresh = { ...quality, textureQualityApplied: new WeakMap() };
+apply(shared, refresh, false);
+apply(shared, refresh, true);
+const sharedVersion = shared.version;
+apply(shared, refresh, true);
+apply(shared, refresh, false);
+assert.equal(shared.colorSpace, Three.SRGBColorSpace, 'shared color use upgrades an earlier data-texture visit');
+assert.equal(shared.version, sharedVersion, 'shared slots are processed once after their effective color policy is known');
+const material = new Three.MeshStandardMaterial();
+context.vrodosEnhanceMeshMaterial(material, {}, quality);
+const materialVersion = material.version;
+context.vrodosEnhanceMeshMaterial(material, {}, quality);
+assert.equal(material.version, materialVersion, 'unchanged material refresh preserves its compiled program');
+context.vrodosEnhanceMeshMaterial(material, { roughness: 0.4, color: '#ff0000' }, quality);
+assert.equal(material.version, materialVersion, 'value changes do not invalidate the shader');
+context.vrodosEnhanceMeshMaterial(material, {}, { ...quality, renderQuality: 'low' });
+assert.ok(material.version > materialVersion, 'dithering changes invalidate the shader');
+const videoRefresh = { renderQuality: 'low', textureQualityApplied: new WeakMap() };
+for (const videoMaterial of [new Three.MeshStandardMaterial({ map: video }), new Three.MeshStandardMaterial({ map: video })]) {
+    const version = videoMaterial.version;
+    context.vrodosEnhanceMeshMaterial(videoMaterial, {}, videoRefresh);
+    assert.equal(videoMaterial.version, version + 1, 'each material using a shared sRGB video refreshes its decode define');
+    context.vrodosEnhanceMeshMaterial(videoMaterial, {}, videoRefresh);
+    assert.equal(videoMaterial.version, version + 1, 'unchanged video decoding preserves the program');
+}
+const videoVersion = video.version;
+video.needsUpdate = true;
+apply(video, videoRefresh, true);
+assert.equal(video.version, videoVersion + 1, 'video frame updates remain owned by the video texture');
 console.log('Texture quality tests passed.');

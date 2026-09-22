@@ -2,6 +2,15 @@
 
 define( 'ABSPATH', __DIR__ );
 
+function admin_url( string $path = '' ): string { return 'https://example.test/wp-admin/' . $path; }
+function apply_filters( string $name, $value, ...$args ) {
+	if ( 'vrodos_compiled_runtime_context' === $name && isset( $GLOBALS['fixture_result_delivery'] ) ) {
+		$GLOBALS['fixture_context_calls']++;
+		$value['immerseResults'] = $GLOBALS['fixture_result_delivery'];
+	}
+	return $value;
+}
+
 if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
 	class VRodos_Path_Manager {
 		public static function plugin_path( string $relative = '' ): string {
@@ -1051,4 +1060,29 @@ try {
 }
 vrodos_foundation_remove_tree( $test_dir );
 
+// Every target/profile uses the same resolved result-delivery context, once per scene.
+$capability_resolver = new VRodos_Compiler_Plan_Resolver( $plan_settings, new VRodos_Compiler_Runtime_Script_Planner( new VRodos_Compiler_Runtime_Manifest() ) );
+foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
+	foreach ( [ 'custom', 'adaptive' ] as $build_mode ) {
+		foreach ( [ 'single-player', 'networked' ] as $runtime_mode ) {
+			foreach ( [ false, true ] as $delivery ) {
+				$GLOBALS['fixture_result_delivery'] = [ 'enabled' => $delivery, 'restUrl' => '/results', 'projectId' => 9, 'sceneId' => 101, 'token' => 'fixture' ];
+				$GLOBALS['fixture_context_calls'] = 0;
+				$scene = (object) [ 'metadata' => (object) [ 'desktopPerformanceProfiles' => (object) [ 'schemaVersion' => 2, 'buildMode' => $build_mode ] ], 'objects' => (object) [] ];
+				$plan = $capability_resolver->resolve( new VRodos_Compile_Request( 9, 101, [ 101 ], $runtime_mode, $target, false ), [
+					'valid_scene_ids' => [ 101 ], 'scene_json' => [ $scene ], 'scene_title' => [ 'Capability fixture' ], 'project_type_slug' => 'vrexpo_games',
+				] )->scenes[0];
+				vrodos_foundation_assert( 1 === $GLOBALS['fixture_context_calls'], 'resolve runtime context once per scene' );
+				vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->chunk_ids, true ), "$target/$build_mode/$runtime_mode delivery chunk" );
+				vrodos_foundation_assert( $plan->runtime_context['immerseResults'] === $GLOBALS['fixture_result_delivery'], 'emitted context equals capability selection context' );
+				if ( 'desktop' === $target ) {
+					foreach ( ( 'adaptive' === $build_mode ? [ 'low', 'medium', 'high' ] : [ 'custom' ] ) as $profile_id ) {
+						vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->desktop_profiles['profiles'][ $profile_id ]['chunkIds'], true ), "$profile_id delivery chunk" );
+					}
+				}
+			}
+		}
+	}
+}
+unset( $GLOBALS['fixture_result_delivery'] );
 echo "Compiler plan foundation tests passed.\n";

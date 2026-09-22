@@ -411,6 +411,7 @@
                     node.visible = false;
                     node.userData = node.userData || {};
                     node.userData.vrodosPmndrsLegacySuppressed = true;
+                    bindAtmosphereVisualOwner(self)?.registerNormalPassExclusion(node);
                 }
             });
 
@@ -726,6 +727,7 @@
                         node.visible = false;
                         node.userData = node.userData || {};
                         node.userData.vrodosPmndrsLegacySuppressed = true;
+                        bindAtmosphereVisualOwner(self)?.registerNormalPassExclusion(node);
                     }
                 });
             }
@@ -974,6 +976,7 @@
                 state.starsFallbackMesh.frustumCulled = false;
                 state.starsFallbackMesh.renderOrder = -998;
                 state.starsFallbackMesh.userData.vrodosPmndrsAtmosphereStars = true;
+                bindAtmosphereVisualOwner(self)?.registerNormalPassExclusion(state.starsFallbackMesh);
                 state.starsFallbackMesh.name = 'vrodosPmndrsAtmosphereStarsFallback';
                 state.starsFallbackMesh.onBeforeRender = function (_renderer, _scene, camera) {
                     const cameraFar = camera && typeof camera.far === 'number' ? camera.far : PMNDRS_STARS_FALLBACK_RADIUS;
@@ -1051,6 +1054,7 @@
                 state.starsMesh.frustumCulled = false;
                 state.starsMesh.renderOrder = -999;
                 state.starsMesh.userData.vrodosPmndrsAtmosphereStars = true;
+                bindAtmosphereVisualOwner(self)?.registerNormalPassExclusion(state.starsMesh);
                 state.starsMesh.name = 'vrodosPmndrsAtmosphereStars';
                 self.el.object3D.add(state.starsMesh);
             } else if (state.starsMesh && state.starsMesh.parent !== self.el.object3D) {
@@ -1900,6 +1904,7 @@
                 state.skyMesh.frustumCulled = false;
                 state.skyMesh.renderOrder = -1000;
                 state.skyMesh.userData.vrodosPmndrsAtmosphereSky = true;
+                bindAtmosphereVisualOwner(self)?.registerNormalPassExclusion(state.skyMesh);
                 state.skyMesh.name = 'vrodosPmndrsAtmosphereSky';
                 self.el.object3D.add(state.skyMesh);
             }

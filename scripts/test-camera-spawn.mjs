@@ -59,7 +59,6 @@ function fixture({ disabled = 'true', mode = 'fly', standard = false, yaw = 180,
         data: { thumbstickDeadzone: 0.08 }, hasAuthoredNavigationMode: () => true,
         areCollisionsEnabled: () => false, beginImmersiveSmoothnessFrame: () => null,
         getActiveImmersiveSmoothnessFrame: () => null, finishImmersiveSmoothnessFrame: noop,
-        measureImmersiveSmoothness: (_frame, _name, callback) => callback(),
         updateWASDControlsState: noop, applyRightThumbstickTurn: noop, updateVerticalMotion: noop,
         requestShadowMapRefresh: noop, beginImmersiveEntryPoseSettle: noop
     });

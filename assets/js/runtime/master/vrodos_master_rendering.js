@@ -582,6 +582,15 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
         return;
     }
 
+    const applied = options.textureQualityApplied;
+    if (applied && applied.has(texture) && (!isColorTexture || applied.get(texture))) return;
+    if (applied) applied.set(texture, Boolean(isColorTexture));
+    const colorSpace = texture.colorSpace;
+    const anisotropy = texture.anisotropy;
+    const magFilter = texture.magFilter;
+    const minFilter = texture.minFilter;
+    const generateMipmaps = texture.generateMipmaps;
+
     if (isColorTexture) {
         texture.colorSpace = THREE.SRGBColorSpace;
     }
@@ -614,7 +623,11 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
         }
     }
 
-    texture.needsUpdate = true;
+    if (texture.colorSpace !== colorSpace || texture.anisotropy !== anisotropy ||
+        texture.magFilter !== magFilter || texture.minFilter !== minFilter ||
+        texture.generateMipmaps !== generateMipmaps) {
+        texture.needsUpdate = true;
+    }
 }
 
 function vrodosGetExplicitMaterialOverrides(entityEl) {
@@ -1064,6 +1077,10 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         return;
     }
 
+    const dithering = material.dithering;
+    const side = material.side;
+    const emissiveMap = material.emissiveMap;
+
     const reflectionSource = options.reflectionSource || (options.environmentMap ? 'hdr' : 'none');
     const globalReflectionStrength = vrodosGetGlobalReflectionStrength(options);
     const reflectionsDisabled = globalReflectionStrength <= 0 || reflectionSource === 'none';
@@ -1137,13 +1154,11 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         if (typeof material.metalness !== 'undefined') {
             material.metalness = 0;
         }
-        material.needsUpdate = true;
     } else if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== 'undefined') {
         if (typeof material.userData.vrodosBaseEmissiveIntensity === 'undefined') {
             material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
         }
         material.emissiveIntensity = Math.min(material.userData.vrodosBaseEmissiveIntensity, 0.08);
-        material.needsUpdate = true;
     } else if (typeof overrides.emissiveIntensity !== 'undefined' && overrides.emissiveIntensity !== null && overrides.emissiveIntensity !== '' && typeof material.emissiveIntensity !== 'undefined') {
         material.emissiveIntensity = parseFloat(overrides.emissiveIntensity);
     } else if (options.renderQuality === 'high' && material.emissive && material.emissiveMap && typeof material.emissiveIntensity !== 'undefined') {
@@ -1249,7 +1264,17 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
     } else if (material.userData && material.userData.vrodosTerrainShadowLiftUniform) {
         material.userData.vrodosTerrainShadowLiftUniform.value = 0;
     }
-    material.needsUpdate = true;
+    // Video sRGB decoding is a shader define in Three r185, unlike ordinary
+    // image texture decoding. Keep it per material because textures are shared.
+    const videoDecode = (material.map?.isVideoTexture && material.map.colorSpace === THREE.SRGBColorSpace ? 1 : 0) |
+        (material.emissiveMap?.isVideoTexture && material.emissiveMap.colorSpace === THREE.SRGBColorSpace ? 2 : 0);
+    const previousVideoDecode = material.userData.vrodosVideoDecode || 0;
+    material.userData.vrodosVideoDecode = videoDecode;
+    // Uniform-only changes do not invalidate Three's program selection. Patch
+    // installers and env-map changes above own their own invalidation.
+    if (material.dithering !== dithering || material.side !== side || material.emissiveMap !== emissiveMap || videoDecode !== previousVideoDecode) {
+        material.needsUpdate = true;
+    }
 }
 
 

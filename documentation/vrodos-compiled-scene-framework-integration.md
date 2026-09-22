@@ -18,6 +18,12 @@ The runtime is a single A-Frame scene with helpers attached to the same renderer
 
 ## Runtime Architecture
 
+Performance ownership (2026-09-22): render-profile retains normalized atmosphere configuration and calculation scratch objects; the facade shares changing celestial calculations within a scene frame and invalidates derived lighting/star caches when inputs change. Atmosphere retains the normal-pass exclusion collection, including legacy/gradient sky membership, and releases it on removal. The pass restores exact visibility after errors without traversing authored geometry. Material-profile refreshes deduplicate textures and only invalidate uploads/programs when their effective properties change.
+
+The networked `vrodos-chat-occupancy` system receives `player-info` lifecycle changes and reconciles connection events once per scene. Chat launchers and indicators share capacity/count policy and availability events. Marker vectors are retained, diagnostic text updates at most four times per second, and camera helpers update ancestors without changing A-Frame/WebXR tracking or projection ownership.
+
+`assessment-runtime` is an optional chunk between `scene-components` and consuming components. It owns CEFR, assessment rendering/launching, and result delivery. Recursive content inspection or enabled delivery in the resolved compile context selects it across all targets; POI-only spatial UI remains independent. Early resources and the shared DOM overlay remain in `scene-components`.
+
 Core ownership:
 
 - A-Frame owns the runtime host, entity/component lifecycle, WebXR session, camera, controllers, and render loop.

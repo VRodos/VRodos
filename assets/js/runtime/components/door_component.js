@@ -31,6 +31,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
         this.marker = null;
         this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.basePosition = null;
+        this.worldScale = new THREE.Vector3();
         this.offset = Math.random() * Math.PI * 2;
         this.placeMarker = this.placeMarker.bind(this);
         this.el.addEventListener('model-loaded', this.placeMarker);
@@ -86,7 +87,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
         this.marker.position.copy(targetLocal);
         this.basePosition = targetLocal.clone();
 
-        var worldScale = new THREE.Vector3();
+        var worldScale = this.worldScale;
         this.el.object3D.getWorldScale(worldScale);
         this.marker.scale.set(
             worldScale.x !== 0 ? 1 / Math.abs(worldScale.x) : 1,
@@ -120,7 +121,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
         }
 
         var seconds = time / 1000;
-        var worldScale = new THREE.Vector3();
+        var worldScale = this.worldScale;
         this.el.object3D.getWorldScale(worldScale);
         var yScale = worldScale.y !== 0 ? Math.abs(worldScale.y) : 1;
 

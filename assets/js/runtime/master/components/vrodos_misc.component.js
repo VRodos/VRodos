@@ -171,9 +171,14 @@ AFRAME.registerComponent('show-position', {
         this.positionShow = document.getElementById("positionShow");
         this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
         this.worldPosition = new THREE.Vector3();
+        this.lastTextUpdate = -Infinity;
+        this.movementEl = null;
     },
     getDisplayedPosition: function () {
-        const movementEl = document.querySelector('[custom-movement]');
+        if (!this.movementEl || !this.movementEl.isConnected || !this.movementEl.components['custom-movement']) {
+            this.movementEl = this.el.sceneEl.querySelector('[custom-movement]');
+        }
+        const movementEl = this.movementEl;
         const movement = movementEl && movementEl.components ? movementEl.components['custom-movement'] : null;
         if (movement && typeof movement.getNavigationWorldPosition === 'function') {
             return movement.getNavigationWorldPosition();
@@ -186,17 +191,26 @@ AFRAME.registerComponent('show-position', {
         return this.el.getAttribute('position');
     },
     tick: function (time, timeDelta) {
+        if (time - this.lastTextUpdate < 250) return;
+        this.lastTextUpdate = time;
         if (this.positionShow) {
             const p = this.getDisplayedPosition();
-            this.positionShow.innerHTML = `${Math.round(p.x * 100) / 100  }, ${  Math.round(p.y * 100) / 100  }, ${  Math.round(p.z * 100) / 100}`;
+            const text = `${Math.round(p.x * 100) / 100  }, ${  Math.round(p.y * 100) / 100  }, ${  Math.round(p.z * 100) / 100}`;
+            if (this.positionShow.textContent !== text) this.positionShow.textContent = text;
         }
 
         if (this.occupantsNumberShow && typeof window.easyrtc !== 'undefined' && typeof window.NAF !== 'undefined') {
             const occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
             if (occupants) {
-                this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+                const text = String(Object.keys(occupants).length);
+                if (this.occupantsNumberShow.textContent !== text) this.occupantsNumberShow.textContent = text;
             }
         }
+    },
+    remove: function () {
+        this.movementEl = null;
+        this.positionShow = null;
+        this.occupantsNumberShow = null;
     }
 });
 

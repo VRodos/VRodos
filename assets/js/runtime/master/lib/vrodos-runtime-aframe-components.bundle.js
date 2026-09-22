@@ -847,8 +847,11 @@
       connectedUsers: { default: 0, type: "number" }
     },
     init: function() {
+      var _a, _b;
       this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
       this.removed = false;
+      this.occupancySystem = (_a = this.el.sceneEl) == null ? void 0 : _a.systems["vrodos-chat-occupancy"];
+      (_b = this.occupancySystem) == null ? void 0 : _b.updatePlayer(this);
       this.anims_loaded = false;
       this.ownedByLocalUser = this.el.id === "cameraA";
       if (this.ownedByLocalUser) {
@@ -915,9 +918,14 @@
       }
     },
     update: function() {
+      var _a;
+      (_a = this.occupancySystem) == null ? void 0 : _a.updatePlayer(this);
       this.applyAvatar();
     },
     remove: function() {
+      var _a;
+      (_a = this.occupancySystem) == null ? void 0 : _a.unregisterPlayer(this);
+      this.occupancySystem = null;
       this.removed = true;
       this.resources.disposeAll();
       this.avatarRetryTimeout = null;
@@ -996,6 +1004,7 @@
         this.adaptiveShadowFitFrames = /* @__PURE__ */ new Set();
         this.adaptiveShadowFitTimers = /* @__PURE__ */ new Set();
         this.presentationRefreshes = /* @__PURE__ */ new Set();
+        this.atmosphereConfigCache = null;
         this.queuedQualityRefreshId = null;
         this.pendingQualityRefreshWaitForSettle = false;
         this.removed = false;
@@ -1059,6 +1068,7 @@
           this.settings.removePhotorealHelperLights();
         }
         this.removeLightSources();
+        this.atmosphereConfigCache = null;
         this.lightingState = null;
         this.terrainDepthMaterials.forEach(({ material, previous }, mesh) => {
           if (mesh.customDepthMaterial === material) mesh.customDepthMaterial = previous;
@@ -1378,6 +1388,7 @@
         this.settings = null;
         this.visualRefreshes = /* @__PURE__ */ new Set();
         this.visualRefreshEpoch = 0;
+        this.normalPassExclusions = /* @__PURE__ */ new Map();
         this.removed = false;
         this.legacySkyCleanupDirty = true;
         this.handleLegacySkyObjectSet = this.invalidateLegacySkyCleanup.bind(this);
@@ -1403,6 +1414,15 @@
             return this.atmosphereRuntime ? this.atmosphereRuntime.state : null;
           }
         });
+      },
+      registerNormalPassExclusion: function(object) {
+        if (this.removed || this.normalPassExclusions.has(object)) return;
+        const unregister = () => {
+          object.removeEventListener("removed", unregister);
+          this.normalPassExclusions.delete(object);
+        };
+        this.normalPassExclusions.set(object, unregister);
+        object.addEventListener("removed", unregister);
       },
       invalidateLegacySkyCleanup: function() {
         if (!this.removed) {
@@ -1547,6 +1567,8 @@
         if (this.removed) return;
         this.removed = true;
         this.legacySkyCleanupDirty = false;
+        this.normalPassExclusions.forEach((unregister) => unregister());
+        this.normalPassExclusions.clear();
         this.el.removeEventListener("object3dset", this.handleLegacySkyObjectSet, true);
         this.el.removeEventListener("componentchanged", this.handleLegacySkySettingsChange, true);
         this.el.removeEventListener("componentinitialized", this.handleLegacySkySettingsChange, true);
@@ -5341,13 +5363,13 @@
       }
       frame.timings[label] = this.roundDiagnosticNumber((frame.timings[label] || 0) + durationMs, 3);
     },
-    measureImmersiveSmoothness: function(frame, label, callback) {
+    measureImmersiveSmoothness: function(frame, label, callback, a, b, c, d, e) {
       if (!frame || typeof callback !== "function") {
-        return callback ? callback() : void 0;
+        return callback ? callback.call(this, a, b, c, d, e) : void 0;
       }
       const startedAt = this.getRuntimeNow();
       try {
-        return callback();
+        return callback.call(this, a, b, c, d, e);
       } finally {
         this.addImmersiveSmoothnessDuration(frame, label, this.getRuntimeNow() - startedAt);
       }
@@ -6474,9 +6496,14 @@
       const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components["scene-settings"] : null;
       if (settings && typeof settings.syncPresentedShadowLightTransforms === "function") {
         const now = this.getRuntimeNow();
-        this.measureImmersiveSmoothness(smoothnessFrame, "shadowSyncMs", () => {
-          settings.syncPresentedShadowLightTransforms();
-        });
+        {
+          const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
+          try {
+            settings.syncPresentedShadowLightTransforms();
+          } finally {
+            if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "shadowSyncMs", this.getRuntimeNow() - measuredAt);
+          }
+        }
         this.immersiveLastPresentedShadowSyncAt = now;
         this.immersiveLastPresentedShadowSyncTransformCount = this.immersiveRootTransformCount;
       }
@@ -7504,21 +7531,7 @@
       return null;
     },
     updateFlyCameraWorldMatrix: function(cameraEl, cameraObject) {
-      if (cameraObject && typeof cameraObject.updateProjectionMatrix === "function") {
-        cameraObject.updateProjectionMatrix();
-      }
-      if (this.sceneEl && this.sceneEl.object3D && typeof this.sceneEl.object3D.updateMatrixWorld === "function") {
-        this.sceneEl.object3D.matrixWorldNeedsUpdate = true;
-        this.sceneEl.object3D.updateMatrixWorld(true);
-      }
-      if (cameraEl && cameraEl.object3D && typeof cameraEl.object3D.updateMatrixWorld === "function") {
-        cameraEl.object3D.matrixWorldNeedsUpdate = true;
-        cameraEl.object3D.updateMatrixWorld(true);
-      }
-      if (cameraObject && typeof cameraObject.updateMatrixWorld === "function") {
-        cameraObject.matrixWorldNeedsUpdate = true;
-        cameraObject.updateMatrixWorld(true);
-      }
+      if (cameraObject) cameraObject.updateWorldMatrix(true, false);
     },
     setFlyForwardVectorFromLookControls: function() {
       const lookControls = this.refreshLookControlsOrientation();
@@ -8412,7 +8425,7 @@
       this.targetWorldPosition.x += deltaX;
       this.targetWorldPosition.z += deltaZ;
       const smoothnessFrame = this.getActiveImmersiveSmoothnessFrame();
-      if (this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
+      if (this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.targetWorldPosition)) {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.hasLastGroundHit = false;
         this.notifyDesktopNavigationShadowRefresh("desktop-navigation-direct");
@@ -8430,7 +8443,7 @@
       this.targetWorldPosition.y += deltaY;
       this.targetWorldPosition.z += deltaZ;
       const smoothnessFrame = this.getActiveImmersiveSmoothnessFrame();
-      if (this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
+      if (this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.targetWorldPosition)) {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.hasLastGroundHit = false;
         this.heightOffset = null;
@@ -8453,9 +8466,7 @@
       }
       const smoothnessFrame = this.getActiveImmersiveSmoothnessFrame();
       if (this.heightOffset === null) {
-        this.measureImmersiveSmoothness(smoothnessFrame, "heightSyncMs", () => {
-          this.syncHeightOffset();
-        });
+        this.measureImmersiveSmoothness(smoothnessFrame, "heightSyncMs", this.syncHeightOffset);
       }
       const currentPosition = this.constrainedCurrentPosition.copy(this.lastResolvedPosition);
       let currentGround = this.hasLastGroundHit ? this.lastGroundHit : null;
@@ -8463,27 +8474,23 @@
         currentGround = null;
       }
       if (!currentGround) {
-        currentGround = this.measureImmersiveSmoothness(smoothnessFrame, "groundSampleMs", () => this.sampleGroundAt(
-          currentPosition,
-          this.hasLastGroundHit ? this.lastGroundHit.point.y : void 0,
-          this.sampledGroundHit
-        ));
+        currentGround = this.measureImmersiveSmoothness(smoothnessFrame, "groundSampleMs", this.sampleGroundAt, currentPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : void 0, this.sampledGroundHit);
       }
       if (!currentGround) {
         return finalizeConstrained(false);
       }
-      let resolvedStep = this.measureImmersiveSmoothness(smoothnessFrame, "groundResolveMs", () => this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep));
+      let resolvedStep = this.measureImmersiveSmoothness(smoothnessFrame, "groundResolveMs", this.resolveMovementAgainstGround, currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
       if (!resolvedStep) {
         return finalizeConstrained(false);
       }
-      resolvedStep = this.measureImmersiveSmoothness(smoothnessFrame, "blockerResolveMs", () => this.resolveMovementAgainstBlockers(currentPosition, deltaX, deltaZ, currentGround, resolvedStep));
+      resolvedStep = this.measureImmersiveSmoothness(smoothnessFrame, "blockerResolveMs", this.resolveMovementAgainstBlockers, currentPosition, deltaX, deltaZ, currentGround, resolvedStep);
       if (!resolvedStep) {
         return finalizeConstrained(false);
       }
       this.immersiveLastStepDeltaY = resolvedStep.ground.point.y - currentGround.point.y;
       if (resolvedStep.airborne) {
         this.targetWorldPosition.set(resolvedStep.position.x, currentPosition.y, resolvedStep.position.z);
-        if (!this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
+        if (!this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.targetWorldPosition)) {
           return finalizeConstrained(false);
         }
         this.lastResolvedPosition.copy(this.targetWorldPosition);
@@ -8494,7 +8501,7 @@
       }
       const nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
       this.targetWorldPosition.set(resolvedStep.position.x, nextY, resolvedStep.position.z);
-      if (!this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
+      if (!this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.targetWorldPosition)) {
         return finalizeConstrained(false);
       }
       this.lastResolvedPosition.copy(this.targetWorldPosition);
@@ -8514,29 +8521,28 @@
           return;
         }
         if (immersivePresenting) {
-          this.measureImmersiveSmoothness(smoothnessFrame, "immersiveStateMs", () => {
+          const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
+          try {
             if (!this.immersiveWasPresenting) {
               this.resetImmersiveWorldLocomotion();
             }
             this.ensureImmersiveRuntimeHelpers();
             this.settleImmersiveEntryPose();
-          });
+          } finally {
+            if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "immersiveStateMs", this.getRuntimeNow() - measuredAt);
+          }
         } else if (this.immersiveWasPresenting) {
           this.handleExitVr();
         } else {
           this.rememberNonImmersiveNavigationPosition();
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "primeNavigationMs", () => {
-          this.ensureNavigationStatePrimed();
-        });
+        this.measureImmersiveSmoothness(smoothnessFrame, "primeNavigationMs", this.ensureNavigationStatePrimed);
         const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === "true" || settings.movement_disabled === "1";
         if (movementDisabled) {
           if (this.isAirborne()) {
             this.restoreLastGroundedPosition("movement-disabled");
           }
-          this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", () => {
-            this.setNavigationWorldPosition(this.lastResolvedPosition);
-          });
+          this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.lastResolvedPosition);
           return;
         }
         const navigationMode = this.getNavigationMode(settings);
@@ -8553,13 +8559,11 @@
           this.lastResolvedPosition.copy(currentPosition);
           hasExternalMovement = false;
         }
-        const collisionsEnabled = this.measureImmersiveSmoothness(smoothnessFrame, "collisionRefreshMs", () => this.areCollisionsEnabled(settings));
+        const collisionsEnabled = this.measureImmersiveSmoothness(smoothnessFrame, "collisionRefreshMs", this.areCollisionsEnabled, settings);
         if (this.isAirborne() && (flyMode || !collisionsEnabled)) {
           this.restoreLastGroundedPosition("navigation-mode-change");
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "wasdStateMs", () => {
-          this.updateWASDControlsState(navigationMode, collisionsEnabled);
-        });
+        this.measureImmersiveSmoothness(smoothnessFrame, "wasdStateMs", this.updateWASDControlsState, navigationMode, collisionsEnabled);
         if (smoothnessFrame) {
           smoothnessFrame.navigationMode = navigationMode;
           smoothnessFrame.collisionsEnabled = Boolean(collisionsEnabled);
@@ -8571,7 +8575,8 @@
           };
         }
         if (hasExternalMovement) {
-          this.measureImmersiveSmoothness(smoothnessFrame, "externalMovementMs", () => {
+          const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
+          try {
             this.setNavigationWorldPosition(this.lastResolvedPosition);
             if (flyMode) {
               this.applyFreeMovement(externalDeltaX, externalDeltaY, externalDeltaZ);
@@ -8582,27 +8587,32 @@
             } else {
               this.applyDirectMovement(externalDeltaX, externalDeltaZ);
             }
-          });
+          } finally {
+            if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "externalMovementMs", this.getRuntimeNow() - measuredAt);
+          }
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "rightStickTurnMs", () => {
-          this.applyRightThumbstickTurn(timeDelta);
-        });
+        this.measureImmersiveSmoothness(smoothnessFrame, "rightStickTurnMs", this.applyRightThumbstickTurn, timeDelta);
         let inputX = 0;
         let inputY = 0;
         let inputVertical = 0;
-        this.measureImmersiveSmoothness(smoothnessFrame, "inputResolveMs", () => {
-          const thumbstickX = Math.abs(this.leftThumbInput.x) > this.data.thumbstickDeadzone ? this.leftThumbInput.x : 0;
-          const thumbstickY = Math.abs(this.leftThumbInput.y) > this.data.thumbstickDeadzone ? this.leftThumbInput.y : 0;
-          const keyboardX = collisionsEnabled || flyMode ? this.keyboardInput.x : 0;
-          const keyboardY = collisionsEnabled || flyMode ? this.keyboardInput.y : 0;
-          const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
-          inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
-          inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
-          inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
-          this.lastEffectiveMoveInput.x = inputX;
-          this.lastEffectiveMoveInput.y = inputY;
-          this.lastEffectiveMoveInput.vertical = inputVertical;
-        });
+        {
+          const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
+          try {
+            const thumbstickX = Math.abs(this.leftThumbInput.x) > this.data.thumbstickDeadzone ? this.leftThumbInput.x : 0;
+            const thumbstickY = Math.abs(this.leftThumbInput.y) > this.data.thumbstickDeadzone ? this.leftThumbInput.y : 0;
+            const keyboardX = collisionsEnabled || flyMode ? this.keyboardInput.x : 0;
+            const keyboardY = collisionsEnabled || flyMode ? this.keyboardInput.y : 0;
+            const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
+            inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
+            inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
+            inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
+            this.lastEffectiveMoveInput.x = inputX;
+            this.lastEffectiveMoveInput.y = inputY;
+            this.lastEffectiveMoveInput.vertical = inputVertical;
+          } finally {
+            if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "inputResolveMs", this.getRuntimeNow() - measuredAt);
+          }
+        }
         if (smoothnessFrame) {
           smoothnessFrame.moveActive = inputX !== 0 || inputY !== 0 || inputVertical !== 0;
         }
@@ -8616,7 +8626,7 @@
             movementSpeed *= this.airControl;
           }
           const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1e3);
-          const movementDelta = this.measureImmersiveSmoothness(smoothnessFrame, "movementBasisMs", () => flyMode ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance) : this.getMovementDeltaFromInput(inputX, inputY, movementDistance));
+          const movementDelta = this.measureImmersiveSmoothness(smoothnessFrame, "movementBasisMs", flyMode ? this.getFlyMovementDeltaFromInput : this.getMovementDeltaFromInput, inputX, inputY, flyMode ? inputVertical : movementDistance, movementDistance);
           if (movementDelta) {
             if (smoothnessFrame) {
               smoothnessFrame.virtualMovementDelta = {
@@ -8628,22 +8638,25 @@
                 ), 4)
               };
             }
-            this.measureImmersiveSmoothness(smoothnessFrame, "movementApplyMs", () => {
-              if (flyMode) {
-                this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
-              } else if (collisionsEnabled && this.isAirborne()) {
-                this.applyAirborneMovement(movementDelta.x, movementDelta.z);
-              } else if (collisionsEnabled) {
-                this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
-              } else {
-                this.applyDirectMovement(movementDelta.x, movementDelta.z);
+            {
+              const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
+              try {
+                if (flyMode) {
+                  this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
+                } else if (collisionsEnabled && this.isAirborne()) {
+                  this.applyAirborneMovement(movementDelta.x, movementDelta.z);
+                } else if (collisionsEnabled) {
+                  this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
+                } else {
+                  this.applyDirectMovement(movementDelta.x, movementDelta.z);
+                }
+              } finally {
+                if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "movementApplyMs", this.getRuntimeNow() - measuredAt);
               }
-            });
+            }
           }
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "verticalMovementMs", () => {
-          this.updateVerticalMotion(timeDelta, settings, collisionsEnabled);
-        });
+        this.measureImmersiveSmoothness(smoothnessFrame, "verticalMovementMs", this.updateVerticalMotion, timeDelta, settings, collisionsEnabled);
       } finally {
         this.finishImmersiveSmoothnessFrame(smoothnessFrame);
       }
@@ -8811,9 +8824,14 @@
       this.positionShow = document.getElementById("positionShow");
       this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
       this.worldPosition = new THREE.Vector3();
+      this.lastTextUpdate = -Infinity;
+      this.movementEl = null;
     },
     getDisplayedPosition: function() {
-      const movementEl = document.querySelector("[custom-movement]");
+      if (!this.movementEl || !this.movementEl.isConnected || !this.movementEl.components["custom-movement"]) {
+        this.movementEl = this.el.sceneEl.querySelector("[custom-movement]");
+      }
+      const movementEl = this.movementEl;
       const movement = movementEl && movementEl.components ? movementEl.components["custom-movement"] : null;
       if (movement && typeof movement.getNavigationWorldPosition === "function") {
         return movement.getNavigationWorldPosition();
@@ -8824,16 +8842,25 @@
       return this.el.getAttribute("position");
     },
     tick: function(time, timeDelta) {
+      if (time - this.lastTextUpdate < 250) return;
+      this.lastTextUpdate = time;
       if (this.positionShow) {
         const p = this.getDisplayedPosition();
-        this.positionShow.innerHTML = `${Math.round(p.x * 100) / 100}, ${Math.round(p.y * 100) / 100}, ${Math.round(p.z * 100) / 100}`;
+        const text = `${Math.round(p.x * 100) / 100}, ${Math.round(p.y * 100) / 100}, ${Math.round(p.z * 100) / 100}`;
+        if (this.positionShow.textContent !== text) this.positionShow.textContent = text;
       }
       if (this.occupantsNumberShow && typeof window.easyrtc !== "undefined" && typeof window.NAF !== "undefined") {
         const occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
         if (occupants) {
-          this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+          const text = String(Object.keys(occupants).length);
+          if (this.occupantsNumberShow.textContent !== text) this.occupantsNumberShow.textContent = text;
         }
       }
+    },
+    remove: function() {
+      this.movementEl = null;
+      this.positionShow = null;
+      this.occupantsNumberShow = null;
     }
   });
   AFRAME.registerComponent("start-animation", {

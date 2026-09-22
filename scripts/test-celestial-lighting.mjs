@@ -226,6 +226,52 @@ assert.match(fallbackKey.getAttribute('light'), /castShadow: false/, 'shadow-off
 fallback.self.removePhotorealHelperLights();
 assert.equal(fallback.children.length, 0);
 
+// The configuration facade shares normalized state and celestial calculations
+// across consumers, while effective inputs and frame time invalidate it.
+let sunCalculations = 0;
+context.VRODOS_TAKRAM_ATMOSPHERE = {
+    getSunDirectionECEF: (date, target) => { sunCalculations++; return target.set(Math.sin(date.getTime() / 86400000), 1, 0).normalize(); },
+    getMoonDirectionECEF: (_date, target) => target.set(0, -1, 0),
+    getECIToECEFRotationMatrix: (_date, target) => target.identity()
+};
+const cachedAtmosphere = fixture();
+const settings = cachedAtmosphere.self;
+settings.getPmndrsAtmosphereConfig = helpers.getPmndrsAtmosphereConfig;
+settings.getHorizonSkyPreset = () => 'natural';
+settings.data.postFXEngine = 'pmndrs';
+settings.data.pmndrsAtmosphereEnabled = '1';
+settings.data.pmndrsCelestialMode = 'datetime';
+settings.data.pmndrsDayNightCycleEnabled = '1';
+settings.data.pmndrsDayNightCycleDurationMinutes = 1;
+settings.el.time = 0;
+const firstConfig = settings.getPmndrsAtmosphereConfig();
+const direction = firstConfig.sunDirection;
+const firstDate = firstConfig.effectiveDate.getTime();
+assert.equal(sunCalculations, 1, 'configuration initializes before the first tick');
+firstConfig._calibratedCelestialLightingProfile = {};
+firstConfig._starsLocalRotationMatrix = new THREE.Matrix4();
+for (let i = 0; i < 5; i++) assert.equal(settings.getPmndrsAtmosphereConfig(), firstConfig);
+assert.equal(sunCalculations, 1, 'all consumers share one celestial calculation per frame');
+settings.el.time = 1000;
+assert.equal(settings.getPmndrsAtmosphereConfig(), firstConfig);
+assert.equal(sunCalculations, 2);
+assert.equal(firstConfig.sunDirection, direction, 'changing time reuses vectors');
+assert.notEqual(firstConfig.effectiveDate.getTime(), firstDate);
+assert.equal(firstConfig._calibratedCelestialLightingProfile, null);
+assert.equal(firstConfig._starsLocalRotationMatrix, null);
+settings.data.pmndrsGeospatialLatitudeDeg = 30;
+const changedConfig = settings.getPmndrsAtmosphereConfig();
+assert.notEqual(changedConfig, firstConfig, 'synchronous setting changes invalidate normalized state');
+settings.data.pmndrsDayNightCycleEnabled = '0';
+const staticConfig = settings.getPmndrsAtmosphereConfig();
+const staticCalculations = sunCalculations;
+settings.el.time = 2000;
+assert.equal(settings.getPmndrsAtmosphereConfig(), staticConfig);
+assert.equal(sunCalculations, staticCalculations, 'static celestial settings do not recalculate every frame');
+cachedAtmosphere.owner.remove();
+assert.equal(settings.getPmndrsAtmosphereConfig(), null);
+assert.equal(cachedAtmosphere.owner.atmosphereConfigCache, null);
+
 const core = runtimeBuildChunks.find(chunk => chunk.id === 'core-runtime');
 const index = name => core.sourceFiles.indexOf(`assets/js/runtime/master/${name}`);
 assert.ok(index('vrodos_celestial_lighting.js') > index('vrodos_shadow_runtime.js'));

@@ -125,7 +125,8 @@ final readonly class VRodos_Scene_Compile_Plan {
 		array $chunk_ids,
 		array $diagnostics,
 		public bool $hover_enabled,
-		array $desktop_profiles = []
+		array $desktop_profiles = [],
+		public array $runtime_context = []
 	) {
 		$this->capabilities = array_values( array_unique( $capabilities ) );
 		$this->chunk_ids    = array_values( array_unique( $chunk_ids ) );

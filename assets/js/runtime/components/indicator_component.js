@@ -7,14 +7,9 @@ AFRAME.registerComponent('indicator-availability', {
         this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.element = this.el;
         this.lastAvailabilityState = null;
-        this.lastOccupancyCheck = 0;
-        this.maxParticipants = Number(this.data.num_participants);
-
-        if (this.maxParticipants === -1) {
-            this.maxParticipants = Number.MAX_SAFE_INTEGER;
-        } else if (!Number.isFinite(this.maxParticipants) || this.maxParticipants < 1) {
-            this.maxParticipants = 2;
-        }
+        this.cameraWorldPosition = new THREE.Vector3();
+        this.occupancySystem = this.el.sceneEl.systems['vrodos-chat-occupancy'];
+        this.maxParticipants = this.occupancySystem.normalizeCapacity(this.data.num_participants);
 
         this.checkIndicatorEntity = document.createElement('a-entity');
         this.checkIndicatorEntity.setAttribute("gltf-model", "#check_indicator_id");
@@ -79,15 +74,7 @@ AFRAME.registerComponent('indicator-availability', {
         this.xIndicatorEntity.object3D.position.copy(localPos);
     },
     getPrivateChatOccupancy: function () {
-        let chatId = this.element.getAttribute("id");
-
-        return [...document.querySelectorAll('[player-info]')].filter(function (playerEl) {
-            if (!playerEl.components || !playerEl.components['player-info']) {
-                return false;
-            }
-
-            return playerEl.components['player-info'].data.currentPrivateChat == chatId;
-        }).length;
+        return this.occupancySystem.occupancy(this.element.getAttribute("id"));
     },
     setAvailabilityState: function (state) {
         if (this.lastAvailabilityState === state) {
@@ -105,14 +92,14 @@ AFRAME.registerComponent('indicator-availability', {
         this.setAvailabilityState(isFull ? "full" : "available");
     },
     faceCamera: function () {
-        let camera = document.getElementById('cameraA') || document.querySelector('[camera]');
+        const camera = this.el.sceneEl.camera;
 
-        if (!camera || !camera.object3D) {
+        if (!camera) {
             return;
         }
 
-        let cameraWorldPos = new THREE.Vector3();
-        camera.object3D.getWorldPosition(cameraWorldPos);
+        const cameraWorldPos = this.cameraWorldPosition;
+        camera.getWorldPosition(cameraWorldPos);
 
         this.checkIndicatorEntity.object3D.lookAt(cameraWorldPos);
         // checkmark.glb has a different forward axis than xmark.glb, so compensate after billboarding.
@@ -120,15 +107,8 @@ AFRAME.registerComponent('indicator-availability', {
 
         this.xIndicatorEntity.object3D.lookAt(cameraWorldPos);
     },
-    tick: function (time) {
+    tick: function () {
         this.faceCamera();
-
-        if (time - this.lastOccupancyCheck < 250) {
-            return;
-        }
-
-        this.lastOccupancyCheck = time;
-        this.updateAvailability();
     },
     remove: function () {
         this.resources.disposeAll();

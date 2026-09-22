@@ -96,7 +96,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		);
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
-		$this->append_runtime_context_script( $dom, $project_id, $scene_id, $scene_json, $scene_settings );
+		$this->append_runtime_context_script( $dom, (array) ( $options['runtime_context'] ?? [] ) );
 		$compile_diagnostics = $this->entity_renderer->build_compile_diagnostics( $dom );
 		$plan_diagnostics    = array_merge(
 			$settings_diagnostics,
@@ -194,16 +194,8 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		return $this->template_renderer->write_runtime_artifact( $filename, $prefix . $content );
 	}
 
-	private function append_runtime_context_script( DOMDocument $dom, int $project_id, int $scene_id, $scene_json, array $scene_settings ): void {
-		$context = [
-			'projectId'  => absint( $project_id ),
-			'sceneId'    => absint( $scene_id ),
-			'sceneTitle' => (string) get_the_title( absint( $scene_id ) ),
-			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-		];
-
-		$context = apply_filters( 'vrodos_compiled_runtime_context', $context, absint( $project_id ), absint( $scene_id ), $scene_json, $scene_settings );
-		if ( ! is_array( $context ) || empty( $context ) ) {
+	private function append_runtime_context_script( DOMDocument $dom, array $context ): void {
+		if ( empty( $context ) ) {
 			return;
 		}
 

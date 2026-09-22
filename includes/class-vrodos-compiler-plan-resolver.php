@@ -9,6 +9,7 @@ require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 require_once __DIR__ . '/class-vrodos-desktop-performance-profiles.php';
+require_once __DIR__ . '/class-vrodos-compiler-runtime-context.php';
 
 /**
  * Converts repository data plus one project target into an effective compile plan.
@@ -81,6 +82,9 @@ final class VRodos_Compiler_Plan_Resolver {
 			$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
 			// Legacy composite metadata must not override the target policy either.
 			$settings = array_replace( $settings, $headset_baseline );
+			$runtime_context = VRodos_Compiler_Runtime_Context::resolve(
+				$request->project_id, (int) $scene_id, (string) ( $scene_title[ $index ] ?? '' ), $normalized_scene, $settings
+			);
 
 			$desktop_profiles = [];
 			if ( 'desktop' === $request->vr_runtime_profile ) {
@@ -96,7 +100,7 @@ final class VRodos_Compiler_Plan_Resolver {
 					: [ 'custom' ];
 				foreach ( $compiled_profile_ids as $profile_id ) {
 					$desktop_profile = &$desktop_profiles['profiles'][ $profile_id ];
-					$profile_capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $desktop_profile['settings'] );
+					$profile_capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $desktop_profile['settings'], $runtime_context );
 					$profile_chunk_ids = $this->script_planner->script_ids_for_capabilities( $profile_capabilities );
 					$desktop_profile['capabilities'] = $profile_capabilities;
 					$desktop_profile['chunkIds'] = $profile_chunk_ids;
@@ -107,7 +111,7 @@ final class VRodos_Compiler_Plan_Resolver {
 				$capabilities = array_values( array_unique( $capabilities ) );
 				$chunk_ids = array_values( array_unique( $chunk_ids ) );
 			} else {
-				$capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $settings );
+				$capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $settings, $runtime_context );
 				$chunk_ids    = $this->script_planner->script_ids_for_capabilities( $capabilities );
 			}
 			$hover        = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeHoveringInteractables ?? true, true );
@@ -121,7 +125,8 @@ final class VRodos_Compiler_Plan_Resolver {
 				$chunk_ids,
 				$diagnostics,
 				$hover,
-				$desktop_profiles
+				$desktop_profiles,
+				$runtime_context
 			);
 		}
 

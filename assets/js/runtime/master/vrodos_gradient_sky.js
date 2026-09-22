@@ -103,6 +103,7 @@
             sky.material.uniforms.bottomColor.value.set(colors.bottom);
         }
         sky.visible = true;
+        self.el.components?.['vrodos-atmosphere']?.registerNormalPassExclusion(sky);
         return sky;
     }
 

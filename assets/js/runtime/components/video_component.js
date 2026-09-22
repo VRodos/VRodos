@@ -251,12 +251,7 @@ AFRAME.registerComponent('video-controls', {
             return true;
         }
 
-        if (scene.object3D && typeof scene.object3D.updateMatrixWorld === "function") {
-            scene.object3D.updateMatrixWorld(true);
-        }
-        if (typeof camera.updateMatrixWorld === "function") {
-            camera.updateMatrixWorld(true);
-        }
+        camera.updateWorldMatrix(true, false);
 
         this.videoDisplay.object3D.getWorldPosition(this.videoWorldPosition);
         this.videoWorldPosition.project(camera);

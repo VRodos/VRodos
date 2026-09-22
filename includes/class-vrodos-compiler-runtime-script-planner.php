@@ -26,7 +26,7 @@ class VRodos_Compiler_Runtime_Script_Planner {
 	 *
 	 * @return string[]
 	 */
-	public function capabilities_for_resolved_scene( $scene_json, array $settings ): array {
+	public function capabilities_for_resolved_scene( $scene_json, array $settings, array $runtime_context = [] ): array {
 		$effective_scene = is_object( $scene_json ) ? clone $scene_json : new stdClass();
 		$metadata        = is_object( $effective_scene->metadata ?? null ) ? clone $effective_scene->metadata : new stdClass();
 		foreach ( VRodos_Runtime_Settings_Contract::settings() as $setting_key => $definition ) {
@@ -39,16 +39,26 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		}
 		$effective_scene->metadata = $metadata;
 
-		return $this->capabilities_for_scene(
+		$capabilities = $this->capabilities_for_scene(
 			$effective_scene,
 			(string) ( $settings['runtimeMode'] ?? VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_SINGLE_PLAYER )
 		);
+		$results = $runtime_context['immerseResults'] ?? [];
+		if ( is_array( $results ) && false !== ( $results['enabled'] ?? true ) &&
+			! empty( $results['restUrl'] ) && ! empty( $results['projectId'] ) && ! empty( $results['sceneId'] ) && ! empty( $results['token'] ) ) {
+			$capabilities[] = 'assessment';
+		}
+		return array_values( array_unique( $capabilities ) );
 	}
 
 	/** @return string[] */
 	public function capabilities_for_scene( $scene_json, string $runtime_mode = 'networked' ): array {
 		$metadata     = $this->feature_flags->metadata( $scene_json );
 		$capabilities = [];
+
+		if ( $this->feature_flags->has_assessment_content( $scene_json ) ) {
+			$capabilities[] = 'assessment';
+		}
 
 		if ( $this->feature_flags->has_spatial_ui_content( $scene_json ) ) {
 			$capabilities[] = 'spatial-ui';

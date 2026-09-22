@@ -17,7 +17,7 @@ export const runtimeBuildChunks = Object.freeze([
     label: 'Scene components',
     output: 'vrodos-runtime-scene-components.bundle.js',
     order: 10,
-    features: ['scene-components', 'poi', 'media', 'audio', 'assessment'],
+    features: ['scene-components', 'poi', 'media', 'audio'],
     sourceFiles: [
       'master/vrodos_runtime_resources.js',
       'vrodos_runtime_overlay.js',
@@ -29,7 +29,18 @@ export const runtimeBuildChunks = Object.freeze([
       'components/audio_component.js',
       'components/video_component.js',
       'components/vrodos_hypnotic_hover.component.js',
-      'components/vrodos_camera_start.component.js',
+      'components/vrodos_camera_start.component.js'
+    ].map(runtimeSource)
+  },
+  {
+    id: 'assessment-runtime',
+    label: 'Assessment and CEFR runtime',
+    output: 'vrodos-runtime-assessment.bundle.js',
+    order: 11,
+    dependencies: ['scene-components'],
+    features: ['assessment', 'cefr', 'assessment-results'],
+    activationCapabilities: ['assessment'],
+    sourceFiles: [
       'assessment/assessment-utils.js',
       'assessment/assessment-session-runtime.js',
       'assessment/assessment-cefr-runtime.js',
@@ -60,6 +71,7 @@ export const runtimeBuildChunks = Object.freeze([
     features: ['networked-components', 'chat', 'availability'],
     activationCapabilities: ['networking'],
     sourceFiles: [
+      'components/vrodos_chat_occupancy.system.js',
       'components/chat_component.js',
       'components/chat_poi_component.js',
       'components/indicator_component.js'

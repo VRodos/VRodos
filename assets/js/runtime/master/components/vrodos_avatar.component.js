@@ -22,6 +22,8 @@ AFRAME.registerComponent('player-info', {
     init: function () {
         this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.removed = false;
+        this.occupancySystem = this.el.sceneEl?.systems['vrodos-chat-occupancy'];
+        this.occupancySystem?.updatePlayer(this);
         this.anims_loaded = false;
         this.ownedByLocalUser = this.el.id === 'cameraA';
 
@@ -100,9 +102,12 @@ AFRAME.registerComponent('player-info', {
         }
     },
     update: function () {
+        this.occupancySystem?.updatePlayer(this);
         this.applyAvatar();
     },
     remove: function () {
+        this.occupancySystem?.unregisterPlayer(this);
+        this.occupancySystem = null;
         this.removed = true;
         this.resources.disposeAll();
         this.avatarRetryTimeout = null;

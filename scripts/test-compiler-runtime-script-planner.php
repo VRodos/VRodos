@@ -118,6 +118,7 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'scene-components'             => vrodos_test_chunk( 'scene-components', 'script', 'js/master/lib/vrodos-runtime-scene-components.bundle.js', 10 ),
+			'assessment-runtime'           => vrodos_test_chunk( 'assessment-runtime', 'script', 'js/master/lib/vrodos-runtime-assessment.bundle.js', 11, [ 'scene-components' ], [ 'activationCapabilities' => [ 'assessment' ] ] ),
 			'spatial-ui'                   => vrodos_test_chunk( 'spatial-ui', 'script', 'js/master/lib/vrodos-runtime-spatial-ui.bundle.js', 12, [ 'scene-components' ], [ 'activationCapabilities' => [ 'spatial-ui' ] ] ),
 			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15, [], [ 'activationCapabilities' => [ 'networking' ] ] ),
 			'core-runtime'                 => vrodos_test_chunk( 'core-runtime', 'script', 'js/master/lib/vrodos-runtime-core.bundle.js', 20 ),
@@ -211,7 +212,7 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	[ 'scene-components', 'assessment-runtime', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene(
 		vrodos_test_scene(
 			[],
@@ -228,7 +229,7 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	[ 'scene-components', 'assessment-runtime', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene(
 		vrodos_test_scene(
 			[],
@@ -547,6 +548,25 @@ vrodos_assert_same(
 );
 
 $selection_planner = new VRodos_Compiler_Runtime_Script_Planner( $actual_manifest );
+foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
+	foreach ( [ 'single-player', 'networked' ] as $mode ) {
+		foreach ( [
+			'empty' => [ [], [], false ],
+			'poi' => [ [ (object) [ 'category_slug' => 'poi-imagetext' ] ], [], false ],
+			'assessment' => [ [ (object) [ 'children' => [ (object) [ 'category_slug' => 'assessment' ] ] ] ], [], true ],
+			'cefr' => [ [ (object) [ 'category_slug' => 'decoration', 'immerse_cefr_levels' => 'A1' ] ], [], true ],
+			'delivery' => [ [], [ 'immerseResults' => [ 'restUrl' => '/results', 'projectId' => 1, 'sceneId' => 2, 'token' => 'fixture' ] ], true ],
+			'disabled-delivery' => [ [], [ 'immerseResults' => [ 'enabled' => false, 'restUrl' => '/results', 'projectId' => 1, 'sceneId' => 2, 'token' => 'fixture' ] ], false ],
+		] as $case => [ $objects, $context, $expected ] ) {
+			$capabilities = $selection_planner->capabilities_for_resolved_scene( vrodos_test_scene( [], $objects ), [ 'vrRuntimeProfile' => $target, 'runtimeMode' => $mode ], $context );
+			$ids = $selection_planner->script_ids_for_capabilities( $capabilities );
+			vrodos_assert_true( $expected === in_array( 'assessment-runtime', $ids, true ), "$target/$mode/$case assessment capability" );
+			if ( $expected ) {
+				vrodos_assert_true( array_search( 'scene-components', $ids, true ) < array_search( 'assessment-runtime', $ids, true ), 'resource initialization precedes assessment' );
+			}
+		}
+	}
+}
 foreach ( [ 'poi-imagetext', 'door', 'poi-link' ] as $selection_category ) {
 	$selection_scene = vrodos_test_scene(
 		[ 'aframeNavigationMode' => 'fly', 'aframeCollisionMode' => 'off' ],

@@ -2970,6 +2970,14 @@ ${STOCHASTIC_GLSL}`).replace(
     if (!texture) {
       return;
     }
+    const applied = options.textureQualityApplied;
+    if (applied && applied.has(texture) && (!isColorTexture || applied.get(texture))) return;
+    if (applied) applied.set(texture, Boolean(isColorTexture));
+    const colorSpace = texture.colorSpace;
+    const anisotropy = texture.anisotropy;
+    const magFilter = texture.magFilter;
+    const minFilter = texture.minFilter;
+    const generateMipmaps = texture.generateMipmaps;
     if (isColorTexture) {
       texture.colorSpace = THREE.SRGBColorSpace;
     }
@@ -2994,7 +3002,9 @@ ${STOCHASTIC_GLSL}`).replace(
         texture.generateMipmaps = true;
       }
     }
-    texture.needsUpdate = true;
+    if (texture.colorSpace !== colorSpace || texture.anisotropy !== anisotropy || texture.magFilter !== magFilter || texture.minFilter !== minFilter || texture.generateMipmaps !== generateMipmaps) {
+      texture.needsUpdate = true;
+    }
   }
   function vrodosGetExplicitMaterialOverrides(entityEl) {
     if (!entityEl) {
@@ -3347,9 +3357,13 @@ ${STOCHASTIC_GLSL}`).replace(
     window.vrodosGetTargetEnvMapIntensity = vrodosGetTargetEnvMapIntensity;
   }
   function vrodosEnhanceMeshMaterial(material, overrides, options) {
+    var _a, _b;
     if (!material) {
       return;
     }
+    const dithering = material.dithering;
+    const side = material.side;
+    const emissiveMap = material.emissiveMap;
     const reflectionSource = options.reflectionSource || (options.environmentMap ? "hdr" : "none");
     const globalReflectionStrength = vrodosGetGlobalReflectionStrength(options);
     const reflectionsDisabled = globalReflectionStrength <= 0 || reflectionSource === "none";
@@ -3410,13 +3424,11 @@ ${STOCHASTIC_GLSL}`).replace(
       if (typeof material.metalness !== "undefined") {
         material.metalness = 0;
       }
-      material.needsUpdate = true;
     } else if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== "undefined") {
       if (typeof material.userData.vrodosBaseEmissiveIntensity === "undefined") {
         material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
       }
       material.emissiveIntensity = Math.min(material.userData.vrodosBaseEmissiveIntensity, 0.08);
-      material.needsUpdate = true;
     } else if (typeof overrides.emissiveIntensity !== "undefined" && overrides.emissiveIntensity !== null && overrides.emissiveIntensity !== "" && typeof material.emissiveIntensity !== "undefined") {
       material.emissiveIntensity = parseFloat(overrides.emissiveIntensity);
     } else if (options.renderQuality === "high" && material.emissive && material.emissiveMap && typeof material.emissiveIntensity !== "undefined") {
@@ -3515,7 +3527,12 @@ ${STOCHASTIC_GLSL}`).replace(
     } else if (material.userData && material.userData.vrodosTerrainShadowLiftUniform) {
       material.userData.vrodosTerrainShadowLiftUniform.value = 0;
     }
-    material.needsUpdate = true;
+    const videoDecode = (((_a = material.map) == null ? void 0 : _a.isVideoTexture) && material.map.colorSpace === THREE.SRGBColorSpace ? 1 : 0) | (((_b = material.emissiveMap) == null ? void 0 : _b.isVideoTexture) && material.emissiveMap.colorSpace === THREE.SRGBColorSpace ? 2 : 0);
+    const previousVideoDecode = material.userData.vrodosVideoDecode || 0;
+    material.userData.vrodosVideoDecode = videoDecode;
+    if (material.dithering !== dithering || material.side !== side || material.emissiveMap !== emissiveMap || videoDecode !== previousVideoDecode) {
+      material.needsUpdate = true;
+    }
   }
   VRODOSMaster.NAVMESH_DEFAULTS = VRODOS_NAVMESH_DEFAULTS;
   VRODOSMaster.clamp = vrodosClamp;
@@ -4338,8 +4355,8 @@ ${STOCHASTIC_GLSL}`).replace(
       "last-quarter": 90,
       "waning-gibbous": 45
     });
-    function buildPmndrsMoonDirection(sunDirection) {
-      return sunDirection.clone().multiplyScalar(-1).normalize();
+    function buildPmndrsMoonDirection(sunDirection, target = new THREE.Vector3()) {
+      return target.copy(sunDirection).multiplyScalar(-1).normalize();
     }
     function normalizePmndrsMoonPhase(value) {
       if (RuntimeSettings.normalizeEnum) {
@@ -4356,31 +4373,39 @@ ${STOCHASTIC_GLSL}`).replace(
       }
       return Math.max(0, Math.min(1, (1 - config.sunDirection.dot(config.moonDirection)) * 0.5));
     }
-    function getPmndrsStableMoonNorth(moonDirection) {
-      const north = new THREE.Vector3(0, 1, 0);
+    function getPmndrsStableMoonNorth(moonDirection, north = new THREE.Vector3()) {
+      north.set(0, 1, 0);
       north.addScaledVector(moonDirection, -north.dot(moonDirection));
       if (north.lengthSq() < 1e-6) {
         north.set(0, 0, 1).addScaledVector(moonDirection, -moonDirection.z);
       }
       return north.normalize();
     }
-    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection) {
-      const center = moonDirection.clone().normalize();
-      const north = getPmndrsStableMoonNorth(center);
-      const east = north.clone().cross(center).normalize();
-      return new THREE.Matrix4().makeBasis(center, east, north);
+    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection, scratch) {
+      const center = scratch.center.copy(moonDirection).normalize();
+      const north = getPmndrsStableMoonNorth(center, scratch.north);
+      const east = scratch.east.copy(north).cross(center).normalize();
+      return scratch.orientation.makeBasis(center, east, north);
     }
     function applyPmndrsMoonPhaseConfig(config, vta) {
+      const scratch = config._moonPhaseScratch || (config._moonPhaseScratch = {
+        center: new THREE.Vector3(),
+        north: new THREE.Vector3(),
+        east: new THREE.Vector3(),
+        light: new THREE.Vector3(),
+        orientation: new THREE.Matrix4(),
+        inertial: new THREE.Matrix4()
+      });
       const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
       const astronomicalPosition = config.celestialMode === "datetime" && config.astronomicalMoonPosition === true;
       const astronomicalAuto = authoredPhase === "auto" && astronomicalPosition;
       let phaseAngleDeg = 0;
       let illumination = 1;
       if (!astronomicalPosition) {
-        config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
-        config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
+        config.moonDirection = buildPmndrsMoonDirection(config.sunDirection, config.moonDirection);
+        config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection, config.localMoonDirection);
       }
-      const lightDirection = config.moonDirection.clone().normalize();
+      const lightDirection = scratch.light.copy(config.moonDirection).normalize();
       let effectivePhase = authoredPhase;
       if (astronomicalAuto) {
         illumination = getPmndrsAutoMoonIllumination(config);
@@ -4390,19 +4415,19 @@ ${STOCHASTIC_GLSL}`).replace(
         phaseAngleDeg = authoredPhase === "auto" ? 0 : PMNDRS_MOON_PHASE_ANGLES_DEG[authoredPhase];
         illumination = getPmndrsMoonPhaseIlluminationFromAngle(phaseAngleDeg);
         lightDirection.applyAxisAngle(
-          getPmndrsStableMoonNorth(config.moonDirection),
+          getPmndrsStableMoonNorth(config.moonDirection, scratch.north),
           THREE.MathUtils.degToRad(phaseAngleDeg)
         ).normalize();
         effectivePhase = authoredPhase === "auto" ? "full" : authoredPhase;
       }
       let orientationMode = "stable-north-up";
-      let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
+      let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection, scratch);
       const moonEffectiveDate = config.moonEffectiveDate || config.effectiveDate;
       const moonInertialToECEFMatrix = config.moonInertialToECEFMatrix || config.inertialToECEFMatrix;
       if (config.celestialMode === "datetime" && moonEffectiveDate && moonInertialToECEFMatrix && vta && typeof vta.getMoonFixedToECIRotationMatrix === "function") {
-        moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
+        moonFixedToECEFMatrix = scratch.orientation.multiplyMatrices(
           moonInertialToECEFMatrix,
-          vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, new THREE.Matrix4())
+          vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, scratch.inertial)
         );
         orientationMode = "moon-fixed-date-time";
       }
@@ -4428,11 +4453,11 @@ ${STOCHASTIC_GLSL}`).replace(
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752314245179e-9;
     const clampPmndrsNumber = VRODOSMaster.RuntimeSettings.clampNumber;
-    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
+    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg, target = new THREE.Vector3()) {
       const elevation = THREE.MathUtils.degToRad(elevationDeg);
       const azimuth = THREE.MathUtils.degToRad(azimuthDeg);
       const cosElevation = Math.cos(elevation);
-      return new THREE.Vector3(
+      return target.set(
         Math.sin(azimuth) * cosElevation,
         Math.sin(elevation),
         -Math.cos(azimuth) * cosElevation
@@ -4499,21 +4524,21 @@ ${STOCHASTIC_GLSL}`).replace(
       config._resolvedGeospatialFrame = getPmndrsGeospatialFrame(config) || buildPmndrsGeospatialFrame(0, 90, 0);
       return config._resolvedGeospatialFrame;
     }
-    function ecefDirectionToPmndrsLocal(direction, frame) {
+    function ecefDirectionToPmndrsLocal(direction, frame, target = new THREE.Vector3()) {
       if (!direction || !frame) {
-        return direction ? direction.clone().normalize() : new THREE.Vector3(0, 1, 0);
+        return direction ? target.copy(direction).normalize() : target.set(0, 1, 0);
       }
-      return new THREE.Vector3(
+      return target.set(
         direction.dot(frame.east),
         direction.dot(frame.up),
         direction.dot(frame.south)
       ).normalize();
     }
-    function localDirectionToPmndrsEcef(localDirection, frame) {
+    function localDirectionToPmndrsEcef(localDirection, frame, target = new THREE.Vector3()) {
       if (!localDirection || !frame) {
-        return new THREE.Vector3(0, 1, 0);
+        return target.set(0, 1, 0);
       }
-      return new THREE.Vector3().addScaledVector(frame.east, localDirection.x).addScaledVector(frame.up, localDirection.y).addScaledVector(frame.south, localDirection.z).normalize();
+      return target.set(0, 0, 0).addScaledVector(frame.east, localDirection.x).addScaledVector(frame.up, localDirection.y).addScaledVector(frame.south, localDirection.z).normalize();
     }
     function applyLocalDirectionAngles(config) {
       const local = config && config.localSunDirection ? config.localSunDirection : null;
@@ -4523,15 +4548,15 @@ ${STOCHASTIC_GLSL}`).replace(
       config.sunElevationDeg = THREE.MathUtils.radToDeg(Math.asin(Math.max(-1, Math.min(1, local.y))));
       config.sunAzimuthDeg = THREE.MathUtils.radToDeg(Math.atan2(local.x, -local.z));
     }
-    function buildPmndrsEcefSunDirection(localSunDirection, config) {
+    function buildPmndrsEcefSunDirection(localSunDirection, config, target = new THREE.Vector3()) {
       if (!localSunDirection) {
-        return new THREE.Vector3(0, 1, 0);
+        return target.set(0, 1, 0);
       }
       const frame = getPmndrsGeospatialFrame(config);
       if (frame) {
-        return localDirectionToPmndrsEcef(localSunDirection, frame);
+        return localDirectionToPmndrsEcef(localSunDirection, frame, target);
       }
-      return new THREE.Vector3(
+      return target.set(
         -localSunDirection.x,
         localSunDirection.y,
         -localSunDirection.z
@@ -7517,6 +7542,7 @@ ${STOCHASTIC_GLSL}`).replace(
           shadowAwareReflections,
           reflectionIntensityScale,
           ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
+          textureQualityApplied: /* @__PURE__ */ new WeakMap(),
           environmentMap: sceneObj ? sceneObj.environment || null : null
         };
         const enhancedMaterials = typeof WeakSet !== "undefined" ? /* @__PURE__ */ new WeakSet() : null;
@@ -8317,6 +8343,7 @@ ${STOCHASTIC_GLSL}`).replace(
       self._vrTakramLightsOnlyGradientSky = null;
     }
     function ensureVrTakramLightsOnlyGradientSky(self, preset) {
+      var _a, _b;
       if (!self || !self.el || !self.el.object3D || typeof THREE === "undefined") {
         return null;
       }
@@ -8376,6 +8403,7 @@ ${STOCHASTIC_GLSL}`).replace(
         sky.material.uniforms.bottomColor.value.set(colors.bottom);
       }
       sky.visible = true;
+      (_b = (_a = self.el.components) == null ? void 0 : _a["vrodos-atmosphere"]) == null ? void 0 : _b.registerNormalPassExclusion(sky);
       return sky;
     }
     VRODOSMaster.GradientSky = Object.freeze({
@@ -8693,6 +8721,7 @@ ${STOCHASTIC_GLSL}`).replace(
           return;
         }
         self.el.object3D.traverse((node) => {
+          var _a;
           if (!node || node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsAtmosphereStars)) {
             return;
           }
@@ -8700,6 +8729,7 @@ ${STOCHASTIC_GLSL}`).replace(
             node.visible = false;
             node.userData = node.userData || {};
             node.userData.vrodosPmndrsLegacySuppressed = true;
+            (_a = bindAtmosphereVisualOwner(self)) == null ? void 0 : _a.registerNormalPassExclusion(node);
           }
         });
         Array.prototype.forEach.call(document.querySelectorAll('#default-sky, #default-sun, #vrodos-pmndrs-sun, #vrodos-pmndrs-sun-haze, a-sun-sky, a-sky[data-vrodos-preset-sky="true"], .environmentSun, .environment-sun, .environmentSky, .environment-sky, [class*="environmentSun"], [class*="environmentSky"]'), (node) => {
@@ -8950,6 +8980,7 @@ ${STOCHASTIC_GLSL}`).replace(
         });
         if (self.el.object3D) {
           self.el.object3D.traverse((node) => {
+            var _a;
             if (!node) {
               return;
             }
@@ -8960,6 +8991,7 @@ ${STOCHASTIC_GLSL}`).replace(
               node.visible = false;
               node.userData = node.userData || {};
               node.userData.vrodosPmndrsLegacySuppressed = true;
+              (_a = bindAtmosphereVisualOwner(self)) == null ? void 0 : _a.registerNormalPassExclusion(node);
             }
           });
         }
@@ -9157,6 +9189,7 @@ ${shader.vertexShader}`;
         return true;
       }
       function ensurePmndrsAtmosphereStarsFallback(self, config, state, intensity) {
+        var _a;
         if (!self || !state || !state.starsData || intensity <= 0 || !self.el || !self.el.object3D || !THREE.Points || !THREE.PointsMaterial) {
           return false;
         }
@@ -9182,6 +9215,7 @@ ${shader.vertexShader}`;
           state.starsFallbackMesh.frustumCulled = false;
           state.starsFallbackMesh.renderOrder = -998;
           state.starsFallbackMesh.userData.vrodosPmndrsAtmosphereStars = true;
+          (_a = bindAtmosphereVisualOwner(self)) == null ? void 0 : _a.registerNormalPassExclusion(state.starsFallbackMesh);
           state.starsFallbackMesh.name = "vrodosPmndrsAtmosphereStarsFallback";
           state.starsFallbackMesh.onBeforeRender = function(_renderer, _scene, camera) {
             const cameraFar = camera && typeof camera.far === "number" ? camera.far : PMNDRS_STARS_FALLBACK_RADIUS;
@@ -9214,6 +9248,7 @@ ${shader.vertexShader}`;
         return true;
       }
       function ensurePmndrsAtmosphereStars(self, config, state, vta) {
+        var _a;
         if (!self || !state || !config || state.failed || state.starsFailed || !self.el || !self.el.object3D) {
           return false;
         }
@@ -9252,6 +9287,7 @@ ${shader.vertexShader}`;
           state.starsMesh.frustumCulled = false;
           state.starsMesh.renderOrder = -999;
           state.starsMesh.userData.vrodosPmndrsAtmosphereStars = true;
+          (_a = bindAtmosphereVisualOwner(self)) == null ? void 0 : _a.registerNormalPassExclusion(state.starsMesh);
           state.starsMesh.name = "vrodosPmndrsAtmosphereStars";
           self.el.object3D.add(state.starsMesh);
         } else if (state.starsMesh && state.starsMesh.parent !== self.el.object3D) {
@@ -9953,6 +9989,7 @@ ${shader.fragmentShader}` : withUniform;
         return visibility;
       }
       function ensurePmndrsAtmosphereSky(self, config) {
+        var _a;
         config = getPresentedPmndrsAtmosphereConfig(self, config);
         const state = self.ensurePmndrsAtmosphereResources ? self.ensurePmndrsAtmosphereResources() : null;
         const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -9977,6 +10014,7 @@ ${shader.fragmentShader}` : withUniform;
           state.skyMesh.frustumCulled = false;
           state.skyMesh.renderOrder = -1e3;
           state.skyMesh.userData.vrodosPmndrsAtmosphereSky = true;
+          (_a = bindAtmosphereVisualOwner(self)) == null ? void 0 : _a.registerNormalPassExclusion(state.skyMesh);
           state.skyMesh.name = "vrodosPmndrsAtmosphereSky";
           self.el.object3D.add(state.skyMesh);
         }
@@ -11007,7 +11045,7 @@ ${shader.fragmentShader}` : withUniform;
         aFrameHorizon: false
       };
     };
-    H.getPmndrsAtmosphereConfig = function() {
+    function buildPmndrsAtmosphereConfig() {
       if (!this || !this.data) {
         return null;
       }
@@ -11086,40 +11124,95 @@ ${shader.fragmentShader}` : withUniform;
       if (isPmndrsTakramLocalHorizonMode(this)) {
         applyPmndrsTakramLocalHorizonConstraints(this, config);
       }
-      config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
-      config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
-      config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config);
-      config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
+      config.baseDate = getPmndrsDateObject(celestialDate, celestialUtcTime);
+      return config;
+    }
+    function updatePmndrsCelestialConfig(config) {
+      const { celestialMode, dayNightCycleEnabled, dayNightCycleDurationMinutes } = config;
+      config._calibratedCelestialLightingProfile = null;
+      config._starsLocalRotationMatrix = null;
+      config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg, config.localSunDirection);
+      config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection, config.localMoonDirection);
+      config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config, config.sunDirection);
+      config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection, config.moonDirection);
       if (celestialMode === "datetime" && window.VRODOS_TAKRAM_ATMOSPHERE) {
         const frame = getPmndrsResolvedGeospatialFrame(config);
         const observerECEF = frame.position;
-        const date = dayNightCycleEnabled ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), getPmndrsDateObject(celestialDate, celestialUtcTime), dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
+        const date = dayNightCycleEnabled ? VRODOSMaster.CelestialClock.effectiveDate(this.getRenderProfileOwner().getLightingState(), config.baseDate, dayNightCycleDurationMinutes) : config.baseDate;
         const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate ? this._pmndrsDayNightCycleState.moonEffectiveDate : date;
         const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
         config.effectiveDate = date;
         config.moonEffectiveDate = moonDate;
         if (typeof vta.getSunDirectionECEF === "function") {
-          config.sunDirection = vta.getSunDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
-          config.localSunDirection = ecefDirectionToPmndrsLocal(config.sunDirection, frame);
+          config.sunDirection = vta.getSunDirectionECEF(date, config.sunDirection, observerECEF).normalize();
+          config.localSunDirection = ecefDirectionToPmndrsLocal(config.sunDirection, frame, config.localSunDirection);
           applyLocalDirectionAngles(config);
         }
         if (typeof vta.getMoonDirectionECEF === "function") {
-          config.moonDirection = vta.getMoonDirectionECEF(moonDate, new THREE.Vector3(), observerECEF).normalize();
-          config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame);
+          config.moonDirection = vta.getMoonDirectionECEF(moonDate, config.moonDirection, observerECEF).normalize();
+          config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame, config.localMoonDirection);
           config.astronomicalMoonPosition = true;
         } else {
-          config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection);
-          config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection);
+          config.moonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.sunDirection, config.moonDirection);
+          config.localMoonDirection = VRODOSMaster.MoonPhase.directionFromSun(config.localSunDirection, config.localMoonDirection);
           config.astronomicalMoonPosition = false;
         }
         if (typeof vta.getECIToECEFRotationMatrix === "function") {
-          config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, new THREE.Matrix4());
-          config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, new THREE.Matrix4());
+          config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, config.inertialToECEFMatrix || new THREE.Matrix4());
+          config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, config.moonInertialToECEFMatrix || new THREE.Matrix4());
         }
       }
       VRODOSMaster.MoonPhase.applyConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
-      syncPmndrsTakramHorizonState(this, config);
       return config;
+    }
+    H.getPmndrsAtmosphereConfig = function() {
+      if (!this || !this.data) return null;
+      const owner = this.getRenderProfileOwner();
+      if (!owner || owner.removed) return null;
+      const quality = this.getPmndrsAtmosphereQuality ? this.getPmndrsAtmosphereQuality() : this.data.pmndrsAtmosphereQuality;
+      const horizonPreset = this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : "natural";
+      const physicalLights = shouldUsePmndrsTakramPhysicalHorizonLights();
+      const vendor = window.VRODOS_TAKRAM_ATMOSPHERE;
+      let cache = owner.atmosphereConfigCache;
+      let changed = !cache || cache.quality !== quality || cache.horizonPreset !== horizonPreset || cache.physicalLights !== physicalLights || cache.vendor !== vendor;
+      if (!changed) {
+        for (const key in this.data) {
+          if (cache.inputs[key] !== this.data[key]) {
+            changed = true;
+            break;
+          }
+        }
+        if (!changed) {
+          for (const key in cache.inputs) {
+            if (!(key in this.data)) {
+              changed = true;
+              break;
+            }
+          }
+        }
+      }
+      if (changed) {
+        cache = owner.atmosphereConfigCache = {
+          inputs: { ...this.data },
+          quality,
+          horizonPreset,
+          physicalLights,
+          vendor,
+          config: buildPmndrsAtmosphereConfig.call(this),
+          time: null,
+          initialized: false
+        };
+      }
+      const sceneTime = this.el && this.el.time;
+      const time = typeof sceneTime === "number" ? sceneTime : this._pmndrsTickTimeMs;
+      if (!cache.initialized || cache.config.dayNightCycleEnabled && (typeof time !== "number" || cache.time !== time)) {
+        if (typeof time === "number") this._pmndrsTickTimeMs = time;
+        updatePmndrsCelestialConfig.call(this, cache.config);
+        cache.time = time;
+        cache.initialized = true;
+      }
+      syncPmndrsTakramHorizonState(this, cache.config);
+      return cache.config;
     };
     H.isPmndrsDayNightCycleActive = function() {
       return isPmndrsDayNightCycleEnabled(this);

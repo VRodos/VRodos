@@ -145,7 +145,9 @@ for (const name of ['vrodos_runtime_resources.js', 'vrodos_runtime_settings_help
 }
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;
 // Use the real legacy-sky classification and removal against the owner's dirty policy.
-const visuals = context.VRODOSMaster.AtmosphereVisuals.create({ lighting: {}, cloud: {}, shadow: {}, host: {} });
+const visuals = context.VRODOSMaster.AtmosphereVisuals.create({ lighting: {}, cloud: {}, shadow: {}, host: {
+    bindAtmosphereVisualOwner: self => self.el.components['vrodos-atmosphere']
+} });
 const cleanup = fixture();
 let queries = 0, traversals = 0;
 const legacyElements = [];
@@ -287,4 +289,31 @@ teardown.settings.disablePmndrsPostProcessing = () => sequence.push('pmndrs');
 removal.call(teardown.settings);
 assert.deepEqual(sequence, ['legacy', 'pmndrs', 'atmosphere']);
 assert.equal(teardownGenerator.disposals, 1); assert.equal(teardown.owner.settings, null);
-console.log('Atmosphere component ownership, legacy-sky invalidation, replacement, async guards, precision fallback, scheduler cancellation, and teardown passed.');
+// Normal-pass filtering touches registered background objects only and restores
+// exact visibility even if the upstream render fails.
+const postfx = readFileSync(new URL('../assets/js/runtime/master/vrodos_postprocessing_pmndrs.js', import.meta.url), 'utf8');
+const normalFunctions = postfx.slice(postfx.indexOf('    function isPmndrsNormalPassExcludedObject'), postfx.indexOf('    function ensurePmndrsSharedNormalPass'));
+vm.runInContext(normalFunctions, context);
+const normalFixture = fixture();
+const visibleSky = new THREE.Object3D(), hiddenSky = new THREE.Object3D();
+visibleSky.userData.vrodosPmndrsAtmosphereSky = true;
+hiddenSky.userData.vrodosPmndrsAtmosphereStars = true; hiddenSky.visible = false;
+normalFixture.el.object3D.add(visibleSky, hiddenSky);
+normalFixture.owner.registerNormalPassExclusion(visibleSky);
+normalFixture.owner.registerNormalPassExclusion(hiddenSky);
+normalFixture.owner.registerNormalPassExclusion(visibleSky);
+assert.equal(normalFixture.owner.normalPassExclusions.size, 2);
+normalFixture.el.object3D.traverse = () => { throw new Error('normal pass must not traverse the scene'); };
+const normalPass = { render() {
+    assert.equal(visibleSky.visible, false); assert.equal(hiddenSky.visible, false);
+    throw new Error('upstream render failed');
+} };
+context.installPmndrsNormalPassVisibilityFilter(normalPass, normalFixture.settings);
+assert.throws(() => normalPass.render(), /upstream render failed/);
+assert.equal(visibleSky.visible, true); assert.equal(hiddenSky.visible, false);
+normalFixture.el.object3D.remove(visibleSky);
+assert.equal(normalFixture.owner.normalPassExclusions.size, 1, 'detached sky releases membership');
+normalFixture.el.object3D.add(visibleSky); normalFixture.owner.registerNormalPassExclusion(visibleSky);
+normalFixture.owner.remove();
+assert.equal(normalFixture.owner.normalPassExclusions.size, 0);
+console.log('Atmosphere lifecycle, normal-pass exclusions, visibility restoration, and teardown passed.');
