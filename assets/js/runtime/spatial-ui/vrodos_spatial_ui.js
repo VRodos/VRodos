@@ -91,6 +91,7 @@ import { MSDF } from "@zappar/msdf-generator";
     let hostComponentRegistered = false;
     let hostComponentScene = null;
     let hostComponentAttachAttempts = 0;
+    let hostComponentAttachTimer = null;
     let spatialFontGenerationPromise = null;
     let spatialMsdfWasmDataUrlPromise = null;
     let spatialFontWarmupStarted = false;
@@ -2969,7 +2970,8 @@ import { MSDF } from "@zappar/msdf-generator";
 
         const configuredDelay = Number(panelState.config && panelState.config.initialRevealDelayMs);
         const delay = Number.isFinite(configuredDelay) ? Math.max(0, configuredDelay) : 0;
-        window.setTimeout(() => {
+        panelState.revealTimer = window.setTimeout(() => {
+            panelState.revealTimer = null;
             if (activePanel !== panelState || !panelState.group) {
                 return;
             }
@@ -2982,6 +2984,8 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function ensureAFrameHostComponent() {
+        if (hostComponentAttachTimer !== null) window.clearTimeout(hostComponentAttachTimer);
+        hostComponentAttachTimer = null;
         if (!window.AFRAME || !window.AFRAME.registerComponent) {
             return;
         }
@@ -2990,6 +2994,12 @@ import { MSDF } from "@zappar/msdf-generator";
                 hostComponentRegistered = true;
             } else {
                 window.AFRAME.registerComponent("vrodos-spatial-ui-host", {
+                    remove: function () {
+                        if (hostComponentScene === this.el) {
+                            dispose();
+                            hostComponentScene = null;
+                        }
+                    },
                     tick: function (time, delta) {
                         if (window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.__tick === "function") {
                             window.VRODOSSpatialUI.__tick(delta || 0);
@@ -3013,7 +3023,7 @@ import { MSDF } from "@zappar/msdf-generator";
             hostComponentAttachAttempts = 0;
         } else if (!scene && hostComponentAttachAttempts < 80) {
             hostComponentAttachAttempts += 1;
-            window.setTimeout(ensureAFrameHostComponent, 100);
+            hostComponentAttachTimer = window.setTimeout(ensureAFrameHostComponent, 100);
         }
     }
 
@@ -3171,6 +3181,7 @@ import { MSDF } from "@zappar/msdf-generator";
             return;
         }
         activePanel = null;
+        if (panelState.revealTimer != null) window.clearTimeout(panelState.revealTimer);
         detachInput(panelState);
         suppressSceneRaycastTargets(panelState, false);
         suppressSceneControls(panelState, false);
@@ -3200,6 +3211,8 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function dispose() {
+        if (hostComponentAttachTimer !== null) window.clearTimeout(hostComponentAttachTimer);
+        hostComponentAttachTimer = null;
         hideControlsHint();
         closePanel("spatial-ui-dispose");
     }

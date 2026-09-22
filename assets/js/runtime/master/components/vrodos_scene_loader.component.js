@@ -14,7 +14,8 @@ AFRAME.registerComponent('clear-frustum-culling', {
     },
     init: function () {
         const el = this.el;
-        el.addEventListener("model-loaded", e => {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.resources.listen(el, "model-loaded", () => {
             const mesh = el.getObject3D('mesh');
             if (!mesh) { return; }
             mesh.traverse((node) => {
@@ -31,7 +32,8 @@ AFRAME.registerComponent('clear-frustum-culling', {
                 }
             });
         });
-    }
+    },
+    remove: function () { this.resources.disposeAll(); }
 });
 
 AFRAME.registerComponent('vrodos-model-origin', {
@@ -93,6 +95,9 @@ AFRAME.registerComponent('vrodos-scene-loader', {
     },
     init: function () {
         this.sceneEl = this.el.sceneEl || this.el;
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.removed = false;
+        this.revealScheduled = false;
         this.revealTargets = [];
         this.lazyTargets = [];
         this.lazyQueue = [];
@@ -289,6 +294,8 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
+        this.assetsEl.removeEventListener('loaded', this.boundHandleAssetReady);
+        this.assetsEl.removeEventListener('timeout', this.boundHandleAssetReady);
         Array.prototype.slice.call(this.assetsEl.children).forEach(function (assetEl) {
             assetEl.removeEventListener('load', this.boundHandleAssetReady);
             assetEl.removeEventListener('loaded', this.boundHandleAssetReady);
@@ -457,7 +464,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.progressLabel.textContent = `Decoding 3D assets — ${  loadedModelCount  } / ${  totalModelCount}`;
     },
     maybeRevealScene: function () {
-        if (this.isReady || this.criticalFailure || !this.loadedAssets || this.pendingModelCount > 0) {
+        if (this.removed || this.revealScheduled || this.isReady || this.criticalFailure || !this.loadedAssets || this.pendingModelCount > 0) {
             return;
         }
 
@@ -468,7 +475,11 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         const elapsed = performance.now() - this.startedAt;
         const remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
-        window.setTimeout(this.revealScene.bind(this), remainingDelay);
+        this.revealScheduled = true;
+        this.resources.timeout(() => {
+            this.revealScheduled = false;
+            this.revealScene();
+        }, remainingDelay);
     },
     isRuntimeReadyForReveal: function () {
         const settingsComponent = this.sceneEl &&
@@ -553,7 +564,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         return ready;
     },
     scheduleRuntimeReadyCheck: function () {
-        if (this.runtimeReadyTimer) {
+        if (this.removed || this.runtimeReadyTimer !== null) {
             return;
         }
 
@@ -571,11 +582,12 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.scheduleLazyBatch(this.data.lazyBatchDelayMs);
     },
     scheduleLazyBatch: function (delayMs) {
-        if (!this.lazyQueue.length || this.lazyScheduleTimer) {
+        if (this.removed || !this.lazyQueue.length || this.lazyScheduleTimer !== null) {
             return;
         }
 
         const run = () => {
+            if (this.removed) return;
             this.lazyScheduleTimer = null;
             this.lazyScheduleIsIdle = false;
             this.loadLazyBatch();
@@ -622,6 +634,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         target.setAttribute('gltf-model', src);
     },
     handleLazyModelReady: function (event) {
+        if (this.removed) return;
         const target = event && event.target ? event.target : null;
         if (target) {
             target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);
@@ -641,12 +654,12 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         }
     },
     revealScene: function () {
-        if (this.isReady) {
+        if (this.removed || this.isReady || this.criticalFailure) {
             return;
         }
 
         this.isReady = true;
-        if (this.runtimeReadyTimer) {
+        if (this.runtimeReadyTimer !== null) {
             window.clearTimeout(this.runtimeReadyTimer);
             this.runtimeReadyTimer = null;
         }
@@ -666,7 +679,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         if (this.loadingOverlay) {
             this.loadingOverlay.style.opacity = '0';
             this.loadingOverlay.style.pointerEvents = 'none';
-            window.setTimeout(() => {
+            this.resources.timeout(() => {
                 if (this.loadingOverlay && this.loadingOverlay.parentNode) {
                     this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
                 }
@@ -686,11 +699,13 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
     },
     remove: function () {
+        this.removed = true;
+        this.resources.disposeAll();
         this.sceneEl.removeEventListener('loaded', this.boundHandleSceneLoaded);
         this.sceneEl.removeEventListener('model-loaded', this.boundHandleModelLoaded);
         this.sceneEl.removeEventListener('model-error', this.boundHandleModelError);
         this.clearPendingAssets();
-        if (this.lazyScheduleTimer) {
+        if (this.lazyScheduleTimer !== null) {
             if (this.lazyScheduleIsIdle && typeof window.cancelIdleCallback === 'function') {
                 window.cancelIdleCallback(this.lazyScheduleTimer);
             } else {
@@ -698,7 +713,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             }
             this.lazyScheduleTimer = null;
         }
-        if (this.runtimeReadyTimer) {
+        if (this.runtimeReadyTimer !== null) {
             window.clearTimeout(this.runtimeReadyTimer);
             this.runtimeReadyTimer = null;
         }
@@ -714,5 +729,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         if (this.loadingOverlay && this.loadingOverlay.parentNode) {
             this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
         }
+        this.loadingOverlay = null;
+        this.progressLabel = null;
+        this.lazyQueue = [];
+        this.lazyTargets = [];
+        this.revealTargets = [];
     }
 });

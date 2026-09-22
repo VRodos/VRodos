@@ -51,11 +51,12 @@ const context = vm.createContext({
         querySelector: (selector) => elements[selector] || null,
         getElementById: () => null
     },
-    window: {},
+    window: { requestAnimationFrame: () => 1, cancelAnimationFrame() {} },
     console,
     performance: { now: () => now },
     requestAnimationFrame: (fn) => fn()
 });
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_runtime_resources.js', import.meta.url), 'utf8'), context);
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/components/video_component.js', import.meta.url), 'utf8'), context);
 
 const geometryOwner = {};
@@ -130,7 +131,18 @@ assert.equal(stopped, 2, 'Hint clicks must stop propagation to avoid a second to
 control.useFlatMediaMaterial = true;
 control.applyWorldVideoMaterial();
 assert.match(display.getAttribute('material'), /shader: flat; side: front/);
+let videoFrameCallback, frameCanceled = false, lateBindings = 0;
+video.readyState = 3; video.videoWidth = 320;
+video.requestVideoFrameCallback = callback => { videoFrameCallback = callback; return 0; };
+video.cancelVideoFrameCallback = handle => { assert.equal(handle, 0); frameCanceled = true; };
+control.bindInlineVideoTexture = () => lateBindings++;
+control.activateInlineVideoTexture();
 control.remove();
+videoFrameCallback();
+assert.equal(frameCanceled, true);
+assert.equal(lateBindings, 0, 'A delivered video-frame callback must not bind textures after removal');
+assert.equal([...video.listeners.values()].reduce((count, listeners) => count + listeners.size, 0), 0);
+assert.equal(video.paused, true);
 for (const hint of hints) assert.equal(hint.listeners.get('click').size, 0);
 assert.equal(display.listeners.get('click').size, 0);
 geometryOwner.geometry.dispose();

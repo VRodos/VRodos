@@ -10,6 +10,8 @@ AFRAME.registerComponent('audio-source-controls', {
     },
 
     init: function () {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.removed = false;
         this.soundComponent = null;
         this.pendingAutoplay = this.data.mode === 'autoplay';
         this.pendingPlayRequest = false;
@@ -57,7 +59,7 @@ AFRAME.registerComponent('audio-source-controls', {
                 },
 
                 registerPending: function (source) {
-                    if (!source) {
+                    if (!source || source.removed) {
                         return;
                     }
 
@@ -112,11 +114,14 @@ AFRAME.registerComponent('audio-source-controls', {
         if (sceneEl && sceneEl.hasLoaded) {
             this.onSceneLoaded();
         } else if (sceneEl) {
-            sceneEl.addEventListener('loaded', this.onSceneLoaded, { once: true });
+            this.resources.listen(sceneEl, 'loaded', this.onSceneLoaded, { once: true });
         }
     },
 
     remove: function () {
+        this.removed = true;
+        this.resources.disposeAll();
+        this.stopAudio();
         if (this.audioAsset) {
             this.audioAsset.removeEventListener('ended', this.onAudioAssetEnded);
         }
@@ -286,7 +291,7 @@ AFRAME.registerComponent('audio-source-controls', {
                 this.pendingPlayRequest = false;
             }
 
-            window.setTimeout(() => {
+            this.resources.timeout(() => {
                 const playing = this.isPlaying();
                 console.log('[Audio] Delayed (250ms) isPlaying check:', playing);
                 if (!playing) {
@@ -344,6 +349,7 @@ AFRAME.registerComponent('audio-source-controls', {
 
         if (playPromise && typeof playPromise.catch === 'function') {
             playPromise.catch((e) => {
+                if (this.removed) return;
                 console.error('[Audio] Fallback play() promise rejected:', e);
                 this.fallbackPlaybackActive = false;
                 this.syncVisualState(false);

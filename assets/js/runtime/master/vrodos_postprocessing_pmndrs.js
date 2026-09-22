@@ -2291,7 +2291,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         self._pmndrsCloudTextureState = state;
 
         const markLoaded = function (key, texture) {
-            if (state.failed || state.ready) {
+            if (self._pmndrsCloudTextureState !== state || self.removed || state.failed || state.ready) {
                 return;
             }
             state.textures[key] = texture;
@@ -2314,7 +2314,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         };
 
         const markFailed = function (key, error) {
-            if (state.failed) {
+            if (self._pmndrsCloudTextureState !== state || self.removed || state.failed) {
                 return;
             }
             state.failed = true;
@@ -4115,7 +4115,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         syncPmndrsCloudDependentEffects(self, 'cloud-dispose');
     }
 
-    function disposePmndrsComposerResources(self) {
+    function disposePmndrsComposerResources(self, pendingEffects = []) {
         if (!self) {
             return;
         }
@@ -4130,13 +4130,22 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             });
         }
         const disposeUnattached = resource => {
-            if (!attached.has(resource)) disposeRuntimeResource(resource);
+            if (!resource || attached.has(resource)) return;
+            attached.add(resource);
+            if (Array.isArray(resource.effects)) resource.effects.forEach(effect => attached.add(effect));
+            disposeRuntimeResource(resource);
         };
+        [self.pmndrsRenderPass, self.pmndrsEffectPass, self.pmndrsAtmospherePass,
+            self.pmndrsChromaticAberrationPass, self.pmndrsSmaaPass, self.pmndrsLensFlarePass,
+            self.pmndrsHorizonFoliageOverlayPass].forEach(disposeUnattached);
         disposePmndrsNativeSsaoResources(self, true, disposeUnattached);
         disposePmndrsCloudEffect(self, disposeUnattached);
         disposePmndrsCloudLightingMaskResources(self, disposeUnattached);
         disposeUnattached(self.pmndrsMoonCloudShaftsEffect);
         self.pmndrsMoonCloudShaftsEffect = null;
+        [self.pmndrsBloomEffect, self.pmndrsLensFlareEffect, self.pmndrsSmaaEffect,
+            self.pmndrsLutEffect, self.pmndrsNoiseEffect, self.pmndrsChromaticAberrationEffect,
+            self.pmndrsAerialPerspectiveEffect, ...pendingEffects].forEach(disposeUnattached);
 
         if (self.pmndrsComposer) {
             try {
@@ -5085,7 +5094,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 composer.addPass(this.pmndrsAtmospherePass);
             } catch (err) {
                 console.error('[VRodos] pmndrs atmosphere EffectPass construction failed:', err);
-                try { composer.dispose(); } catch (e) { /* swallow */ }
+                this.pmndrsComposer = composer;
+                disposePmndrsComposerResources(this, [...effects, ...atmosphereEffects]);
                 return false;
             }
         }
@@ -5102,7 +5112,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 composer.addPass(this.pmndrsEffectPass);
             } catch (err) {
                 console.error('[VRodos] pmndrs EffectPass construction failed:', err);
-                try { composer.dispose(); } catch (e) { /* swallow */ }
+                this.pmndrsComposer = composer;
+                disposePmndrsComposerResources(this, [...effects, ...atmosphereEffects]);
                 return false;
             }
         }

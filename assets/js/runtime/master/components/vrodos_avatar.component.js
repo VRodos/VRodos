@@ -20,6 +20,8 @@ AFRAME.registerComponent('player-info', {
         connectedUsers: { default: 0, type: 'number' }
     },
     init: function () {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.removed = false;
         this.anims_loaded = false;
         this.ownedByLocalUser = this.el.id === 'cameraA';
 
@@ -36,7 +38,7 @@ AFRAME.registerComponent('player-info', {
         }
 
         // Listen for template instantiation
-        this.el.addEventListener('instantiated', (evt) => {
+        this.resources.listen(this.el, 'instantiated', () => {
             this.applyAvatar();
         });
 
@@ -44,6 +46,7 @@ AFRAME.registerComponent('player-info', {
         this.applyAvatar();
     },
     applyAvatar: function () {
+        if (this.removed) return;
         const elem = this.el;
         const isRemote = !this.ownedByLocalUser;
 
@@ -64,7 +67,7 @@ AFRAME.registerComponent('player-info', {
             if (networked && networked.template === '#avatar-template-expo') {
                 if (!this.avatarRetryTimeout && (!this.retryCount || this.retryCount < 10)) {
                     this.retryCount = (this.retryCount || 0) + 1;
-                    this.avatarRetryTimeout = setTimeout(() => {
+                    this.avatarRetryTimeout = this.resources.timeout(() => {
                         this.avatarRetryTimeout = null;
                         if (this.el) this.applyAvatar();
                     }, 200);
@@ -100,8 +103,8 @@ AFRAME.registerComponent('player-info', {
         this.applyAvatar();
     },
     remove: function () {
-        if (this.avatarRetryTimeout) {
-            clearTimeout(this.avatarRetryTimeout);
-        }
+        this.removed = true;
+        this.resources.disposeAll();
+        this.avatarRetryTimeout = null;
     }
 });

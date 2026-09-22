@@ -1,10 +1,10 @@
 # VRodos cleanup and refactoring roadmap
 
-Status: **shadow/lighting ownership implemented; automated integration and browser teardown verified; live workflow acceptance remains open** (2026-09-22). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
+Status: **runtime resource ownership audited; automated integration and browser teardown verified; live workflow acceptance remains open** (2026-09-22). Preserve current compiler, storage, and connector contracts. Checked items are complete; unchecked items remain in the approved roadmap.
 
 Current scope (2026-09-22): prioritize runtime ownership and integration acceptance. Acropolis derivative/FPS trials, temple visual optimization, and desktop profile/cloud acceptance are deferred by user direction; they are not prerequisites for this cleanup.
 
-Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `vrodos-render-profile`, so the lighting/clock owner exists before the initial day/night sky configuration. The schema also accepts the compiled `vrHeadsetAssetQuality` field. Local compiled scene 8980 passed first-load and resize checks with day/night enabled after bypassing cached bundles; atmosphere and clock initialized without runtime errors. The remaining duplicate Three warning was traced to the Immersive Web Emulator extension's r184 import before A-Frame r185; VRodos and A-Frame share their r185 instance. Recompile published scenes to refresh bundle cache keys when deploying this fix.
+Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `vrodos-render-profile`, so the lighting/clock owner exists before the initial day/night sky configuration. The schema also accepts the compiled `vrHeadsetAssetQuality` field. Local compiled scene 8980 passed first-load and resize checks with day/night enabled after bypassing cached bundles; atmosphere and clock initialized without runtime errors. The remaining duplicate Three warning was traced to the Immersive Web Emulator extension's older Three import before A-Frame; VRodos and A-Frame share their r185 instance. Recompile published scenes to refresh bundle cache keys when deploying this fix.
 
 ## A. Verification baseline
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
@@ -80,7 +80,7 @@ Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `v
 - [x] Keep scene-settings as configuration/coordination; remove duplicate tick path with explicit component registration checks.
 - [x] Deduplicate shared resources within registry teardown.
 - [x] Audit and fix sun/haze material and cached-texture disposal, lights-only gradient cleanup, and cloud sun overlay teardown.
-- [ ] Audit single ownership and disposal of every GPU resource/listener.
+- [x] Audit GPU resources, listeners, timers, media and asynchronous cleanup across the first-party compiled runtime; record owners and intentional page/library lifetimes in the resource inventory below.
 - [x] Audit rendering-pipeline teardown: restore terrain attachments, dispose light shadow targets, avoid duplicate composer-effect disposal, release atmosphere bindings, and unregister scene/chat/avatar listeners.
 - [x] Verify actual browser scene-settings removal/reattachment with pending presentation refreshes, released light/shadow resources, and restored atmosphere rendering (scene 8747, 2026-09-22).
 
@@ -109,6 +109,30 @@ Build-config passed; lint 0 errors/245 warnings; 19 runtime tests passed. PHP pl
 VRodos changes only. No framework or dependency upgrade. Preserve published/AJAX contracts, migration safeguards, settings globals, rendering constants, navigation math, and vendor patches. Do not remove media based only on literal-reference searches. No commits or pushes by the agent.
 
 ## Implementation log
+
+### Broader runtime resource audit (2026-09-22)
+
+The audit covers authored runtime sources under `assets/js/runtime/`, their generated chunks, and the locked library ownership boundaries they use. Editor resources and vendor internals are separate scopes; borrowed A-Frame GLB geometry, material-system textures, sound nodes, renderer/XR objects and NAF streams must not be independently disposed by consumers. This closes the broader resource-audit item left open by the earlier shadow/lighting package, without claiming real-device or live WordPress workflow acceptance.
+
+| Runtime area | Owner and release boundary | Audit result |
+| --- | --- | --- |
+| Shared resource registry | Component or scene registry; terminal `disposeAll()` | Tracks timers, animation/video-frame callbacks, listeners and custom cleanup; cancels pending handles, rejects delivered stale callbacks and disposes late resources. Cleanup failures do not prevent other registered cleanup. Loaded once in the earliest scene-components chunk, with explicit core/network dependencies. |
+| Render profile, atmosphere, reflections and shader factories | Focused runtime components; factories transfer ownership to callers | Rechecked existing terrain/light/shadow, sky/star/Moon, HDR/PMREM/probe and FPS teardown. Pure math/profile/smoothing helpers allocate no independent GPU or listener lifetimes. |
+| PMNDRS postprocessing | Composer owns attached passes/effects; adapter owns uninstalled resources and cloud textures | Partial EffectPass construction now releases attached and unattached resources once. Late cloud texture success/failure cannot change replacement state. Existing native-headset material restoration and cloud listener cleanup remain in place. |
+| Legacy postprocessing | Scene-settings postprocessing adapter | Releases partial builds even before activation or after renderer loss. Retained render wrappers delegate safely after removal and cannot overwrite a newer render owner. |
+| Navigation and collision | Navigation component and box/selection owners | Hidden navmesh/collider materials are reused, released and original attachments restored; newer material owners are preserved. XR entry retries are canceled. Navigation-owned BVHs and scene collections are released; geometry borrowed from A-Frame is preserved. |
+| Scene loading | Loader component; A-Frame owns model downloads | Coalesces delayed reveal, cancels reveal/fade, idle/lazy and runtime-ready work; removes asset-container and per-asset listeners and progress subscriptions. Removed loaders cannot reveal or schedule lazy work. |
+| Avatars and small components | Individual components | Avatar retries/instantiation, sound-loaded, keyboard movement, link/door events and indicator callbacks release on removal. Generated indicator entities and static-mask material attachments are cleaned up. Removed an unused highlight animation listener. |
+| Video and audio | Placement component; active placement owns shared video-dialog callbacks | Cancels frame/readiness work, removes media listeners, pauses playback and releases dynamically created video elements. Shared dialog callbacks transfer to the active placement. Play-icon geometry/materials dispose on removal. Audio removes scene-load and delayed retry work and unregisters pending/active sources. A-Frame retains sound/material-system ownership. |
+| Assessment and CEFR | Active panel plus registered placements; result delivery is page-owned | Removed placements unregister from CEFR and close their own active assessment. Last CEFR removal cancels presentation listeners/retries and releases scene/XR references; re-registration creates a fresh registry. Existing word-search pointer cleanup and panel state reset remain intact. Pending assessment payloads cannot retain a removed launcher. |
+| Controller overlays | Scene ray-feedback host | Releases click bridges, readiness listeners and hit-marker geometry/materials. Ended XR sessions unregister readiness handlers. Host reattachment reinstalls the bridge; controller ray selection policy is unchanged. |
+| Spatial UI | Spatial host owns panels/hints; UIKit owns component-tree internals | Host removal closes panels/hints, restores input/raycast state and cancels deferred reveal/host attachment. Pointer bridge/marker cleanup remains panel-owned. Greek font metadata/atlases are intentional page caches; the MSDF worker is disposed in `finally`. |
+| Chat and session delivery | Chat component cleanup lists; NAF and assessment session singletons | Existing chat teardown unregisters DOM/data-channel handlers. NAF owns transferred network streams. Assessment result requests/visibility delivery intentionally survive individual panel removal. |
+| Page UI, capture and diagnostics | Document bootstrap or scene diagnostics | Dialog shell/director/bootstrap handlers are installed once for the compiled document. Recording streams stop on completion, startup failure and page exit; replaced recording blob URLs are revoked. Hardware diagnostic listeners/advisories are released by settings; the temporary hardware probe releases its WebGL context. Spector is a page-owned opt-in debug tool. |
+
+Verification: 53 runtime and 36 compiler scripts passed. The added lifecycle regression covers stale/canceled callbacks (including handle zero), material restoration without disposing borrowed resources, loader reveal cancellation, late cloud results, controller markers, retained legacy render wrappers and recording failure/stop cleanup. Existing media, CEFR and PMNDRS fixtures cover video-frame cancellation, registration removal/recreation and partially installed effect passes.
+
+Browser verification: local compiled scene 8980 loaded with day/night atmosphere ready and no runtime errors. Actual play-icon removal disposed its geometry and two materials; reattachment created a new mesh. Video controls removed/recreated with old playback stopped and their generated video released. Removing the spatial host closed/detached its panel; spatial and ray-feedback hosts reinitialized. Removing all 20 CEFR registrations released their registry and reattachment restored all 20. The scene retained its WebGL context. All temporary changes were confined to a test tab; no authoring or published HTML was changed. Real Quest, live recording permissions/capture and the broader WordPress acceptance matrix remain separate validation gates. Recompile scenes on deployment because the shared resource helper moved to the scene-components bundle.
 
 ### Shadow/lighting ownership and integration checks (2026-09-22)
 

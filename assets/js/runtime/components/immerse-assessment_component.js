@@ -48,6 +48,15 @@
             },
 
             remove: function () {
+                namespace.getCefrRuntime().unregister(this.el);
+                const desktop = window.__vrodosImmerseAssessmentRuntime;
+                if (desktop && desktop.payload && desktop.payload.anchorElement === this.el) desktop.hide();
+                const immersive = window.__vrodosImmerseAssessmentVrRuntime;
+                if (immersive && immersive.pendingPayload && immersive.pendingPayload.anchorElement === this.el) immersive.pendingPayload = null;
+                if (immersive && immersive.payload && immersive.payload.anchorElement === this.el) {
+                    if (window.VRODOSSpatialUI) window.VRODOSSpatialUI.closePanel('component-remove');
+                    immersive.reset();
+                }
                 if (this.onClick) {
                     this.el.removeEventListener("click", this.onClick);
                 }
@@ -57,7 +66,8 @@
         AFRAME.registerComponent("immerse-cefr-asset", {
             init: function () {
                 namespace.getCefrRuntime().register(this.el);
-            }
+            },
+            remove: function () { namespace.getCefrRuntime().unregister(this.el); }
         });
     }
 })();

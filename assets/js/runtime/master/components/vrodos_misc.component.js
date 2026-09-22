@@ -4,10 +4,12 @@
 
 AFRAME.registerComponent('autoplay-sound', {
     init: function () {
-        this.el.addEventListener("loaded", () => {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.resources.listen(this.el, "loaded", () => {
             this.el.components.sound.playSound();
         });
-    }
+    },
+    remove: function () { this.resources.disposeAll(); }
 });
 
 AFRAME.registerComponent('vrodos-stochastic-tiling', {
@@ -64,8 +66,9 @@ AFRAME.registerComponent('entity-movement-emitter', {
     init: function () {
         const shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
         const elem = this.el;
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
 
-        document.addEventListener('keydown', (event) => {
+        this.resources.listen(document, 'keydown', (event) => {
             const cameraA = document.getElementById('cameraA');
             if (!cameraA) return;
 
@@ -93,33 +96,46 @@ AFRAME.registerComponent('entity-movement-emitter', {
             }
         });
 
-        document.addEventListener('keyup', (event) => {
+        this.resources.listen(document, 'keyup', (event) => {
             const cameraA = document.getElementById('cameraA');
             if (cameraA) {
                 elem.emit('avatar-changed-animation', "stopped", false);
                 cameraA.setAttribute('avatar-movement-info', 'movementState', "stop");
             }
         });
-    }
+    },
+    remove: function () { this.resources.disposeAll(); }
 });
 
 AFRAME.registerComponent('static-mask-me', {
     init: function () {
         const el = this.el;
+        this.originals = new Map();
+        const mesh = el.getObject3D('mesh');
+        if (!mesh) return;
         const maskMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: false,
             colorWrite: false,
         });
         maskMaterial.needsUpdate = true;
-        const mesh = el.getObject3D('mesh');
-        if (!mesh) return;
+        this.maskMaterial = maskMaterial;
         mesh.traverse(node => {
             if (node.isMesh) {
+                this.originals.set(node, { material: node.material, renderOrder: node.renderOrder });
                 node.material = maskMaterial;
                 node.renderOrder = 999;
             }
         });
+    },
+    remove: function () {
+        this.originals.forEach((original, mesh) => {
+            if (mesh.material === this.maskMaterial) mesh.material = original.material;
+            if (mesh.renderOrder === 999) mesh.renderOrder = original.renderOrder;
+        });
+        this.originals.clear();
+        if (this.maskMaterial) this.maskMaterial.dispose();
+        this.maskMaterial = null;
     }
 });
 

@@ -125,6 +125,7 @@
                 return;
             }
 
+            if (!runtime.resources) runtime.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
             runtime.elements.push(element);
             element.removeAttribute("data-vrodos-delayed-reveal");
             setCefrControlledVisible(element, false);
@@ -134,6 +135,18 @@
                 return;
             }
             runtime.schedulePrompt();
+        };
+
+        runtime.unregister = function (element) {
+            runtime.elements = runtime.elements.filter(entry => entry !== element);
+            if (runtime.elements.length) return;
+            runtime.hidePrompt();
+            runtime.hideSessionPrompt();
+            if (runtime.resources) runtime.resources.disposeAll();
+            runtime.resources = null;
+            runtime.presentationEventsBound = false;
+            runtime.xrSessionEventsBound = false;
+            runtime.promptScheduled = false;
         };
 
         runtime.requiresParticipantName = function () {
@@ -541,7 +554,7 @@
                 setCefrControlledVisible(element, false);
             });
             runtime.applyStoredIdentityIfAvailable();
-            window.setTimeout(() => runtime.showPrompt(), 80);
+            if (runtime.resources) runtime.resources.timeout(() => runtime.showPrompt(), 80);
         };
 
         runtime.setPendingVrPromptLock = function (locked) {
@@ -805,6 +818,7 @@
         };
 
         runtime.showVrPrompt = function () {
+            if (!runtime.elements.length) return false;
             const overlayApi = window.VRODOSRuntimeOverlay || null;
             const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function"
                 ? overlayApi.shouldUseVrPanel()
@@ -895,7 +909,8 @@
             const delay = Number.isFinite(parsedDelay)
                 ? Math.max(0, parsedDelay)
                 : VR_PROMPT_RETRY_DELAY_MS;
-            window.setTimeout(() => {
+            if (!runtime.resources) return;
+            runtime.resources.timeout(() => {
                 if (!runtime.levelApplied && runtime.isImmersiveVrActive()) {
                     runtime.showPrompt();
                 }
@@ -903,6 +918,7 @@
         };
 
         runtime.showPrompt = function () {
+            if (!runtime.elements.length) return;
             if (!runtime.isSceneReadyForPrompt()) {
                 if (runtime.isImmersiveVrActive()) {
                     runtime.hideDomPrompt();
@@ -979,7 +995,7 @@
             const bind = function () {
                 const scene = document.querySelector("a-scene");
                 if (!scene) {
-                    window.setTimeout(bind, 120);
+                    runtime.resources.timeout(bind, 120);
                     return;
                 }
 
@@ -995,23 +1011,23 @@
                     }
                 };
 
-                scene.addEventListener("enter-vr", () => {
+                runtime.resources.listen(scene, "enter-vr", () => {
                     scheduleVrOpenAttempts();
                 });
-                scene.addEventListener("exit-vr", () => {
+                runtime.resources.listen(scene, "exit-vr", () => {
                     if (!runtime.levelApplied && runtime.vrPromptActive) {
                         runtime.hidePrompt();
-                        window.setTimeout(() => runtime.showPrompt(), 120);
+                        runtime.resources.timeout(() => runtime.showPrompt(), 120);
                     } else {
                         runtime.setPendingVrPromptLock(false);
                     }
                 });
-                scene.addEventListener("loaded", () => {
+                runtime.resources.listen(scene, "loaded", () => {
                     if (runtime.isImmersiveVrActive()) {
                         scheduleVrOpenAttempts();
                     }
                 });
-                scene.addEventListener("vrodos-scene-loader-ready", () => {
+                runtime.resources.listen(scene, "vrodos-scene-loader-ready", () => {
                     if (runtime.isImmersiveVrActive()) {
                         scheduleVrOpenAttempts();
                     }
@@ -1023,12 +1039,12 @@
                     }
                     const xr = scene.renderer && scene.renderer.xr;
                     if (xr && typeof xr.addEventListener === "function") {
-                        xr.addEventListener("sessionstart", scheduleVrOpenAttempts);
+                        runtime.resources.listen(xr, "sessionstart", scheduleVrOpenAttempts);
                         runtime.xrSessionEventsBound = true;
                         return;
                     }
                     if ((attempt || 0) < 80) {
-                        window.setTimeout(() => bindXrSessionStart((attempt || 0) + 1), 250);
+                        runtime.resources.timeout(() => bindXrSessionStart((attempt || 0) + 1), 250);
                     }
                 };
                 bindXrSessionStart(0);
@@ -1047,7 +1063,7 @@
 
             const waitForSceneReady = () => {
                 if (!runtime.isSceneReadyForPrompt()) {
-                    window.setTimeout(waitForSceneReady, 180);
+                    runtime.resources.timeout(waitForSceneReady, 180);
                     return;
                 }
 

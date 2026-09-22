@@ -1,8 +1,9 @@
 AFRAME.registerComponent('door-listener', {
     schema: { type: "string", default: "default value" },
     init: function () {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.el.setAttribute("link", "on: click; href: " + this.data);
-        this.el.addEventListener("click", evt => {
+        this.resources.listen(this.el, "click", evt => {
             if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
                 if (evt.detail.originalEvent.button !== 0) return;
             }
@@ -10,7 +11,8 @@ AFRAME.registerComponent('door-listener', {
                 window.gtag('event', 'door_click');
             }
         });
-    }
+    },
+    remove: function () { this.resources.disposeAll(); }
 });
 
 AFRAME.registerComponent('vrodos-door-indicator', {
@@ -27,12 +29,13 @@ AFRAME.registerComponent('vrodos-door-indicator', {
 
     init: function () {
         this.marker = null;
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.basePosition = null;
         this.offset = Math.random() * Math.PI * 2;
         this.placeMarker = this.placeMarker.bind(this);
         this.el.addEventListener('model-loaded', this.placeMarker);
         this.createMarker();
-        window.setTimeout(this.placeMarker, 0);
+        this.resources.timeout(this.placeMarker, 0);
     },
 
     createMarker: function () {
@@ -130,6 +133,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
     },
 
     remove: function () {
+        this.resources.disposeAll();
         this.el.removeEventListener('model-loaded', this.placeMarker);
         if (!this.marker) {
             return;

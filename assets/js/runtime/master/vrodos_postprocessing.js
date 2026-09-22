@@ -266,10 +266,12 @@
             this.ssrScene.add(this.ssrQuad);
         }
 
-        this.postProcessingOriginalRender = renderer.render.bind(renderer);
+        const originalRender = renderer.render.bind(renderer);
+        this.postProcessingOriginalRender = originalRender;
         this.postProcessingActive = true;
 
-        renderer.render = function (scene, camera) {
+        const render = function (scene, camera) {
+            if (this.postProcessingRender !== render) return originalRender(scene, camera);
             const shouldIntercept = this.postProcessingActive &&
                 this.shouldUsePostProcessing() &&
                 !this.postProcessingRendering &&
@@ -525,17 +527,17 @@
                 this.postProcessingRendering = false;
             }
         }.bind(this);
+        this.postProcessingRender = render;
+        renderer.render = render;
     };
     H.disablePostProcessing = function () {
-        if (!this.postProcessingActive || !this.el.renderer) {
-            return;
-        }
-
-        if (this.postProcessingOriginalRender) {
+        if (this.el.renderer && this.postProcessingOriginalRender && this.el.renderer.render === this.postProcessingRender) {
             this.el.renderer.render = this.postProcessingOriginalRender;
         }
+        this.postProcessingRender = null;
 
         disposeRuntimeResource([
+            this.postProcessingMaterial,
             this.postProcessingQuad,
             this.postProcessingTarget,
             this.bloomTargetA,

@@ -132,7 +132,8 @@
     },
     init: function() {
       const el = this.el;
-      el.addEventListener("model-loaded", (e) => {
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+      this.resources.listen(el, "model-loaded", () => {
         const mesh = el.getObject3D("mesh");
         if (!mesh) {
           return;
@@ -151,6 +152,9 @@
           }
         });
       });
+    },
+    remove: function() {
+      this.resources.disposeAll();
     }
   });
   AFRAME.registerComponent("vrodos-model-origin", {
@@ -211,6 +215,9 @@
     },
     init: function() {
       this.sceneEl = this.el.sceneEl || this.el;
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+      this.removed = false;
+      this.revealScheduled = false;
       this.revealTargets = [];
       this.lazyTargets = [];
       this.lazyQueue = [];
@@ -382,6 +389,8 @@
         this.pendingAssetCount = 0;
         return;
       }
+      this.assetsEl.removeEventListener("loaded", this.boundHandleAssetReady);
+      this.assetsEl.removeEventListener("timeout", this.boundHandleAssetReady);
       Array.prototype.slice.call(this.assetsEl.children).forEach(function(assetEl) {
         assetEl.removeEventListener("load", this.boundHandleAssetReady);
         assetEl.removeEventListener("loaded", this.boundHandleAssetReady);
@@ -519,7 +528,7 @@
       this.progressLabel.textContent = `Decoding 3D assets \u2014 ${loadedModelCount} / ${totalModelCount}`;
     },
     maybeRevealScene: function() {
-      if (this.isReady || this.criticalFailure || !this.loadedAssets || this.pendingModelCount > 0) {
+      if (this.removed || this.revealScheduled || this.isReady || this.criticalFailure || !this.loadedAssets || this.pendingModelCount > 0) {
         return;
       }
       if (!this.isRuntimeReadyForReveal()) {
@@ -528,7 +537,11 @@
       }
       const elapsed = performance.now() - this.startedAt;
       const remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
-      window.setTimeout(this.revealScene.bind(this), remainingDelay);
+      this.revealScheduled = true;
+      this.resources.timeout(() => {
+        this.revealScheduled = false;
+        this.revealScene();
+      }, remainingDelay);
     },
     isRuntimeReadyForReveal: function() {
       const settingsComponent = this.sceneEl && this.sceneEl.components && this.sceneEl.components["scene-settings"];
@@ -598,7 +611,7 @@
       return ready;
     },
     scheduleRuntimeReadyCheck: function() {
-      if (this.runtimeReadyTimer) {
+      if (this.removed || this.runtimeReadyTimer !== null) {
         return;
       }
       this.runtimeReadyTimer = window.setTimeout(() => {
@@ -614,10 +627,11 @@
       this.scheduleLazyBatch(this.data.lazyBatchDelayMs);
     },
     scheduleLazyBatch: function(delayMs) {
-      if (!this.lazyQueue.length || this.lazyScheduleTimer) {
+      if (this.removed || !this.lazyQueue.length || this.lazyScheduleTimer !== null) {
         return;
       }
       const run = () => {
+        if (this.removed) return;
         this.lazyScheduleTimer = null;
         this.lazyScheduleIsIdle = false;
         this.loadLazyBatch();
@@ -658,6 +672,7 @@
       target.setAttribute("gltf-model", src);
     },
     handleLazyModelReady: function(event) {
+      if (this.removed) return;
       const target = event && event.target ? event.target : null;
       if (target) {
         target.removeEventListener("model-loaded", this.boundHandleLazyModelReady);
@@ -675,11 +690,11 @@
       }
     },
     revealScene: function() {
-      if (this.isReady) {
+      if (this.removed || this.isReady || this.criticalFailure) {
         return;
       }
       this.isReady = true;
-      if (this.runtimeReadyTimer) {
+      if (this.runtimeReadyTimer !== null) {
         window.clearTimeout(this.runtimeReadyTimer);
         this.runtimeReadyTimer = null;
       }
@@ -694,7 +709,7 @@
       if (this.loadingOverlay) {
         this.loadingOverlay.style.opacity = "0";
         this.loadingOverlay.style.pointerEvents = "none";
-        window.setTimeout(() => {
+        this.resources.timeout(() => {
           if (this.loadingOverlay && this.loadingOverlay.parentNode) {
             this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
           }
@@ -708,11 +723,13 @@
       this.startLazyLoading();
     },
     remove: function() {
+      this.removed = true;
+      this.resources.disposeAll();
       this.sceneEl.removeEventListener("loaded", this.boundHandleSceneLoaded);
       this.sceneEl.removeEventListener("model-loaded", this.boundHandleModelLoaded);
       this.sceneEl.removeEventListener("model-error", this.boundHandleModelError);
       this.clearPendingAssets();
-      if (this.lazyScheduleTimer) {
+      if (this.lazyScheduleTimer !== null) {
         if (this.lazyScheduleIsIdle && typeof window.cancelIdleCallback === "function") {
           window.cancelIdleCallback(this.lazyScheduleTimer);
         } else {
@@ -720,7 +737,7 @@
         }
         this.lazyScheduleTimer = null;
       }
-      if (this.runtimeReadyTimer) {
+      if (this.runtimeReadyTimer !== null) {
         window.clearTimeout(this.runtimeReadyTimer);
         this.runtimeReadyTimer = null;
       }
@@ -735,6 +752,11 @@
       if (this.loadingOverlay && this.loadingOverlay.parentNode) {
         this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
       }
+      this.loadingOverlay = null;
+      this.progressLabel = null;
+      this.lazyQueue = [];
+      this.lazyTargets = [];
+      this.revealTargets = [];
     }
   });
   (function() {
@@ -825,6 +847,8 @@
       connectedUsers: { default: 0, type: "number" }
     },
     init: function() {
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+      this.removed = false;
       this.anims_loaded = false;
       this.ownedByLocalUser = this.el.id === "cameraA";
       if (this.ownedByLocalUser) {
@@ -838,12 +862,13 @@
           colorChanger.style.color = this.data.color;
         }
       }
-      this.el.addEventListener("instantiated", (evt) => {
+      this.resources.listen(this.el, "instantiated", () => {
         this.applyAvatar();
       });
       this.applyAvatar();
     },
     applyAvatar: function() {
+      if (this.removed) return;
       const elem = this.el;
       const isRemote = !this.ownedByLocalUser;
       this.head = this.el.querySelector(".head");
@@ -858,7 +883,7 @@
         if (networked && networked.template === "#avatar-template-expo") {
           if (!this.avatarRetryTimeout && (!this.retryCount || this.retryCount < 10)) {
             this.retryCount = (this.retryCount || 0) + 1;
-            this.avatarRetryTimeout = setTimeout(() => {
+            this.avatarRetryTimeout = this.resources.timeout(() => {
               this.avatarRetryTimeout = null;
               if (this.el) this.applyAvatar();
             }, 200);
@@ -893,9 +918,9 @@
       this.applyAvatar();
     },
     remove: function() {
-      if (this.avatarRetryTimeout) {
-        clearTimeout(this.avatarRetryTimeout);
-      }
+      this.removed = true;
+      this.resources.disposeAll();
+      this.avatarRetryTimeout = null;
     }
   });
   (function() {
@@ -3610,7 +3635,7 @@
     },
     handleXrEnter: function() {
       if (!this.isDirectVrPresentationActive()) {
-        window.setTimeout(() => {
+        this.runtimeResources.timeout(() => {
           if (this.isDirectVrPresentationActive()) {
             this.handleXrEnter();
           }
@@ -4446,76 +4471,66 @@
     collisionSkin: 0.05,
     maxFrameDeltaSeconds: 0.05
   };
-  AFRAME.registerComponent("vrodos-navmesh-helper", {
-    init: function() {
-      this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
-      this.createHiddenNavmeshMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function(material) {
-        return material;
-      };
-      this.el.addEventListener("model-loaded", this.applyHiddenNavmeshState);
-      if (this.el.getObject3D("mesh")) {
-        this.applyHiddenNavmeshState();
-      }
-    },
-    applyHiddenNavmeshState: function() {
-      const meshRoot = this.el.getObject3D("mesh");
-      if (!meshRoot) {
-        return;
-      }
-      meshRoot.visible = false;
-      meshRoot.traverse((node) => {
-        if (!node.isMesh) {
+  function vrodosHiddenMeshHelper(useEntityRoot) {
+    return {
+      init: function() {
+        this.originalNodes = /* @__PURE__ */ new Map();
+        this.originalRoots = /* @__PURE__ */ new Map();
+        this.hiddenMaterial = null;
+        this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
+        this.el.addEventListener("model-loaded", this.applyHiddenNavmeshState);
+        if (this.el.getObject3D("mesh")) {
+          this.applyHiddenNavmeshState();
+        }
+      },
+      applyHiddenNavmeshState: function() {
+        const meshRoot = this.el.getObject3D("mesh") || (useEntityRoot ? this.el.object3D : null);
+        if (!meshRoot) {
           return;
         }
-        node.frustumCulled = false;
-        node.castShadow = false;
-        node.receiveShadow = false;
-        if (Array.isArray(node.material)) {
-          node.material = node.material.map((material) => this.createHiddenNavmeshMaterial(material));
-        } else if (node.material) {
-          node.material = this.createHiddenNavmeshMaterial(node.material);
-        }
-      });
-    },
-    remove: function() {
-      this.el.removeEventListener("model-loaded", this.applyHiddenNavmeshState);
-    }
-  });
-  AFRAME.registerComponent("vrodos-collider-helper", {
-    init: function() {
-      this.applyHiddenColliderState = this.applyHiddenColliderState.bind(this);
-      this.createHiddenColliderMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function(material) {
-        return material;
-      };
-      this.el.addEventListener("model-loaded", this.applyHiddenColliderState);
-      if (this.el.getObject3D("mesh")) {
-        this.applyHiddenColliderState();
+        if (!this.originalRoots.has(meshRoot)) this.originalRoots.set(meshRoot, meshRoot.visible);
+        meshRoot.visible = false;
+        meshRoot.traverse((node) => {
+          if (!node.isMesh || this.originalNodes.has(node)) {
+            return;
+          }
+          this.originalNodes.set(node, {
+            material: node.material,
+            frustumCulled: node.frustumCulled,
+            castShadow: node.castShadow,
+            receiveShadow: node.receiveShadow
+          });
+          node.frustumCulled = false;
+          node.castShadow = false;
+          node.receiveShadow = false;
+          if (node.material) {
+            if (!this.hiddenMaterial) this.hiddenMaterial = VRODOSMaster.createHiddenNavmeshMaterial();
+            node.material = this.hiddenMaterial;
+          }
+        });
+      },
+      remove: function() {
+        this.el.removeEventListener("model-loaded", this.applyHiddenNavmeshState);
+        this.originalNodes.forEach((original, node) => {
+          if (node.material === this.hiddenMaterial) {
+            node.material = original.material;
+            node.frustumCulled = original.frustumCulled;
+            node.castShadow = original.castShadow;
+            node.receiveShadow = original.receiveShadow;
+          }
+        });
+        this.originalRoots.forEach((visible, root) => {
+          if (!root.visible) root.visible = visible;
+        });
+        this.originalNodes.clear();
+        this.originalRoots.clear();
+        if (this.hiddenMaterial) this.hiddenMaterial.dispose();
+        this.hiddenMaterial = null;
       }
-    },
-    applyHiddenColliderState: function() {
-      const meshRoot = this.el.getObject3D("mesh") || this.el.object3D;
-      if (!meshRoot) {
-        return;
-      }
-      meshRoot.visible = false;
-      meshRoot.traverse((node) => {
-        if (!node.isMesh) {
-          return;
-        }
-        node.frustumCulled = false;
-        node.castShadow = false;
-        node.receiveShadow = false;
-        if (Array.isArray(node.material)) {
-          node.material = node.material.map((material) => this.createHiddenColliderMaterial(material));
-        } else if (node.material) {
-          node.material = this.createHiddenColliderMaterial(node.material);
-        }
-      });
-    },
-    remove: function() {
-      this.el.removeEventListener("model-loaded", this.applyHiddenColliderState);
-    }
-  });
+    };
+  }
+  AFRAME.registerComponent("vrodos-navmesh-helper", vrodosHiddenMeshHelper(false));
+  AFRAME.registerComponent("vrodos-collider-helper", vrodosHiddenMeshHelper(true));
   AFRAME.registerComponent("vrodos-box-collider", {
     schema: {
       center: { type: "vec3" },
@@ -4591,6 +4606,7 @@
       this.colliderRoots = [];
       this.blockerCollisionTargets = [];
       this.bvhTargets = /* @__PURE__ */ new Set();
+      this.ownedBoundsTrees = /* @__PURE__ */ new Map();
       this.bvhInstalled = false;
       this.navMeshBounds = new THREE.Box3();
       this.navMeshRootBounds = new THREE.Box3();
@@ -5700,6 +5716,9 @@
       this.scheduleDesktopFullscreenNavigationPoseRestore("desktop-fullscreen-exit");
     },
     handleEnterVr: function() {
+      if (this.removed) return;
+      if (this.entryResources) this.entryResources.disposeAll();
+      this.entryResources = window.VRODOSMaster.RuntimeResources.createRegistry();
       const runImmersiveEntry = () => {
         this.prepareVerticalMotionForEnterVr();
         this.resetImmersiveTurnSmoothing("enter-vr");
@@ -5714,7 +5733,7 @@
         this.immersiveLastPresentedShadowSyncAt = 0;
         this.immersiveLastPresentedShadowSyncTransformCount = -1;
         this.rememberNonImmersiveNavigationPosition(true);
-        window.setTimeout(() => {
+        this.entryResources.timeout(() => {
           if (this.isImmersiveXrPresenting()) {
             this.resetImmersiveWorldLocomotion();
             this.ensureImmersiveRuntimeHelpers();
@@ -5722,7 +5741,7 @@
         }, 100);
       };
       if (!this.isImmersiveXrPresenting()) {
-        window.setTimeout(() => {
+        this.entryResources.timeout(() => {
           if (this.isImmersiveXrPresenting()) {
             runImmersiveEntry();
           }
@@ -5732,6 +5751,7 @@
       runImmersiveEntry();
     },
     handleExitVr: function() {
+      if (this.entryResources) this.entryResources.disposeAll();
       if (!this.immersiveWasPresenting && !this.isImmersiveXrPresenting()) {
         return;
       }
@@ -5897,6 +5917,8 @@
       return Boolean(event && (event.code === "Space" || event.key === " " || event.key === "Spacebar" || event.keyCode === 32));
     },
     remove: function() {
+      this.removed = true;
+      if (this.entryResources) this.entryResources.disposeAll();
       if (this.thumbL) {
         this.thumbL.removeEventListener("thumbstickmoved", this.handleThumbstickMove);
         this.thumbL.removeEventListener("thumbsticktouchend", this.handleThumbstickEnd);
@@ -5931,7 +5953,16 @@
       document.removeEventListener("MSFullscreenChange", this.handleDesktopFullscreenChange);
       this.clearImmersiveExitNavigationHandoffTimers();
       this.clearDesktopFullscreenPoseRestoreTimers();
-      if (this.immersiveShadowRefreshPendingTimer) {
+      this.ownedBoundsTrees.forEach((tree, geometry) => {
+        if (geometry.boundsTree === tree) geometry.boundsTree = null;
+      });
+      this.ownedBoundsTrees.clear();
+      this.bvhTargets.clear();
+      this.navMeshRoots = [];
+      this.navMeshCollisionTargets = [];
+      this.colliderRoots = [];
+      this.blockerCollisionTargets = [];
+      if (this.immersiveShadowRefreshPendingTimer !== null) {
         window.clearTimeout(this.immersiveShadowRefreshPendingTimer);
         this.immersiveShadowRefreshPendingTimer = null;
       }
@@ -7166,6 +7197,7 @@
       if (canBuildBvh && !node.geometry.boundsTree && !this.bvhTargets.has(node.uuid)) {
         try {
           node.geometry.computeBoundsTree();
+          this.ownedBoundsTrees.set(node.geometry, node.geometry.boundsTree);
         } catch (err) {
           if (!this.loggedBvhBuildWarning) {
             const message = this.collisionBvhRequired ? "VRodos: failed to build one or more static collision BVHs; headset collision mesh skipped." : "VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.";
@@ -8619,9 +8651,13 @@
   });
   AFRAME.registerComponent("autoplay-sound", {
     init: function() {
-      this.el.addEventListener("loaded", () => {
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+      this.resources.listen(this.el, "loaded", () => {
         this.el.components.sound.playSound();
       });
+    },
+    remove: function() {
+      this.resources.disposeAll();
     }
   });
   AFRAME.registerComponent("vrodos-stochastic-tiling", {
@@ -8675,7 +8711,8 @@
     init: function() {
       const shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
       const elem = this.el;
-      document.addEventListener("keydown", (event) => {
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+      this.resources.listen(document, "keydown", (event) => {
         const cameraA = document.getElementById("cameraA");
         if (!cameraA) return;
         if (event.keyCode === 87) {
@@ -8701,32 +8738,47 @@
           elem.emit("avatar-changed-animation", "idle", false);
         }
       });
-      document.addEventListener("keyup", (event) => {
+      this.resources.listen(document, "keyup", (event) => {
         const cameraA = document.getElementById("cameraA");
         if (cameraA) {
           elem.emit("avatar-changed-animation", "stopped", false);
           cameraA.setAttribute("avatar-movement-info", "movementState", "stop");
         }
       });
+    },
+    remove: function() {
+      this.resources.disposeAll();
     }
   });
   AFRAME.registerComponent("static-mask-me", {
     init: function() {
       const el = this.el;
+      this.originals = /* @__PURE__ */ new Map();
+      const mesh = el.getObject3D("mesh");
+      if (!mesh) return;
       const maskMaterial = new THREE.MeshBasicMaterial({
         color: 65535,
         transparent: false,
         colorWrite: false
       });
       maskMaterial.needsUpdate = true;
-      const mesh = el.getObject3D("mesh");
-      if (!mesh) return;
+      this.maskMaterial = maskMaterial;
       mesh.traverse((node) => {
         if (node.isMesh) {
+          this.originals.set(node, { material: node.material, renderOrder: node.renderOrder });
           node.material = maskMaterial;
           node.renderOrder = 999;
         }
       });
+    },
+    remove: function() {
+      this.originals.forEach((original, mesh) => {
+        if (mesh.material === this.maskMaterial) mesh.material = original.material;
+        if (mesh.renderOrder === 999) mesh.renderOrder = original.renderOrder;
+      });
+      this.originals.clear();
+      if (this.maskMaterial) this.maskMaterial.dispose();
+      this.maskMaterial = null;
     }
   });
   AFRAME.registerComponent("render-order-change", {

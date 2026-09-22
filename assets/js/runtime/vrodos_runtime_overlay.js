@@ -20,6 +20,8 @@
     let spatialUiRuntimePromise = null;
     let sceneRayFeedbackComponentRegistered = false;
     const sceneRayFeedbackOwners = new Set();
+    let resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+    let stopped = false;
 
     function diagnosticsStore() {
         window.__vrodosRuntimeOverlayDiagnostics = window.__vrodosRuntimeOverlayDiagnostics || [];
@@ -86,9 +88,12 @@
 
     function createControllerRayReadinessApi() {
         const states = new Map();
-        const controllerListenerElements = new WeakSet();
+        let controllerListenerElements = new WeakSet();
+        let readinessResources = window.VRODOSMaster.RuntimeResources.createRegistry();
         let sceneListenersAttachedTo = null;
         let sessionListenersAttachedTo = null;
+        let sceneListenerCleanups = [];
+        let sessionListenerCleanups = [];
 
         function stateForHand(hand) {
             const key = hand || "unknown";
@@ -307,15 +312,10 @@
             if (!scene || sceneListenersAttachedTo === scene) {
                 return;
             }
-            if (sceneListenersAttachedTo && sceneListenersAttachedTo.removeEventListener) {
-                ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
-                    sceneListenersAttachedTo.removeEventListener(eventName, markAllDirtyFromEvent);
-                });
-            }
+            sceneListenerCleanups.forEach(release => release());
             sceneListenersAttachedTo = scene;
-            ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
-                scene.addEventListener(eventName, markAllDirtyFromEvent);
-            });
+            sceneListenerCleanups = ["enter-vr", "exit-vr", "controllersupdated"].map(eventName =>
+                readinessResources.listen(scene, eventName, markAllDirtyFromEvent));
         }
 
         function markAllDirtyFromEvent(event) {
@@ -325,14 +325,21 @@
         function ensureSessionListener(scene) {
             const xr = scene && scene.renderer && scene.renderer.xr;
             const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
-            if (!session || sessionListenersAttachedTo === session) {
+            if (sessionListenersAttachedTo === session) {
                 return;
             }
-            if (sessionListenersAttachedTo && sessionListenersAttachedTo.removeEventListener) {
-                sessionListenersAttachedTo.removeEventListener("inputsourceschange", markAllDirtyFromEvent);
-            }
+            sessionListenerCleanups.forEach(release => release());
+            sessionListenerCleanups = [];
             sessionListenersAttachedTo = session;
-            session.addEventListener("inputsourceschange", markAllDirtyFromEvent);
+            if (session) {
+                sessionListenerCleanups.push(readinessResources.listen(session, "inputsourceschange", markAllDirtyFromEvent));
+                sessionListenerCleanups.push(readinessResources.listen(session, "end", () => {
+                    sessionListenerCleanups.forEach(release => release());
+                    sessionListenerCleanups = [];
+                    sessionListenersAttachedTo = null;
+                    markDirty('session-end');
+                }));
+            }
         }
 
         function ensureControllerListeners(el) {
@@ -341,7 +348,7 @@
             }
             controllerListenerElements.add(el);
             ["controllerconnected", "controllerdisconnected", "controllermodelready"].forEach((eventName) => {
-                el.addEventListener(eventName, (event) => {
+                readinessResources.listen(el, eventName, (event) => {
                     const detailName = event && event.detail && event.detail.name || "";
                     markDirty(`${eventName}${detailName ? `:${detailName}` : ""}`, resolveHand(el));
                 });
@@ -422,7 +429,17 @@
         return {
             markDirty,
             resolve,
-            reset
+            reset,
+            dispose: function () {
+                readinessResources.disposeAll();
+                readinessResources = window.VRODOSMaster.RuntimeResources.createRegistry();
+                controllerListenerElements = new WeakSet();
+                sceneListenersAttachedTo = null;
+                sessionListenersAttachedTo = null;
+                sceneListenerCleanups = [];
+                sessionListenerCleanups = [];
+                states.clear();
+            }
         };
     }
 
@@ -527,10 +544,10 @@
             refreshRaycasterObjects();
             remaining -= 1;
             if (remaining > 0) {
-                requestAnimationFrame(refresh);
+                resources.frame(refresh);
             }
         };
-        requestAnimationFrame(refresh);
+        resources.frame(refresh);
     }
 
     function collectRaycasters() {
@@ -950,7 +967,13 @@
     function hideInactiveSceneRayHitMarkers(activeOwners) {
         sceneRayFeedbackOwners.forEach((owner) => {
             if (!activeOwners || !activeOwners.has(owner)) {
-                hideSceneRayHitMarker(owner);
+                const marker = owner.__vrodosSceneRayHitMarker;
+                if (marker) {
+                    marker.removeFromParent();
+                    window.VRODOSMaster.RuntimeResources.dispose(marker);
+                    delete owner.__vrodosSceneRayHitMarker;
+                }
+                sceneRayFeedbackOwners.delete(owner);
             }
         });
     }
@@ -1002,10 +1025,23 @@
                 sceneRayFeedbackComponentRegistered = true;
             } else {
                 window.AFRAME.registerComponent("vrodos-scene-ray-feedback", {
+                    init: function () {
+                        if (!stopped) return;
+                        stopped = false;
+                        resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+                        controllerRuntimeInstallAttempts = 0;
+                        resources.timeout(() => {
+                            bindControllerBridgeLifecycle();
+                            installControllerRuntimeWhenReady();
+                        }, 0);
+                    },
                     tick: function () {
                         updateSceneRayFeedback();
                     },
                     remove: function () {
+                        stopped = true;
+                        resources.disposeAll();
+                        window.VRODOSControllerRayReadiness.dispose();
                         hideInactiveSceneRayHitMarkers(new Set());
                     }
                 });
@@ -1118,9 +1154,10 @@
                 rememberEmittedClick(hit.target);
             };
 
-            ["triggerdown", "mousedown", "selectstart", "squeezestart"].forEach((type) => controllerEl.addEventListener(type, handleDown));
-            ["triggerup", "mouseup", "selectend", "squeezeend"].forEach((type) => controllerEl.addEventListener(type, handleUp));
-            ["select", "squeeze"].forEach((type) => controllerEl.addEventListener(type, handleSelect));
+            resources.cleanup(() => { delete controllerEl.__vrodosControllerClickBridge; });
+            ["triggerdown", "mousedown", "selectstart", "squeezestart"].forEach((type) => resources.listen(controllerEl, type, handleDown));
+            ["triggerup", "mouseup", "selectend", "squeezeend"].forEach((type) => resources.listen(controllerEl, type, handleUp));
+            ["select", "squeeze"].forEach((type) => resources.listen(controllerEl, type, handleSelect));
             recordDiagnostic("debug", "Installed controller click bridge.", {
                 controller: describeElement(controllerEl)
             });
@@ -1203,12 +1240,13 @@
                 rememberEmittedClick(hit.target);
             };
 
-            controllerObject.addEventListener("selectstart", handleDown);
-            controllerObject.addEventListener("selectend", handleUp);
-            controllerObject.addEventListener("select", handleSelect);
-            controllerObject.addEventListener("squeezestart", handleDown);
-            controllerObject.addEventListener("squeezeend", handleUp);
-            controllerObject.addEventListener("squeeze", handleSelect);
+            resources.cleanup(() => { delete controllerObject.__vrodosNativeClickBridge; });
+            resources.listen(controllerObject, "selectstart", handleDown);
+            resources.listen(controllerObject, "selectend", handleUp);
+            resources.listen(controllerObject, "select", handleSelect);
+            resources.listen(controllerObject, "squeezestart", handleDown);
+            resources.listen(controllerObject, "squeezeend", handleUp);
+            resources.listen(controllerObject, "squeeze", handleSelect);
             recordDiagnostic("debug", "Installed native WebXR controller click bridge.", {
                 controllerIndex: index
             });
@@ -1334,12 +1372,13 @@
 
     let controllerRuntimeInstallAttempts = 0;
     function installControllerRuntimeWhenReady() {
+        if (stopped) return;
         installControllerClickBridge();
         installNativeWebXRClickBridge();
         ensureSceneRayFeedbackComponent();
         controllerRuntimeInstallAttempts += 1;
         if (controllerRuntimeInstallAttempts < 24) {
-            window.setTimeout(installControllerRuntimeWhenReady, 250);
+            resources.timeout(installControllerRuntimeWhenReady, 250);
         }
     }
 
@@ -1349,23 +1388,24 @@
             return Boolean(scene);
         }
         scene.__vrodosControllerBridgeLifecycleBound = true;
-        scene.addEventListener("enter-vr", installControllerRuntimeWhenReady);
-        scene.addEventListener("loaded", installControllerRuntimeWhenReady);
+        resources.cleanup(() => { delete scene.__vrodosControllerBridgeLifecycleBound; });
+        resources.listen(scene, "enter-vr", installControllerRuntimeWhenReady);
+        resources.listen(scene, "loaded", installControllerRuntimeWhenReady);
         return true;
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
+        resources.listen(document, "DOMContentLoaded", () => {
             bindControllerBridgeLifecycle();
             installControllerRuntimeWhenReady();
-            window.setTimeout(maybePreloadSpatialUiRuntime, 250);
+            resources.timeout(maybePreloadSpatialUiRuntime, 250);
         }, { once: true });
     } else {
         bindControllerBridgeLifecycle();
         installControllerRuntimeWhenReady();
-        window.setTimeout(maybePreloadSpatialUiRuntime, 250);
+        resources.timeout(maybePreloadSpatialUiRuntime, 250);
     }
-    window.addEventListener("load", installControllerRuntimeWhenReady, { once: true });
-    window.addEventListener("load", () => window.setTimeout(maybePreloadSpatialUiRuntime, 250), { once: true });
-    window.setTimeout(bindControllerBridgeLifecycle, 500);
+    resources.listen(window, "load", installControllerRuntimeWhenReady, { once: true });
+    resources.listen(window, "load", () => resources.timeout(maybePreloadSpatialUiRuntime, 250), { once: true });
+    resources.timeout(bindControllerBridgeLifecycle, 500);
 })();

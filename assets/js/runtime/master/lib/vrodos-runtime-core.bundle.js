@@ -815,69 +815,6 @@ ${STOCHASTIC_GLSL}`).replace(
       renderBudgetPolicy
     };
   })();
-  window.VRODOSMaster = window.VRODOSMaster || {};
-  (function() {
-    const Master = window.VRODOSMaster;
-    if (!Master.RuntimeResources) {
-      Master.RuntimeResources = {};
-    }
-    const Resources = Master.RuntimeResources;
-    function disposeOne(resource, seen = /* @__PURE__ */ new Set()) {
-      if (!resource || seen.has(resource)) {
-        return;
-      }
-      seen.add(resource);
-      if (Array.isArray(resource)) {
-        resource.forEach((entry) => disposeOne(entry, seen));
-        return;
-      }
-      if (resource.geometry) {
-        disposeOne(resource.geometry, seen);
-      }
-      if (Array.isArray(resource.material)) {
-        resource.material.forEach((entry) => disposeOne(entry, seen));
-      } else if (resource.material) {
-        disposeOne(resource.material, seen);
-      }
-      if (typeof resource.dispose === "function") {
-        resource.dispose();
-      }
-    }
-    Resources.dispose = function(resource) {
-      disposeOne(resource);
-    };
-    Resources.createRegistry = function() {
-      const resources = [];
-      const listeners = [];
-      return {
-        track: function(resource) {
-          if (resource) {
-            resources.push(resource);
-          }
-          return resource;
-        },
-        listen: function(target, type, handler, options) {
-          if (!target || typeof target.addEventListener !== "function") {
-            return;
-          }
-          target.addEventListener(type, handler, options);
-          listeners.push({ target, type, handler, options });
-        },
-        disposeAll: function() {
-          const disposed = /* @__PURE__ */ new Set();
-          while (listeners.length) {
-            const listener = listeners.pop();
-            if (listener.target && typeof listener.target.removeEventListener === "function") {
-              listener.target.removeEventListener(listener.type, listener.handler, listener.options);
-            }
-          }
-          while (resources.length) {
-            disposeOne(resources.pop(), disposed);
-          }
-        }
-      };
-    };
-  })();
   (function() {
     window.VRODOSMasterUI = window.VRODOSMasterUI || {};
     const api = window.VRODOSMasterUI;
@@ -1944,6 +1881,36 @@ ${STOCHASTIC_GLSL}`).replace(
     };
   })();
   (function() {
+    const captureStreams = /* @__PURE__ */ new Set();
+    let recordingUrl = null;
+    let activeRecorder = null;
+    let pageHidden = false;
+    function releaseCapture(stream) {
+      if (!stream) return;
+      stream.getTracks().forEach((track) => {
+        track.onended = null;
+        if (track.readyState !== "ended") track.stop();
+      });
+      captureStreams.delete(stream);
+    }
+    function ownCapture(stream) {
+      if (pageHidden) {
+        releaseCapture(stream);
+        throw new Error("The capture page has been closed.");
+      }
+      captureStreams.add(stream);
+      return stream;
+    }
+    window.addEventListener("pagehide", () => {
+      pageHidden = true;
+      if (activeRecorder && activeRecorder.state !== "inactive") activeRecorder.stop();
+      captureStreams.forEach(releaseCapture);
+      if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+      recordingUrl = null;
+    });
+    window.addEventListener("pageshow", () => {
+      pageHidden = false;
+    });
     const apiPatternSingle = {
       ThresholdMin: 0.106,
       ThresholdMax: 0.13,
@@ -2199,26 +2166,33 @@ ${STOCHASTIC_GLSL}`).replace(
         });
       });
     }
-    function startRecording(stream) {
-      const recorder = new MediaRecorder(stream);
+    async function startRecording(stream) {
+      ownCapture(stream);
+      let recorder;
       const data = [];
-      recorder.ondataavailable = function(event) {
-        data.push(event.data);
-      };
-      recorder.start();
-      return Promise.all([
-        new Promise((resolve, reject) => {
-          recorder.onstop = resolve;
-          recorder.onerror = function(event) {
-            reject(event.name);
-          };
-        })
-      ]).then(() => data);
+      try {
+        recorder = new MediaRecorder(stream);
+        activeRecorder = recorder;
+        return await new Promise((resolve, reject) => {
+          recorder.ondataavailable = (event) => data.push(event.data);
+          recorder.onstop = () => resolve(data);
+          recorder.onerror = (event) => reject(event.error || new Error(event.name));
+          recorder.start();
+        });
+      } finally {
+        if (recorder) {
+          if (recorder.state !== "inactive") recorder.stop();
+          recorder.ondataavailable = null;
+          recorder.onstop = null;
+          recorder.onerror = null;
+        }
+        releaseCapture(stream);
+        if (activeRecorder === recorder) activeRecorder = null;
+      }
     }
     function stopRecording(stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-      });
+      if (activeRecorder && activeRecorder.state !== "inactive") activeRecorder.stop();
+      releaseCapture(stream);
       const recordBtn = VRODOSMaster.getElement("start-recording-btn", true);
       const downloadBtn = VRODOSMaster.getElement("download-recording-btn", true);
       const uploadBtn = VRODOSMaster.getElement("upload-recording-btn", true);
@@ -2313,10 +2287,12 @@ ${STOCHASTIC_GLSL}`).replace(
             audio: true
           }).then((stream) => {
             buttonEl.disabled = true;
+            ownCapture(stream);
             if (downloadButton) {
               downloadButton.style.visibility = "hidden";
             }
             if (!videoPreview) {
+              releaseCapture(stream);
               return null;
             }
             videoPreview.style.display = "block";
@@ -2331,16 +2307,24 @@ ${STOCHASTIC_GLSL}`).replace(
             });
           }).then(() => {
             if (!videoPreview || typeof videoPreview.captureStream !== "function") {
+              if (videoPreview) releaseCapture(videoPreview.srcObject);
               return null;
             }
             return startRecording(videoPreview.captureStream());
           }).then((recordedChunks) => {
-            if (!recordedChunks) {
+            if (videoPreview) {
+              releaseCapture(videoPreview.srcObject);
+              videoPreview.srcObject = null;
+              videoPreview.onplaying = null;
+            }
+            if (!recordedChunks || pageHidden) {
               return;
             }
             window.recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
             if (recording) {
-              recording.src = URL.createObjectURL(window.recordedBlob);
+              if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+              recordingUrl = URL.createObjectURL(window.recordedBlob);
+              recording.src = recordingUrl;
             }
             if (downloadButton && recording) {
               downloadButton.style.visibility = "visible";

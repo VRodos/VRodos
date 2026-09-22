@@ -294,6 +294,7 @@ function createVmContext() {
     vm.createContext(context);
 
     [
+        "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/vrodos_runtime_overlay.js",
         "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
         "assets/js/runtime/master/vrodos_runtime_profile_policy.js",

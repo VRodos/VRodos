@@ -429,6 +429,7 @@
       num_participants: { type: "number", default: 2 }
     },
     init: function() {
+      this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
       this.element = this.el;
       this.lastAvailabilityState = null;
       this.lastOccupancyCheck = 0;
@@ -448,7 +449,7 @@
       this.xIndicatorEntity.setAttribute("scale", "0.32 0.32 0.32");
       this.element.appendChild(this.checkIndicatorEntity);
       this.element.appendChild(this.xIndicatorEntity);
-      this.element.addEventListener("chat-availability-change", (evt) => {
+      this.resources.listen(this.element, "chat-availability-change", (evt) => {
         this.setAvailabilityState(evt.detail === "full" ? "full" : "available");
       });
       this.handleOccupancyChanged = (evt) => {
@@ -459,9 +460,9 @@
       document.addEventListener("chat-occupancy-changed", this.handleOccupancyChanged);
       this.positionIndicators = this.positionIndicators.bind(this);
       this.element.addEventListener("model-loaded", this.positionIndicators);
-      this.checkIndicatorEntity.addEventListener("model-loaded", this.disableIndicatorCulling.bind(this));
-      this.xIndicatorEntity.addEventListener("model-loaded", this.disableIndicatorCulling.bind(this));
-      setTimeout(this.positionIndicators, 500);
+      this.resources.listen(this.checkIndicatorEntity, "model-loaded", this.disableIndicatorCulling.bind(this));
+      this.resources.listen(this.xIndicatorEntity, "model-loaded", this.disableIndicatorCulling.bind(this));
+      this.resources.timeout(this.positionIndicators, 500);
       this.updateAvailability();
     },
     disableIndicatorCulling: function() {
@@ -532,6 +533,9 @@
       this.updateAvailability();
     },
     remove: function() {
+      this.resources.disposeAll();
+      this.checkIndicatorEntity.remove();
+      this.xIndicatorEntity.remove();
       this.element.removeEventListener("model-loaded", this.positionIndicators);
       document.removeEventListener("chat-occupancy-changed", this.handleOccupancyChanged);
     }

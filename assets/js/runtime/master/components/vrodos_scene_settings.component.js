@@ -2539,7 +2539,7 @@ AFRAME.registerComponent('scene-settings', {
     },
     handleXrEnter: function () {
         if (!this.isDirectVrPresentationActive()) {
-            window.setTimeout(() => {
+            this.runtimeResources.timeout(() => {
                 if (this.isDirectVrPresentationActive()) {
                     this.handleXrEnter();
                 }

@@ -8,6 +8,7 @@ AFRAME.registerComponent('info-panel', {
     schema: { type: "string", default: "" },
 
     init: function () {
+        this.removed = false;
         this.buttonEl = document.querySelector('#button_poi_' + this.data) || this.el;
         this.scen = document.querySelector('#aframe-scene-container');
         this.spatialPoiPanelApi = null;
@@ -27,6 +28,7 @@ AFRAME.registerComponent('info-panel', {
     },
 
     remove: function () {
+        this.removed = true;
         this.closeSpatialPoiPanel("component-remove");
         if (this.buttonEl) {
             this.buttonEl.removeEventListener('click', this.onMenuButtonClick);
@@ -227,6 +229,7 @@ AFRAME.registerComponent('info-panel', {
             if (loadSpatialUiRuntime && !this.spatialPoiLoadPending) {
                 this.spatialPoiLoadPending = true;
                 loadSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+                    if (this.removed) return;
                     this.spatialPoiLoadPending = false;
                     if (available && this.shouldUseVrOverlay()) {
                         this.openSpatialPoiPanel();

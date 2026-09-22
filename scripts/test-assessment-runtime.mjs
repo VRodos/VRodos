@@ -736,7 +736,8 @@ async function runAssessmentFreeSceneHarness() {
         fetch(url) { writes.push(url); return Promise.resolve({ ok: true }); }
     };
     sceneWindow.window = sceneWindow;
-    const sceneContext = vm.createContext({ window: sceneWindow, console, URLSearchParams, TextDecoder, Uint8Array });
+    const sceneContext = vm.createContext({ window: sceneWindow, document: { getElementById: () => null }, console, URLSearchParams, TextDecoder, Uint8Array });
+    vm.runInContext(readFileSync(resolve(root, "assets/js/runtime/master/vrodos_runtime_resources.js"), "utf8"), sceneContext);
     ["assessment-utils.js", "assessment-session-runtime.js", "assessment-cefr-runtime.js"].forEach((file) => {
         vm.runInContext(readFileSync(resolve(root, "assets/js/runtime/assessment", file), "utf8"), sceneContext, { filename: file });
     });
@@ -786,6 +787,13 @@ async function runAssessmentFreeSceneHarness() {
     assert(a1.getAttribute("visible") === "true" && a1.classList.contains("raycastable"), "Matching CEFR attachment stayed hidden");
     assert(b1.getAttribute("visible") === "false" && !b1.classList.contains("raycastable"), "Nonmatching CEFR attachment remained selectable");
     assert(writes.length === 0 && !session.hasIdentity(), "CEFR-only start created a results session");
+    cefr.unregister(a1);
+    assert(cefr.elements.length === 1 && cefr.elements[0] === b1, "Removed CEFR placements must not be retained");
+    cefr.unregister(b1);
+    assert(cefr.elements.length === 0 && cefr.resources === null && !cefr.promptScheduled, "Last CEFR removal must release presentation resources");
+    cefr.register(a1);
+    assert(cefr.resources && cefr.elements.length === 1, "CEFR must support a fresh placement after teardown");
+    cefr.unregister(a1);
 }
 
 // A headset user can page through the word bank, revise answers, and submit

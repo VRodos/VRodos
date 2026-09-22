@@ -18,10 +18,12 @@ const VRODOSVerticalMovementDefaults = {
     maxFrameDeltaSeconds: 0.05
 };
 
-AFRAME.registerComponent('vrodos-navmesh-helper', {
+function vrodosHiddenMeshHelper(useEntityRoot) { return {
     init: function () {
+        this.originalNodes = new Map();
+        this.originalRoots = new Map();
+        this.hiddenMaterial = null;
         this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
-        this.createHiddenNavmeshMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function (material) { return material; };
         this.el.addEventListener('model-loaded', this.applyHiddenNavmeshState);
 
         if (this.el.getObject3D('mesh')) {
@@ -29,70 +31,51 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
         }
     },
     applyHiddenNavmeshState: function () {
-        const meshRoot = this.el.getObject3D('mesh');
+        const meshRoot = this.el.getObject3D('mesh') || (useEntityRoot ? this.el.object3D : null);
         if (!meshRoot) {
             return;
         }
 
+        if (!this.originalRoots.has(meshRoot)) this.originalRoots.set(meshRoot, meshRoot.visible);
         meshRoot.visible = false;
         meshRoot.traverse((node) => {
-            if (!node.isMesh) {
+            if (!node.isMesh || this.originalNodes.has(node)) {
                 return;
             }
-
+            this.originalNodes.set(node, {
+                material: node.material, frustumCulled: node.frustumCulled,
+                castShadow: node.castShadow, receiveShadow: node.receiveShadow
+            });
             node.frustumCulled = false;
             node.castShadow = false;
             node.receiveShadow = false;
 
-            if (Array.isArray(node.material)) {
-                node.material = node.material.map((material) => this.createHiddenNavmeshMaterial(material));
-            } else if (node.material) {
-                node.material = this.createHiddenNavmeshMaterial(node.material);
+            if (node.material) {
+                if (!this.hiddenMaterial) this.hiddenMaterial = VRODOSMaster.createHiddenNavmeshMaterial();
+                node.material = this.hiddenMaterial;
             }
         });
     },
     remove: function () {
         this.el.removeEventListener('model-loaded', this.applyHiddenNavmeshState);
-    }
-});
-
-AFRAME.registerComponent('vrodos-collider-helper', {
-    init: function () {
-        this.applyHiddenColliderState = this.applyHiddenColliderState.bind(this);
-        this.createHiddenColliderMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function (material) { return material; };
-        this.el.addEventListener('model-loaded', this.applyHiddenColliderState);
-
-        if (this.el.getObject3D('mesh')) {
-            this.applyHiddenColliderState();
-        }
-    },
-    applyHiddenColliderState: function () {
-        const meshRoot = this.el.getObject3D('mesh') || this.el.object3D;
-        if (!meshRoot) {
-            return;
-        }
-
-        meshRoot.visible = false;
-        meshRoot.traverse((node) => {
-            if (!node.isMesh) {
-                return;
-            }
-
-            node.frustumCulled = false;
-            node.castShadow = false;
-            node.receiveShadow = false;
-
-            if (Array.isArray(node.material)) {
-                node.material = node.material.map((material) => this.createHiddenColliderMaterial(material));
-            } else if (node.material) {
-                node.material = this.createHiddenColliderMaterial(node.material);
+        this.originalNodes.forEach((original, node) => {
+            if (node.material === this.hiddenMaterial) {
+                node.material = original.material;
+                node.frustumCulled = original.frustumCulled;
+                node.castShadow = original.castShadow;
+                node.receiveShadow = original.receiveShadow;
             }
         });
-    },
-    remove: function () {
-        this.el.removeEventListener('model-loaded', this.applyHiddenColliderState);
+        this.originalRoots.forEach((visible, root) => { if (!root.visible) root.visible = visible; });
+        this.originalNodes.clear();
+        this.originalRoots.clear();
+        if (this.hiddenMaterial) this.hiddenMaterial.dispose();
+        this.hiddenMaterial = null;
     }
-});
+}; }
+
+AFRAME.registerComponent('vrodos-navmesh-helper', vrodosHiddenMeshHelper(false));
+AFRAME.registerComponent('vrodos-collider-helper', vrodosHiddenMeshHelper(true));
 
 
 AFRAME.registerComponent('vrodos-box-collider', {
@@ -172,6 +155,7 @@ AFRAME.registerComponent('custom-movement', {
         this.colliderRoots = [];
         this.blockerCollisionTargets = [];
         this.bvhTargets = new Set();
+        this.ownedBoundsTrees = new Map();
         this.bvhInstalled = false;
         this.navMeshBounds = new THREE.Box3();
         this.navMeshRootBounds = new THREE.Box3();
@@ -1395,6 +1379,9 @@ AFRAME.registerComponent('custom-movement', {
         this.scheduleDesktopFullscreenNavigationPoseRestore('desktop-fullscreen-exit');
     },
     handleEnterVr: function () {
+        if (this.removed) return;
+        if (this.entryResources) this.entryResources.disposeAll();
+        this.entryResources = window.VRODOSMaster.RuntimeResources.createRegistry();
         const runImmersiveEntry = () => {
             this.prepareVerticalMotionForEnterVr();
             this.resetImmersiveTurnSmoothing('enter-vr');
@@ -1409,7 +1396,7 @@ AFRAME.registerComponent('custom-movement', {
             this.immersiveLastPresentedShadowSyncAt = 0;
             this.immersiveLastPresentedShadowSyncTransformCount = -1;
             this.rememberNonImmersiveNavigationPosition(true);
-            window.setTimeout(() => {
+            this.entryResources.timeout(() => {
                 if (this.isImmersiveXrPresenting()) {
                     this.resetImmersiveWorldLocomotion();
                     this.ensureImmersiveRuntimeHelpers();
@@ -1418,7 +1405,7 @@ AFRAME.registerComponent('custom-movement', {
         };
 
         if (!this.isImmersiveXrPresenting()) {
-            window.setTimeout(() => {
+            this.entryResources.timeout(() => {
                 if (this.isImmersiveXrPresenting()) {
                     runImmersiveEntry();
                 }
@@ -1429,6 +1416,7 @@ AFRAME.registerComponent('custom-movement', {
         runImmersiveEntry();
     },
     handleExitVr: function () {
+        if (this.entryResources) this.entryResources.disposeAll();
         if (!this.immersiveWasPresenting && !this.isImmersiveXrPresenting()) {
             return;
         }
@@ -1612,6 +1600,8 @@ AFRAME.registerComponent('custom-movement', {
         ));
     },
     remove: function () {
+        this.removed = true;
+        if (this.entryResources) this.entryResources.disposeAll();
         if (this.thumbL) {
             this.thumbL.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
             this.thumbL.removeEventListener('thumbsticktouchend', this.handleThumbstickEnd);
@@ -1646,7 +1636,16 @@ AFRAME.registerComponent('custom-movement', {
         document.removeEventListener('MSFullscreenChange', this.handleDesktopFullscreenChange);
         this.clearImmersiveExitNavigationHandoffTimers();
         this.clearDesktopFullscreenPoseRestoreTimers();
-        if (this.immersiveShadowRefreshPendingTimer) {
+        this.ownedBoundsTrees.forEach((tree, geometry) => {
+            if (geometry.boundsTree === tree) geometry.boundsTree = null;
+        });
+        this.ownedBoundsTrees.clear();
+        this.bvhTargets.clear();
+        this.navMeshRoots = [];
+        this.navMeshCollisionTargets = [];
+        this.colliderRoots = [];
+        this.blockerCollisionTargets = [];
+        if (this.immersiveShadowRefreshPendingTimer !== null) {
             window.clearTimeout(this.immersiveShadowRefreshPendingTimer);
             this.immersiveShadowRefreshPendingTimer = null;
         }
@@ -3095,6 +3094,7 @@ AFRAME.registerComponent('custom-movement', {
         if (canBuildBvh && !node.geometry.boundsTree && !this.bvhTargets.has(node.uuid)) {
             try {
                 node.geometry.computeBoundsTree();
+                this.ownedBoundsTrees.set(node.geometry, node.geometry.boundsTree);
             } catch (err) {
                 if (!this.loggedBvhBuildWarning) {
                     const message = this.collisionBvhRequired

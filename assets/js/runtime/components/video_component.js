@@ -47,6 +47,9 @@ AFRAME.registerComponent('video-controls', {
     },
 
     init: function () {
+        this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
+        this.textureResources = null;
+        this.dialogResources = null;
         // IDs and Strings
         this.videoElementId = "video_" + this.data.id;
         this.video_id = "#" + this.videoElementId;
@@ -93,23 +96,18 @@ AFRAME.registerComponent('video-controls', {
         this.onDesktopFullscreenBlur = this.onDesktopFullscreenBlur.bind(this);
 
         // Event Listeners
-        document.querySelector('a-scene').addEventListener('exit-vr', this.removeVRTraces);
+        this.resources.listen(document.querySelector('a-scene'), 'exit-vr', this.removeVRTraces);
 
-        if (this.dialogVideo) {
-            this.dialogVideo.addEventListener('play', () => this.trackEvent('poivideo_video_play'));
-            this.dialogVideo.addEventListener('pause', () => this.trackEvent('poivideo_video_pause'));
-        }
-
-        this.video.addEventListener("ended", () => this.syncUI());
-        this.video.addEventListener("play", () => {
+        this.resources.listen(this.video, "ended", () => this.syncUI());
+        this.resources.listen(this.video, "play", () => {
             this.updateInlinePlayHint();
             this.updateDesktopFullscreenInlineGuard();
         });
-        this.video.addEventListener("pause", () => {
+        this.resources.listen(this.video, "pause", () => {
             this.updateInlinePlayHint();
             this.stopDesktopFullscreenInlineGuard(false);
         });
-        this.video.addEventListener("ended", () => this.stopDesktopFullscreenInlineGuard(false));
+        this.resources.listen(this.video, "ended", () => this.stopDesktopFullscreenInlineGuard(false));
 
         if (this.videoSourceUrl) {
             this.videoDisplay.addEventListener('click', this.onVideoClick);
@@ -289,6 +287,7 @@ AFRAME.registerComponent('video-controls', {
         }
 
         var videoEl = document.createElement("video");
+        this.ownedVideo = videoEl;
         videoEl.id = this.videoElementId;
         videoEl.setAttribute("crossorigin", "anonymous");
         videoEl.setAttribute("playsinline", "");
@@ -368,7 +367,7 @@ AFRAME.registerComponent('video-controls', {
             this.videoDisplay.classList.add("raycastable");
         }
         this.setVideoDisplayShadowState(!this.useFlatMediaMaterial);
-        requestAnimationFrame(() => this.tuneVideoTexture());
+        this.resources.frame(() => this.tuneVideoTexture());
         if (!this.useFlatMediaMaterial) {
             this.requestSceneLightingRefresh();
         }
@@ -416,16 +415,19 @@ AFRAME.registerComponent('video-controls', {
     bindInlineVideoTexture: function () {
         if (!this.videoDisplay || !this.video) return;
         this.applyWorldVideoMaterial();
-        requestAnimationFrame(() => this.tuneVideoTexture());
     },
 
     activateInlineVideoTexture: function () {
         if (!this.videoDisplay || !this.video) return;
+        if (this.textureResources) this.textureResources.disposeAll();
+        const resources = this.textureResources = window.VRODOSMaster.RuntimeResources.createRegistry();
 
         const bind = () => {
             if (this.video.readyState >= 3 && this.video.videoWidth > 0) {
                 if (typeof this.video.requestVideoFrameCallback === "function") {
-                    this.video.requestVideoFrameCallback(() => this.bindInlineVideoTexture());
+                    resources.defer(() => this.bindInlineVideoTexture(),
+                        callback => this.video.requestVideoFrameCallback(callback),
+                        handle => this.video.cancelVideoFrameCallback(handle));
                 } else {
                     this.bindInlineVideoTexture();
                 }
@@ -443,8 +445,8 @@ AFRAME.registerComponent('video-controls', {
             }
         };
 
-        this.video.addEventListener("loadeddata", onLoaded);
-        this.video.addEventListener("canplay", onLoaded);
+        resources.listen(this.video, "loadeddata", onLoaded);
+        resources.listen(this.video, "canplay", onLoaded);
     },
 
     primeVideoForPlayback: function () {
@@ -579,11 +581,26 @@ AFRAME.registerComponent('video-controls', {
 
         const closeDialog = () => {
             this.stopDialogPlayback(video_element);
-            if (videoDialog) videoDialog.removeEventListener('close', closeDialog);
+            this.dialogResources.disposeAll();
+            this.dialogResources = null;
         };
 
         if (videoDialog) {
-            videoDialog.addEventListener('close', closeDialog);
+            // The shared DOM video belongs to the currently opened placement only.
+            if (videoDialog.vrodosVideoOwner && videoDialog.vrodosVideoOwner !== this) {
+                const previousOwner = videoDialog.vrodosVideoOwner;
+                previousOwner.dialogResources.disposeAll();
+                previousOwner.dialogResources = null;
+            }
+            if (this.dialogResources) this.dialogResources.disposeAll();
+            const resources = this.dialogResources = window.VRODOSMaster.RuntimeResources.createRegistry();
+            videoDialog.vrodosVideoOwner = this;
+            resources.cleanup(() => {
+                if (videoDialog.vrodosVideoOwner === this) delete videoDialog.vrodosVideoOwner;
+            });
+            resources.listen(videoDialog, 'close', closeDialog);
+            resources.listen(video_element, 'play', () => this.trackEvent('poivideo_video_play'));
+            resources.listen(video_element, 'pause', () => this.trackEvent('poivideo_video_pause'));
             if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
                 window.VRODOSMasterUI.showDialog(videoDialog);
             } else if (typeof videoDialog.showModal === 'function') {
@@ -626,7 +643,21 @@ AFRAME.registerComponent('video-controls', {
     },
 
     remove: function () {
+        this.resources.disposeAll();
+        if (this.textureResources) this.textureResources.disposeAll();
+        if (this.dialogResources) {
+            this.dialogResources.disposeAll();
+            this.dialogResources = null;
+            this.stopVideoElement(this.dialogVideo);
+        }
         this.stopDesktopFullscreenInlineGuard(true);
+        this.stopVideoElement(this.video);
+        if (this.ownedVideo) {
+            this.ownedVideo.removeAttribute('src');
+            this.ownedVideo.load();
+            this.ownedVideo.remove();
+            this.ownedVideo = null;
+        }
 
         const scene = document.querySelector('a-scene');
         if (scene) {
@@ -699,5 +730,11 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
         this.el.object3D.renderOrder = renderOrder;
         this.el.object3D.frustumCulled = false;
         this.el.setObject3D('mesh', mesh);
+        this.mesh = mesh;
+    },
+    remove: function () {
+        if (this.el.getObject3D('mesh') === this.mesh) this.el.removeObject3D('mesh');
+        window.VRODOSMaster.RuntimeResources.dispose(this.mesh);
+        this.mesh = null;
     }
 });

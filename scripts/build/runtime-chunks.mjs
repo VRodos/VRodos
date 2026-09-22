@@ -19,6 +19,7 @@ export const runtimeBuildChunks = Object.freeze([
     order: 10,
     features: ['scene-components', 'poi', 'media', 'audio', 'assessment'],
     sourceFiles: [
+      'master/vrodos_runtime_resources.js',
       'vrodos_runtime_overlay.js',
       'components/vrodos_controls_hint.component.js',
       'highlight_img.js',
@@ -55,6 +56,7 @@ export const runtimeBuildChunks = Object.freeze([
     label: 'Networked scene components',
     output: 'vrodos-runtime-networked-components.bundle.js',
     order: 15,
+    dependencies: ['scene-components'],
     features: ['networked-components', 'chat', 'availability'],
     activationCapabilities: ['networking'],
     sourceFiles: [
@@ -68,7 +70,7 @@ export const runtimeBuildChunks = Object.freeze([
     label: 'Core runtime',
     output: 'vrodos-runtime-core.bundle.js',
     order: 20,
-    dependencies: ['three-addons-vendor'],
+    dependencies: ['scene-components', 'three-addons-vendor'],
     features: ['runtime-core', 'ui', 'rendering', 'quality-profiles', 'scene-probe'],
     sourceFiles: [
       generatedRuntimeContractPath,
@@ -77,7 +79,6 @@ export const runtimeBuildChunks = Object.freeze([
       masterSource('vrodos_runtime_settings_helpers.js'),
       masterSource('vrodos_runtime_profile_policy.js'),
       masterSource('vrodos_runtime_render_policy.js'),
-      masterSource('vrodos_runtime_resources.js'),
       masterSource('vrodos_ui_helpers.js'),
       masterSource('vrodos_hardware_capabilities.js'),
       masterSource('vrodos_hardware_diagnostics.js'),

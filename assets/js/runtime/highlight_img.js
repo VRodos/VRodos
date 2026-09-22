@@ -24,11 +24,6 @@ AFRAME.registerComponent('highlight', {
         this.el.addEventListener('raycaster-intersection-cleared', this.onRaycasterIntersectionCleared);
         this.el.addEventListener('click', this.onClick);
 
-        this.el.addEventListener("animationcomplete", e => {
-            if (e.detail.name == "animation__scale") {
-                console.log(e.detail.name + " Completed");
-            }
-        });
     },
 
     onClick: function (evt) {

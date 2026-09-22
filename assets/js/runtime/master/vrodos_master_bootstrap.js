@@ -2,6 +2,37 @@
  * VRodos Master runtime bootstrap.
  */
 (function () {
+    const captureStreams = new Set();
+    let recordingUrl = null;
+    let activeRecorder = null;
+    let pageHidden = false;
+
+    function releaseCapture(stream) {
+        if (!stream) return;
+        stream.getTracks().forEach(track => {
+            track.onended = null;
+            if (track.readyState !== 'ended') track.stop();
+        });
+        captureStreams.delete(stream);
+    }
+
+    function ownCapture(stream) {
+        if (pageHidden) {
+            releaseCapture(stream);
+            throw new Error('The capture page has been closed.');
+        }
+        captureStreams.add(stream);
+        return stream;
+    }
+
+    window.addEventListener('pagehide', () => {
+        pageHidden = true;
+        if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop();
+        captureStreams.forEach(releaseCapture);
+        if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+        recordingUrl = null;
+    });
+    window.addEventListener('pageshow', () => { pageHidden = false; });
     const apiPatternSingle = {
         ThresholdMin: 0.106,
         ThresholdMax: 0.13,
@@ -304,29 +335,34 @@
         });
     }
 
-    function startRecording(stream) {
-        const recorder = new MediaRecorder(stream);
+    async function startRecording(stream) {
+        ownCapture(stream);
+        let recorder;
         const data = [];
-
-        recorder.ondataavailable = function (event) {
-            data.push(event.data);
-        };
-        recorder.start();
-
-        return Promise.all([
-            new Promise((resolve, reject) => {
-                recorder.onstop = resolve;
-                recorder.onerror = function (event) {
-                    reject(event.name);
-                };
-            })
-        ]).then(() => data);
+        try {
+            recorder = new MediaRecorder(stream);
+            activeRecorder = recorder;
+            return await new Promise((resolve, reject) => {
+                recorder.ondataavailable = event => data.push(event.data);
+                recorder.onstop = () => resolve(data);
+                recorder.onerror = event => reject(event.error || new Error(event.name));
+                recorder.start();
+            });
+        } finally {
+            if (recorder) {
+                if (recorder.state !== 'inactive') recorder.stop();
+                recorder.ondataavailable = null;
+                recorder.onstop = null;
+                recorder.onerror = null;
+            }
+            releaseCapture(stream);
+            if (activeRecorder === recorder) activeRecorder = null;
+        }
     }
 
     function stopRecording(stream) {
-        stream.getTracks().forEach((track) => {
-            track.stop();
-        });
+        if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop();
+        releaseCapture(stream);
 
         const recordBtn = VRODOSMaster.getElement('start-recording-btn', true);
         const downloadBtn = VRODOSMaster.getElement('download-recording-btn', true);
@@ -434,11 +470,13 @@
                     audio: true
                 }).then((stream) => {
                     buttonEl.disabled = true;
+                    ownCapture(stream);
                     if (downloadButton) {
                         downloadButton.style.visibility = 'hidden';
                     }
 
                     if (!videoPreview) {
+                        releaseCapture(stream);
                         return null;
                     }
 
@@ -455,19 +493,27 @@
                     });
                 }).then(() => {
                     if (!videoPreview || typeof videoPreview.captureStream !== 'function') {
+                        if (videoPreview) releaseCapture(videoPreview.srcObject);
                         return null;
                     }
 
                     return startRecording(videoPreview.captureStream());
                 }).then((recordedChunks) => {
-                    if (!recordedChunks) {
+                    if (videoPreview) {
+                        releaseCapture(videoPreview.srcObject);
+                        videoPreview.srcObject = null;
+                        videoPreview.onplaying = null;
+                    }
+                    if (!recordedChunks || pageHidden) {
                         return;
                     }
 
                     window.recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
 
                     if (recording) {
-                        recording.src = URL.createObjectURL(window.recordedBlob);
+                        if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+                        recordingUrl = URL.createObjectURL(window.recordedBlob);
+                        recording.src = recordingUrl;
                     }
 
                     if (downloadButton && recording) {

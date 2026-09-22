@@ -42,33 +42,61 @@ window.VRODOSMaster = window.VRODOSMaster || {};
 
     Resources.createRegistry = function () {
         const resources = [];
-        const listeners = [];
+        const cleanups = new Set();
+        let released = false;
+
+        function cleanup(callback) {
+            const release = () => {
+                if (!cleanups.delete(release)) return;
+                callback();
+            };
+            if (released) callback();
+            else cleanups.add(release);
+            return release;
+        }
+
+        function defer(callback, schedule, cancel) {
+            if (released) return () => {};
+            let pending = true;
+            const handle = schedule((...args) => {
+                if (!pending || released) return;
+                pending = false;
+                cleanups.delete(release);
+                callback(...args);
+            });
+            const release = cleanup(() => { pending = false; cancel(handle); });
+            return release;
+        }
 
         return {
+            cleanup,
+            defer,
+            timeout: (callback, delay) => defer(callback, run => window.setTimeout(run, delay), handle => window.clearTimeout(handle)),
+            frame: callback => defer(callback, run => window.requestAnimationFrame(run), handle => window.cancelAnimationFrame(handle)),
             track: function (resource) {
                 if (resource) {
-                    resources.push(resource);
+                    if (released) disposeOne(resource);
+                    else resources.push(resource);
                 }
                 return resource;
             },
             listen: function (target, type, handler, options) {
-                if (!target || typeof target.addEventListener !== 'function') {
+                if (released || !target || typeof target.addEventListener !== 'function') {
                     return;
                 }
                 target.addEventListener(type, handler, options);
-                listeners.push({ target, type, handler, options });
+                return cleanup(() => target.removeEventListener(type, handler, options));
             },
             disposeAll: function () {
+                if (released) return;
+                released = true;
                 const disposed = new Set();
-                while (listeners.length) {
-                    const listener = listeners.pop();
-                    if (listener.target && typeof listener.target.removeEventListener === 'function') {
-                        listener.target.removeEventListener(listener.type, listener.handler, listener.options);
-                    }
+                for (const release of [...cleanups]) {
+                    try { release(); } catch (error) { console.warn('[VRodos] Resource cleanup failed:', error); }
                 }
 
                 while (resources.length) {
-                    disposeOne(resources.pop(), disposed);
+                    try { disposeOne(resources.pop(), disposed); } catch (error) { console.warn('[VRodos] Resource disposal failed:', error); }
                 }
             }
         };

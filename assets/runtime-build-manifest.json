@@ -19,6 +19,7 @@
         "assessment"
       ],
       "sourceFiles": [
+        "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/vrodos_runtime_overlay.js",
         "assets/js/runtime/components/vrodos_controls_hint.component.js",
         "assets/js/runtime/highlight_img.js",
@@ -70,7 +71,9 @@
       "file": "vrodos-runtime-networked-components.bundle.js",
       "src": "js/master/lib/vrodos-runtime-networked-components.bundle.js",
       "order": 15,
-      "dependencies": [],
+      "dependencies": [
+        "scene-components"
+      ],
       "features": [
         "networked-components",
         "chat",
@@ -94,6 +97,7 @@
       "src": "js/master/lib/vrodos-runtime-core.bundle.js",
       "order": 20,
       "dependencies": [
+        "scene-components",
         "three-addons-vendor"
       ],
       "features": [
@@ -110,7 +114,6 @@
         "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
         "assets/js/runtime/master/vrodos_runtime_profile_policy.js",
         "assets/js/runtime/master/vrodos_runtime_render_policy.js",
-        "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/master/vrodos_ui_helpers.js",
         "assets/js/runtime/master/vrodos_hardware_capabilities.js",
         "assets/js/runtime/master/vrodos_hardware_diagnostics.js",

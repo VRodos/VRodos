@@ -52,6 +52,16 @@ for (const attached of [true, false]) {
     if (!attached) { effectPass.effects = []; effectPass.dispose(); }
 }
 const start = source.indexOf('    function shouldUsePmndrsNativeHeadset(');
+// A pass can be constructed without reaching composer.addPass; its effects still have one owner.
+{
+    const bloom = new OwnedEffect('bloom'), tone = new OwnedEffect('tone'), orphan = new OwnedEffect('orphan');
+    const pass = new EffectPass(new THREE.PerspectiveCamera(), bloom, tone);
+    const partial = { pmndrsEffectPass: pass, pmndrsBloomEffect: bloom,
+        pmndrsComposer: { passes: [], dispose() {} } };
+    lifecycle.disposePmndrsComposerResources(partial, [bloom, tone, orphan]);
+    lifecycle.disposePmndrsComposerResources(partial);
+    for (const effect of [bloom, tone, orphan]) assert.equal(disposalCounts.get(effect), 1);
+}
 const end = source.indexOf('    function isPmndrsXrStereoComposerRequested(', start);
 const context = vm.createContext({
     THREE,
