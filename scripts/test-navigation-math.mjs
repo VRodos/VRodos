@@ -109,6 +109,103 @@ function createMovementHarness(options = {}) {
 
 for (const withGround of [false, true]) {
     const nav = createMovementHarness();
+    const groundY = withGround ? 2 : 0;
+    let now = 10;
+    let viewerY = 1.6;
+    let frameReady = false;
+    const resetListeners = new Set();
+    const referenceSpace = {
+        addEventListener(type, listener) { if (type === 'reset') resetListeners.add(listener); },
+        removeEventListener(type, listener) { if (type === 'reset') resetListeners.delete(listener); },
+        reset() { for (const listener of resetListeners) listener(); }
+    };
+    const frame = {
+        getViewerPose() {
+            return { transform: { position: { x: 0.5, y: viewerY, z: -0.5 } } };
+        }
+    };
+    nav.sceneEl = {
+        renderer: { xr: {
+            isPresenting: true,
+            getFrame: () => frameReady ? frame : null,
+            getReferenceSpace: () => referenceSpace
+        } },
+        systems: { webxr: { sessionReferenceSpaceType: 'local-floor' } }
+    };
+    nav.immersiveViewerPosePosition = new THREE.Vector3();
+    nav.immersiveSessionAnchorPosition = new THREE.Vector3();
+    nav.immersivePhysicalAnchorPosition = new THREE.Vector3();
+    nav.immersiveLiveAnchorDelta = new THREE.Vector3();
+    nav.immersiveVirtualNavPosition = new THREE.Vector3(4, groundY + 1.6, 6);
+    nav.immersiveRenderOffset = new THREE.Vector3();
+    nav.immersiveRenderQuaternion = new THREE.Quaternion();
+    nav.heightOffset = 1.6;
+    nav.hasImmersiveSessionAnchor = false;
+    nav.immersiveReferenceSpace = null;
+    nav.immersiveReferenceSpaceResetPending = false;
+    nav.immersiveLastViewerPoseY = null;
+    nav.immersiveLastViewerPoseAt = 0;
+    nav.immersiveExitPending = false;
+    nav.handleImmersiveReferenceSpaceReset = nav.handleImmersiveReferenceSpaceReset.bind(nav);
+    nav.getRuntimeNow = () => now;
+    nav.getImmersivePhysicalAnchorPosition = (target) => target.set(0.5, viewerY, -0.5);
+    nav.applyImmersiveRenderTransform = () => { nav.updateImmersiveRenderTransformState(); return true; };
+    nav.requestShadowMapRefresh = () => {};
+    nav.areCollisionsEnabled = () => withGround;
+
+    let rigResetCount = 0;
+    nav.restoreImmersiveWorldBaseTransforms = () => {};
+    nav.resetImmersiveRigTransform = () => { rigResetCount++; };
+    assert(!nav.resetImmersiveWorldLocomotion(), 'world initialization must wait for a current XR frame');
+    assert(rigResetCount === 0, 'unavailable pose must not reset the rig');
+    assert(!nav.captureImmersiveSessionAnchor('entry'), 'entry must wait for a current XR frame');
+    assert(!nav.hasImmersiveSessionAnchor, 'unavailable pose must not lock an anchor');
+    frameReady = true;
+    assert(nav.captureImmersiveSessionAnchor('entry'), 'current XR pose should initialize the anchor');
+    assert(resetListeners.size === 1, 'entry should observe the active reference space');
+    nav.applyImmersiveRenderTransform();
+    const floorInXr = () => groundY + nav.immersiveRenderOffset.y;
+    assertNear(viewerY - floorInXr(), 1.6, 'entry aligns floor to headset eye height');
+
+    now += 16;
+    viewerY = 1.5;
+    assert(!nav.observeImmersiveViewerPose(), 'ordinary head movement must not rebase the floor');
+    assertNear(nav.immersiveSessionAnchorPosition.y, 1.6, 'ordinary head movement preserves the anchor');
+    now += 16;
+    viewerY = 2.5;
+    assert(nav.observeImmersiveViewerPose(), 'a one-frame tracking jump should rebase the floor');
+    assertNear(nav.immersiveSessionAnchorPosition.y, 2.6, 'jump rebase uses the pose delta');
+    assertNear(viewerY - floorInXr(), 1.5, 'floor remains aligned after a tracking jump');
+    assertNear(nav.immersiveVirtualNavPosition.y, groundY + 1.6, 'rebase preserves authored navigation height');
+    assertNear(nav.immersiveVirtualNavPosition.x, 4, 'rebase preserves horizontal navigation');
+    assertNear(nav.immersiveRenderYaw, 0, 'rebase preserves facing');
+
+    now += 180;
+    referenceSpace.reset();
+    viewerY = 3.5;
+    assert(nav.observeImmersiveViewerPose(), 'reference-space reset should rebase after a delayed frame');
+    assert(nav.lastImmersiveAnchorCorrection.reason === 'reference-space-reset', 'reset reason is diagnosed');
+    assertNear(viewerY - floorInXr(), 1.5, 'floor remains aligned after reference-space reset');
+
+    nav.isImmersiveXrPresenting = () => false;
+    nav.immersiveWasPresenting = false;
+    nav.handleExitVr();
+    assert(resetListeners.size === 0, 'VR exit removes the reference-space listener');
+    assert(nav.immersiveLastViewerPoseY === null, 'VR exit clears pose history');
+    assert(!nav.getCurrentImmersiveViewerPosePosition(), 'a half-active exiting session must not recapture a pose');
+    nav.clearImmersiveSessionAnchor();
+    nav.isImmersiveXrPresenting = () => true;
+    nav.immersiveExitPending = false;
+    now += 20;
+    viewerY = 1.6;
+    assert(nav.captureImmersiveSessionAnchor('second-entry'), 'a second session captures a fresh pose');
+    nav.applyImmersiveRenderTransform();
+    assertNear(viewerY - floorInXr(), 1.6, 'second session does not inherit the prior floor offset');
+    nav.clearImmersivePoseTracking();
+}
+
+for (const withGround of [false, true]) {
+    const nav = createMovementHarness();
     let physicalHeight = 1.1;
     const floorY = withGround ? 2 : 0;
     nav.immersiveVirtualNavPosition = new THREE.Vector3(4, floorY + 1.1, 6);
