@@ -471,8 +471,14 @@ VRODOS.exporter.SceneExporter = class {
 
     processAvatar(o, entryObject) {
         const quatCombined = new THREE.Quaternion();
-        const pitchRotation = VRODOS.utils.sceneSafeNumber(o.rotation.x, 0);
-        const yawRotation = VRODOS.utils.sceneSafeNumber(o.rotation.y, 0);
+        const previewRotation = VRODOS.editor.avatarControlsEnabled && VRODOS.editor.originalDirectorRot
+            ? VRODOS.editor.originalDirectorRot : o.rotation;
+        if (VRODOS.editor.avatarControlsEnabled && VRODOS.editor.originalDirectorPos) {
+            const position = VRODOS.editor.originalDirectorPos;
+            entryObject.position = [position.x, position.y, position.z];
+        }
+        const pitchRotation = VRODOS.utils.sceneSafeNumber(previewRotation.x, 0);
+        const yawRotation = VRODOS.utils.sceneSafeNumber(previewRotation.y, 0);
         const camEulerCombined = new THREE.Euler(-pitchRotation, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatCombined.setFromEuler(camEulerCombined);
 

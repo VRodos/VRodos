@@ -18,6 +18,7 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
 	[
 		'editorLoad',
 		'vrodosAssetOriginMode',
+		'vrodos_environment_asset',
 		'vrodosCollisionBounds'
 	].forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(resourcesGLB, key)) {
@@ -138,6 +139,7 @@ function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
         VRODOS.editor.sceneRegistry.invalidateBounds(finalObject);
         if (typeof VRODOS.loader.prepareLoadedGlbRootMaterial === 'function') VRODOS.loader.prepareLoadedGlbRootMaterial(finalObject);
         if (VRODOS.editor.selection.get() === finalObject && typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(finalObject);
+        if (VRODOS.editor.selection.get() === finalObject) VRODOS.editor.transforms.syncProxyToObject(finalObject);
         if (typeof VRODOS.ui.updateHierarchyPreparationStatus === 'function') VRODOS.ui.updateHierarchyPreparationStatus(finalObject);
     }
     finalObject.isSelectableMesh = true;

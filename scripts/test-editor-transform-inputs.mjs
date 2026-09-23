@@ -101,4 +101,53 @@ for (const [index, property, amount] of [[0, 'dg_t1', 0.4], [3, 'dg_r1', 0.4], [
     assert.equal(context.vrodosGuiKeyboardEditing, 0);
     assert.equal(context._isDragScrubbing, false);
 }
+
+const transforms = context.VRODOS.editor.transforms;
+const environment = new THREE.Group();
+environment.immerse_object_type = 'vr-environment';
+environment.vrodosCollisionBounds = { center: [10, 2, -4] };
+environment.position.set(3, 0, 5);
+environment.scale.setScalar(1.5);
+const proxy = new THREE.Object3D();
+const localCenter = new THREE.Vector3(10, 2, -4);
+transforms.positionProxyAtObjectPivot(proxy, environment);
+assert(proxy.position.distanceTo(new THREE.Vector3(18, 3, -1)) < 1e-9, 'Environment gizmo must use the source bounds center.');
+assert.deepEqual(environment.position.toArray(), [3, 0, 5], 'Centering the gizmo must preserve scene placement.');
+
+environment.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+transforms.positionObjectAtProxyPivot(environment, proxy);
+environment.updateMatrixWorld(true);
+assert(environment.localToWorld(localCenter.clone()).distanceTo(proxy.position) < 1e-9, 'Rotating with the gizmo must keep the environment center fixed.');
+
+environment.scale.setScalar(2);
+transforms.positionObjectAtProxyPivot(environment, proxy);
+environment.updateMatrixWorld(true);
+assert(environment.localToWorld(localCenter.clone()).distanceTo(proxy.position) < 1e-9, 'Scaling with the gizmo must keep the environment center fixed.');
+
+proxy.position.x += 7;
+transforms.positionObjectAtProxyPivot(environment, proxy);
+environment.updateMatrixWorld(true);
+assert(environment.localToWorld(localCenter.clone()).distanceTo(proxy.position) < 1e-9, 'Moving the gizmo must move the environment center with it.');
+
+const environmentWithoutSourceBounds = new THREE.Group();
+environmentWithoutSourceBounds.immerse_object_type = 'vr-environment';
+const visibleKitchen = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 6));
+visibleKitchen.position.set(9, 1, -3);
+environmentWithoutSourceBounds.add(visibleKitchen);
+transforms.positionProxyAtObjectPivot(proxy, environmentWithoutSourceBounds);
+assert(proxy.position.distanceTo(visibleKitchen.position) < 1e-9, 'Loaded geometry must center the gizmo when source bounds are unavailable.');
+
+const regularObject = new THREE.Group();
+regularObject.position.set(4, 5, 6);
+regularObject.vrodosCollisionBounds = { center: [10, 2, -4] };
+transforms.positionProxyAtObjectPivot(proxy, regularObject);
+assert(proxy.position.distanceTo(regularObject.position) < 1e-9, 'Other assets must retain their authored gizmo origin.');
+
+regularObject.vrodos_environment_asset = 'true';
+transforms.positionProxyAtObjectPivot(proxy, regularObject);
+assert(proxy.position.distanceTo(new THREE.Vector3(14, 7, 2)) < 1e-9, 'A VR environment asset placed manually must use the same centered gizmo.');
+
+environment.vrodosAssetOriginMode = 'bounds-center';
+transforms.positionProxyAtObjectPivot(proxy, environment);
+assert(proxy.position.distanceTo(environment.position) < 1e-9, 'Already centered environment assets must not receive a second offset.');
 console.log('Editor transform input tests passed.');

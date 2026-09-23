@@ -128,4 +128,28 @@ assert.ok(frameDistance < initial3DOffset.length(), 'new-object framing must mov
 assert.ok(frameDistance > 8, 'new-object framing must leave the object visible');
 assert.ok(envir.orbitTarget2D.equals(building.position), 'framing must also center the inactive top view');
 
+const perspectivePosition = envir.cameraOrbit3D.position.clone();
+const perspectiveTarget = envir.orbitControls.target.clone();
+const expectedHeight = frameDistance * 2 * Math.tan(Three.MathUtils.degToRad(envir.VIEW_ANGLE) / 2);
+assert.equal(envir.setOrbitProjection('orthographic'), true);
+assert.equal(envir.cameraOrbit, envir.cameraOrbitOrtho3D);
+assert.ok(envir.cameraOrbit.position.equals(perspectivePosition), 'switching projection must preserve camera position');
+assert.ok(envir.orbitControls.target.equals(perspectiveTarget), 'switching projection must preserve the target');
+assert.ok(Math.abs((envir.cameraOrbit.top - envir.cameraOrbit.bottom) / envir.cameraOrbit.zoom - expectedHeight) < 1e-8, 'projection switch must preserve apparent scale at the target');
+assert.equal(transformCamera, envir.cameraOrbitOrtho3D, 'transform controls must use the active orthographic camera');
+
+envir.cameraOrbit.zoom = 2;
+envir.cameraOrbit.updateProjectionMatrix();
+envir.setOrbitProjection('perspective');
+assert.ok(Math.abs(envir.cameraOrbit.position.distanceTo(perspectiveTarget) - frameDistance / 2) < 1e-8, 'orthographic zoom must become perspective distance');
+envir.setOrbitProjection('orthographic');
+const orthoZoom = envir.cameraOrbit.zoom;
+envir.setOrbitCameraMode(true);
+assert.equal(envir.setOrbitProjection('perspective'), false, '2D top view must not change the 3D projection');
+envir.setOrbitCameraMode(false);
+assert.equal(envir.cameraOrbit, envir.cameraOrbitOrtho3D, 'returning from 2D must restore the chosen 3D projection');
+assert.equal(envir.cameraOrbit.zoom, orthoZoom, '2D top view must not alter 3D orthographic scale');
+envir.frameOrbitObject(building);
+assert.ok(Number.isFinite(envir.cameraOrbit.zoom) && envir.cameraOrbit.zoom > 0, 'orthographic object framing must set a usable zoom');
+
 console.log('Editor camera navigation test passed.');

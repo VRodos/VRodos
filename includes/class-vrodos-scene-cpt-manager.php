@@ -296,6 +296,9 @@ class VRodos_Scene_CPT_Manager {
 			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
 			'is_shared'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 		];
+		if ( VRodos_Core_Manager::is_vr_environment_asset( $asset_id ) ) {
+			$metadata['vrodos_environment_asset'] = true;
+		}
 		$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
 		if ( '' !== $glb_url ) {
 			$bounds = VRodos_Asset_Optimization_Manager::collision_bounds_for_asset( $asset_id );

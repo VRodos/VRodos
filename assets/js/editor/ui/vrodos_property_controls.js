@@ -1461,12 +1461,16 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             const boostedDelta = new THREE.Quaternion().setFromAxisAngle(axis, angle * window.vrodosRotationSensitivity);
             
             realObject.quaternion.copy(dragState.qRealStart).multiply(boostedDelta);
+            VRODOS.editor.transforms.positionObjectAtProxyPivot(realObject, attachedObject);
             realObject.updateMatrix();
             realObject.updateMatrixWorld();
         } else {
             // 1:1 Sync for Translation, Scale, or non-proxy fallback
             realObject.position.copy(attachedObject.position);
             realObject.scale.copy(attachedObject.scale);
+            if (isWorkingOnProxy) {
+                VRODOS.editor.transforms.positionObjectAtProxyPivot(realObject, attachedObject);
+            }
             if (!isWorkingOnProxy) {
                 realObject.quaternion.copy(attachedObject.quaternion);
             }
@@ -1476,7 +1480,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     } else {
         // IDLE STATE: Handles follow asset
         if (isWorkingOnProxy) {
-            attachedObject.position.copy(realObject.position);
+            VRODOS.editor.transforms.positionProxyAtObjectPivot(attachedObject, realObject);
             attachedObject.quaternion.copy(realObject.quaternion);
             attachedObject.scale.copy(realObject.scale);
             attachedObject.updateMatrix();
@@ -1604,6 +1608,11 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             }
             VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
+    }
+
+    if (isScaling && isWorkingOnProxy) {
+        VRODOS.editor.transforms.positionObjectAtProxyPivot(realObject, attachedObject);
+        realObject.updateMatrixWorld(true);
     }
 
 }

@@ -218,6 +218,13 @@ class VRodos_Pages_Manager {
 			$single_project_asset_list = true;
 			$current_game_project_id   = absint( $_GET['vrodos_project_id'] );
 			$current_game_project_post = get_post( $current_game_project_id );
+			if (
+				! $current_game_project_post instanceof WP_Post
+				|| 'vrodos_game' !== $current_game_project_post->post_type
+				|| ! VRodos_Immerse_Access_Manager::can_access_project( $current_game_project_id )
+			) {
+				wp_die( esc_html__( 'This project is unavailable.' ), esc_html__( 'Local Assets' ), [ 'response' => 403 ] );
+			}
 			$current_game_project_slug = $current_game_project_post instanceof WP_Post ? $current_game_project_post->post_name : '';
 			$user_games_slugs          = [$current_game_project_slug];
 		} elseif ( $isRestrictedImmerseUser ) {
@@ -227,6 +234,13 @@ class VRodos_Pages_Manager {
 		}
 
 		$assets       = VRodos_Core_Manager::get_assets( $user_games_slugs );
+		if ( $single_project_asset_list ) {
+			$assets = array_values( array_filter(
+				$assets,
+				static fn( $asset ) => (int) ( $asset['owner_project_id'] ?? 0 ) === $current_game_project_id
+					&& empty( $asset['is_shared'] )
+			) );
+		}
 		$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage( 'asset' );
 		$has_immerse_assets = ! empty(
 			array_filter(
@@ -261,13 +275,13 @@ class VRodos_Pages_Manager {
 
 		if ( $isUserloggedIn ) {
 			if ( $isRestrictedImmerseUser && $single_project_asset_list ) {
-				$helpMessage = 'Create assets for this Immerse project or reuse any Immerse and public asset shown here.';
+				$helpMessage = 'Assets owned by this Immerse project are shown here. Use Global Assets to browse all accessible assets.';
 			} elseif ( $isRestrictedImmerseUser ) {
-				$helpMessage = 'All Immerse assets and public assets are available here. Open a project to add a new asset.';
+				$helpMessage = 'All accessible Immerse and public assets are shown here. Open a project to manage its local assets.';
 			} elseif ( $single_project_asset_list ) {
-				$helpMessage = 'A list of your private Assets belonging to the project <b>' . $current_game_project_post->post_title . '</b>.';
+				$helpMessage = 'Assets owned by the project <b>' . esc_html( $current_game_project_post->post_title ) . '</b> are shown here.';
 			} else {
-				$helpMessage = 'Add a Shared Asset here. These are accessible across all your projects. To keep an asset private, create a new project and add it there.';
+				$helpMessage = 'Browse all accessible assets here. New assets added from this view are shared across projects; use a project\'s Local Assets view to add a private asset.';
 			}
 		} else {
 			$helpMessage = 'Login to manage Shared Assets or to create a new Project for your private assets.';

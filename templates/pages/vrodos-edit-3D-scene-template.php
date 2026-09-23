@@ -323,13 +323,18 @@ extract( $data );
 							title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
 							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn toggle-active">3D</a>
 					</div>
+					<div class="environmentButton">
+						<button type="button" id="projection-change-btn" class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn"
+							aria-label="Switch angled 3D view to orthographic projection" aria-pressed="false"
+							title="3D projection: Perspective">PERS</button>
+					</div>
 
 					<!-- The button to start walking in the 3d environment -->
 					<div class="environmentButton">
 						<div id="firstPersonBlocker">
 							<a type="button" id="firstPersonBlockerBtn" data-toggle='on'
 								class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn"
-								title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys">
+								title="First-person preview: W/A/S/D move, drag to look, Q/E adjust height">
 								<i data-lucide="user" class="tw-w-4 tw-h-4"></i>
 							</a>
 						</div>

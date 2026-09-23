@@ -128,12 +128,17 @@ VRODOS.editor = VRODOS.editor || {};
     }
 
     function updateCameraProjectionForResize() {
-        if (!this.cameraOrbit3D || !this.cameraOrbit2D) {
+        if (!this.cameraOrbit3D || !this.cameraOrbitOrtho3D || !this.cameraOrbit2D) {
             return;
         }
 
         this.cameraOrbit3D.aspect = this.ASPECT;
         this.cameraOrbit3D.updateProjectionMatrix();
+
+        const ortho3DHalfHeight = (this.cameraOrbitOrtho3D.top - this.cameraOrbitOrtho3D.bottom) / 2;
+        this.cameraOrbitOrtho3D.left = -ortho3DHalfHeight * this.ASPECT;
+        this.cameraOrbitOrtho3D.right = ortho3DHalfHeight * this.ASPECT;
+        this.cameraOrbitOrtho3D.updateProjectionMatrix();
 
         const frustumSize = this.FRUSTUM_SIZE || cameraDefaults.frustumSize;
         this.cameraOrbit2D.left = frustumSize * this.ASPECT / -2;

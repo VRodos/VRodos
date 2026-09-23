@@ -26,6 +26,7 @@ class VRodos_Asset_Import_Manager {
 		add_action( 'vrodos_render_settings_tab_' . self::SETTINGS_TAB_KEY, [ $this, 'render_settings_tab' ] );
 
 		add_action( 'wp_ajax_vrodos_upload_model_chunk_action', [ $this, 'upload_model_chunk_callback' ] );
+		add_action( 'wp_ajax_vrodos_cancel_model_upload', [ $this, 'cancel_model_upload_callback' ] );
 		add_action( 'wp_ajax_vrodos_asset_import_inspect_staged_upload', [ $this, 'inspect_staged_upload_callback' ] );
 		add_action( 'wp_ajax_vrodos_asset_import_prepare_staged_upload', [ $this, 'prepare_staged_upload_callback' ] );
 		add_action( 'wp_ajax_vrodos_asset_import_staged_upload_status', [ $this, 'staged_upload_status_callback' ] );
@@ -160,6 +161,10 @@ class VRodos_Asset_Import_Manager {
 		if ( '' === $upload_id || $total <= 0 || $chunk_index >= $total || '' === $file_name ) {
 			wp_send_json_error( 'Invalid model upload metadata.', 400 );
 		}
+		$user_id = get_current_user_id();
+		if ( self::is_upload_cancelled( $user_id, $upload_id ) ) {
+			wp_send_json_error( 'The model upload was cancelled.', 409 );
+		}
 
 		if ( $project_id <= 0 || 'vrodos_game' !== get_post_type( $project_id ) || ! current_user_can( 'edit_post', $project_id ) ) {
 			wp_send_json_error( 'You are not allowed to upload assets to this project.', 403 );
@@ -187,7 +192,6 @@ class VRodos_Asset_Import_Manager {
 			wp_send_json_error( $upload_dir['error'], 500 );
 		}
 
-		$user_id     = get_current_user_id();
 		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $upload_id );
 		if ( 0 === $chunk_index && is_dir( $session_dir ) ) {
 			VRodos_Asset_Import_Execution::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
@@ -223,6 +227,10 @@ class VRodos_Asset_Import_Manager {
 		$part_path = trailingslashit( $session_dir ) . 'chunk-' . $chunk_index . '.part';
 		if ( ! move_uploaded_file( (string) $_FILES['chunk']['tmp_name'], $part_path ) ) {
 			wp_send_json_error( 'Could not store the model upload chunk.', 500 );
+		}
+		if ( self::is_upload_cancelled( $user_id, $upload_id ) ) {
+			VRodos_Asset_Import_Execution::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			wp_send_json_error( 'The model upload was cancelled.', 409 );
 		}
 
 		$complete = true;
@@ -280,6 +288,10 @@ class VRodos_Asset_Import_Manager {
 				wp_send_json_error( 'Could not finalize the model upload manifest.', 500 );
 			}
 		}
+		if ( self::is_upload_cancelled( $user_id, $upload_id ) ) {
+			VRodos_Asset_Import_Execution::delete_directory_inside_root( $session_dir, VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			wp_send_json_error( 'The model upload was cancelled.', 409 );
+		}
 
 		wp_send_json_success(
 			[
@@ -290,6 +302,42 @@ class VRodos_Asset_Import_Manager {
 				'total'     => $total,
 			]
 		);
+	}
+
+	private static function is_upload_cancelled( int $user_id, string $upload_id ): bool {
+		return (bool) get_transient( 'vrodos_upload_cancel_' . $user_id . '_' . $upload_id );
+	}
+
+	public function cancel_model_upload_callback(): void {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( 'You must be logged in to cancel model uploads.', 403 );
+		}
+		check_ajax_referer( 'post_nonce', 'nonce' );
+
+		$upload_id  = isset( $_POST['upload_id'] ) ? sanitize_key( (string) wp_unslash( $_POST['upload_id'] ) ) : '';
+		$project_id = isset( $_POST['project_id'] ) ? absint( $_POST['project_id'] ) : 0;
+		if ( '' === $upload_id || $project_id <= 0 || 'vrodos_game' !== get_post_type( $project_id ) || ! current_user_can( 'edit_post', $project_id ) ) {
+			wp_send_json_error( 'You are not allowed to cancel this model upload.', 403 );
+		}
+
+		$user_id    = get_current_user_id();
+		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) ) {
+			wp_send_json_error( $upload_dir['error'], 500 );
+		}
+		$root        = VRodos_Asset_Import_Session::user_staged_root( (string) $upload_dir['basedir'], $user_id );
+		$session_dir = VRodos_Asset_Import_Session::staged_session_dir( (string) $upload_dir['basedir'], $user_id, $upload_id );
+		$state_path  = trailingslashit( $session_dir ) . 'upload-state.json';
+		$state       = is_file( $state_path ) ? json_decode( (string) file_get_contents( $state_path ), true ) : null;
+		if ( is_array( $state ) && ( (int) ( $state['user_id'] ?? 0 ) !== $user_id || (int) ( $state['project_id'] ?? 0 ) !== $project_id ) ) {
+			wp_send_json_error( 'This model upload belongs to another user or project.', 403 );
+		}
+
+		set_transient( 'vrodos_upload_cancel_' . $user_id . '_' . $upload_id, 1, HOUR_IN_SECONDS );
+		if ( is_array( $state ) ) {
+			VRodos_Asset_Import_Execution::delete_directory_inside_root( $session_dir, $root );
+		}
+		wp_send_json_success( [ 'cancelled' => true ] );
 	}
 
 	public function inspect_staged_upload_callback(): void {

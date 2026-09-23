@@ -74,6 +74,7 @@ window.vrodosZipPreflightState = window.vrodosZipPreflightState || {
 };
 
 let vrodosModelSelectionSerial = 0;
+let vrodosActiveModelTransfer = null;
 const VRODOS_MODEL_UPLOAD_EXTENSIONS = ['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'];
 const VRODOS_MODEL_CONVERSION_EXTENSIONS = ['blend', 'fbx', 'obj', 'dae', 'gltf'];
 
@@ -216,6 +217,7 @@ function vrodos_set_asset_save_progress(options = {}) {
 }
 
 function vrodos_hide_asset_save_progress() {
+    vrodos_set_upload_cancel_available(false);
     const overlay = document.getElementById('assetSaveProgressOverlay');
     const editor = document.getElementById('vrodos-asset-editor');
     const focusTarget = vrodosAssetSaveProgressPreviousFocus;
@@ -256,15 +258,69 @@ function vrodos_hide_asset_save_progress() {
 window.vrodos_set_asset_save_progress = vrodos_set_asset_save_progress;
 window.vrodos_hide_asset_save_progress = vrodos_hide_asset_save_progress;
 
+function vrodos_set_upload_cancel_available(available) {
+    const button = document.getElementById('assetUploadCancelBtn');
+    if (!button) return;
+    button.hidden = !available;
+    button.classList.toggle('tw-hidden', !available);
+    button.disabled = !available;
+}
+
+async function vrodos_cancel_model_upload() {
+    const transfer = vrodosActiveModelTransfer;
+    if (!transfer || transfer.cancelled) return;
+    transfer.cancelled = true;
+    vrodosModelSelectionSerial += 1;
+    vrodos_set_upload_cancel_available(false);
+    if (transfer.request) transfer.request.abort();
+
+    const fileInput = document.getElementById('fileUploadInput');
+    const tokenInput = document.getElementById('assetImportUploadToken');
+    const label = document.getElementById('fileUploadInputLabel');
+    if (fileInput) fileInput.value = '';
+    if (tokenInput) tokenInput.value = '';
+    if (label) label.textContent = 'Model Upload';
+    vrodos_set_zip_preflight_state({ status: 'idle', token: '', canSave: true, message: '' });
+    vrodos_hide_asset_save_progress();
+    vrodos_set_asset_editor_submit_locked(false);
+    vrodos_set_asset_editor_notice('Model upload cancelled.', false);
+
+    const body = new URLSearchParams();
+    body.set('action', 'vrodos_cancel_model_upload');
+    body.set('nonce', transfer.nonce);
+    body.set('upload_id', transfer.uploadId);
+    body.set('project_id', transfer.projectId);
+    try {
+        const response = await window.fetch(transfer.ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: body.toString()
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload || !payload.success) {
+            throw new Error(vrodos_payload_error_message(payload, 'The server could not clean up the cancelled upload.'));
+        }
+    } catch (error) {
+        vrodos_set_asset_editor_notice(error.message || 'The server could not clean up the cancelled upload.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('assetUploadCancelBtn');
+    if (button) button.addEventListener('click', vrodos_cancel_model_upload);
+});
+
 function vrodos_get_asset_editor_ajax_url() {
     return (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.getAjaxUrl === 'function')
         ? VRODOS.utils.getAjaxUrl()
         : '/wp-admin/admin-ajax.php';
 }
 
-function vrodos_upload_model_chunk_request(ajaxUrl, formData, onProgress, onUploadComplete) {
+function vrodos_upload_model_chunk_request(ajaxUrl, formData, onProgress, onUploadComplete, onRequest) {
     return new Promise((resolve, reject) => {
         const request = new window.XMLHttpRequest();
+        if (typeof onRequest === 'function') onRequest(request);
         request.open('POST', ajaxUrl, true);
         request.withCredentials = true;
 
@@ -982,6 +1038,16 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         return false;
     }
     const ajaxUrl = vrodos_get_asset_editor_ajax_url();
+    const transfer = {
+        ajaxUrl,
+        uploadId,
+        nonce: nonceInput.value,
+        projectId: String(window.vrodosAssetEditorProjectId || '0'),
+        request: null,
+        cancelled: false
+    };
+    vrodosActiveModelTransfer = transfer;
+    vrodos_set_upload_cancel_available(true);
     const progressTitle = shouldPrepareModel ? 'Preparing Model' : 'Saving Asset';
     const uploadProgress = (uploadedBytes) => {
         const clampedBytes = Math.min(file.size, Math.max(0, uploadedBytes));
@@ -1013,6 +1079,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         let finalPayload = null;
         let uploadedBytes = 0;
         for (let index = 0; index < totalChunks; index += 1) {
+            if (transfer.cancelled) return false;
             const start = index * chunkSize;
             const chunk = file.slice(start, Math.min(start + chunkSize, file.size));
             const formData = new FormData();
@@ -1032,6 +1099,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
                 (chunkUploadedBytes) => reportUploadProgress(start + Math.min(chunk.size, chunkUploadedBytes)),
                 () => {
                     if (index === totalChunks - 1) {
+                        vrodos_set_upload_cancel_available(false);
                         const totalMb = (file.size / (1024 * 1024)).toFixed(1);
                         vrodos_set_asset_save_progress({
                             title: progressTitle,
@@ -1040,8 +1108,11 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
                             indeterminate: true
                         });
                     }
-                }
+                },
+                (request) => { transfer.request = request; }
             );
+            transfer.request = null;
+            if (transfer.cancelled) return false;
             finalPayload = payload;
             uploadedBytes += chunk.size;
             reportUploadProgress(uploadedBytes);
@@ -1050,6 +1121,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         if (!finalPayload || !finalPayload.data || !finalPayload.data.complete) {
             throw new Error('The model upload did not finish assembling on the server.');
         }
+        vrodos_set_upload_cancel_available(false);
 
         if (tokenInput) {
             tokenInput.value = uploadId;
@@ -1155,6 +1227,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         vrodos_set_asset_editor_notice(extension === 'glb' ? 'GLB upload completed. Saving asset...' : 'Model upload completed. Saving asset and queueing conversion...', false);
         return true;
     } catch (error) {
+        if (transfer.cancelled) return false;
         const message = error && error.message ? error.message : 'The model upload failed.';
         if (shouldPrepareModel) {
             if (tokenInput) {
@@ -1171,6 +1244,8 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         vrodos_hide_asset_save_progress();
         return false;
     } finally {
+        if (vrodosActiveModelTransfer === transfer) vrodosActiveModelTransfer = null;
+        vrodos_set_upload_cancel_available(false);
         vrodos_set_asset_editor_submit_locked(false);
     }
 };

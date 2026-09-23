@@ -125,32 +125,44 @@ VRODOS.ui = VRODOS.ui || {};
         }
     }
 
-    function setDirectorRigVisible(envir, visible) {
-        const rig = getDirectorRig(envir);
-        if (rig) {
-            rig.visible = visible;
-        }
-    }
-
-    function setDirectorVisualVisible(envir, visible) {
-        const directorVisual = envir && typeof envir.getDirectorVisualObject === 'function' ? envir.getDirectorVisualObject() : null;
-        if (directorVisual) {
-            directorVisual.visible = visible;
-        }
-    }
-
     function setTransformCamera(camera) {
         if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setCamera === 'function' && camera) {
             VRODOS.editor.transforms.setCamera(camera);
         }
     }
 
-    function setTransformControlsVisible(envir, visible) {
-        if (!envir || envir.is2d || !VRODOS.editor.transforms || typeof VRODOS.editor.transforms.setVisible !== 'function') {
-            return;
+    function capturePreviewVisibility(envir) {
+        const rig = getDirectorRig(envir);
+        const visual = getDirectorObject(envir) && envir.getDirectorVisualObject ? envir.getDirectorVisualObject() : null;
+        const controls = VRODOS.editor.transform_controls;
+        VRODOS.editor.firstPersonPreviewVisibility = {
+            grid: envir.gridHelper ? envir.gridHelper.visible : null,
+            axes: envir.axesHelper ? envir.axesHelper.visible : null,
+            rig: rig ? rig.visible : null,
+            visual: visual ? visual.visible : null,
+            transforms: controls ? controls.visible : null
+        };
+        if (envir.gridHelper) envir.gridHelper.visible = false;
+        if (envir.axesHelper) envir.axesHelper.visible = false;
+        if (visual) visual.visible = false;
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setVisible === 'function') {
+            VRODOS.editor.transforms.setVisible(false);
         }
+    }
 
-        VRODOS.editor.transforms.setVisible(visible);
+    function restorePreviewVisibility(envir) {
+        const saved = VRODOS.editor.firstPersonPreviewVisibility;
+        if (!saved) return;
+        if (envir.gridHelper && saved.grid !== null) envir.gridHelper.visible = saved.grid;
+        if (envir.axesHelper && saved.axes !== null) envir.axesHelper.visible = saved.axes;
+        const rig = getDirectorRig(envir);
+        if (rig && saved.rig !== null) rig.visible = saved.rig;
+        const visual = envir.getDirectorVisualObject ? envir.getDirectorVisualObject() : null;
+        if (visual && saved.visual !== null) visual.visible = saved.visual;
+        if (saved.transforms !== null && VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setVisible === 'function') {
+            VRODOS.editor.transforms.setVisible(saved.transforms);
+        }
+        VRODOS.editor.firstPersonPreviewVisibility = null;
     }
 
     function showFirstPersonBlocker() {
@@ -173,8 +185,14 @@ VRODOS.ui = VRODOS.ui || {};
 
         saveDirectorPreviewTransform(envir);
         syncFirstPersonRigToDirector(envir);
+		capturePreviewVisibility(envir);
+		if (envir.cameraAvatar) {
+			envir.cameraAvatar.fov = 60;
+			envir.cameraAvatar.near = 0.1;
+			envir.cameraAvatar.far = 7000;
+			envir.cameraAvatar.updateProjectionMatrix();
+		}
 
-        setDirectorRigVisible(envir, Boolean(envir.thirdPersonView && VRODOS.editor.avatarControlsEnabled));
         setTransformCamera(envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar);
         requestPointerRender('first-person-enabled');
     }
@@ -188,12 +206,10 @@ VRODOS.ui = VRODOS.ui || {};
 
         showFirstPersonBlocker();
         envir.thirdPersonView = false;
-        setDirectorVisualVisible(envir, true);
         setTransformCamera(envir.cameraOrbit);
-        setTransformControlsVisible(envir, true);
-        setDirectorRigVisible(envir, true);
 
         restoreDirectorPreviewTransform(envir);
+        restorePreviewVisibility(envir);
         clearDirectorPreviewTransform();
         if (envir.orbitControls) envir.orbitControls.update();
         requestPointerRender('first-person-disabled');
@@ -211,6 +227,38 @@ VRODOS.ui = VRODOS.ui || {};
         }
     };
 
+    function bindFirstPersonMouseLook() {
+        const envir = getEnvir();
+        const canvas = envir && envir.renderer ? envir.renderer.domElement : null;
+        if (!canvas || canvas.vrodosFirstPersonLookBound) return;
+        canvas.vrodosFirstPersonLookBound = true;
+        let dragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        canvas.addEventListener('mousedown', (event) => {
+            if (!VRODOS.editor.avatarControlsEnabled || event.button !== 0) return;
+            dragging = true;
+            lastX = event.clientX;
+            lastY = event.clientY;
+        });
+        document.addEventListener('mousemove', (event) => {
+            if (!dragging || !VRODOS.editor.avatarControlsEnabled || !envir.cameraAvatar) return;
+            const deltaX = event.clientX - lastX;
+            const deltaY = event.clientY - lastY;
+            lastX = event.clientX;
+            lastY = event.clientY;
+            envir.cameraAvatar.rotation.y -= deltaX * 0.002;
+            envir.cameraAvatar.rotation.x = THREE.MathUtils.clamp(
+                envir.cameraAvatar.rotation.x - deltaY * 0.002,
+                -Math.PI / 2 + 0.01,
+                Math.PI / 2 - 0.01
+            );
+            requestPointerRender('first-person-look');
+        });
+        document.addEventListener('mouseup', () => { dragging = false; });
+        window.addEventListener('blur', () => { dragging = false; });
+    }
+
     VRODOS.api.firstPersonViewWithoutLock = function() {
         const envir = getEnvir();
         if (!envir) {
@@ -218,6 +266,7 @@ VRODOS.ui = VRODOS.ui || {};
         }
 
         if (!VRODOS.editor.avatarControlsEnabled) {
+            bindFirstPersonMouseLook();
             enterFirstPersonView(envir);
             return;
         }

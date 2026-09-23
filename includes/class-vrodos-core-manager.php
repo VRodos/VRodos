@@ -233,6 +233,11 @@ class VRodos_Core_Manager {
 		return VRodos_Path_Manager::image_url( 'ui/audio.png' );
 	}
 
+	public static function is_vr_environment_asset( int $asset_id ): bool {
+		return '1' === (string) get_post_meta( $asset_id, '_vrodos_ic_vr_environment_asset', true )
+			|| '' !== (string) get_post_meta( $asset_id, '_vrodos_ic_vr_environment_id', true );
+	}
+
 	public static function vrodos_plugin_main_page(): void {
 		VRodos_Admin_Dashboard_Page::render();
 	}
@@ -556,6 +561,9 @@ class VRodos_Core_Manager {
 				$owner_project_id = VRodos_Immerse_Access_Manager::resolve_parent_project_id( $asset_id );
 				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ), 'is_immerse' => VRodos_Immerse_Access_Manager::is_immerse_asset( $asset_id ), 'owner_project_id' => $owner_project_id, 'can_edit' => VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ), 'author_id' => (int) get_post_field( 'post_author', $asset_id )];
 				$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+				if ( self::is_vr_environment_asset( $asset_id ) ) {
+					$data_arr['vrodos_environment_asset'] = true;
+				}
 				if ( '' !== $origin_mode ) {
 					$data_arr['vrodosAssetOriginMode'] = $origin_mode;
 				}
@@ -825,6 +833,9 @@ class VRodos_Core_Manager {
 					'author_username'        => $author_username
 				];
 				$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+				if ( self::is_vr_environment_asset( $asset_id ) ) {
+					$data_arr['vrodos_environment_asset'] = true;
+				}
 				if ( '' !== $origin_mode ) {
 					$data_arr['vrodosAssetOriginMode'] = $origin_mode;
 				}

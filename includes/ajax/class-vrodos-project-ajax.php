@@ -345,7 +345,7 @@ class VRodos_Project_AJAX {
 
 				// 2b. Actions
 				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-shrink-0">';
-				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">ASSETS</a>';
+				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage local assets">LOCAL ASSETS</a>';
 				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="tw-btn tw-btn-primary tw-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">3D EDITOR</a>';
 				if ( 'immerse' !== $project_source ) {
 					echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded tw-transition-all vrodos-delete-project-btn" data-game-id="' . $game_id . '" data-game-title="' . esc_attr( $game_title ) . '" title="Delete project">';

@@ -6,8 +6,7 @@ VRODOS.api = VRODOS.api || {};
 VRODOS.ui = VRODOS.ui || {};
 
 (function initVrodosKeyboardControls() {
-    const MOVEMENT_SPEED = 0.5;
-    const ROTATION_SPEED = 0.3;
+    const MOVEMENT_SPEED = 2;
     const movementState = {
         forward: false,
         backward: false,
@@ -15,14 +14,14 @@ VRODOS.ui = VRODOS.ui || {};
         right: false,
         up: false,
         down: false,
-        viewUp: false,
-        viewDown: false,
         listenersBound: false
     };
 
     let prevTime = performance.now();
-    const velocity = new THREE.Vector3();
-    const torque = new THREE.Vector3();
+    const forward = new THREE.Vector3();
+    const right = new THREE.Vector3();
+    const movement = new THREE.Vector3();
+    const upAxis = new THREE.Vector3(0, 1, 0);
 
     function isAvatarControlsEnabled() {
         return Boolean(VRODOS.editor && VRODOS.editor.avatarControlsEnabled);
@@ -53,16 +52,10 @@ VRODOS.ui = VRODOS.ui || {};
                 movementState.right = value;
                 return true;
             case 81: // Q
-                movementState.up = value;
-                return true;
-            case 69: // E
                 movementState.down = value;
                 return true;
-            case 82: // R
-                movementState.viewUp = value;
-                return true;
-            case 70: // F
-                movementState.viewDown = value;
+            case 69: // E
+                movementState.up = value;
                 return true;
             default:
                 return false;
@@ -76,6 +69,8 @@ VRODOS.ui = VRODOS.ui || {};
     }
 
     function keydownHandler(event) {
+        const target = event.target;
+        if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
         switch (event.keyCode) {
             case 80: // P
                 if (VRODOS.ui && typeof VRODOS.ui.pauseClickFun === 'function') {
@@ -103,7 +98,8 @@ VRODOS.ui = VRODOS.ui || {};
                 }
                 break;
             default:
-                if (setMovementFlag(event.keyCode, true)) {
+                if (isAvatarControlsEnabled() && setMovementFlag(event.keyCode, true)) {
+                    event.preventDefault();
                     requestKeyboardRender('keyboard-movement-keydown');
                 }
                 break;
@@ -112,6 +108,7 @@ VRODOS.ui = VRODOS.ui || {};
 
     function keyupHandler(event) {
         if (setMovementFlag(event.keyCode, false)) {
+            if (isAvatarControlsEnabled()) event.preventDefault();
             requestKeyboardRender('keyboard-movement-keyup');
         }
     }
@@ -136,21 +133,6 @@ VRODOS.ui = VRODOS.ui || {};
         movementState.listenersBound = false;
     }
 
-    document.addEventListener('wheel', (event) => {
-        if (!isAvatarControlsEnabled() || !event.deltaY) {
-            return;
-        }
-
-        const camera = getAvatarCamera();
-        if (!camera) {
-            return;
-        }
-
-        camera.fov += event.deltaY > 0 ? 1 : -1;
-        camera.updateProjectionMatrix();
-        requestKeyboardRender('avatar-fov-wheel');
-    }, true);
-
     document.addEventListener('remove_movement', () => {
         unbindMovementListeners();
     });
@@ -158,61 +140,40 @@ VRODOS.ui = VRODOS.ui || {};
     document.addEventListener('add_movement', () => {
         bindMovementListeners();
     });
+    window.addEventListener('blur', () => VRODOS.api.resetAvatarMovement());
 
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
-    /* Update the Director rig while moving with key presses. */
+    /* Preview desktop movement at the published walking speed. */
     VRODOS.api.updatePointerLockControls = function() {
         const time = performance.now();
-        const delta = (time - prevTime) / 1000;
-
-        velocity.x -= velocity.x * 2.0 * delta;
-        velocity.y -= velocity.y * 2.0 * delta;
-        velocity.z -= velocity.z * 2.0 * delta;
-
-        torque.y *= 0.7;
-        torque.x *= 0.7;
-
-        if (movementState.forward) velocity.z -= MOVEMENT_SPEED * delta;
-        if (movementState.backward) velocity.z += MOVEMENT_SPEED * delta;
-        if (movementState.left) torque.y += ROTATION_SPEED * delta;
-        if (movementState.right) torque.y -= ROTATION_SPEED * delta;
-        if (movementState.up) velocity.y -= MOVEMENT_SPEED * delta;
-        if (movementState.down) velocity.y += MOVEMENT_SPEED * delta;
-        if (movementState.viewUp) torque.x -= ROTATION_SPEED * delta;
-        if (movementState.viewDown) torque.x += ROTATION_SPEED * delta;
-
-        const controls = VRODOS.editor.envir ? VRODOS.editor.envir.avatarControls : null;
-        const pointerLockObject = VRODOS.utils.getPointerLockObject(controls);
-
-        if (!pointerLockObject) {
-            prevTime = time;
-            return;
-        }
-
-        pointerLockObject.translateX(velocity.x);
-        pointerLockObject.translateY(velocity.y);
-        pointerLockObject.translateZ(velocity.z);
-
-        pointerLockObject.rotation.y += torque.y;
-        const avatarCamera = getAvatarCamera();
-        if (avatarCamera) {
-            avatarCamera.rotation.x += torque.x;
-        }
-
+        const delta = Math.max(0, Math.min((time - prevTime) / 1000, 0.25));
         prevTime = time;
+        const camera = getAvatarCamera();
+        if (!camera || !delta) return;
+
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        if (forward.lengthSq() < 0.000001) forward.set(0, 0, -1);
+        forward.normalize();
+        right.crossVectors(forward, upAxis).normalize();
+        movement.set(0, 0, 0);
+        if (movementState.forward) movement.add(forward);
+        if (movementState.backward) movement.sub(forward);
+        if (movementState.left) movement.sub(right);
+        if (movementState.right) movement.add(right);
+        if (movementState.up) movement.y += 1;
+        if (movementState.down) movement.y -= 1;
+        if (movement.lengthSq() > 0) camera.position.addScaledVector(movement.normalize(), MOVEMENT_SPEED * delta);
     };
 
     VRODOS.api.resetAvatarMovement = function() {
-        velocity.set(0, 0, 0);
-        torque.set(0, 0, 0);
+        prevTime = performance.now();
         movementState.forward = false;
         movementState.backward = false;
         movementState.left = false;
         movementState.right = false;
         movementState.up = false;
         movementState.down = false;
-        movementState.viewUp = false;
-        movementState.viewDown = false;
     };
 })();

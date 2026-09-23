@@ -143,6 +143,7 @@ VRODOS.ui.onMouseDown = function(event) {
     VRODOS.editor._lastClickY = event.clientY;
 };
 VRODOS.ui.onMouseUp = function(event) {
+    if (VRODOS.editor.avatarControlsEnabled) return;
     const dx = event.clientX - _mouseDownPos.x;
     const dy = event.clientY - _mouseDownPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);

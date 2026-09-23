@@ -42,7 +42,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assets Manager | VRodos</title>
+    <title><?php echo $single_project_asset_list ? 'Local Assets' : 'Global Assets'; ?> | VRodos</title>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
@@ -56,7 +56,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                 <span class="vrodos-display-title tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                 <div class="tw-flex tw-items-center tw-gap-3">
-                    <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest">Asset Manager</h1>
+                    <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest"><?php echo $single_project_asset_list ? 'Local Assets' : 'Global Assets'; ?></h1>
                     <span class="tw-bg-slate-50 tw-text-slate-400 tw-text-[9px] tw-font-black tw-px-2 tw-py-0.5 tw-rounded-full tw-border tw-border-slate-100">
                         <?php echo count($assets); ?>
                     </span>
@@ -71,7 +71,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                         <?php if ($single_project_asset_list && $current_game_project_post): ?>
                             Project: <span class="tw-text-primary tw-normal-case"><?php echo esc_html($current_game_project_post->post_title); ?></span>
                         <?php else: ?>
-                            <?php echo $is_restricted_immerse_user ? 'Immerse + Public' : 'Shared'; ?>
+                            <?php echo $is_restricted_immerse_user ? 'Immerse + Public' : 'All Accessible'; ?>
                         <?php endif; ?>
                     </div>
                     <?php if ($help_message): ?>

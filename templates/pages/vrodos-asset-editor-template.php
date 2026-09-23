@@ -203,6 +203,7 @@ else { ?>
                     <p id="assetSaveProgressDetail" class="tw-min-h-5 tw-text-xs tw-font-semibold tw-text-slate-500"></p>
                     <span id="assetSaveProgressElapsed" class="tw-flex-none tw-text-[10px] tw-font-black tw-tabular-nums tw-text-slate-400">Elapsed 0s</span>
                 </div>
+                <button type="button" id="assetUploadCancelBtn" class="tw-btn tw-btn-outline tw-btn-sm tw-mt-5 tw-hidden" hidden>Cancel upload</button>
                 <div class="tw-mt-5 tw-flex tw-items-center tw-gap-2 tw-rounded-xl tw-bg-slate-50 tw-px-3 tw-py-2.5 tw-text-slate-500">
                     <i data-lucide="info" class="tw-h-4 tw-w-4 tw-flex-none"></i>
                     <span class="tw-text-[11px] tw-font-bold">Do not close this page while the asset is being saved.</span>

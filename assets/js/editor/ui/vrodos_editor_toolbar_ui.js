@@ -14,6 +14,7 @@ VRODOS.api = VRODOS.api || {};
         redo: 'redo-scene-button',
         orbitAutoRotate: 'toggle-tour-around-btn',
         dimension: 'dim-change-btn',
+        projection: 'projection-change-btn',
         firstPerson: 'firstPersonBlockerBtn',
         objectManipulation: 'object-manipulation-toggle',
         axisIncrease: 'axis-size-increase-btn',
@@ -41,11 +42,14 @@ VRODOS.api = VRODOS.api || {};
             bindTransformModeControls();
             bindScaleLockControl();
             bindDimensionToggle();
+            bindProjectionToggle();
             bindCreateControls();
 
             this.isBound = true;
+            syncProjectionButton();
             return true;
-        }
+        },
+        syncProjectionButton
     };
 
     function getEnvir() {
@@ -176,8 +180,14 @@ VRODOS.api = VRODOS.api || {};
 
         blockerButton.addEventListener('click', () => {
             if (typeof VRODOS.api.firstPersonViewWithoutLock === 'function') {
+                const envir = getEnvir();
+                if (envir && envir.is2d) {
+                    const dimensionButton = getElement(TOOLBAR_IDS.dimension);
+                    if (dimensionButton) dimensionButton.click();
+                }
                 VRODOS.api.firstPersonViewWithoutLock();
                 setButtonActive(blockerButton, VRODOS.editor.avatarControlsEnabled);
+                syncProjectionButton();
             }
         }, false);
     }
@@ -243,6 +253,30 @@ VRODOS.api = VRODOS.api || {};
         setButtonActive(dimensionButton, is3dMode);
     }
 
+    function syncProjectionButton() {
+        const button = getElement(TOOLBAR_IDS.projection);
+        const envir = getEnvir();
+        if (!button || !envir) return;
+        const orthographic = envir.orbitProjection === 'orthographic';
+        button.textContent = orthographic ? 'ORTHO' : 'PERS';
+        button.title = `3D projection: ${orthographic ? 'Orthographic' : 'Perspective'}`;
+        button.setAttribute('aria-label', `Switch angled 3D view to ${orthographic ? 'perspective' : 'orthographic'} projection`);
+        button.setAttribute('aria-pressed', orthographic ? 'true' : 'false');
+        button.disabled = Boolean(envir.is2d || VRODOS.editor.avatarControlsEnabled);
+        setButtonActive(button, orthographic);
+    }
+
+    function bindProjectionToggle() {
+        const button = getElement(TOOLBAR_IDS.projection);
+        if (!button) return;
+        button.addEventListener('click', () => {
+            const envir = getEnvir();
+            if (!envir || typeof envir.setOrbitProjection !== 'function') return;
+            envir.setOrbitProjection(envir.orbitProjection === 'orthographic' ? 'perspective' : 'orthographic');
+            syncProjectionButton();
+        });
+    }
+
     function setObjectManipulationVisible(isVisible) {
         const objectManipulationToggle = getElement(TOOLBAR_IDS.objectManipulation);
         if (objectManipulationToggle) {
@@ -291,6 +325,7 @@ VRODOS.api = VRODOS.api || {};
             }
 
             setDimensionButtonState(dimensionButton, envir);
+            syncProjectionButton();
             requestRender('dimension-toggle');
         });
     }

@@ -61,6 +61,33 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return window.vrodosGizmoProxy;
     }
 
+    function environmentPivotOffset(target) {
+        if (!target || (target.immerse_object_type !== 'vr-environment' && ![true, 'true', '1'].includes(target.vrodos_environment_asset)) || target.vrodosAssetOriginMode === 'bounds-center') return null;
+
+        const sourceCenter = target.vrodosCollisionBounds && target.vrodosCollisionBounds.center;
+        let center = Array.isArray(sourceCenter) && sourceCenter.length === 3 && sourceCenter.every((value) => Number.isFinite(Number(value)))
+            ? new THREE.Vector3(...sourceCenter.map(Number))
+            : null;
+        if (!center && target.userData && Array.isArray(target.userData.vrodosEnvironmentPivot)) {
+            center = new THREE.Vector3(...target.userData.vrodosEnvironmentPivot);
+        }
+        if (!center && !(target.userData && target.userData.vrodosEditorPlaceholder)) {
+            target.updateWorldMatrix(true, true);
+            const bounds = new THREE.Box3().setFromObject(target);
+            if (!bounds.isEmpty()) {
+                center = target.worldToLocal(bounds.getCenter(new THREE.Vector3()));
+                target.userData.vrodosEnvironmentPivot = center.toArray();
+            }
+        }
+        return center ? center.multiply(target.scale).applyQuaternion(target.quaternion) : null;
+    }
+
+    function positionProxyAtObjectPivot(proxy, target) {
+        proxy.position.copy(target.position);
+        const offset = environmentPivotOffset(target);
+        if (offset) proxy.position.add(offset);
+    }
+
     function getTransformHelper(controls) {
         return VRODOS.editor.transform_controls_helper || (controls ? controls._root : null) || null;
     }
@@ -209,12 +236,18 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         const proxy = ensureProxy();
         if (!target || !proxy || proxy.realObject !== target) return;
 
-        proxy.position.copy(target.position);
+        positionProxyAtObjectPivot(proxy, target);
         proxy.quaternion.copy(target.quaternion);
         proxy.scale.copy(target.scale);
         proxy.updateMatrix();
         proxy.updateMatrixWorld(true);
         invalidateBounds(target);
+    };
+
+    transforms.positionProxyAtObjectPivot = positionProxyAtObjectPivot;
+    transforms.positionObjectAtProxyPivot = function(target, proxy) {
+        const offset = environmentPivotOffset(target);
+        if (offset) target.position.copy(proxy.position).sub(offset);
     };
 
     transforms.attach = function(object) {
@@ -250,7 +283,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             proxy.isLight = target.isLight;
             proxy.parentLight = target.parentLight;
             proxy.locked = transforms.isLockedObject(target);
-            proxy.position.copy(target.position);
+            positionProxyAtObjectPivot(proxy, target);
             proxy.quaternion.copy(target.quaternion);
             proxy.scale.copy(target.scale);
             proxy.updateMatrix();
