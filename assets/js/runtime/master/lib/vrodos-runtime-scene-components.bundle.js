@@ -1345,6 +1345,7 @@
       "right-stick": `<g transform="translate(53 0) scale(-1 1)">${controller}${stick}</g>${badge}<path fill-rule="evenodd" d="M47 44h6c6 0 6 7 2 8l3 4h-3l-3-4h-2v4h-3Zm3 2.5v3h3c2 0 2-3 0-3Z"/>`,
       "right-trigger": '<path fill-rule="evenodd" d="M15 10h34c5 0 8 4 9 9l4 24c1 6-3 11-9 11H11C5 54 1 49 2 43l4-24c1-5 4-9 9-9Zm0 3c-3 0-5 3-6 7L5 44c-.5 4 2 7 6 7h42c4 0 6.5-3 6-7l-4-24c-1-4-3-7-6-7Z"/><path fill-rule="evenodd" d="M15 21h9c12 0 12 13 4 15l7 9h-5l-7-9h-4v9h-4Zm4 4v7h5c6 0 6-7 0-7Z"/><path d="M35 21h18v4h-7v20h-4V25h-7Z"/>',
       "jump-buttons": '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path fill-rule="evenodd" d="M15 24h4l7 16h-4l-1.5-4h-7L12 40H8Zm2 4-2.5 5h5ZM39 24h4l4 5.5 4-5.5h4l-6 8 6 8h-4l-4-5.5-4 5.5h-4l6-8Z"/>',
+      "reset-buttons": '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path d="M11 25h7c7 0 9 7 4 9 6 3 3 9-4 9h-7Zm4 3v4h3c3 0 3-4 0-4Zm0 7v5h3c4 0 4-5 0-5ZM37 25h4l6 8 6-8h4l-8 11v7h-4v-7Z"/>',
       "mouse-click": mouse,
       "mouse-drag": `<g transform="translate(8 8) scale(.75)">${mouse}</g><path d="M1 32l7-7v5h8v4H8v5ZM63 32l-7-7v5h-8v4h8v5Z"/>`
     }).map(([name, body]) => [name, { name, content: svg(body) }]));
@@ -1392,6 +1393,7 @@
         if (movement && !disabled && movement.getNavigationMode(settings) === "walkable" && movement.areCollisionsEnabled(settings)) {
           add(immersive ? "A / X" : "Space", "Jump", immersive ? "jump-buttons" : void 0);
         }
+        if (immersive && movement) add("B / Y", "Reset height", "reset-buttons");
         return items;
       },
       syncPresentation: function() {
@@ -1637,8 +1639,15 @@
   });
   function vrodosPoiImageHasValidUrl(url) {
     if (!url) return false;
-    const normalized = String(url).trim().toLowerCase();
-    return normalized !== "" && normalized !== "false" && normalized !== "null" && normalized !== "undefined" && normalized !== "0";
+    const value = String(url).trim();
+    const normalized = value.toLowerCase();
+    if (!value || ["false", "null", "undefined", "0"].includes(normalized) || /[\s<>"'\\]/.test(value)) return false;
+    try {
+      const parsed = new URL(value, document.baseURI || window.location.href);
+      return ["http:", "https:", "blob:"].includes(parsed.protocol) || parsed.protocol === "data:" && normalized.startsWith("data:image/");
+    } catch (_) {
+      return false;
+    }
   }
   AFRAME.registerComponent("info-panel", {
     schema: { type: "string", default: "" },
@@ -1694,10 +1703,10 @@
       }
     },
     getPoiTitleText: function() {
-      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-title") ? this.buttonEl.getAttribute("data-vrodos-poi-title") : "Info";
+      return String(this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-title") || "").trim();
     },
     getPoiDescriptionText: function() {
-      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-description") ? this.buttonEl.getAttribute("data-vrodos-poi-description") : "";
+      return String(this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-description") || "").trim();
     },
     getPoiImageUrl: function() {
       return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-image-src") ? this.buttonEl.getAttribute("data-vrodos-poi-image-src") : "";
@@ -1746,24 +1755,29 @@
       const pages = this.spatialPoiDescriptionPages || [];
       const pageIndex = Math.max(0, Math.min(this.spatialPoiPage || 0, Math.max(0, pages.length - 1)));
       const imageUrl = this.getPoiImageUrl();
+      const hasImage = vrodosPoiImageHasValidUrl(imageUrl);
+      const hasBody = hasImage || pages.length > 0;
       const frame = api.frame({
         title: this.getPoiTitleText(),
+        showHeader: Boolean(this.getPoiTitleText()),
+        showContent: hasBody,
+        showFooter: hasBody,
         status: pages.length > 1 ? "Page " + (pageIndex + 1) + " of " + pages.length : "",
         paddingX: 78,
         paddingY: 58,
         gapY: 24,
-        primary: {
+        primary: hasBody ? {
           label: "Close",
           variant: "secondary",
           onClick: () => {
             this.closeSpatialPoiPanel("poi-close");
           }
-        },
+        } : null,
         onClose: () => {
           this.closeSpatialPoiPanel("poi-close");
         }
       });
-      if (vrodosPoiImageHasValidUrl(imageUrl)) {
+      if (hasImage) {
         api.image(frame.content, {
           src: imageUrl,
           width: 820,
@@ -1814,11 +1828,15 @@
       }
     },
     openSpatialPoiPanel: function() {
+      const hasTitle = Boolean(this.getPoiTitleText());
+      const hasImage = vrodosPoiImageHasValidUrl(this.getPoiImageUrl());
+      const hasDescription = Boolean(this.getPoiDescriptionText());
+      if (!hasTitle && !hasImage && !hasDescription) return false;
       const spatialUi = this.getSpatialUiApi();
       const diagnostics = {
         id: this.data || "",
         title: this.getPoiTitleText(),
-        hasImage: vrodosPoiImageHasValidUrl(this.getPoiImageUrl()),
+        hasImage,
         descriptionLength: this.getPoiDescriptionText().length
       };
       if (!spatialUi) {
@@ -1842,10 +1860,11 @@
       this.closeSpatialPoiPanel("replace");
       this.spatialPoiPage = 0;
       this.spatialPoiDescriptionPages = this.buildSpatialDescriptionPages();
+      const titleOnly = hasTitle && !hasImage && !hasDescription;
       this.spatialPoiPanelApi = spatialUi.openPanel({
         id: "vrodos-poi-image-vr-" + (this.data || "panel"),
-        width: 1.95,
-        height: 1.38,
+        width: titleOnly ? 1.3 : 1.95,
+        height: titleOnly ? 0.2 : hasImage && hasDescription ? 1.38 : hasImage ? 1.16 : 0.92,
         distance: 1.8,
         verticalOffset: 0,
         centerAtEyeLevel: true,
@@ -1872,6 +1891,11 @@
       if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== void 0) {
         if (evt.detail.originalEvent.button !== 0) return;
       }
+      const title = this.getPoiTitleText();
+      const description = this.getPoiDescriptionText();
+      const imageUrl = this.getPoiImageUrl();
+      const hasImage = vrodosPoiImageHasValidUrl(imageUrl);
+      if (!title && !description && !hasImage) return;
       if (typeof window.gtag === "function") {
         window.gtag("event", "poiimgtext_open");
       }
@@ -1882,22 +1906,28 @@
       const titleEl = document.getElementById("poi-img-dialog-title");
       const imageEl = document.getElementById("poi-img-dialog-image");
       const descriptionEl = document.getElementById("poi-img-dialog-description");
-      const imageUrl = this.getPoiImageUrl();
+      const imageArea = document.getElementById("poi-img-dialog-image-area");
+      const contentArea = document.getElementById("poi-img-dialog-content-area");
+      const dialogBox = document.getElementById("poi-img-dialog-box");
       if (titleEl) {
-        titleEl.textContent = this.getPoiTitleText();
+        titleEl.textContent = title;
+        titleEl.style.display = title ? "" : "none";
+        titleEl.style.marginBottom = description ? "" : "0";
       }
+      if (imageArea) imageArea.style.display = hasImage ? "" : "none";
       if (imageEl) {
-        if (vrodosPoiImageHasValidUrl(imageUrl)) {
-          imageEl.style.display = "inline";
+        if (hasImage) {
           imageEl.src = imageUrl;
         } else {
-          imageEl.style.display = "none";
           imageEl.removeAttribute("src");
         }
       }
       if (descriptionEl) {
-        descriptionEl.textContent = this.getPoiDescriptionText();
+        descriptionEl.textContent = description;
+        descriptionEl.style.display = description ? "" : "none";
       }
+      if (contentArea) contentArea.style.display = title || description ? "" : "none";
+      if (dialogBox) dialogBox.style.maxWidth = title && !description && !hasImage ? "min(92vw, 30rem)" : "";
       let imageDialog = document.querySelector("#poi-img-dialog");
       if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === "function") {
         window.VRODOSMasterUI.showDialog(imageDialog);
@@ -1966,6 +1996,7 @@
       this.offset = Math.random() * Math.PI * 2;
       this.placeMarker = this.placeMarker.bind(this);
       this.el.addEventListener("model-loaded", this.placeMarker);
+      this.el.addEventListener("object3dset", this.placeMarker);
       this.createMarker();
       this.resources.timeout(this.placeMarker, 0);
     },
@@ -2050,6 +2081,7 @@
     remove: function() {
       this.resources.disposeAll();
       this.el.removeEventListener("model-loaded", this.placeMarker);
+      this.el.removeEventListener("object3dset", this.placeMarker);
       if (!this.marker) {
         return;
       }
@@ -3069,70 +3101,6 @@
       if (this.el.getObject3D("mesh") === this.mesh) this.el.removeObject3D("mesh");
       window.VRODOSMaster.RuntimeResources.dispose(this.mesh);
       this.mesh = null;
-    }
-  });
-  AFRAME.registerComponent("vrodos-hypnotic-hover", {
-    schema: {
-      amplitude: { type: "number", default: 0.08 },
-      // How high it floats
-      speed: { type: "number", default: 1.5 },
-      // How fast it moves
-      visualOnly: { type: "boolean", default: false },
-      enabled: { type: "boolean", default: true }
-    },
-    init: function() {
-      this.initialY = this.el.object3D.position.y;
-      this.visual = null;
-      this.visualInitialY = 0;
-      this.deferredToImmersiveWorldTransform = false;
-      this.offset = Math.random() * Math.PI * 2;
-    },
-    isImmersiveXrPresenting: function() {
-      const sceneEl = this.el && this.el.sceneEl ? this.el.sceneEl : null;
-      const renderer = sceneEl && sceneEl.renderer ? sceneEl.renderer : null;
-      return Boolean(
-        sceneEl && typeof sceneEl.is === "function" && sceneEl.is("vr-mode") && renderer && renderer.xr && renderer.xr.isPresenting
-      );
-    },
-    isTopLevelSceneRoot: function() {
-      const sceneEl = this.el && this.el.sceneEl ? this.el.sceneEl : null;
-      return Boolean(sceneEl && this.el && this.el.parentElement === sceneEl);
-    },
-    shouldDeferToImmersiveWorldTransform: function() {
-      return !this.data.visualOnly && this.isImmersiveXrPresenting() && this.isTopLevelSceneRoot();
-    },
-    tick: function(time, timeDelta) {
-      if (!this.data.enabled) {
-        return;
-      }
-      if (this.shouldDeferToImmersiveWorldTransform()) {
-        this.deferredToImmersiveWorldTransform = true;
-        return;
-      }
-      this.deferredToImmersiveWorldTransform = false;
-      var bounce = Math.sin(time / 1e3 * this.data.speed + this.offset) * this.data.amplitude;
-      if (this.data.visualOnly) {
-        const visual = this.el.getObject3D("mesh");
-        if (!visual) {
-          return;
-        }
-        if (this.visual !== visual) {
-          this.visual = visual;
-          this.visualInitialY = visual.position.y;
-        }
-        visual.position.y = this.visualInitialY + bounce;
-      } else {
-        this.el.object3D.position.y = this.initialY + bounce;
-      }
-    },
-    remove: function() {
-      if (this.data.visualOnly && this.visual) {
-        this.visual.position.y = this.visualInitialY;
-        return;
-      }
-      if (this.el.object3D && !this.shouldDeferToImmersiveWorldTransform()) {
-        this.el.object3D.position.y = this.initialY;
-      }
     }
   });
   AFRAME.registerComponent("vrodos-camera-start", {

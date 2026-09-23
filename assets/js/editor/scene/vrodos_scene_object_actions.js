@@ -569,9 +569,18 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
 
     VRODOS.utils.applyTRSToObject(assessmentObject, resource.trs);
 
-    VRODOS.ui.finalizeSceneObjectAdd(assessmentObject, {
-        registerOptions: addedObjectRegisterOptions('assessment-added'),
-        selectOptions: { source: 'assessment-added' }
+    VRODOS.loader.loadAssessmentBook(assessmentObject, VRODOS.editor.manager).then(() => {
+        if (getSceneObjectRecord(nameModel) !== resource) return;
+        VRODOS.ui.finalizeSceneObjectAdd(assessmentObject, {
+            registerOptions: addedObjectRegisterOptions('assessment-added'),
+            selectOptions: { source: 'assessment-added' }
+        });
+    }).catch((error) => {
+        console.error('VRodos: assessment book could not be loaded', error);
+        clearSceneObjectAddPending(nameModel);
+        if (getSceneObjectRecord(nameModel) === resource) {
+            VRODOS.utils.sceneDeleteObjectRecord(nameModel);
+        }
     });
 
     return assessmentObject;

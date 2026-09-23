@@ -979,9 +979,12 @@ Object.keys(gui_controls_funs).forEach((key) => {
 
     const label = `${actionLabel[i]  } ${  coordLabel[i % 3]}`;
 
-    // lil-gui: .add() returns a Controller, .step() and .name() chain the same way
-    // .decimals(2) handles display formatting (replaces manual toFixed hacks)
-    dg_controller[i] = controlInterface.add(gui_controls_funs, key).step(0.001).decimals(2).name(key);
+    // Tiny imported GLB scales must remain visible and editable after automatic fitting.
+    const isScale = key.startsWith('dg_s');
+    dg_controller[i] = controlInterface.add(gui_controls_funs, key)
+        .step(isScale ? 0.000001 : 0.001)
+        .decimals(isScale ? 6 : 2)
+        .name(key);
 
     // Patch getValue to ALWAYS return a number — lil-gui's updateDisplay calls .toFixed()
     // which crashes on strings/NaN. This is the definitive guard.

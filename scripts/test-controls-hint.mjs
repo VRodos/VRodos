@@ -109,8 +109,8 @@ vr.mode('immersive-xr');
 await flush();
 assert.equal(vr.vrShows, 1);
 assert.equal(vr.timers.size, 1);
-assert.deepEqual(Array.from(vr.component.getItems(true), item => item.input), ['Left stick', 'Right stick', 'Point + right trigger (RT)', 'A / X']);
-assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon.name), ['left-stick', 'right-stick', 'right-trigger', 'jump-buttons']);
+assert.deepEqual(Array.from(vr.component.getItems(true), item => item.input), ['Left stick', 'Right stick', 'Point + right trigger (RT)', 'A / X', 'B / Y']);
+assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['left-stick', 'right-stick', 'right-trigger', 'jump-buttons', 'reset-buttons']);
 assert.deepEqual(Array.from(vr.component.getItems(false), item => item.icon?.name), [undefined, 'mouse-drag', 'mouse-click', undefined]);
 assert(!actions(vr.component.getItems(true)).includes('Look'), 'Headset look is implicit in VR');
 for (const item of [...vr.component.getItems(true), ...vr.component.getItems(false)].filter(item => item.icon)) {
@@ -127,8 +127,8 @@ await flush();
 assert.equal(vr.timers.size, 0, 'An active dialog must prevent the hint');
 
 vr.settings.movement_disabled = 'true';
-assert.deepEqual(actions(vr.component.getItems(true)), ['Select']);
-assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon.name), ['right-trigger']);
+assert.deepEqual(actions(vr.component.getItems(true)), ['Select', 'Reset height']);
+assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['right-trigger', 'reset-buttons']);
 vr.settings.movement_disabled = false;
 vr.settings.navigationMode = 'fly';
 assert(!actions(vr.component.getItems(false)).includes('Jump'));
@@ -190,7 +190,7 @@ const context = vm.createContext({ controlsHint: null, activePanel: null, PANEL_
 });
 vm.runInContext(functions.get('baseContainerProps') + '\n' + functions.get('hideControlsHint') + '\n' + functions.get('showControlsHint'), context);
 assert.equal(context.showControlsHint(desktop.component.getItems(true)), true);
-assert.equal(context.controlsHint.root.children.length, 4);
+assert.equal(context.controlsHint.root.children.length, 5);
 assert.equal(context.controlsHint.root.props.justifyContent, 'center');
 assert.match(context.controlsHint.root.props.backgroundColor, /^rgba\(.+,0\.64\)$/);
 assert.match(context.controlsHint.root.props.borderColor, /^rgba\(.+,0\.22\)$/);

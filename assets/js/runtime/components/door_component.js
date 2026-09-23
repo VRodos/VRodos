@@ -35,6 +35,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
         this.offset = Math.random() * Math.PI * 2;
         this.placeMarker = this.placeMarker.bind(this);
         this.el.addEventListener('model-loaded', this.placeMarker);
+        this.el.addEventListener('object3dset', this.placeMarker);
         this.createMarker();
         this.resources.timeout(this.placeMarker, 0);
     },
@@ -136,6 +137,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
     remove: function () {
         this.resources.disposeAll();
         this.el.removeEventListener('model-loaded', this.placeMarker);
+        this.el.removeEventListener('object3dset', this.placeMarker);
         if (!this.marker) {
             return;
         }

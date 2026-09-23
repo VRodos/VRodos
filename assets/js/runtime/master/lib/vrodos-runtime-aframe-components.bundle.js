@@ -4916,6 +4916,7 @@
       this.immersiveRawHeightOffset = null;
       this.immersiveHeightCalibrationApplied = false;
       this.immersiveHeightSource = "none";
+      this.immersiveHeightResetOffset = null;
       this.immersiveFirstMovementGroundLock = false;
       this.immersiveFirstMovementGroundDropTolerance = 0.12;
       this.immersiveFirstMovementGroundLockApplied = false;
@@ -4953,6 +4954,7 @@
       this.handleKeyDown = this.handleKeyDown.bind(this);
       this.handleKeyUp = this.handleKeyUp.bind(this);
       this.handleJumpButtonDown = this.handleJumpButtonDown.bind(this);
+      this.handleHeightResetButtonDown = this.handleHeightResetButtonDown.bind(this);
       this.handleEnterVr = this.handleEnterVr.bind(this);
       this.handleExitVr = this.handleExitVr.bind(this);
       this.handleControllerModelLoaded = this.handleControllerModelLoaded.bind(this);
@@ -4960,6 +4962,7 @@
       this.thumbL = document.querySelector("#oculusLeft");
       this.thumbR = document.querySelector("#oculusRight");
       this.jumpButtonEvents = ["abuttondown", "xbuttondown"];
+      this.heightResetButtonEvents = ["bbuttondown", "ybuttondown"];
       this.jumpButtonEls = [];
       if (this.thumbL) {
         this.thumbL.addEventListener("thumbstickmoved", this.handleThumbstickMove);
@@ -4980,6 +4983,9 @@
         }
         this.jumpButtonEvents.forEach((eventName) => {
           buttonEl.addEventListener(eventName, this.handleJumpButtonDown);
+        });
+        this.heightResetButtonEvents.forEach((eventName) => {
+          buttonEl.addEventListener(eventName, this.handleHeightResetButtonDown);
         });
         this.jumpButtonEls.push(buttonEl);
       });
@@ -5830,6 +5836,7 @@
       this.clearImmersiveFirstMovementGroundLock();
       this.clearImmersiveEntryPoseSettle();
       this.clearImmersiveSessionAnchor();
+      this.immersiveHeightResetOffset = null;
       if (!this.isImmersiveXrPresenting()) {
         this.finalizeImmersiveExitNavigationHandoff("handle-exit-vr");
       } else {
@@ -5873,6 +5880,11 @@
     },
     handleJumpButtonDown: function(event) {
       if (this.requestJump("controller") && event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
+    },
+    handleHeightResetButtonDown: function(event) {
+      if (this.resetImmersiveHeight() && event && typeof event.preventDefault === "function") {
         event.preventDefault();
       }
     },
@@ -5991,6 +6003,9 @@
         this.jumpButtonEls.forEach((buttonEl) => {
           this.jumpButtonEvents.forEach((eventName) => {
             buttonEl.removeEventListener(eventName, this.handleJumpButtonDown);
+          });
+          this.heightResetButtonEvents.forEach((eventName) => {
+            buttonEl.removeEventListener(eventName, this.handleHeightResetButtonDown);
           });
         });
         this.jumpButtonEls = [];
@@ -6328,6 +6343,9 @@
       return Number.isFinite(this.desktopVisionHeightOffset) ? this.desktopVisionHeightOffset : null;
     },
     getDesiredImmersiveEyeToGroundOffset: function() {
+      if (Number.isFinite(this.immersiveHeightResetOffset)) {
+        return this.resolveImmersiveEyeToGroundOffset(this.immersiveHeightResetOffset);
+      }
       const desktopHeightOffset = this.getTrustedDesktopVisionHeightOffset();
       if (desktopHeightOffset !== null) {
         this.immersiveRawHeightOffset = desktopHeightOffset;
@@ -6338,6 +6356,12 @@
       return this.resolveImmersiveEyeToGroundOffset(null);
     },
     resolveImmersiveEyeToGroundOffset: function(rawHeightOffset) {
+      if (Number.isFinite(this.immersiveHeightResetOffset)) {
+        this.immersiveRawHeightOffset = this.immersiveHeightResetOffset;
+        this.immersiveHeightCalibrationApplied = false;
+        this.immersiveHeightSource = "reset";
+        return this.immersiveHeightResetOffset;
+      }
       const desktopHeightOffset = this.getTrustedDesktopVisionHeightOffset();
       if (desktopHeightOffset !== null) {
         const numericRawHeightOffset = Number(rawHeightOffset);
@@ -6367,6 +6391,42 @@
         this.desktopVisionMinEyeToGroundOffset,
         this.desktopVisionMaxEyeToGroundOffset
       );
+    },
+    resetImmersiveHeight: function() {
+      if (!this.isImmersiveXrPresenting() || !this.ensureImmersiveSessionAnchor("height-reset")) {
+        return false;
+      }
+      const physicalPosition = this.getImmersivePhysicalAnchorPosition(new THREE.Vector3());
+      const eyeHeight = physicalPosition.y;
+      if (!Number.isFinite(eyeHeight) || eyeHeight < 0.65 || eyeHeight > 2.4) {
+        return false;
+      }
+      const navigationPosition = this.getNavigationWorldPosition().clone();
+      const previousHeight = Number.isFinite(this.heightOffset) ? this.heightOffset : this.getDesiredImmersiveEyeToGroundOffset();
+      const ground = this.areCollisionsEnabled() ? this.sampleGroundAt(
+        navigationPosition,
+        this.hasLastGroundHit ? this.lastGroundHit.point.y : void 0,
+        this.sampledGroundHit
+      ) : null;
+      const floorY = ground ? ground.point.y : navigationPosition.y - previousHeight;
+      this.immersiveHeightResetOffset = eyeHeight;
+      this.heightOffset = eyeHeight;
+      this.immersiveRawHeightOffset = eyeHeight;
+      this.immersiveHeightCalibrationApplied = false;
+      this.immersiveHeightSource = "reset";
+      this.immersiveSessionAnchorPosition.y = eyeHeight;
+      this.immersiveSessionAnchorCapturedAt = this.getRuntimeNow();
+      this.immersiveSessionAnchorSource = "height-reset";
+      this.immersiveVirtualNavPosition.y = floorY + eyeHeight;
+      this.lastResolvedPosition.copy(this.immersiveVirtualNavPosition);
+      if (ground && !this.isAirborne()) {
+        this.setResolvedGroundHit(ground, this.immersiveVirtualNavPosition, this.lastGroundHit);
+        this.hasLastGroundHit = true;
+        this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
+      }
+      this.applyImmersiveRenderTransform();
+      this.requestShadowMapRefresh("immersive-height-reset");
+      return true;
     },
     clearImmersiveGroundCaches: function() {
       this.hasLastGroundHit = false;
@@ -6434,19 +6494,11 @@
           continue;
         }
         this.immersiveWorldBaseTransforms.set(el, {
-          position: this.getImmersiveWorldBasePosition(el, object),
+          position: object.position.clone(),
           quaternion: object.quaternion.clone(),
           scale: object.scale.clone()
         });
       }
-    },
-    getImmersiveWorldBasePosition: function(el, object) {
-      const position = object.position.clone();
-      const hover = el && el.components ? el.components["vrodos-hypnotic-hover"] : null;
-      if (hover && Number.isFinite(hover.initialY)) {
-        position.y = hover.initialY;
-      }
-      return position;
     },
     restoreImmersiveWorldBaseTransforms: function() {
       this.immersiveWorldBaseTransforms.forEach((base, el) => {
@@ -6547,6 +6599,7 @@
       return transformTargets.length > 0;
     },
     initializeImmersiveCollisionState: function() {
+      this.immersiveHeightResetOffset = null;
       this.clearImmersiveWorldBaseTransforms();
       this.clearImmersiveSessionAnchor();
       this.captureImmersiveSessionAnchor("immersive-entry");

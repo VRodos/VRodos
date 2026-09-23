@@ -119,6 +119,36 @@ function vrodosLoaderCreateGlbSceneRoot(object, resource) {
     return sceneRoot;
 }
 
+const VRODOS_OVERSIZED_GLB_LIMIT = 250;
+const VRODOS_OVERSIZED_GLB_TARGET = 25;
+
+VRODOS.loader.fitOversizedGlbPlacement = function(object, resource) {
+    if (!object || !resource) return false;
+
+    const bounds = new THREE.Box3().setFromObject(object);
+    const size = bounds.getSize(new THREE.Vector3());
+    const largestDimension = Math.max(size.x, size.y, size.z);
+    if (!Number.isFinite(largestDimension) || largestDimension <= VRODOS_OVERSIZED_GLB_LIMIT) return false;
+
+    const originalScale = object.scale.toArray();
+    if (originalScale.every((value) => value < 0)) object.scale.set(...originalScale.map(Math.abs));
+    object.scale.multiplyScalar(VRODOS_OVERSIZED_GLB_TARGET / largestDimension);
+    object.updateMatrixWorld(true);
+
+    resource.trs = resource.trs || {};
+    resource.trs.scale = object.scale.toArray();
+    VRODOS.editor.sceneRegistry.invalidateBounds(object);
+    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
+        VRODOS.editor.envir.oversizedGlbPlacementAdjusted = true;
+    }
+    console.warn('VRodos: oversized GLB placement was fitted to the editor scene.', {
+        asset_id: resource.asset_id || '',
+        previousSize: largestDimension,
+        fittedSize: VRODOS_OVERSIZED_GLB_TARGET
+    });
+    return true;
+};
+
 function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
     const resource = resources3D[name] || {};
     const sceneRoot = vrodosLoaderCreateGlbSceneRoot(object, resource);
@@ -137,12 +167,15 @@ function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
         finalObject.vrodosCollisionBounds = resource.vrodosCollisionBounds;
         if (sceneRoot.vrodosAssetOriginCenter) finalObject.vrodosAssetOriginCenter = sceneRoot.vrodosAssetOriginCenter;
         VRODOS.editor.sceneRegistry.invalidateBounds(finalObject);
+    }
+    finalObject.isSelectableMesh = true;
+    VRODOS.loader.fitOversizedGlbPlacement(finalObject, resource);
+    if (replacingPlaceholder) {
         if (typeof VRODOS.loader.prepareLoadedGlbRootMaterial === 'function') VRODOS.loader.prepareLoadedGlbRootMaterial(finalObject);
         if (VRODOS.editor.selection.get() === finalObject && typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(finalObject);
         if (VRODOS.editor.selection.get() === finalObject) VRODOS.editor.transforms.syncProxyToObject(finalObject);
         if (typeof VRODOS.ui.updateHierarchyPreparationStatus === 'function') VRODOS.ui.updateHierarchyPreparationStatus(finalObject);
     }
-    finalObject.isSelectableMesh = true;
     VRODOS.loader.applyTextureAnisotropy(finalObject, VRODOS.loader.getEditorTextureAnisotropy());
 
     if (finalObject.children === '') {

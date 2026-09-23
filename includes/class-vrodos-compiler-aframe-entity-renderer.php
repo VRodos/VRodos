@@ -691,7 +691,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$model->setAttribute( 'highlight', 'assessment_' . $uuid );
 		$this->apply_compiled_collision_attributes( $model, $contentObject, 'assessment-model' );
 		if ( $this->isHoverEnabled ) {
-			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
+			$model->setAttribute( 'vrodos-door-indicator', '' );
 		}
 		$model->setAttribute( 'vrodos-shared-model-textures', '' );
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
@@ -1417,7 +1417,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$entity->setAttribute( 'link-listener', (string) ($obj->poi_link_url ?? '') );
 			$entity->setAttribute( 'highlight', $uuid );
 			if ( $this->isHoverEnabled ) {
-				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
 		} elseif ( $cat === 'chat' || $cat === 'poi-chat' ) {
 			// Help Chat POI
@@ -1440,7 +1440,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			}
 
 			if ( $this->isHoverEnabled ) {
-				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
 		}
 
@@ -1449,7 +1449,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$entity->setAttribute( 'highlight', $uuid );
 			$this->apply_poi_interaction_attributes( $entity, $obj );
 			if ( 'decoration' === $cat && $this->isHoverEnabled ) {
-				$entity->setAttribute( 'vrodos-hypnotic-hover', 'visualOnly: true' );
+				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
 		}
 
@@ -1556,7 +1556,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$entity_class .= ' raycastable clickable';
 			$entity->setAttribute( 'highlight', 'audio_entity_' . $uuid );
 			if ( $this->isHoverEnabled ) {
-				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
 		}
 
@@ -1689,7 +1689,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$play_hint->setAttribute( 'class', 'raycastable' );
 			$play_hint->setAttribute( 'highlight', 'video-playhint_' . $uuid );
 			if ( $this->isHoverEnabled ) {
-				$play_hint->setAttribute( 'vrodos-hypnotic-hover', '' );
+				$play_hint->setAttribute( 'vrodos-door-indicator', '' );
 			}
 			$play_hint->setAttribute( 'position', '0 0 0.1' );
 			$play_hint->setAttribute( 'scale', '0.28 0.28 0.28' );
@@ -1743,7 +1743,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->apply_poi_interaction_attributes( $button, $obj );
 		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );
 		if ( $this->isHoverEnabled ) {
-			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
+			$button->setAttribute( 'vrodos-door-indicator', '' );
 		}
 		$this->set_world_lighting_attributes( $button, $this->flat_media_shadow_role() );
 		$button_anchor->appendChild( $button );

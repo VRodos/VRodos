@@ -28,7 +28,6 @@ export const runtimeBuildChunks = Object.freeze([
       'components/door_component.js',
       'components/audio_component.js',
       'components/video_component.js',
-      'components/vrodos_hypnotic_hover.component.js',
       'components/vrodos_camera_start.component.js'
     ].map(runtimeSource)
   },

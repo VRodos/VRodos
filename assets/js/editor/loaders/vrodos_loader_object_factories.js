@@ -470,70 +470,34 @@ VRODOS.loader.createAssessmentPlaceholder = function(nameModel, resource) {
     assessmentGroup.isLight = false;
     assessmentGroup.fnPath = '';
 
-    const card = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            1.1,
-            0.72,
-            0.08
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x0f172a,
-            emissive: 0x0b1220,
-            roughness: 0.85,
-            metalness: 0.1
-        })
-    );
-    card.name = `${nameModel}_card`;
-    card.isSelectableMesh = false;
-    card.castShadow = true;
-    card.receiveShadow = true;
-
-    const accent = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            1.12,
-            0.1,
-            0.09
-        ),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-    );
-    accent.position.set(0, 0.31, 0);
-    accent.name = `${nameModel}_accent`;
-    accent.isSelectableMesh = false;
-
-    const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.08, 24, 24),
-        new THREE.MeshBasicMaterial({ color: resource.assessment_supported === 'true' ? 0x22c55e : 0xf59e0b })
-    );
-    dot.position.set(
-        -0.42,
-        -0.18,
-        0.06
-    );
-    dot.name = `${nameModel}_status`;
-    dot.isSelectableMesh = false;
-
-    assessmentGroup.add(card);
-    assessmentGroup.add(accent);
-    assessmentGroup.add(dot);
-    const rearDot = new THREE.Mesh(dot.geometry, dot.material);
-    rearDot.name = `${nameModel}_status_back`;
-    rearDot.position.set(-dot.position.x, dot.position.y, -dot.position.z);
-    rearDot.isSelectableMesh = false;
-    assessmentGroup.add(rearDot);
-
-    const infoPlate = VRODOS.loader.createAssessmentInfoPlate(
-        assessmentGroup.assessment_type || assessmentGroup.assessment_group,
-        assessmentGroup.assessment_levels
-    );
-    if (infoPlate) {
-        assessmentGroup.add(infoPlate);
-    }
-
     return assessmentGroup;
 };
 
 VRODOS.loader.createAssessmentObject = function(name, resource) {
     return VRODOS.loader.createAssessmentPlaceholder(name, resource);
+};
+
+VRODOS.loader.loadAssessmentBook = async function(assessmentGroup, manager) {
+    const url = `${VRODOS.data.paths.modelBaseUrl}runtime/assessment-web.glb`;
+    await VRODOS.loader.glbAssetCache.load(url, () => new Promise((resolve, reject) => {
+        const gltfLoader = VRODOS.loader.createGltfLoader(manager, {
+            renderer: VRODOS.editor.envir && VRODOS.editor.envir.renderer
+        });
+        gltfLoader.load(url, resolve, undefined, reject);
+    }));
+
+    const book = VRODOS.loader.glbAssetCache.instantiate(url).scene;
+    book.name = `${assessmentGroup.name}_book`;
+    book.rotation.x = -Math.PI / 2;
+    book.traverse((node) => {
+        if (node.isMesh) {
+            node.isSelectableMesh = true;
+            node.castShadow = true;
+            node.receiveShadow = true;
+        }
+    });
+    assessmentGroup.add(book);
+    return assessmentGroup;
 };
 
 VRODOS.ui.createAssessmentInfoPlate = VRODOS.loader.createAssessmentInfoPlate;

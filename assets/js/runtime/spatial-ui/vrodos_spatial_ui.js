@@ -2698,6 +2698,8 @@ import { MSDF } from "@zappar/msdf-generator";
                     backgroundColor: opts.headerColor || DIALOG_HEADER_COLOR,
                     borderTopLeftRadius: panelRadius,
                     borderTopRightRadius: panelRadius,
+                    borderBottomLeftRadius: opts.showContent === false && opts.showFooter === false ? panelRadius : 0,
+                    borderBottomRightRadius: opts.showContent === false && opts.showFooter === false ? panelRadius : 0,
                     paddingX: opts.headerPaddingX !== undefined ? opts.headerPaddingX : DIALOG_HEADER_PADDING_X,
                     height: opts.headerHeight || DIALOG_HEADER_HEIGHT,
                     width: "100%",
@@ -2788,9 +2790,9 @@ import { MSDF } from "@zappar/msdf-generator";
                     zIndex: 5
                 }));
 
-                this.appendRoot(header);
-                this.appendRoot(content);
-                this.appendRoot(footer);
+                if (opts.showHeader !== false) this.appendRoot(header);
+                if (opts.showContent !== false) this.appendRoot(content);
+                if (opts.showFooter !== false) this.appendRoot(footer);
                 this.content = contentHost;
                 this.footer = footer;
 
@@ -3043,9 +3045,9 @@ import { MSDF } from "@zappar/msdf-generator";
         try {
             controlsHint = createPanelState({
                 id: "controls-hint",
-                width: 1.45,
+                width: items.length > 4 ? 1.7 : 1.45,
                 height: 0.26,
-                designWidthPx: 760,
+                designWidthPx: items.length > 4 ? 900 : 760,
                 distance: 1.95,
                 verticalOffset: -0.48,
                 centerAtEyeLevel: true,

@@ -75,6 +75,12 @@ class MockBox3 {
             (this.min.z + this.max.z) / 2
         );
     }
+
+    getSize(target) {
+        return this.isEmpty()
+            ? target.set(0, 0, 0)
+            : target.set(this.max.x - this.min.x, this.max.y - this.min.y, this.max.z - this.min.z);
+    }
 }
 
 let mockUuid = 0;

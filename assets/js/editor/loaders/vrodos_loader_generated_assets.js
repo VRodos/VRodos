@@ -63,17 +63,16 @@ function vrodosLoaderAddGeneratedSceneObject(object, resource, options) {
     return object;
 }
 
-VRODOS.loader.loadAssessmentAsset = function(name, resource, resources3D) {
-    return new Promise((resolve) => {
-        const object = VRODOS.loader.createAssessmentObject(name, resource);
-        VRODOS.loader.setObjectProperties(object, name, resources3D);
-        VRODOS.editor.objectFactory.addSceneObject(object, {
-            selectable: true,
-            updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad(),
-            renderReason: 'assessment-loaded'
-        });
-        resolve(object);
+VRODOS.loader.loadAssessmentAsset = async function(name, resource, resources3D, manager) {
+    const object = VRODOS.loader.createAssessmentObject(name, resource);
+    await VRODOS.loader.loadAssessmentBook(object, manager);
+    VRODOS.loader.setObjectProperties(object, name, resources3D);
+    VRODOS.editor.objectFactory.addSceneObject(object, {
+        selectable: true,
+        updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad(),
+        renderReason: 'assessment-loaded'
     });
+    return object;
 };
 
 VRODOS.loader.loadTextAsset = function(name, resource, resources3D) {

@@ -18,6 +18,14 @@ if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
 		}
 	}
 }
+if ( ! class_exists( 'VRodos_Core_Manager' ) ) {
+	class VRodos_Core_Manager {
+		public static function get_builtin_audio_marker_url(): string { return '/plugin/assets/models/runtime/speaker.glb'; }
+	}
+}
+if ( ! function_exists( 'wp_http_validate_url' ) ) {
+	function wp_http_validate_url( string $url ) { return filter_var( $url, FILTER_VALIDATE_URL ); }
+}
 
 if ( ! function_exists( 'wp_json_encode' ) ) {
 	function wp_json_encode( $value, $flags = 0 ) {
@@ -103,6 +111,7 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-scene-repository.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-aframe-entity-renderer.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-entity-policy.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-artifact-transaction.php';
 require_once __DIR__ . '/../includes/class-vrodos-runtime-settings-contract.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-feature-flags.php';
@@ -355,7 +364,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 		vrodos_foundation_assert( 'Έκθεμα' === $entity->getAttribute( 'data-vrodos-poi-title' ) && str_contains( $entity->getAttribute( 'data-vrodos-poi-description' ), "\n" ), 'POI preserves Greek multiline content' );
 		vrodos_foundation_assert( $poi->poi_img_path === $entity->getAttribute( 'data-vrodos-poi-image-src' ), 'each placement has its own optional photo' );
 		vrodos_foundation_assert( ! str_contains( $entity->getAttribute( 'class' ), 'menu-button' ), 'converted model does not adopt POI button presentation' );
-		vrodos_foundation_assert( ( 'decoration' === $physical ) === ( 'visualOnly: true' === $entity->getAttribute( 'vrodos-hypnotic-hover' ) ), 'converted decorations float only their visual model' );
+		vrodos_foundation_assert( ( 'decoration' === $physical ) === $entity->hasAttribute( 'vrodos-door-indicator' ) && ! $entity->hasAttribute( 'vrodos-hypnotic-hover' ), 'converted decorative POIs replace floating with a diamond indicator' );
 		vrodos_foundation_assert( '2 3 4' === $entity->getAttribute( 'position' ) && '2 2 2' === $entity->getAttribute( 'scale' ), 'conversion preserves transforms' );
 		vrodos_foundation_assert( ( 'walkable-surface' === $physical ) === $entity->hasAttribute( 'data-vrodos-navmesh' ), 'POI keeps original navigation role' );
 		if ( 'decoration' === $physical ) {
@@ -374,7 +383,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$no_hover_assets = $no_hover_dom->createElement( 'a-assets' );
 	$no_hover_scene->appendChild( $no_hover_assets );
 	$no_hover_renderer->render_scene_objects( $no_hover_dom, $no_hover_scene, $no_hover_assets, [ 'decoration' => $poi_objects['decoration'] ], 1, 42 );
-	vrodos_foundation_assert( 0 === ( new DOMXPath( $no_hover_dom ) )->query( '//*[@vrodos-hypnotic-hover]' )->length, 'converted decoration respects disabled scene hover' );
+	vrodos_foundation_assert( 0 === ( new DOMXPath( $no_hover_dom ) )->query( '//*[@vrodos-door-indicator or @vrodos-hypnotic-hover]' )->length, 'converted decoration respects disabled scene indicators' );
 	vrodos_foundation_assert( ( new VRodos_Compiler_Runtime_Feature_Flags() )->has_spatial_ui_content( (object) [ 'objects' => (object) $poi_objects ] ), 'converted POIs require spatial UI' );
 
 	$media_dom = new DOMDocument( '1.0', 'UTF-8' );
@@ -385,7 +394,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$media_renderer = new VRodos_Compiler_AFrame_Entity_Renderer(
 		new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn ( $url ) => $url
 	);
-	$media_renderer->configure( '/plugin/', false );
+	$media_renderer->configure( '/plugin/', true );
 	$media_renderer->render_scene_objects( $media_dom, $media_scene, $media_assets, [
 		'video' => (object) [
 			'uuid' => 'two-faced-video', 'category_slug' => 'video',
@@ -404,6 +413,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( str_contains( $video_display->getAttribute( 'material' ), 'side: front' ), 'video renders only outward faces' );
 	vrodos_foundation_assert( 1 === $media_xpath->query( '//*[@video-controls]' )->length, 'both video faces share one playback controller' );
 	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon]', $video_display )->length, 'video has two play hints' );
+	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon and @vrodos-door-indicator]', $video_display )->length && 0 === $media_xpath->query( '//*[@vrodos-hypnotic-hover]' )->length, 'video play hints use diamonds without floating' );
 	$rear_hint = $media_xpath->query( './a-entity[@id="video-playhint-back_two-faced-video"]', $video_display )->item( 0 );
 	vrodos_foundation_assert( '0 0 -0.1' === $rear_hint->getAttribute( 'position' ) && '0 180 0' === $rear_hint->getAttribute( 'rotation' ), 'rear play hint faces outwards' );
 	$text_panel = $media_xpath->query( '//*[@id="text-panel_two-faced-text"]' )->item( 0 );

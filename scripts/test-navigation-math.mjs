@@ -107,6 +107,56 @@ function createMovementHarness(options = {}) {
     return nav;
 }
 
+for (const withGround of [false, true]) {
+    const nav = createMovementHarness();
+    let physicalHeight = 1.1;
+    const floorY = withGround ? 2 : 0;
+    nav.immersiveVirtualNavPosition = new THREE.Vector3(4, floorY + 1.1, 6);
+    nav.lastResolvedPosition = nav.immersiveVirtualNavPosition.clone();
+    nav.immersiveSessionAnchorPosition = new THREE.Vector3(0.5, 1.1, -0.5);
+    nav.immersivePhysicalAnchorPosition = new THREE.Vector3();
+    nav.hasImmersiveSessionAnchor = true;
+    nav.heightOffset = 1.1;
+    nav.desktopVisionHeightOffset = 1.6;
+    nav.immersiveHeightResetOffset = null;
+    nav.immersiveWasPresenting = true;
+    nav.currentWorldPosition = new THREE.Vector3();
+    nav.hasLastGroundHit = withGround;
+    nav.lastGroundHit = createGroundHit(4, floorY, 6);
+    nav.sampledGroundHit = createGroundHit();
+    nav.areCollisionsEnabled = () => withGround;
+    nav.sampleGroundAt = () => createGroundHit(4, floorY, 6);
+    nav.getImmersivePhysicalAnchorPosition = (target) => target.set(0.5, physicalHeight, -0.5);
+    nav.applyImmersiveRenderTransform = () => true;
+    nav.requestShadowMapRefresh = () => {};
+    nav.getRuntimeNow = () => 10;
+    nav.isAirborne = () => false;
+    nav.setResolvedGroundHit = () => {};
+    nav.rememberGroundedPosition = () => {};
+
+    for (const nextHeight of [1.7, 0.9]) {
+        physicalHeight = nextHeight;
+        const renderedBefore = nav.immersiveVirtualNavPosition.y + physicalHeight - nav.immersiveSessionAnchorPosition.y;
+        assert(nav.resetImmersiveHeight(), 'height reset should work in immersive XR');
+        assertNear(nav.immersiveVirtualNavPosition.y, floorY + nextHeight, 'navigation height follows the current headset height');
+        assertNear(nav.immersiveVirtualNavPosition.y + physicalHeight - nav.immersiveSessionAnchorPosition.y, renderedBefore, 'reset must not visually jump when posture changes');
+        assertNear(nav.resolveImmersiveEyeToGroundOffset(1.6), nextHeight, 'reset overrides the desktop entry height');
+        assertNear(nav.immersiveVirtualNavPosition.x, 4, 'reset preserves horizontal X');
+        assertNear(nav.immersiveVirtualNavPosition.z, 6, 'reset preserves horizontal Z');
+        assertNear(nav.immersiveSessionAnchorPosition.x, 0.5, 'reset preserves horizontal session anchor');
+        assertNear(nav.immersiveRenderYaw, 0, 'reset preserves facing');
+    }
+    nav.isImmersiveXrPresenting = () => false;
+    nav.resetImmersiveTurnSmoothing = () => {};
+    nav.settleVerticalMotionForExitVr = () => {};
+    nav.restoreImmersiveWorldBaseTransforms = () => {};
+    nav.immersiveLiveAnchorDelta = new THREE.Vector3();
+    nav.finalizeImmersiveExitNavigationHandoff = () => {};
+    nav.handleExitVr();
+    assert(nav.immersiveHeightResetOffset === null, 'VR exit clears the height reset');
+    assertNear(nav.getDesiredImmersiveEyeToGroundOffset(), 1.6, 'a later VR entry uses its normal height policy');
+}
+
 {
     const nav = createMovementHarness();
     const refreshes = [];

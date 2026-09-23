@@ -38,7 +38,7 @@ VRODOS.loader.LoaderMulti = class {
 
             } else if (VRODOS.utils.isSceneAssessmentCategory(categorySlug)) {
 
-                pendingLoads.push(VRODOS.loader.loadAssessmentAsset(name, resource, resources3D));
+                pendingLoads.push(VRODOS.loader.loadAssessmentAsset(name, resource, resources3D, manager));
 
             } else if (VRODOS.utils.isSceneTextCategory(categorySlug)) {
 

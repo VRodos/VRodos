@@ -194,22 +194,45 @@ textPanel.scale.set(1, 1, 1);
 const assessment = editorLoader.createAssessmentObject('quiz', {
     assessment_type: 'Question', assessment_levels: 'A1,B2', assessment_supported: 'true'
 });
-const info = assessment.getObjectByName('assessment_info_plate');
-assert.equal(info.children.length, 2, 'Assessment information must have a readable face on each side.');
-assert.equal(info.children[0].material, info.children[1].material);
-const dot = assessment.getObjectByName('quiz_status');
-const rearDot = assessment.getObjectByName('quiz_status_back');
-assert.equal(dot.geometry, rearDot.geometry);
-assert.equal(dot.material, rearDot.material);
-assert.equal(dot.position.x, -rearDot.position.x);
-assert.equal(dot.position.z, -rearDot.position.z);
-for (const root of [textPanel, assessment]) {
+assert.equal(assessment.children.length, 0, 'The assessment card and oversized information plate are gone.');
+const bookBytes = readFileSync(new URL('../assets/models/runtime/assessment-web.glb', import.meta.url));
+const bookJsonLength = bookBytes.readUInt32LE(12);
+const bookJson = JSON.parse(bookBytes.subarray(20, 20 + bookJsonLength).toString());
+const bookAccessor = bookJson.accessors[bookJson.meshes[1].primitives[0].attributes.POSITION];
+const bookSize = bookAccessor.max.map((max, index) => max - bookAccessor.min[index]);
+const bookTemplate = new THREE.Group();
+bookTemplate.add(new THREE.Mesh(new THREE.BoxGeometry(...bookSize), new THREE.MeshStandardMaterial()));
+editorContext.VRODOS.data = { paths: { modelBaseUrl: '/models/' } };
+editorContext.VRODOS.editor = { envir: { renderer: {} } };
+editorLoader.createGltfLoader = () => ({ load: (_url, resolve) => resolve({ scene: bookTemplate }) });
+let loadedUrl = '';
+editorLoader.glbAssetCache = {
+    load: async (url, factory) => { loadedUrl = url; await factory(); },
+    instantiate: () => ({ scene: bookTemplate.clone(true) })
+};
+assessment.position.set(3, 4, 5);
+assessment.scale.set(2, 2, 2);
+assessment.rotation.set(0, 0, Math.PI / 2);
+const assessmentUuid = assessment.uuid;
+await editorLoader.loadAssessmentBook(assessment);
+assert.equal(loadedUrl, '/models/runtime/assessment-web.glb');
+assert.equal(assessment.children[0].rotation.x, -Math.PI / 2, 'Editor book uses the compiled model rotation.');
+assert.equal(assessment.uuid, assessmentUuid);
+assert.deepEqual(assessment.position.toArray(), [3, 4, 5]);
+assert.deepEqual(assessment.scale.toArray(), [2, 2, 2]);
+assert.equal(assessment.rotation.z, Math.PI / 2, 'Saved placement rotation is preserved.');
+assert(bookSize[0] < 0.3 && bookSize[2] < 0.3, 'The real book has small physical dimensions.');
+const bookBounds = new THREE.Box3().setFromObject(assessment).getSize(new THREE.Vector3());
+assert(Math.abs(bookBounds.x - bookSize[2] * 2) < 0.001, 'The rotated editor book keeps the compiled length and saved scale.');
+assert(Math.abs(bookBounds.y - bookSize[0] * 2) < 0.001, 'The saved rotation turns the book without enlarging it.');
+assert(Math.abs(bookBounds.z - bookSize[1] * 2) < 0.001, 'The compiled book thickness is preserved.');
+for (const root of [textPanel]) {
     root.updateMatrixWorld(true);
     for (const side of [1, -1]) {
         const intersections = new THREE.Raycaster(new THREE.Vector3(side === 1 ? -0.1 : 0.1, 0.1, side * 3), new THREE.Vector3(0, 0, -side)).intersectObject(root);
-        const hitFace = intersections.find((entry) => entry.object.name.includes(root === textPanel ? 'text_text_' : 'assessment_info_plate_'));
+        const hitFace = intersections.find((entry) => entry.object.name.includes('text_text_'));
         assert(hitFace && hitFace.uv.x < 0.5, 'Editor slabs must display the left of their content on the left from either face.');
-        assert(intersections.indexOf(hitFace) < intersections.findIndex((entry) => entry.object.name.endsWith(root === textPanel ? '_panel' : '_card')), 'Slab content must be in front of its opaque backing from either side.');
+        assert(intersections.indexOf(hitFace) < intersections.findIndex((entry) => entry.object.name.endsWith('_panel')), 'Slab content must be in front of its opaque backing from either side.');
     }
 }
 const resources = new Set();

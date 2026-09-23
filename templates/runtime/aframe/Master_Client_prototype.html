@@ -392,7 +392,7 @@
     <!-- IMG POI Dialog component (Modernized: Hero Layout) -->
     <dialog id="poi-img-dialog" class="tw-modal vrodos-runtime-dialog tw-overflow-hidden"
         aria-labelledby="Image POI popup">
-        <div
+        <div id="poi-img-dialog-box"
             class="tw-modal-box tw-p-0 tw-max-w-[min(92vw,52rem)] tw-max-h-[85vh] tw-w-full tw-bg-transparent tw-shadow-none tw-overflow-hidden">
             <div
                 class="tw-relative tw-w-full tw-bg-white/95 tw-backdrop-blur-2xl tw-rounded-[2rem] tw-overflow-hidden tw-shadow-[0_32px_64px_-16px_rgba(0,0,0,0.25)] tw-border tw-border-white/60">
@@ -404,13 +404,13 @@
                 </button>
 
                 <!-- Image Display Area -->
-                <div class="tw-flex tw-justify-center tw-bg-slate-100/30 tw-border-b tw-border-slate-100">
+                <div id="poi-img-dialog-image-area" class="tw-flex tw-justify-center tw-bg-slate-100/30 tw-border-b tw-border-slate-100">
                     <img src="" alt="Image POI Content" id="poi-img-dialog-image"
                         class="tw-max-h-[50vh] tw-w-auto tw-max-w-full tw-object-contain tw-transition-transform tw-duration-500" />
                 </div>
 
                 <!-- Content Area -->
-                <div class="tw-p-10 tw-bg-white">
+                <div id="poi-img-dialog-content-area" class="tw-p-10 tw-bg-white">
                     <div id="poi-img-dialog-title"
                         class="tw-text-2xl tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-900 tw-mb-4">
                     </div>

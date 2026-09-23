@@ -12,6 +12,7 @@
         'right-stick': `<g transform="translate(53 0) scale(-1 1)">${controller}${stick}</g>${badge}<path fill-rule="evenodd" d="M47 44h6c6 0 6 7 2 8l3 4h-3l-3-4h-2v4h-3Zm3 2.5v3h3c2 0 2-3 0-3Z"/>`,
         'right-trigger': '<path fill-rule="evenodd" d="M15 10h34c5 0 8 4 9 9l4 24c1 6-3 11-9 11H11C5 54 1 49 2 43l4-24c1-5 4-9 9-9Zm0 3c-3 0-5 3-6 7L5 44c-.5 4 2 7 6 7h42c4 0 6.5-3 6-7l-4-24c-1-4-3-7-6-7Z"/><path fill-rule="evenodd" d="M15 21h9c12 0 12 13 4 15l7 9h-5l-7-9h-4v9h-4Zm4 4v7h5c6 0 6-7 0-7Z"/><path d="M35 21h18v4h-7v20h-4V25h-7Z"/>',
         'jump-buttons': '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path fill-rule="evenodd" d="M15 24h4l7 16h-4l-1.5-4h-7L12 40H8Zm2 4-2.5 5h5ZM39 24h4l4 5.5 4-5.5h4l-6 8 6 8h-4l-4-5.5-4 5.5h-4l6-8Z"/>',
+        'reset-buttons': '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path d="M11 25h7c7 0 9 7 4 9 6 3 3 9-4 9h-7Zm4 3v4h3c3 0 3-4 0-4Zm0 7v5h3c4 0 4-5 0-5ZM37 25h4l6 8 6-8h4l-8 11v7h-4v-7Z"/>',
         'mouse-click': mouse,
         'mouse-drag': `<g transform="translate(8 8) scale(.75)">${mouse}</g><path d="M1 32l7-7v5h8v4H8v5ZM63 32l-7-7v5h-8v4h8v5Z"/>`
     }).map(([name, body]) => [name, { name, content: svg(body) }]));
@@ -63,6 +64,7 @@
             if (movement && !disabled && movement.getNavigationMode(settings) === 'walkable' && movement.areCollisionsEnabled(settings)) {
                 add(immersive ? 'A / X' : 'Space', 'Jump', immersive ? 'jump-buttons' : undefined);
             }
+            if (immersive && movement) add('B / Y', 'Reset height', 'reset-buttons');
             return items;
         },
 
