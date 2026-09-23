@@ -910,6 +910,7 @@ try:
         export_format="GLB",
         export_image_format="AUTO",
         export_materials="EXPORT",
+        export_animations=True,
     )
     progress(100, "GLB export complete")
 except Exception:

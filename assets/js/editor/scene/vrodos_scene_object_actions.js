@@ -771,6 +771,14 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         if (categoryHandlers[addCategory]) {
             categoryHandlers[addCategory]();
         } else {
+            if (!sceneRecord.glb_id) {
+                const progressEl = document.getElementById('result_download');
+                if (progressEl) progressEl.textContent = 'This asset has no prepared 3D model. Re-import or edit the asset before adding it.';
+                console.warn('VRodos: skipped asset without a GLB', { asset_id: sceneRecord.asset_id || '', name: nameModel });
+                clearSceneObjectAddPending(nameModel);
+                VRODOS.utils.sceneDeleteObjectRecord(nameModel);
+                return null;
+            }
             VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath);
         }
     } catch (error) {

@@ -271,4 +271,13 @@ const small = await directLoad;
 assert.equal(small.userData.vrodosEditorPlaceholder, undefined, 'small assets still load directly');
 assert.equal(selections, beforeDirectLoadSelections, 'scene loading never auto-selects pending or ready assets');
 VRODOS.api.clearSceneForReload();
+const addNotice = new Element();
+addNotice.id = 'result_download';
+const missingModel = VRODOS.api.addAssetToCanvas('invalid-import', '', 'POI - Link', {
+    asset_id: 3655, category_slug: 'poi-link', glb_id: ''
+}, [0, 0, 0]);
+assert.equal(missingModel, null, 'an imported asset without a GLB cannot be placed');
+assert.equal(records['invalid-import'], undefined, 'the invalid placement must not enter scene data');
+assert.match(addNotice.textContent, /no prepared 3D model/, 'the editor must explain why the asset was rejected');
+assert.equal(progressWrapper.style.visibility, 'hidden', 'an invalid model must not leave the editor loading overlay visible');
 console.log('Editor asset preparation lifecycle tests passed.');
