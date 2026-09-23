@@ -917,7 +917,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			? $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) )
 			: '';
 		$default_enabled = is_object( $obj ) && (
-			'decoration' === $this->semantic_entity_category( $obj )
+			in_array( $this->semantic_entity_category( $obj ), [ 'decoration', 'walkable-surface' ], true )
 			|| 'primitive-plane' === $source_category
 		);
 		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {

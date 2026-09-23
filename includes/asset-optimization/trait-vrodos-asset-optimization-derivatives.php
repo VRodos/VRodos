@@ -108,12 +108,17 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 
 		$upload_base_url = untrailingslashit( (string) $uploads['baseurl'] );
-		if ( str_starts_with( $clean_url, $upload_base_url ) ) {
+		if ( '' !== $upload_base_url && str_starts_with( $clean_url, $upload_base_url . '/' ) ) {
 			$relative = substr( $clean_url, strlen( $upload_base_url ) );
 			return wp_normalize_path( trailingslashit( $uploads['basedir'] ) . ltrim( rawurldecode( $relative ), '/\\' ) );
 		}
 
-		if ( str_starts_with( $path, '/wp-content/uploads/' ) && defined( 'ABSPATH' ) ) {
+		$url_host = wp_parse_url( $clean_url, PHP_URL_HOST );
+		$site_url = site_url();
+		$site_host = wp_parse_url( $site_url, PHP_URL_HOST );
+		$url_port = wp_parse_url( $clean_url, PHP_URL_PORT );
+		$site_port = wp_parse_url( $site_url, PHP_URL_PORT );
+		if ( ( ! $url_host || ( $url_host === $site_host && $url_port === $site_port ) ) && str_starts_with( $path, '/wp-content/uploads/' ) && defined( 'ABSPATH' ) ) {
 			return wp_normalize_path( trailingslashit( ABSPATH ) . ltrim( rawurldecode( $path ), '/\\' ) );
 		}
 

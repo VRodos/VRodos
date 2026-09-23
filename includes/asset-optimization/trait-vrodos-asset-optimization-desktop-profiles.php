@@ -478,7 +478,11 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			return;
 		}
 		$asset_id = absint( $value->asset_id ?? 0 );
-		if ( $asset_id && get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
+		$glb_meta = $asset_id ? get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) : '';
+		$is_external_glb = is_string( $glb_meta ) && '' !== $glb_meta
+			&& ( $glb_meta === VRodos_Core_Manager::get_builtin_audio_marker_url()
+				|| ( wp_http_validate_url( $glb_meta ) && '' === self::local_path_from_url( $glb_meta ) ) );
+		if ( $asset_id && $glb_meta && ! $is_external_glb ) {
 			$protect = ( new VRodos_Compiler_Entity_Policy() )->requires_protected_geometry( $value );
 			$assets[ $asset_id ] = [
 				'protections' => array_values( array_unique( array_merge( [ $protect ], $assets[ $asset_id ]['protections'] ?? [] ), SORT_REGULAR ) ),

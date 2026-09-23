@@ -716,7 +716,7 @@ class VRodos_Core_Manager {
 	public static function get_assets( $games_slugs ): array {
 		// Create a cache key based on the games slugs to ensure per-context caching
 		$access_scope = VRodos_Immerse_Access_Manager::is_restricted_user() ? 'immerse-restricted' : 'standard';
-		$cache_key = 'vrodos_assets_' . md5( wp_json_encode( $games_slugs ) . get_current_user_id() . '|source-filter-v2|' . $access_scope );
+		$cache_key = 'vrodos_assets_' . md5( wp_json_encode( $games_slugs ) . get_current_user_id() . '|source-filter-v3|' . $access_scope );
 		$cached_assets = get_transient( $cache_key );
 
 		if ( false !== $cached_assets ) {
@@ -747,6 +747,16 @@ class VRodos_Core_Manager {
 		}
 
 		$asset_ids = get_posts( $queryargs );
+		if ( ! VRodos_Immerse_Access_Manager::is_restricted_user() && in_array( 'shared-assets-repository', (array) $games_slugs, true ) ) {
+			$shared_ids = get_posts( [
+				'post_type' => 'vrodos_asset3d',
+				'posts_per_page' => -1,
+				'fields' => 'ids',
+				'meta_key' => '_vrodos_asset_is_shared',
+				'meta_value' => '1',
+			] );
+			$asset_ids = array_values( array_unique( array_merge( $asset_ids, $shared_ids ) ) );
+		}
 
 		if ( ! empty( $asset_ids ) ) {
 			// Warm up caches for all selected posts (meta and terms) in one go

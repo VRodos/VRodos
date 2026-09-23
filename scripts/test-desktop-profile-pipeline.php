@@ -8,6 +8,7 @@ $GLOBALS['vrodos_desktop_test_meta'] = [];
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
 $GLOBALS['vrodos_desktop_test_source'] = [];
+$GLOBALS['vrodos_desktop_test_glb_meta'] = null;
 $GLOBALS['vrodos_desktop_test_progress_path'] = '';
 
 class WP_Error {
@@ -53,7 +54,7 @@ function esc_url_raw( string $url ): string {
 
 function get_post_meta( int $post_id, string $key, bool $single = false ) {
 	if ( 'vrodos_asset3d_glb' === $key ) {
-		return $GLOBALS['vrodos_desktop_test_source']['path'] ?? '';
+		return $GLOBALS['vrodos_desktop_test_glb_meta'] ?? ( $GLOBALS['vrodos_desktop_test_source']['path'] ?? '' );
 	}
 	return $GLOBALS['vrodos_desktop_test_meta'][ $post_id ][ $key ] ?? '';
 }
@@ -64,6 +65,16 @@ function get_the_title( int $post_id ): string {
 
 function is_wp_error( $value ): bool {
 	return $value instanceof WP_Error;
+}
+
+function wp_http_validate_url( string $url ) {
+	return preg_match( '#^https?://[^/]+/.+#', $url ) ? $url : false;
+}
+
+class VRodos_Core_Manager {
+	public static function get_builtin_audio_marker_url(): string {
+		return 'https://example.test/wp-content/plugins/VRodos/assets/models/runtime/speaker.glb';
+	}
 }
 
 function sanitize_key( string $value ): string {
@@ -168,6 +179,10 @@ final class VRodos_Desktop_Profile_Test_Harness {
 
 	private static function prepare_source_glb( int $asset_id ) {
 		return $GLOBALS['vrodos_desktop_test_source'];
+	}
+
+	protected static function local_path_from_url( string $url ): string {
+		return str_starts_with( $url, 'https://example.test/wp-content/uploads/' ) ? '/local-upload.glb' : '';
 	}
 
 	private static function is_derivative_usable( array $record, string $source_url ): bool {
@@ -568,6 +583,23 @@ $plan->scenes = [
 $compile_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $plan );
 vrodos_desktop_assert( 'failed' === $compile_state['status'], 'scheduler rejection must propagate as a failed compiler preflight' );
 vrodos_desktop_assert( str_contains( $compile_state['message'], 'test scheduler rejected' ), 'compiler failure should retain the scheduler error' );
+
+$external_plan = clone $plan;
+$external_plan->scenes = [ (object) [ 'scene_id' => 51, 'scene_json' => (object) [ 'asset_id' => 3460, 'category_slug' => 'audio' ], 'desktop_profiles' => [] ] ];
+$GLOBALS['vrodos_desktop_test_source'] = new WP_Error( 'not-local', 'Only local uploaded GLB files can be optimized.' );
+foreach ( [
+	VRodos_Core_Manager::get_builtin_audio_marker_url(),
+	'https://library.example.test/wp-content/uploads/shared.glb',
+] as $external_url ) {
+	$GLOBALS['vrodos_desktop_test_glb_meta'] = $external_url;
+	$external_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $external_plan );
+	vrodos_desktop_assert( 'ready' === $external_state['status'] && 0 === $external_state['total'], 'URL-based global GLBs must not enter the local upload optimizer' );
+}
+foreach ( [ 3460, 'https://example.test/wp-content/uploads/missing.glb' ] as $local_source ) {
+	$GLOBALS['vrodos_desktop_test_glb_meta'] = $local_source;
+	$local_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $external_plan );
+	vrodos_desktop_assert( 'failed' === $local_state['status'], 'missing local GLB sources must still fail preflight' );
+}
 
 wp_delete_file( $source_path );
 wp_delete_file( $log_path );

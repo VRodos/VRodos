@@ -21,6 +21,13 @@ foreach ( [ 'walkable-surface', 'collision-proxy', 'door', 'image' ] as $categor
 	check_box_policy( 'mesh' === $policy->collision_shape( $object ), 'Existing mesh behavior' );
 	check_box_policy( $policy->requires_protected_geometry( $object ), 'Existing mesh protection' );
 }
+$walkable = (object) [ 'category_slug' => 'walkable-surface' ];
+check_box_policy( 'mesh' === $policy->collision_shape( $walkable ), 'Walkable surfaces default to player collision' );
+check_box_policy( true === $policy->normalize( clone $walkable, 1, 'walkable' )->compiledCollisionEnabled, 'Compile normalization enables walkable collision' );
+$walkable->compiledCollisionEnabled = false;
+check_box_policy( 'none' === $policy->collision_shape( $walkable ), 'Explicitly disabled walkable collision is preserved' );
+$walkable_role = (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'walkable-surface' ];
+check_box_policy( 'mesh' === $policy->collision_shape( $walkable_role ), 'Walkable role defaults to player collision' );
 $object = (object) [ 'category_slug' => 'walkable-surface', 'sceneAssetRole' => 'decoration', 'compiledCollisionEnabled' => true ];
 check_box_policy( 'box' === $policy->collision_shape( $object ) && ! $policy->requires_protected_geometry( $object ), 'Effective decoration role' );
 $object->category_slug = 'decoration';

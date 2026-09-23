@@ -54,6 +54,8 @@ assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...inheritedWalkable, sc
 assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...decoration, sceneAssetRole: "invalid" }) === "decoration", "invalid overrides must be ignored");
 assert(context.VRODOS.utils.resolveSceneAssetCategory({ category_slug: "door", sceneAssetRole: "walkable-surface" }) === "door", "non-eligible asset overrides must be ignored");
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, decoration) === true, "decorations must default to player collision");
+assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, inheritedWalkable) === true, "walkable assets must default to player collision");
+assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(false, inheritedWalkable) === false, "walkable collision can be explicitly disabled");
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, { ...decoration, sceneAssetRole: "walkable-surface" }) === true, "decoration assets must keep their collision default after a placement role change");
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(false, decoration) === false, "an explicitly disabled decoration must stay non-collidable");
 assert(context.VRODOS.utils.normalizeCompiledCollisionEnabled(undefined, { category_slug: "door" }) === false, "other asset categories must keep collision disabled by default");
@@ -70,6 +72,8 @@ const disabledDecoration = context.VRODOS.utils.sceneCreateObjectRecord("table",
 }, [0, 0, 0], 2);
 assert(newDecoration.compiledCollisionEnabled === true, "new decoration placements must start collidable");
 assert(disabledDecoration.compiledCollisionEnabled === false, "an explicit decoration collision choice must override the default");
+const newWalkable = context.VRODOS.utils.sceneCreateObjectRecord("terrain", "/terrain.glb", "Walkable Surfaces", { category_slug: "walkable-surface" }, [0, 0, 0], 3);
+assert(newWalkable.compiledCollisionEnabled === true, "new walkable placements must start collidable");
 
 const convertedPlacement = {
     category_slug: "decoration",

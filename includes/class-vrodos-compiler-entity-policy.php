@@ -10,7 +10,7 @@ final class VRodos_Compiler_Entity_Policy {
 
 	public function collision_shape( object $source ): string {
 		$category = $this->physical_category( $source );
-		$enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $source->compiledCollisionEnabled ?? ( 'decoration' === $category || 'primitive-plane' === $category ), false );
+		$enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $source->compiledCollisionEnabled ?? in_array( $category, [ 'decoration', 'walkable-surface', 'primitive-plane' ], true ), false );
 		return $enabled ? ( 'decoration' === $category ? 'box' : 'mesh' ) : 'none';
 	}
 
@@ -41,7 +41,7 @@ final class VRodos_Compiler_Entity_Policy {
 			null === $source->compiledCollisionEnabled ||
 			( ! is_bool( $source->compiledCollisionEnabled ) && '' === trim( (string) $source->compiledCollisionEnabled ) );
 		if ( $collision_value_missing ) {
-			$source->compiledCollisionEnabled = 'decoration' === $this->physical_category( $source ) || in_array( $source_category, [ 'decoration', 'primitive-plane' ], true );
+			$source->compiledCollisionEnabled = in_array( $this->physical_category( $source ), [ 'decoration', 'walkable-surface' ], true ) || in_array( $source_category, [ 'decoration', 'primitive-plane' ], true );
 		}
 		$source->category_slug = $this->effective_category( $source );
 		$source->name          = empty( $source->name ) ? $object_key : $source->name;

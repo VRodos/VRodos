@@ -15,6 +15,10 @@ function get_posts( $args ): array { return [ 1, 2 ]; }
 function get_the_title( $id ): string { return 'Asset ' . $id; }
 function _prime_post_caches( $ids, $terms, $meta ): void { $GLOBALS['primed'][] = $ids; }
 function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
+function wp_upload_dir(): array { return [ 'baseurl' => 'https://example.test/wp-content/uploads', 'basedir' => sys_get_temp_dir() . '/uploads' ]; }
+function site_url(): string { return 'https://example.test'; }
+function untrailingslashit( string $value ): string { return rtrim( $value, '/\\' ); }
+function trailingslashit( string $value ): string { return untrailingslashit( $value ) . '/'; }
 class VRodos_Core_Manager {
 	public static function resolve_media_meta_url( $value ): string { return $value ? '/source.glb' : ''; }
 }
@@ -26,6 +30,11 @@ class VRodos_Storage_Manager {
 require_once __DIR__ . '/../includes/asset-optimization/class-vrodos-asset-optimization-source.php';
 require_once __DIR__ . '/../includes/asset-optimization/class-vrodos-asset-optimization-dashboard-read-model.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
+require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
+class SourcePathFixture {
+	use VRodos_Asset_Optimization_Derivative_Service;
+	public static function path( string $url ): string { return self::local_path_from_url( $url ); }
+}
 class ScannerFixture {
 	use VRodos_Asset_Optimization_Scanner;
 	public static function scan(): array { return self::scan_glb_derivatives( 'web-high' ); }
@@ -35,6 +44,10 @@ class ScannerFixture {
 	protected static function strip_url_query_fragment( string $url ): string { return preg_split( '/[?#]/', $url )[0]; }
 }
 function verify( bool $condition, string $message ): void { if ( ! $condition ) throw new RuntimeException( $message ); }
+verify( str_ends_with( SourcePathFixture::path( 'https://example.test/wp-content/uploads/model.glb' ), '/uploads/model.glb' ), 'Site uploads must resolve to local files.' );
+verify( '' === SourcePathFixture::path( 'https://library.example.test/wp-content/uploads/model.glb' ), 'Another site’s uploads must remain external.' );
+verify( '' === SourcePathFixture::path( 'https://example.test:8080/wp-content/uploads/model.glb' ), 'Another site on the same host but a different port must remain external.' );
+verify( '' === SourcePathFixture::path( 'https://example.test/wp-content/uploads-other/model.glb' ), 'Upload URL prefixes must end at a directory boundary.' );
 $source_path = tempnam( sys_get_temp_dir(), 'vrodos-inspection-' );
 if ( ! is_string( $source_path ) ) throw new RuntimeException( 'Temporary fixture directory is unavailable.' );
 $writes = 0;

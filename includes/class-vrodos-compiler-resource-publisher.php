@@ -270,6 +270,10 @@ final class VRodos_Compiler_Resource_Publisher {
 				$meta = get_post_thumbnail_id( $asset_id );
 			}
 			if ( 'glb_path' === $property ) {
+				if ( is_string( $meta ) && '' !== $meta && $meta === VRodos_Core_Manager::get_builtin_audio_marker_url() ) {
+					$object->{$property} = $this->publish_file( VRodos_Path_Manager::asset_path( 'models/runtime/speaker.glb' ), 'asset-' . $asset_id . '-audio-marker', 0, 'glb' );
+					continue;
+				}
 				if ( $this->desktop_profiles_enabled && absint( $meta ) > 0 ) {
 					$profile_urls = [];
 					foreach ( $this->desktop_profile_slots as $slot ) {
