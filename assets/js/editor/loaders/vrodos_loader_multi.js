@@ -18,7 +18,7 @@ VRODOS.loader.LoaderMulti = class {
         };
         const pendingLoads = [];
         const glbLoadEntries = [];
-        const modelBaseUrl = VRODOS.utils.loaderResolveBaseUrl(VRODOS.data.pluginPath, 'modelBaseUrl', 'assets/models/');
+        let directorResource = null;
         const loadProfile = VRODOS.loader.applyResourceLoadProfile(resources3D);
         if (!resources3D) return Promise.allSettled(pendingLoads);
 
@@ -34,10 +34,7 @@ VRODOS.loader.LoaderMulti = class {
 
             // Load Camera object
             if (name === 'avatarCamera') {
-
-                pendingLoads.push(VRODOS.loader.loadDirectorCameraAsset(manager, getLoader(), name, resource, {
-                    modelBaseUrl
-                }));
+                directorResource = resource;
 
             } else if (VRODOS.utils.isSceneAssessmentCategory(categorySlug)) {
 
@@ -64,6 +61,10 @@ VRODOS.loader.LoaderMulti = class {
                     glbLoadEntries.push({ name, resource });
                 }
             }
+        }
+
+        if (directorResource || Object.prototype.hasOwnProperty.call(resources3D, 'cameraCoords')) {
+            pendingLoads.push(VRODOS.loader.createDirectorMarker(directorResource || resources3D.cameraCoords));
         }
 
         let uniqueGlbCount = 0;

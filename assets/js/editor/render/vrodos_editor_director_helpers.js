@@ -12,6 +12,7 @@ VRODOS.utils = VRODOS.utils || {};
     const directorGroundGuideObjectExcluded = VRODOS.editorRender.directorGroundGuideObjectExcluded;
     const directorGroundGuideObjectVisible = VRODOS.editorRender.directorGroundGuideObjectVisible;
     const getPointerLockObject = VRODOS.editorRender.getPointerLockObject;
+    const directorUpAxis = new THREE.Vector3(0, 1, 0);
 
     function trackDirectorInternalHelper(object, role) {
         if (!object) {
@@ -149,7 +150,34 @@ VRODOS.utils = VRODOS.utils || {};
         if (camMesh.parent !== director) {
             director.add(camMesh);
         }
+        this.syncDirectorVisualOrientation();
         camMesh.updateMatrixWorld(true);
+    }
+
+    function syncDirectorVisualOrientation() {
+        const director = this.getDirectorObject();
+        const visual = this.directorVisualObject;
+        const body = visual && visual.directorUprightBody;
+        if (!director || !visual || visual.parent !== director || !body) {
+            return;
+        }
+
+        this.directorFacingQuaternion.setFromAxisAngle(directorUpAxis, director.rotation.y);
+        body.quaternion.copy(director.quaternion).invert().multiply(this.directorFacingQuaternion);
+    }
+
+    function updateDirectorMarkerOpacity(camera) {
+        const visual = this.directorVisualObject;
+        const body = visual && visual.directorUprightBody;
+        if (!camera || !body || !visual.parent) return;
+
+        body.localToWorld(this.directorMarkerCenter.set(0, -0.85, 0));
+        camera.getWorldPosition(this.directorMarkerViewPosition);
+        const distance = this.directorMarkerCenter.distanceTo(this.directorMarkerViewPosition);
+        const opacity = 0.2 + 0.8 * THREE.MathUtils.clamp((distance - 0.75) / 2.25, 0, 1);
+        for (const material of visual.directorFadeMaterials) {
+            material.opacity = opacity;
+        }
     }
 
     function getDirectorRig() {
@@ -231,6 +259,7 @@ VRODOS.utils = VRODOS.utils || {};
         if (camMesh) {
             this.trackDirectorInternalHelper(camMesh, 'visual');
             director.add(camMesh);
+            this.syncDirectorVisualOrientation();
             camMesh.updateMatrixWorld(true);
         }
 
@@ -247,7 +276,7 @@ VRODOS.utils = VRODOS.utils || {};
             return;
         }
 
-        const safePosition = directorSafeVector(position, [0, 0.2, 0]);
+        const safePosition = directorSafeVector(position, [0, 1.6, 0]);
         const safeRotation = directorSafeVector(rotation, [0, 0, 0]);
 
         director.position.set(safePosition[0], safePosition[1], safePosition[2]);
@@ -280,7 +309,7 @@ VRODOS.utils = VRODOS.utils || {};
     }
 
     function resetDirectorTransform() {
-        this.applyDirectorTransform([0, 0.2, 0], [0, 0, 0]);
+        this.applyDirectorTransform([0, 1.6, 0], [0, 0, 0]);
     }
 
     function isDirectorGroundGuideObject(object) {
@@ -585,6 +614,8 @@ VRODOS.utils = VRODOS.utils || {};
         prototype.clearDirectorInternalHelpers = clearDirectorInternalHelpers;
         prototype.createDirectorHitProxy = createDirectorHitProxy;
         prototype.setCamMeshToAvatarControls = setCamMeshToAvatarControls;
+        prototype.syncDirectorVisualOrientation = syncDirectorVisualOrientation;
+        prototype.updateDirectorMarkerOpacity = updateDirectorMarkerOpacity;
         prototype.getDirectorRig = getDirectorRig;
         prototype.syncFirstPersonRigToDirector = syncFirstPersonRigToDirector;
         prototype.setDirectorWorldPosition = setDirectorWorldPosition;

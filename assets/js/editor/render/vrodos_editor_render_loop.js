@@ -318,6 +318,8 @@ VRODOS.api = VRODOS.api || {};
             updatePointerLockControls();
             syncTransformCamera(camera);
             updateAnimationMixers(envir, timestamp);
+            envir.syncDirectorVisualOrientation();
+            envir.updateDirectorMarkerOpacity(camera);
             updateDirectorGroundGuide(envir, isCameraInteraction);
             renderEditorScene(envir, camera);
             renderLabels(envir, camera, isContinuous, isCameraInteraction);

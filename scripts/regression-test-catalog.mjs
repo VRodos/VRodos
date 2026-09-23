@@ -28,6 +28,7 @@ export const testGroups = Object.freeze({
     "scripts/test-editor-property-inputs.mjs",
     "scripts/test-editor-transform-inputs.mjs",
     "scripts/test-editor-camera-navigation.mjs",
+    "scripts/test-editor-director-marker.mjs",
     "scripts/test-editor-first-person-preview.mjs",
     "scripts/test-editor-asset-preparation.mjs",
     "scripts/test-shared-behavior.mjs",

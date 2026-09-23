@@ -39,28 +39,66 @@ VRODOS.loader.shouldBuildHierarchyDuringLoad = function() {
     return !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
 };
 
-VRODOS.loader.prepareDirectorCameraObject = function(object) {
-    if (!object) return null;
+VRODOS.loader.createDirectorPersonObject = function() {
+    const marker = new THREE.Group();
+    marker.name = 'Camera3Dmodel';
+    marker.isSelectableMesh = true;
 
-    object.name = "Camera3Dmodel";
-    object.vrodos_internal_helper = true;
-    object.isSelectableMesh = true;
-    object.renderOrder = 1;
+    // The Director camera is at eye height. Feet are 1.6 m below it and the
+    // crown is 0.15 m above it, making this a fixed 1.75 m scale reference.
+    const body = new THREE.Group();
+    body.name = 'Camera3DmodelMesh';
+    marker.directorUprightBody = body;
+    marker.add(body);
 
-    if (typeof object.traverse === 'function') {
-        object.traverse((child) => {
-            child.vrodos_internal_helper = true;
-            if (child !== object) {
-                child.isSelectableMesh = Boolean(child.isMesh);
-            }
-        });
+    const fadeable = { transparent: true, depthWrite: false };
+    const coat = new THREE.MeshBasicMaterial({ color: 0x14b8a6, ...fadeable });
+    const trousers = new THREE.MeshBasicMaterial({ color: 0x334155, ...fadeable });
+    const skin = new THREE.MeshBasicMaterial({ color: 0xf5cba7, ...fadeable });
+    const face = new THREE.MeshBasicMaterial({ color: 0x0f172a, ...fadeable });
+    const direction = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+    marker.directorFadeMaterials = [coat, trousers, skin, face];
+
+    function addPart(parent, name, geometry, material, position, scale) {
+        const part = new THREE.Mesh(geometry, material);
+        part.name = name;
+        part.position.set(...position);
+        if (scale) part.scale.set(...scale);
+        parent.add(part);
+        return part;
     }
 
-    if (object.children && object.children[0]) {
-        object.children[0].name = "Camera3DmodelMesh";
+    addPart(body, 'DirectorHead', new THREE.SphereGeometry(1, 16, 12), skin, [0, -0.01, 0], [0.14, 0.16, 0.14]);
+    addPart(body, 'DirectorFace', new THREE.BoxGeometry(0.18, 0.04, 0.02), face, [0, 0, -0.14]);
+    addPart(body, 'DirectorNeck', new THREE.CylinderGeometry(0.05, 0.05, 0.12, 8), skin, [0, -0.19, 0]);
+    addPart(body, 'DirectorTorso', new THREE.BoxGeometry(0.46, 0.58, 0.27), coat, [0, -0.53, 0]);
+    addPart(body, 'DirectorHips', new THREE.BoxGeometry(0.38, 0.18, 0.24), trousers, [0, -0.87, 0]);
+
+    for (const side of [-1, 1]) {
+        addPart(body, 'DirectorArm', new THREE.CylinderGeometry(0.065, 0.065, 0.55, 8), coat, [side * 0.31, -0.54, 0]);
+        addPart(body, 'DirectorHand', new THREE.SphereGeometry(0.07, 10, 8), skin, [side * 0.31, -0.84, 0]);
+        addPart(body, 'DirectorLeg', new THREE.CylinderGeometry(0.075, 0.075, 0.54, 8), trousers, [side * 0.11, -1.23, 0]);
+        addPart(body, 'DirectorFoot', new THREE.BoxGeometry(0.18, 0.1, 0.29), trousers, [side * 0.11, -1.55, -0.06]);
     }
 
-    return object;
+    // This indicator stays under the camera, so it follows both yaw and pitch.
+    // The body alone is counter-rotated to remain standing upright.
+    addPart(marker, 'DirectorForwardShaft', new THREE.BoxGeometry(0.026, 0.026, 0.43), direction, [0, 0.03, -0.43]);
+    for (const side of [-1, 1]) {
+        const start = new THREE.Vector3(side * 0.11, 0.03, -0.59);
+        const tip = new THREE.Vector3(0, 0.03, -0.76);
+        const vector = tip.clone().sub(start);
+        const wing = addPart(marker, 'DirectorForwardWing', new THREE.CylinderGeometry(0.014, 0.014, vector.length(), 6), direction, [0, 0, 0]);
+        wing.position.copy(start).add(tip).multiplyScalar(0.5);
+        wing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vector.normalize());
+    }
+
+    marker.traverse((node) => {
+        node.vrodos_internal_helper = true;
+        if (node.isMesh) node.isSelectableMesh = true;
+    });
+
+    return marker;
 };
 
 VRODOS.loader.getEditorTextureAnisotropy = function() {

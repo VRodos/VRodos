@@ -34,6 +34,9 @@ VRODOS.editorRender = VRODOS.editorRender || {};
         this.directorGroundGuideRotation = new THREE.Quaternion();
         this.directorGroundGuideGroup = null;
         this.directorVisualObject = null;
+        this.directorFacingQuaternion = new THREE.Quaternion();
+        this.directorMarkerCenter = new THREE.Vector3();
+        this.directorMarkerViewPosition = new THREE.Vector3();
         this.directorHitProxy = null;
         this.directorInternalHelpers = new Set();
 
