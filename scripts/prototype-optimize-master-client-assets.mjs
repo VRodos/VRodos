@@ -981,7 +981,7 @@ async function optimizeAsset(asset, index, options) {
         });
     }
 
-    if (isWebProfile(options.profile)) {
+    if (isWebProfile(options.profile) && document.getRoot().listTextures().length > 0) {
         const textureMaxSize = record.profileOptions.textureMaxSize;
         const jobs = record.profileOptions.ktxJobs;
         operations.push({ id: 'normalize-textures', label: 'Normalizing source textures', run: () => normalizeUnsupportedTextures(document) });

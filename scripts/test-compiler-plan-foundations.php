@@ -436,12 +436,14 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$default_collidable_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="703"]' )->item( 0 );
 	$disabled_collision_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="704"]' )->item( 0 );
 	vrodos_foundation_assert( $converted_walkable instanceof DOMElement, 'converted walkable is rendered' );
+	vrodos_foundation_assert( $converted_walkable->hasAttribute( 'vrodos-glb-animation' ), 'critical authored GLBs autoplay embedded animations' );
 	vrodos_foundation_assert( 'bounds-center' === $converted_walkable->getAttribute( 'vrodos-model-origin' ), 'marked GLBs emit the bounds-center runtime component' );
 	vrodos_foundation_assert( 'true' === $converted_walkable->getAttribute( 'data-vrodos-navmesh' ), 'converted walkable emits navmesh attributes' );
 	vrodos_foundation_assert( 'auto' === $converted_walkable->getAttribute( 'data-vrodos-walk-behavior' ), 'converted walkable keeps Auto behavior' );
 	vrodos_foundation_assert( 'critical' === $converted_walkable->getAttribute( 'data-vrodos-load-phase' ), 'converted walkable loads critically' );
 	vrodos_foundation_assert( 'navmesh' === $converted_walkable->getAttribute( 'data-vrodos-collision-role' ), 'converted walkable collision resolves as navmesh' );
 	vrodos_foundation_assert( $converted_decoration instanceof DOMElement, 'converted decoration is rendered' );
+	vrodos_foundation_assert( $converted_decoration->hasAttribute( 'vrodos-glb-animation' ), 'lazy authored GLBs autoplay embedded animations' );
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'vrodos-model-origin' ), 'unmarked legacy GLBs preserve their authored origin' );
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-navmesh' ), 'converted decoration omits navmesh attributes' );
 	vrodos_foundation_assert( 'lazy' === $converted_decoration->getAttribute( 'data-vrodos-load-phase' ), 'converted decoration uses normal deferred loading' );

@@ -1377,6 +1377,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
 		$this->apply_compiled_gltf_source( $dom, $assets, $entity, $obj, $glb_url, $uuid, 'gltf', $context );
+		$entity->setAttribute( 'vrodos-glb-animation', '' );
 		$this->apply_model_origin( $entity, $obj );
 		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $context );
 

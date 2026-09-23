@@ -51,8 +51,8 @@ try {
     assert.equal(progress.profile, 'web-high');
     assert.equal(path.resolve(progress.sourcePath), path.resolve(source));
     assert.equal(progress.status, 'ready');
-    assert.equal(progress.step, 10);
-    assert.equal(progress.totalSteps, 10);
+    assert.equal(progress.step, progress.totalSteps);
+    assert.ok(progress.totalSteps > 0);
     assert.equal(progress.percent, 100);
     assert.match(progress.message, /ready/i);
     assert.equal((await readdir(successDir)).some((entry) => entry.endsWith('.tmp')), false, 'atomic progress writes must not leave temporary files');
