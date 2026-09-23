@@ -250,42 +250,21 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
-    function resetOrbitFor2d(envir) {
-        if (envir.orbitControls && typeof envir.orbitControls.reset === 'function') {
-            envir.orbitControls.reset();
-        }
-    }
-
-    function fitCameraAfterDimensionChange(envir) {
-        if (typeof VRODOS.utils.findSceneDimensions === 'function') {
-            VRODOS.utils.findSceneDimensions();
-        }
-        if (typeof envir.fitCameraToSceneLimits === 'function') {
-            envir.fitCameraToSceneLimits();
-        }
-        if (envir.orbitControls.object && typeof envir.orbitControls.object.updateProjectionMatrix === 'function') {
-            envir.orbitControls.object.updateProjectionMatrix();
-        }
-    }
-
     function enter3dMode(envir, transforms) {
-        envir.orbitControls.enableRotate = true;
+        envir.setOrbitCameraMode(false);
         if (envir.gridHelper) envir.gridHelper.visible = true;
         if (envir.axesHelper) envir.axesHelper.visible = true;
 
         setObjectManipulationVisible(true);
-        envir.is2d = false;
         transforms.setMode('translate');
     }
 
     function enter2dMode(envir, transforms) {
-        resetOrbitFor2d(envir);
-        envir.orbitControls.enableRotate = false;
+        envir.setOrbitCameraMode(true);
         if (envir.gridHelper) envir.gridHelper.visible = false;
         if (envir.axesHelper) envir.axesHelper.visible = false;
 
         setObjectManipulationVisible(false);
-        envir.is2d = true;
         transforms.setMode('translate');
 
         if (typeof envir.getDirectorVisualObject === 'function' && envir.getDirectorVisualObject()) {
@@ -312,7 +291,6 @@ VRODOS.api = VRODOS.api || {};
             }
 
             setDimensionButtonState(dimensionButton, envir);
-            fitCameraAfterDimensionChange(envir);
             requestRender('dimension-toggle');
         });
     }

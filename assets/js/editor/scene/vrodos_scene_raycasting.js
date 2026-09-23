@@ -256,6 +256,7 @@ VRODOS.ui.selectObjectPreview = function(objectSel) {
         openPanel: false,
         showProperties: false,
         focusHierarchy: true,
+        focusCamera: false,
         outline: true,
         syncGui: true
     });
@@ -269,6 +270,7 @@ VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
         openPanel: true,
         showProperties: true,
         focusHierarchy: true,
+        focusCamera: true,
         outline: true,
         syncGui: true,
         setMode: true

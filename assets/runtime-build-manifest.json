@@ -232,6 +232,7 @@
       ],
       "sourceFiles": [
         "assets/js/runtime/master/vrodos_model_origin.js",
+        "assets/js/runtime/master/vrodos_glb_lighting.js",
         "assets/js/runtime/master/components/vrodos_selection_bvh.system.js",
         "assets/js/runtime/master/components/vrodos_scene_loader.component.js",
         "assets/js/runtime/master/components/vrodos_shared_model_textures.component.js",

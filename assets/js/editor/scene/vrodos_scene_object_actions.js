@@ -252,50 +252,10 @@ function restoreSelectionAfterDelete(deletedUuid, selectedUuid) {
 }
 
 VRODOS.ui.frameNewSceneObject = function(object3D) {
-    if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
-        return;
+    const envir = VRODOS.editor.envir;
+    if (object3D && envir && typeof envir.frameOrbitObject === 'function') {
+        envir.frameOrbitObject(object3D);
     }
-
-    object3D.updateWorldMatrix(true, true);
-
-    const bounds = new THREE.Box3().setFromObject(object3D);
-    const center = new THREE.Vector3();
-    const size = new THREE.Vector3();
-
-    if (bounds.isEmpty()) {
-        object3D.getWorldPosition(center);
-        size.set(1, 1, 1);
-    } else {
-        bounds.getCenter(center);
-        bounds.getSize(size);
-    }
-
-    const focusDimension = Math.max(size.x, size.y, size.z, 1);
-    const paddedSurface = Math.max(focusDimension * 2.4, 6);
-    const currentOffset = new THREE.Vector3().subVectors(VRODOS.editor.envir.cameraOrbit.position, VRODOS.editor.envir.orbitControls.target);
-
-    if (currentOffset.lengthSq() < 0.000001) {
-        currentOffset.set(VRODOS.editor.envir.FRUSTUM_SIZE, VRODOS.editor.envir.FRUSTUM_SIZE, VRODOS.editor.envir.FRUSTUM_SIZE);
-    }
-
-    VRODOS.editor.envir.orbitControls.target.copy(center);
-
-    if (VRODOS.editor.envir.is2d) {
-        VRODOS.editor.envir.cameraOrbit.position.set(center.x, VRODOS.editor.envir.FRUSTUM_SIZE, center.z);
-    } else {
-        VRODOS.editor.envir.cameraOrbit.position.copy(center).add(currentOffset);
-    }
-
-    if (typeof VRODOS.utils.orthoFitZoom === 'function') {
-        VRODOS.editor.envir.cameraOrbit.zoom = VRODOS.utils.orthoFitZoom(VRODOS.editor.envir.FRUSTUM_SIZE, VRODOS.editor.envir.ASPECT, paddedSurface);
-    }
-
-    if (typeof VRODOS.utils.clampNumber === 'function') {
-        VRODOS.editor.envir.cameraOrbit.zoom = VRODOS.utils.clampNumber(VRODOS.editor.envir.cameraOrbit.zoom, 10, 5000, 600);
-    }
-
-    VRODOS.editor.envir.cameraOrbit.updateProjectionMatrix();
-    VRODOS.editor.envir.orbitControls.update();
 }
 
 VRODOS.ui.registerSceneObject = function(object, options) {

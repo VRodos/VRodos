@@ -128,27 +128,25 @@ VRODOS.editor = VRODOS.editor || {};
     }
 
     function updateCameraProjectionForResize() {
-        if (!this.cameraOrbit) {
+        if (!this.cameraOrbit3D || !this.cameraOrbit2D) {
             return;
         }
 
-        if (this.cameraOrbit.type === 'PerspectiveCamera') {
-            this.cameraOrbit.aspect = this.ASPECT;
-        } else if (this.cameraOrbit.type === 'OrthographicCamera') {
-            const frustumSize = this.FRUSTUM_SIZE || cameraDefaults.frustumSize;
-            this.cameraOrbit.left = frustumSize * this.ASPECT / -2;
-            this.cameraOrbit.right = frustumSize * this.ASPECT / 2;
-            this.cameraOrbit.top = frustumSize / 2;
-            this.cameraOrbit.bottom = frustumSize / -2;
-            this.cameraOrbit.zoom = VRODOS.utils.clampNumber(
-                this.cameraOrbit.zoom,
-                zoomDefaults.min,
-                zoomDefaults.max,
-                zoomDefaults.fallback
-            );
-        }
+        this.cameraOrbit3D.aspect = this.ASPECT;
+        this.cameraOrbit3D.updateProjectionMatrix();
 
-        this.cameraOrbit.updateProjectionMatrix();
+        const frustumSize = this.FRUSTUM_SIZE || cameraDefaults.frustumSize;
+        this.cameraOrbit2D.left = frustumSize * this.ASPECT / -2;
+        this.cameraOrbit2D.right = frustumSize * this.ASPECT / 2;
+        this.cameraOrbit2D.top = frustumSize / 2;
+        this.cameraOrbit2D.bottom = frustumSize / -2;
+        this.cameraOrbit2D.zoom = VRODOS.utils.clampNumber(
+            this.cameraOrbit2D.zoom,
+            zoomDefaults.min,
+            zoomDefaults.max,
+            zoomDefaults.fallback
+        );
+        this.cameraOrbit2D.updateProjectionMatrix();
         if (this.orbitControls) {
             this.orbitControls.update();
         }

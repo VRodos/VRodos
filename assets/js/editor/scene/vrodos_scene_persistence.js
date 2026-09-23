@@ -261,7 +261,7 @@ VRODOS.exporter.SceneExporter = class {
             node.name === 'mylightAvatar' ||
             node.name === 'mylightOrbit' ||
             node.name === 'avatarPitchObject' ||
-            node.name === 'orbitCamera' || node.name === 'myAxisHelper' ||
+            node.name === 'orbitCamera' || node.name === 'orbitCamera2D' || node.name === 'myAxisHelper' ||
             node.name === 'myGridHelper' || node.name === 'myTransformControls' ||
             node.category_name === 'lightHelper' ||
             node.category_name === 'lightTargetSpot' ||

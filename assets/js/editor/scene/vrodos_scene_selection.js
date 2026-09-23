@@ -308,6 +308,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                 openPanel: true,
                 showProperties: true,
                 focusHierarchy: true,
+                focusCamera: false,
                 outline: true,
                 syncGui: true,
                 setMode: true
@@ -332,6 +333,13 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             }
 
             transforms.attach(target);
+
+            if (opts.focusCamera) {
+                const envir = getEnvir();
+                if (envir && typeof envir.centerOrbitOnObject === 'function' && !VRODOS.editor.avatarControlsEnabled) {
+                    envir.centerOrbitOnObject(target);
+                }
+            }
 
             if (target.name !== 'avatarCamera' && VRODOS.ui.transform && typeof VRODOS.ui.transform.setSize === 'function') {
                 VRODOS.ui.transform.setSize();

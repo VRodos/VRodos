@@ -184,6 +184,8 @@ VRODOS.loader = VRODOS.loader || {};
                         throw new Error(`GLB loader returned no scene for ${key}`);
                     }
 
+                    window.VRODOSGlbLighting.normalize(gltf.scene);
+
                     entry.template = {
                         scene: gltf.scene,
                         animations: Array.isArray(gltf.animations) ? gltf.animations : []

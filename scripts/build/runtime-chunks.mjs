@@ -151,6 +151,7 @@ export const runtimeBuildChunks = Object.freeze([
     features: ['aframe-components', 'scene-settings', 'navigation', 'avatars'],
     sourceFiles: [
       'vrodos_model_origin.js',
+      'vrodos_glb_lighting.js',
       'components/vrodos_selection_bvh.system.js',
       'components/vrodos_scene_loader.component.js',
       'components/vrodos_shared_model_textures.component.js',

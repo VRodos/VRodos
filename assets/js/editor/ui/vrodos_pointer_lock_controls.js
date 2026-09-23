@@ -164,19 +164,6 @@ VRODOS.ui = VRODOS.ui || {};
         firstPersonBlocker.style.display = 'box';
     }
 
-    function fitOrbitCameraToScene(envir) {
-        const orbitControls = envir && envir.orbitControls ? envir.orbitControls : null;
-        if (orbitControls && typeof orbitControls.reset === 'function') {
-            orbitControls.reset();
-        }
-        if (VRODOS.utils && typeof VRODOS.utils.findSceneDimensions === 'function') {
-            VRODOS.utils.findSceneDimensions();
-        }
-        if (envir && typeof envir.fitCameraToSceneLimits === 'function') {
-            envir.fitCameraToSceneLimits();
-        }
-    }
-
     function enterFirstPersonView(envir) {
         VRODOS.editor.avatarControlsEnabled = true;
         dispatchMovementEvent(ADD_MOVEMENT_EVENT);
@@ -208,7 +195,7 @@ VRODOS.ui = VRODOS.ui || {};
 
         restoreDirectorPreviewTransform(envir);
         clearDirectorPreviewTransform();
-        fitOrbitCameraToScene(envir);
+        if (envir.orbitControls) envir.orbitControls.update();
         requestPointerRender('first-person-disabled');
     }
 

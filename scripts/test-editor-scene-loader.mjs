@@ -320,6 +320,7 @@ context.window = context;
 
 for (const relativePath of [
     "assets/js/runtime/master/vrodos_surface_material.js",
+    "assets/js/runtime/master/vrodos_glb_lighting.js",
     "assets/js/editor/core/vrodos_editor_core_utils.js",
     "assets/js/editor/loaders/vrodos_loader_object_factories.js",
     "assets/js/editor/loaders/vrodos_loader_generated_assets.js",

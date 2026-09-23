@@ -11,6 +11,7 @@ const VRODOS_SCENE_BOUNDS_EXCLUDED_NAMES = Object.freeze([
     'myGridHelper',
     'myAxisHelper',
     'orbitCamera',
+    'orbitCamera2D',
     'avatarCamera'
 ]);
 
@@ -169,6 +170,7 @@ function findSceneDimensions() {
         });
 
     VRODOS.editor.envir.SCENE_DIMENSION_SURFACE = Math.max(bounds.xMax - bounds.xMin, bounds.zMax - bounds.zMin);
+    VRODOS.editor.envir.SCENE_DIMENSION_HEIGHT = bounds.yMax - bounds.yMin;
     VRODOS.editor.envir.SCENE_CENTER_X = bounds.hasSceneContent ? (bounds.xMin + bounds.xMax) / 2 : 0;
     VRODOS.editor.envir.SCENE_CENTER_Y = bounds.hasSceneContent ? (bounds.yMin + bounds.yMax) / 2 : 0;
     VRODOS.editor.envir.SCENE_CENTER_Z = bounds.hasSceneContent ? (bounds.zMin + bounds.zMax) / 2 : 0;

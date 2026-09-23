@@ -669,6 +669,8 @@ Reflection/glint handling:
 
 Emissive/readability handling:
 
+- GLBs with an embedded punctual-light intensity of at least 1,000 are normalized as a rig when loaded in the asset preview, scene editor, and compiled client. The shared policy limits total embedded-light intensity to 1,200, each local light to 200, and each directional light to 2.5. Ordinary rigs, including the ASTRA Music Store, keep their authored intensities; the source GLB and derivative files remain unchanged.
+
 - Authored `material.emissive` and `material.emissiveIntensity` values are serialized by the compiler and reapplied by runtime material enhancement.
 - Emissive maps are texture-quality managed like base color maps.
 - High-quality PBR materials with an emissive map get a small readability floor of `emissiveIntensity >= 1.05` unless an authored override is present.

@@ -83,6 +83,7 @@ const context = {
 context.window = context;
 vm.createContext(context);
 for (const path of [
+    'assets/js/runtime/master/vrodos_glb_lighting.js',
     'assets/js/editor/core/vrodos_editor_core_utils.js',
     'assets/js/editor/scene/vrodos_scene_registry.js',
     'assets/js/editor/scene/vrodos_scene_object_factory.js',

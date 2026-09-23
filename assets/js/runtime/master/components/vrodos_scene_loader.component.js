@@ -388,6 +388,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
+        window.VRODOSGlbLighting.normalize(event.target.getObject3D('mesh'));
         this.resolvePendingModel(event.target);
     },
     handleModelError: function (event) {

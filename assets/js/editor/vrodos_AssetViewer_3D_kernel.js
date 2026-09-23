@@ -564,6 +564,7 @@ class VRodos_AssetViewer_3D_kernel {
 	handleLoadedGltf(gltf) {
 		this.setPreviewStatus('Preparing first frame');
 		this.previewAwaitingFirstFrame = true;
+        window.VRODOSGlbLighting.normalize(gltf.scene);
         if (this.hasPlayableAnimations(gltf.animations)) {
             const glbMixer = new THREE.AnimationMixer(gltf.scene);
             this.mixers.push(glbMixer);

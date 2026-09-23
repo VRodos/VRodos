@@ -113,7 +113,8 @@ VRODOS.api.clearSceneForReload = function() {
         'vrodosGizmoProxy',
         'avatarCamera',
         'avatarControls',
-        'orbitCamera'
+        'orbitCamera',
+        'orbitCamera2D'
     ]);
 
     for (let i = envir.scene.children.length - 1; i >= 0; i--) {
@@ -246,10 +247,7 @@ VRODOS.api.finalizeSceneLoad = function() {
     }
 
     if (playerObject) {
-        VRODOS.editor.envir.orbitControls.target.copy(playerObject.position);
-        VRODOS.editor.envir.cameraOrbit.zoom = 800;
-        VRODOS.editor.envir.cameraOrbit.updateProjectionMatrix();
-        VRODOS.editor.envir.orbitControls.update();
+        VRODOS.editor.envir.centerOrbitOnObject(playerObject);
     }
 
     if (typeof VRODOS.ui.removeHierarchySkeleton === 'function') VRODOS.ui.removeHierarchySkeleton();

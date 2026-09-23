@@ -95,7 +95,16 @@ VRODOS.ui = VRODOS.ui || {};
     }
 
     function setOrbitCamera() {
-        this.cameraOrbit = new THREE.OrthographicCamera(
+        this.cameraOrbit3D = new THREE.PerspectiveCamera(
+            this.VIEW_ANGLE,
+            this.ASPECT,
+            this.NEAR,
+            this.FAR
+        );
+        this.cameraOrbit3D.name = 'orbitCamera';
+        this.scene.add(this.cameraOrbit3D);
+
+        this.cameraOrbit2D = new THREE.OrthographicCamera(
             this.FRUSTUM_SIZE * this.ASPECT / -2,
             this.FRUSTUM_SIZE * this.ASPECT / 2,
             this.FRUSTUM_SIZE / 2,
@@ -103,20 +112,25 @@ VRODOS.ui = VRODOS.ui || {};
             0,
             this.FAR
         );
+        this.cameraOrbit2D.name = 'orbitCamera2D';
+        this.scene.add(this.cameraOrbit2D);
 
-        this.cameraOrbit.name = "orbitCamera";
-        this.scene.add(this.cameraOrbit);
-        this.cameraOrbit.position.set(0, this.FRUSTUM_SIZE, 0);
+        this.orbitTarget3D = new THREE.Vector3();
+        this.orbitTarget2D = new THREE.Vector3();
+        this.cameraOrbit = this.cameraOrbit3D;
+        this.fitCameraToSceneLimits();
 
         this.orbitControls = new THREE.OrbitControls(this.cameraOrbit, this.renderer.domElement);
         this.orbitControls.userPanSpeed = 1;
         this.orbitControls.enableDamping = false;
         this.orbitControls.dampingFactor = 0;
         this.orbitControls.zoomSpeed = 1.25;
-        this.orbitControls.object.zoom = 1;
-        this.orbitControls.minZoom = 1;
-        this.orbitControls.maxZoom = 10000;
+        this.orbitControls.minDistance = 0.05;
+        this.orbitControls.minZoom = zoomDefaults.min;
+        this.orbitControls.maxZoom = zoomDefaults.max;
         this.orbitControls.enableRotate = true;
+        this.orbitControls.target.copy(this.orbitTarget3D);
+        this.orbitControls.update();
 
         this.orbitControls.addEventListener('start', () => beginCameraInteraction('orbit-start'));
         this.orbitControls.addEventListener('change', () => markCameraInteraction('orbit-change'));
@@ -166,43 +180,124 @@ VRODOS.ui = VRODOS.ui || {};
     }
 
     function fitCameraToSceneLimits() {
-        if (!this.cameraOrbit) {
+        if (!this.cameraOrbit3D || !this.cameraOrbit2D) {
             return;
         }
 
-        if (this.cameraOrbit.type === 'OrthographicCamera') {
-            this.updateScreenMetrics();
-            this.cameraOrbit.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
-            this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
-            this.cameraOrbit.zoom = VRODOS.utils.orthoFitZoom(
-                this.FRUSTUM_SIZE,
-                this.ASPECT,
-                this.SCENE_DIMENSION_SURFACE
-            );
-        }
+        this.updateScreenMetrics();
+        const center = new THREE.Vector3(this.SCENE_CENTER_X, this.SCENE_CENTER_Y, this.SCENE_CENTER_Z);
+        const surface = Math.max(this.SCENE_DIMENSION_SURFACE || 0, 10);
+        const height = Math.max(this.SCENE_DIMENSION_HEIGHT || 0, 1);
+        const distance = perspectiveFitDistance.call(this, new THREE.Vector3(surface, height, surface));
 
-        if (this.is2d) {
-            this.cameraOrbit.position.set(this.SCENE_CENTER_X, this.FRUSTUM_SIZE, this.SCENE_CENTER_Z);
-        } else {
-            this.cameraOrbit.position.set(
-                this.SCENE_CENTER_X + this.FRUSTUM_SIZE,
-                this.FRUSTUM_SIZE,
-                this.SCENE_CENTER_Z + this.FRUSTUM_SIZE
-            );
-        }
+        this.orbitTarget3D.copy(center);
+        this.cameraOrbit3D.position.copy(center).add(new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(distance));
+        this.cameraOrbit3D.lookAt(center);
+        this.cameraOrbit3D.updateProjectionMatrix();
+
+        this.orbitTarget2D.copy(center);
+        this.cameraOrbit2D.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
+        this.cameraOrbit2D.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
+        this.cameraOrbit2D.position.set(center.x, center.y + this.FRUSTUM_SIZE, center.z);
+        this.cameraOrbit2D.zoom = VRODOS.utils.orthoFitZoom(
+            this.FRUSTUM_SIZE, this.ASPECT, surface
+        );
+        this.cameraOrbit2D.updateProjectionMatrix();
 
         if (this.orbitControls) {
-            this.orbitControls.target.set(this.SCENE_CENTER_X, this.SCENE_CENTER_Y, this.SCENE_CENTER_Z);
+            this.orbitControls.target.copy(this.is2d ? this.orbitTarget2D : this.orbitTarget3D);
             this.orbitControls.update();
         }
+    }
 
-        this.cameraOrbit.zoom = VRODOS.utils.clampNumber(
-            this.cameraOrbit.zoom,
-            zoomDefaults.min,
-            zoomDefaults.max,
-            zoomDefaults.fallback
-        );
-        this.cameraOrbit.updateProjectionMatrix();
+    function perspectiveFitDistance(size) {
+        const radius = Math.max(size.length() / 2, 1);
+        const verticalFov = THREE.MathUtils.degToRad(this.VIEW_ANGLE);
+        const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * Math.max(this.ASPECT, 0.1));
+        return radius * 1.3 / Math.sin(Math.min(verticalFov, horizontalFov) / 2);
+    }
+
+    function setOrbitCameraMode(is2d) {
+        if (!this.orbitControls) return;
+
+        if (this.cameraOrbit === this.cameraOrbit2D) {
+            this.orbitTarget2D.copy(this.orbitControls.target);
+        } else {
+            this.orbitTarget3D.copy(this.orbitControls.target);
+        }
+
+        this.is2d = Boolean(is2d);
+        this.cameraOrbit = this.is2d ? this.cameraOrbit2D : this.cameraOrbit3D;
+        this.orbitControls.object = this.cameraOrbit;
+        this.orbitControls.target.copy(this.is2d ? this.orbitTarget2D : this.orbitTarget3D);
+        this.orbitControls.enableRotate = !this.is2d;
+        this.orbitControls.update();
+
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setCamera === 'function') {
+            VRODOS.editor.transforms.setCamera(this.cameraOrbit);
+        }
+    }
+
+    function getObjectFocus(object) {
+        object.updateWorldMatrix(true, true);
+        const registry = VRODOS.editor.sceneRegistry;
+        const bounds = registry && typeof registry.getBounds === 'function'
+            ? registry.getBounds(object)
+            : new THREE.Box3().setFromObject(object);
+        const center = new THREE.Vector3();
+        const size = new THREE.Vector3(1, 1, 1);
+
+        if (bounds && !bounds.isEmpty()) {
+            bounds.getCenter(center);
+            bounds.getSize(size);
+        } else {
+            object.getWorldPosition(center);
+        }
+
+        return { center, size };
+    }
+
+    function centerOrbitOnObject(object) {
+        if (!object || !this.orbitControls || !this.cameraOrbit3D || !this.cameraOrbit2D) return;
+
+        const { center } = getObjectFocus(object);
+        centerOrbitAt.call(this, center);
+        requestEditorRender('selection-camera-focus');
+    }
+
+    function centerOrbitAt(center) {
+        const activeTarget = this.is2d ? this.orbitTarget2D : this.orbitTarget3D;
+        activeTarget.copy(this.orbitControls.target);
+
+        this.cameraOrbit3D.position.add(new THREE.Vector3().subVectors(center, this.orbitTarget3D));
+        this.cameraOrbit2D.position.add(new THREE.Vector3().subVectors(center, this.orbitTarget2D));
+        this.orbitTarget3D.copy(center);
+        this.orbitTarget2D.copy(center);
+        this.orbitControls.target.copy(center);
+        this.orbitControls.update();
+    }
+
+    function frameOrbitObject(object) {
+        if (!object || !this.orbitControls) return;
+
+        const { center, size } = getObjectFocus(object);
+        centerOrbitAt.call(this, center);
+        const camera = this.cameraOrbit;
+        const currentOffset = new THREE.Vector3().subVectors(camera.position, center);
+
+        if (this.is2d) {
+            camera.position.set(center.x, center.y + this.FRUSTUM_SIZE, center.z);
+            camera.zoom = VRODOS.utils.orthoFitZoom(
+                this.FRUSTUM_SIZE, this.ASPECT, Math.max(size.x, size.y, size.z, 1) * 2.4
+            );
+            camera.updateProjectionMatrix();
+        } else {
+            if (currentOffset.lengthSq() < 0.000001) currentOffset.set(1, 1, 1);
+            camera.position.copy(center).add(currentOffset.normalize().multiplyScalar(perspectiveFitDistance.call(this, size)));
+        }
+
+        this.orbitControls.update();
+        requestEditorRender('object-framed');
     }
 
     VRODOS.editorRender.installCameraMethods = function(prototype) {
@@ -214,5 +309,8 @@ VRODOS.ui = VRODOS.ui || {};
         prototype.setOrbitCamera = setOrbitCamera;
         prototype.setAvatarCamera = setAvatarCamera;
         prototype.fitCameraToSceneLimits = fitCameraToSceneLimits;
+        prototype.setOrbitCameraMode = setOrbitCameraMode;
+        prototype.centerOrbitOnObject = centerOrbitOnObject;
+        prototype.frameOrbitObject = frameOrbitObject;
     };
 })();

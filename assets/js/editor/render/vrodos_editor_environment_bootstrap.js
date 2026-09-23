@@ -52,6 +52,7 @@ VRODOS.editorRender = VRODOS.editorRender || {};
         this.FRUSTUM_SIZE = cameraDefaults.frustumSize;
 
         this.SCENE_DIMENSION_SURFACE = sceneDefaults.surfaceDimension;
+        this.SCENE_DIMENSION_HEIGHT = sceneDefaults.surfaceDimension;
         this.SCENE_CENTER_X = sceneDefaults.centerX;
         this.SCENE_CENTER_Y = sceneDefaults.centerY;
         this.SCENE_CENTER_Z = sceneDefaults.centerZ;
