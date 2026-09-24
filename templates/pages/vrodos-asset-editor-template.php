@@ -825,11 +825,19 @@ else { ?>
                                        value="<?php echo esc_attr($video_title); ?>">
                                 
                                 <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
-                                    <input type="checkbox" id="video_autoloop_checkbox" name="video_autoloop_checkbox" 
-                                           class="tw-checkbox tw-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
-                                    <label for="video_autoloop_checkbox" class="tw-cursor-pointer">
-                                        <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
-                                        <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
+                                    <input type="checkbox" id="video_autoplay_checkbox" name="video_autoplay_checkbox"
+                                           class="tw-checkbox tw-checkbox-primary tw-rounded-lg" <?php echo $video_autoplay; ?>/>
+                                    <label for="video_autoplay_checkbox" class="tw-cursor-pointer">
+                                        <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay</span>
+                                        <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start muted when the scene opens</span>
+                                    </label>
+                                </div>
+                                <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
+                                    <input type="checkbox" id="video_loop_checkbox" name="video_loop_checkbox"
+                                           class="tw-checkbox tw-checkbox-primary tw-rounded-lg" <?php echo $video_loop; ?>/>
+                                    <label for="video_loop_checkbox" class="tw-cursor-pointer">
+                                        <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Loop</span>
+                                        <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Repeat after playback ends</span>
                                     </label>
                                 </div>
                             </div>

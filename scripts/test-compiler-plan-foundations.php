@@ -399,7 +399,13 @@ if ( class_exists( 'DOMDocument' ) ) {
 		'video' => (object) [
 			'uuid' => 'two-faced-video', 'category_slug' => 'video',
 			'video_path' => '/sample.mp4', 'screenshot_path' => '/poster.png',
+			'video_autoplay' => '1', 'video_loop' => '0',
 			'position' => [ -2.5, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+		],
+		'loop-only-video' => (object) [
+			'uuid' => 'loop-only-video', 'category_slug' => 'video',
+			'video_path' => '/sample.mp4', 'video_autoplay' => '0', 'video_loop' => '1',
+			'position' => [ -2.5, 0, 2 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
 		],
 		'text' => (object) [
 			'uuid' => 'two-faced-text', 'category_slug' => '3d-text', 'text_content' => "Readable text\nSecond line",
@@ -409,9 +415,12 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$media_xpath = new DOMXPath( $media_dom );
 	$video_display = $media_xpath->query( '//*[@id="video-display_two-faced-video"]' )->item( 0 );
 	vrodos_foundation_assert( $video_display instanceof DOMElement, 'video emits one display entity' );
+	vrodos_foundation_assert( 'true' === $video_display->getAttribute( 'data-vrodos-video-autoplay' ) && 'false' === $video_display->getAttribute( 'data-vrodos-video-loop' ), 'compiled video autoplay and loop are independent' );
+	$loop_only_display = $media_xpath->query( '//*[@id="video-display_loop-only-video"]' )->item( 0 );
+	vrodos_foundation_assert( $loop_only_display instanceof DOMElement && 'false' === $loop_only_display->getAttribute( 'data-vrodos-video-autoplay' ) && 'true' === $loop_only_display->getAttribute( 'data-vrodos-video-loop' ), 'compiled loop-only video stays interactive' );
 	vrodos_foundation_assert( 'primitive: vrodos-two-sided-plane; width: 4; height: 3' === $video_display->getAttribute( 'geometry' ), 'video uses readable front and rear geometry' );
 	vrodos_foundation_assert( str_contains( $video_display->getAttribute( 'material' ), 'side: front' ), 'video renders only outward faces' );
-	vrodos_foundation_assert( 1 === $media_xpath->query( '//*[@video-controls]' )->length, 'both video faces share one playback controller' );
+	vrodos_foundation_assert( 1 === $media_xpath->query( 'self::*[@video-controls]', $video_display )->length, 'both video faces share one playback controller' );
 	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon]', $video_display )->length, 'video has two play hints' );
 	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon and @vrodos-door-indicator]', $video_display )->length && 0 === $media_xpath->query( '//*[@vrodos-hypnotic-hover]' )->length, 'video play hints use diamonds without floating' );
 	$rear_hint = $media_xpath->query( './a-entity[@id="video-playhint-back_two-faced-video"]', $video_display )->item( 0 );

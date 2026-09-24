@@ -1,4 +1,4 @@
-/* global VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, displayAssessmentProperties, displaySceneAssetRoleProperties, displayWalkableSurfaceProperties, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, displayCollisionProperties, displayShadowRoleProperties, displayMaterialRoleProperties, displayPrimitivePlaneProperties, displayAudioProperties */
+/* global VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, displayAssessmentProperties, displaySceneAssetRoleProperties, displayWalkableSurfaceProperties, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, displayCollisionProperties, displayShadowRoleProperties, displayMaterialRoleProperties, displayPrimitivePlaneProperties, displayAudioProperties, displayVideoProperties */
 /* exported isObjectControlsPanelOpen, showObjectControlsPanel, refreshSceneAssetRolePresentation */
 
 function getObjectControlsElement(key) {
@@ -177,6 +177,10 @@ function showPropertiesInPanel(object) {
             break;
         case 'audio':
             displayAudioProperties(object);
+            hasProperties = true;
+            break;
+        case 'video':
+            displayVideoProperties(object);
             hasProperties = true;
             break;
         default:

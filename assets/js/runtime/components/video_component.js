@@ -74,6 +74,7 @@ AFRAME.registerComponent('video-controls', {
 
         // Video Properties
         this.videoSourceUrl = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-src") || "") : "";
+        this.videoAutoplay = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-autoplay") === "true" : false;
         this.videoLoop = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-loop") === "true" : false;
         this.videoPosterSelector = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-poster") || "") : "";
         this.videoTitle = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-title") || "") : "";
@@ -263,14 +264,13 @@ AFRAME.registerComponent('video-controls', {
     },
 
     checkAutoplay: function() {
-        if (this.video.getAttribute("autoplay-manual") === "true") {
+        if (this.videoAutoplay && this.videoSourceUrl) {
+            this.video.muted = true;
             this.primeVideoForPlayback();
-            var playPromise = this.video.play();
+            const playPromise = this.video.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => console.warn("Autoplay prevented:", error));
             }
-        } else {
-            this.videoDisplay.classList.add("raycastable");
         }
     },
 
@@ -371,7 +371,7 @@ AFRAME.registerComponent('video-controls', {
     prepareVideoElement: function (videoEl) {
         if (!videoEl) return;
         videoEl.loop = this.videoLoop;
-        videoEl.preload = videoEl.getAttribute("autoplay-manual") === "true" ? "auto" : "none";
+        videoEl.preload = this.videoAutoplay ? "auto" : "none";
     },
 
     configureDialogVideoElement: function (videoEl) {
@@ -524,13 +524,15 @@ AFRAME.registerComponent('video-controls', {
 
     playVideo: function() {
         this.primeVideoForPlayback();
+        const wasMuted = this.video.muted;
+        if (wasMuted) this.video.muted = false;
         if (this.video.paused) {
             const playPromise = this.video.play();
             if (playPromise && typeof playPromise.catch === "function") {
                 playPromise.catch(error => console.warn("VR video playback prevented:", error));
             }
             this.trackEvent('poivideo_video_play_vr');
-        } else {
+        } else if (!wasMuted) {
             this.video.pause();
             this.trackEvent('poivideo_video_pause_vr');
         }

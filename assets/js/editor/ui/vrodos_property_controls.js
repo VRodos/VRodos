@@ -65,7 +65,7 @@ function bindPoiImageControls() {
         });
     }
 }
-/* exported VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, vrodosNormalizeWalkableBehavior, vrodosNormalizeObjectShadowRole, vrodosNormalizeObjectMaterialRole, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, vrodosNormalizeAudioPlaybackMode, vrodosNormalizeAudioLoopValue, vrodosNormalizeAudioNumericValue, vrodosCommitObjectControlsProperty, vrodosPlaneSurfaceMaterialState, vrodosSavePlaneSurfaceMaterialPackage, vrodosSavePlaneTextureChange */
+/* exported VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, vrodosNormalizeWalkableBehavior, vrodosNormalizeObjectShadowRole, vrodosNormalizeObjectMaterialRole, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, vrodosNormalizeAudioPlaybackMode, vrodosNormalizeToggleValue, vrodosNormalizeAudioNumericValue, vrodosCommitObjectControlsProperty, vrodosPlaneSurfaceMaterialState, vrodosSavePlaneSurfaceMaterialPackage, vrodosSavePlaneTextureChange */
 // Shared property inputs and change application.
 
 const VRODOS_OBJECT_CONTROLS_IDS = {
@@ -722,7 +722,7 @@ function vrodosNormalizeAudioPlaybackMode(value) {
     return String(value || '').toLowerCase() === 'autoplay' ? 'autoplay' : 'interact';
 }
 
-function vrodosNormalizeAudioLoopValue(value) {
+function vrodosNormalizeToggleValue(value) {
     const normalized = String(value ?? '').toLowerCase();
     return (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') ? '1' : '0';
 }

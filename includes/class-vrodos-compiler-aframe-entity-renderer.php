@@ -1676,7 +1676,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->setAttribute( 'original-scale', '1 1 1' );
 			$video_url = $this->normalize_url( $obj->video_path ?? '' );
 			$display->setAttribute( 'data-vrodos-video-src', $video_url );
-			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
+			$display->setAttribute( 'data-vrodos-video-autoplay', filter_var( $obj->video_autoplay ?? false, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false' );
+			$display->setAttribute( 'data-vrodos-video-loop', filter_var( $obj->video_loop ?? false, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false' );
 			$display->setAttribute( 'data-vrodos-video-title', $this->sanitize_text_attr( $obj->video_title ?? 'Video' ) );
 			$this->track_runtime_asset( 'video', $video_url, 'video:' . $uuid );
 			$this->set_world_lighting_attributes( $display, $this->flat_media_shadow_role() );

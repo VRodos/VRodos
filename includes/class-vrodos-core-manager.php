@@ -589,10 +589,11 @@ class VRodos_Core_Manager {
 						$data_arr['screenshot_path']         = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
 						break;
 					case 'video':
-						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
-						$data_arr['video_title'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
-						$data_arr['video_loop']  = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
+						$data_arr['video_id']       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
+						$data_arr['video_path']     = self::resolve_media_meta_url( $data_arr['video_id'] );
+						$data_arr['video_title']    = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
+						$data_arr['video_autoplay'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true );
+						$data_arr['video_loop']     = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
 						break;
 					case 'poi-imagetext':
 						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
@@ -854,10 +855,11 @@ class VRodos_Core_Manager {
 						$data_arr['screenshot_path']      = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
 						break;
 					case 'video':
-						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
-						$data_arr['video_title'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
-						$data_arr['video_loop']  = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
+						$data_arr['video_id']       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
+						$data_arr['video_path']     = self::resolve_media_meta_url( $data_arr['video_id'] );
+						$data_arr['video_title']    = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
+						$data_arr['video_autoplay'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true );
+						$data_arr['video_loop']     = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
 						break;
 					case 'poi-imagetext':
 						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );

@@ -207,7 +207,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 					VRodos_Upload_Manager::upload_asset_screenshot( $_POST['videoSshotFileInput'], $asset_id, $project_id );
 				}
 				update_post_meta( $asset_id, 'vrodos_asset3d_video_title', sanitize_text_field( $_POST['videoTitle'] ?? '' ) );
-				update_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', isset( $_POST['video_autoloop_checkbox'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', isset( $_POST['video_autoplay_checkbox'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', isset( $_POST['video_loop_checkbox'] ) );
 				break;
 
 			case 'poi-imagetext':
@@ -569,7 +570,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$video_attachment_post         = is_numeric( $videoID ) ? get_post( (int) $videoID ) : null;
 		$data['video_attachment_file'] = self::resolve_media_meta_url( $videoID );
 		$data['video_title']           = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
-		$data['video_autoloop']        = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true ) ? 'checked' : '';
+		$data['video_autoplay']        = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true ) ? 'checked' : '';
+		$data['video_loop']            = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true ) ? 'checked' : '';
 
 		// Audio
 		$audio_defaults                = self::get_audio_settings_defaults();

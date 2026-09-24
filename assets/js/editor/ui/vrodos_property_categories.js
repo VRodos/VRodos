@@ -1,5 +1,5 @@
-/* global _getEditorInput, _setEditorInputValue, _setEditorInputChecked, _showEditorPanel, _getPropertyPanelState, _populateEditorSelect, _getFirstChildMaterialColorHex, _setDoorSelectValue, _bindDoorSelectToObject, _getLightShadowRadius, getObjectControlsElement, vrodosGetEffectiveObjectCategory, vrodosNormalizeWalkableBehavior, vrodosNormalizeObjectShadowRole, vrodosNormalizeObjectMaterialRole, getObjectControlsTargetObject, vrodosNormalizeAudioPlaybackMode, vrodosNormalizeAudioLoopValue, vrodosNormalizeAudioNumericValue, vrodosCommitObjectControlsProperty, VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES, vrodosPlaneNumericValue, vrodosPlaneTextureState, vrodosPlaneSurfaceMaterialState, vrodosSavePlaneSurfaceMaterialPackage, vrodosSavePlaneTextureChange, refreshSceneAssetRolePresentation */
-/* exported displayAssessmentProperties, displaySceneAssetRoleProperties, displayWalkableSurfaceProperties, displayCollisionProperties, displayShadowRoleProperties, displayMaterialRoleProperties, displayAudioProperties */
+/* global _getEditorInput, _setEditorInputValue, _setEditorInputChecked, _showEditorPanel, _getPropertyPanelState, _populateEditorSelect, _getFirstChildMaterialColorHex, _setDoorSelectValue, _bindDoorSelectToObject, _getLightShadowRadius, getObjectControlsElement, vrodosGetEffectiveObjectCategory, vrodosNormalizeWalkableBehavior, vrodosNormalizeObjectShadowRole, vrodosNormalizeObjectMaterialRole, getObjectControlsTargetObject, vrodosNormalizeAudioPlaybackMode, vrodosNormalizeToggleValue, vrodosNormalizeAudioNumericValue, vrodosCommitObjectControlsProperty, VRODOS_PLANE_TEXTURE_SLOT_PROPERTIES, vrodosPlaneNumericValue, vrodosPlaneTextureState, vrodosPlaneSurfaceMaterialState, vrodosSavePlaneSurfaceMaterialPackage, vrodosSavePlaneTextureChange, refreshSceneAssetRolePresentation */
+/* exported displayAssessmentProperties, displaySceneAssetRoleProperties, displayWalkableSurfaceProperties, displayCollisionProperties, displayShadowRoleProperties, displayMaterialRoleProperties, displayAudioProperties, displayVideoProperties */
 
 function getSpotTargetOptionObjects() {
     return typeof VRODOS.utils.getSelectableEditorSceneRoots === 'function'
@@ -996,7 +996,7 @@ function displayAudioProperties(object) {
     const rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
 
     const playbackMode = vrodosNormalizeAudioPlaybackMode(object.audio_playback_mode);
-    const loopValue = vrodosNormalizeAudioLoopValue(object.audio_loop);
+    const loopValue = vrodosNormalizeToggleValue(object.audio_loop);
     const volumeValue = vrodosNormalizeAudioNumericValue(object.audio_volume, 1, 0, 1);
     const refDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_ref_distance, 2, 0.1);
     const maxDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_max_distance, 20, 0.1);
@@ -1017,5 +1017,47 @@ function displayAudioProperties(object) {
     if (maxDistanceInput) maxDistanceInput.value = maxDistanceValue;
     if (rolloffFactorInput) rolloffFactorInput.value = rolloffFactorValue;
 
+    section.style.display = 'block';
+}
+
+function ensureVideoPropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('videoPropertiesDiv');
+    if (section) return section;
+
+    section = document.createElement('div');
+    section.id = 'videoPropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Video Settings</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-3 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<label class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-text-slate-200">' +
+        '<input type="checkbox" id="videoAutoplayCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
+        '<span>Autoplay (muted until clicked)</span></label>' +
+        '<label class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-text-slate-200">' +
+        '<input type="checkbox" id="videoLoopCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
+        '<span>Loop</span></label>' +
+        '</div>';
+    container.appendChild(section);
+
+    document.getElementById('videoAutoplayCheckbox').addEventListener('change', function () {
+        vrodosCommitObjectControlsProperty('video_autoplay', this.checked ? '1' : '0');
+    });
+    document.getElementById('videoLoopCheckbox').addEventListener('change', function () {
+        vrodosCommitObjectControlsProperty('video_loop', this.checked ? '1' : '0');
+    });
+
+    return section;
+}
+
+function displayVideoProperties(object) {
+    const section = ensureVideoPropertiesSection();
+    if (!section || !object) return;
+
+    document.getElementById('videoAutoplayCheckbox').checked = vrodosNormalizeToggleValue(object.video_autoplay) === '1';
+    document.getElementById('videoLoopCheckbox').checked = vrodosNormalizeToggleValue(object.video_loop) === '1';
     section.style.display = 'block';
 }
