@@ -178,6 +178,17 @@
         return copy;
     }
 
+    function shuffleFillGapWordBank(words) {
+        const shuffled = shuffleArray(words);
+        if (shuffled.every((word, index) => word.text === words[index].text)) {
+            const differentIndex = shuffled.findIndex((word) => word.text !== shuffled[0].text);
+            if (differentIndex > 0) {
+                [shuffled[0], shuffled[differentIndex]] = [shuffled[differentIndex], shuffled[0]];
+            }
+        }
+        return shuffled;
+    }
+
     function arrayEquals(left, right) {
         if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
             return false;
@@ -695,6 +706,7 @@
     namespace.toArray = toArray;
     namespace.uniqueId = uniqueId;
     namespace.shuffleArray = shuffleArray;
+    namespace.shuffleFillGapWordBank = shuffleFillGapWordBank;
     namespace.arrayEquals = arrayEquals;
     namespace.normalizeQuestionItems = normalizeQuestionItems;
     namespace.normalizePairEntries = normalizePairEntries;

@@ -11,6 +11,7 @@
     const toArray = namespace.toArray;
 
     const shuffleArray = namespace.shuffleArray;
+    const shuffleFillGapWordBank = namespace.shuffleFillGapWordBank;
     const arrayEquals = namespace.arrayEquals;
     const normalizeAssessmentLineBreaks = namespace.normalizeAssessmentLineBreaks;
     const normalizeQuestionItems = namespace.normalizeQuestionItems;
@@ -1059,7 +1060,7 @@
                     sourceText,
                     annotations: blanks,
                     values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
-                    wordBank: createFillGapWordBank(sourceText, blanks),
+                    wordBank: shuffleFillGapWordBank(createFillGapWordBank(sourceText, blanks)),
                     assignmentsByBlank: {},
                     selectedWordId: "",
                     dragWordId: ""

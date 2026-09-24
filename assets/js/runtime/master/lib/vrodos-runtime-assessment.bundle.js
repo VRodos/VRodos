@@ -122,6 +122,16 @@
       }
       return copy;
     }
+    function shuffleFillGapWordBank(words) {
+      const shuffled = shuffleArray(words);
+      if (shuffled.every((word, index) => word.text === words[index].text)) {
+        const differentIndex = shuffled.findIndex((word) => word.text !== shuffled[0].text);
+        if (differentIndex > 0) {
+          [shuffled[0], shuffled[differentIndex]] = [shuffled[differentIndex], shuffled[0]];
+        }
+      }
+      return shuffled;
+    }
     function arrayEquals(left, right) {
       if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
         return false;
@@ -530,6 +540,7 @@
     namespace.toArray = toArray;
     namespace.uniqueId = uniqueId;
     namespace.shuffleArray = shuffleArray;
+    namespace.shuffleFillGapWordBank = shuffleFillGapWordBank;
     namespace.arrayEquals = arrayEquals;
     namespace.normalizeQuestionItems = normalizeQuestionItems;
     namespace.normalizePairEntries = normalizePairEntries;
@@ -1989,6 +2000,7 @@
     const normalizeFreeText = namespace.normalizeFreeText;
     const toArray = namespace.toArray;
     const shuffleArray = namespace.shuffleArray;
+    const shuffleFillGapWordBank = namespace.shuffleFillGapWordBank;
     const arrayEquals = namespace.arrayEquals;
     const normalizeAssessmentLineBreaks = namespace.normalizeAssessmentLineBreaks;
     const normalizeQuestionItems = namespace.normalizeQuestionItems;
@@ -2854,7 +2866,7 @@
             sourceText,
             annotations: blanks,
             values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
-            wordBank: createFillGapWordBank(sourceText, blanks),
+            wordBank: shuffleFillGapWordBank(createFillGapWordBank(sourceText, blanks)),
             assignmentsByBlank: {},
             selectedWordId: "",
             dragWordId: ""
@@ -3052,6 +3064,7 @@
     const normalizeFreeText = namespace.normalizeFreeText;
     const toArray = namespace.toArray;
     const shuffleArray = namespace.shuffleArray;
+    const shuffleFillGapWordBank = namespace.shuffleFillGapWordBank;
     const arrayEquals = namespace.arrayEquals;
     const normalizeAssessmentLineBreaks = namespace.normalizeAssessmentLineBreaks;
     const normalizeQuestionItems = namespace.normalizeQuestionItems;
@@ -4064,7 +4077,7 @@
             annotations: blanks,
             phrases: createFillGapPhrases(sourceText, blanks),
             values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
-            wordBank: shuffleArray(createFillGapWordBank(sourceText, blanks)),
+            wordBank: shuffleFillGapWordBank(createFillGapWordBank(sourceText, blanks)),
             activeBlankIndex: 0,
             activePhraseIndex: 0,
             wordPage: 0,

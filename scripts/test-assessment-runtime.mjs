@@ -808,6 +808,14 @@ async function runAssessmentFreeSceneHarness() {
         return { id: "gap-" + index, start, end: cursor, type: "blank", correctValue: answer };
     });
     runtime.open(makePayload("Ten gaps", "Text", "Fill in the gaps", { text, annotations }));
+    const authoredOrder = answers.join("|");
+    const headsetWordOrder = runtime.state.wordBank.map((word) => word.text).join("|");
+    assert(headsetWordOrder !== authoredOrder, "VR fill gaps: word bank exposed the authored answer order");
+    const desktopPayload = makePayload("Ten gaps desktop", "Text", "Fill in the gaps", { text, annotations });
+    const desktopWordBank = namespace.resolveRenderer(desktopPayload).createState(desktopPayload).wordBank;
+    assert(desktopWordBank.map((word) => word.text).join("|") !== authoredOrder, "Desktop fill gaps: word bank exposed the authored answer order");
+    const repeatedWords = [{ text: "same" }, { text: "same" }, { text: "other" }];
+    assert(namespace.shuffleFillGapWordBank(repeatedWords).map((word) => word.text).join("|") !== "same|same|other", "Fill gaps: repeated words kept the visible answer order");
     const button = (label) => {
         const frame = activePanel.api.frames.at(-1);
         const pending = [frame.content, frame.footer];
@@ -857,6 +865,7 @@ async function runAssessmentFreeSceneHarness() {
     }
     click("Previous");
     assert(runtime.state.values["gap-7"] === answers[7], "Fill gaps: navigation lost response");
+    assert(runtime.state.wordBank.map((word) => word.text).join("|") === headsetWordOrder, "Fill gaps: word bank reshuffled during the attempt");
     click("Submit");
     assert(windowStub.__vrodosLastAssessmentResult.isCorrect === true, "Fill gaps: completed response graded incorrectly");
 
