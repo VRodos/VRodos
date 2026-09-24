@@ -275,7 +275,7 @@ class VRodos_Pages_Manager {
 
 		if ( $isUserloggedIn ) {
 			if ( $isRestrictedImmerseUser && $single_project_asset_list ) {
-				$helpMessage = 'Assets owned by this Immerse project are shown here. Use Global Assets to browse all accessible assets.';
+				$helpMessage = 'Assets owned by this Immerse project are shown here. Use Shared Assets to browse all accessible assets.';
 			} elseif ( $isRestrictedImmerseUser ) {
 				$helpMessage = 'All accessible Immerse and public assets are shown here. Open a project to manage its local assets.';
 			} elseif ( $single_project_asset_list ) {

@@ -86,6 +86,8 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
         wp_enqueue_script( 'lucide-icons' );
+		// Fetch icons early, before the asset preview requests start.
+		wp_script_add_data( 'lucide-icons', 'group', 0 );
 
 		$isAdmin = is_admin() ? 'back' : 'front';
 		wp_enqueue_script( 'vrodos_namespace' );

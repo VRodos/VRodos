@@ -42,7 +42,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $single_project_asset_list ? 'Local Assets' : 'Global Assets'; ?> | VRodos</title>
+    <title><?php echo $single_project_asset_list ? 'Local Assets' : 'Shared Assets'; ?> | VRodos</title>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
@@ -56,7 +56,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                 <span class="vrodos-display-title tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                 <div class="tw-flex tw-items-center tw-gap-3">
-                    <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest"><?php echo $single_project_asset_list ? 'Local Assets' : 'Global Assets'; ?></h1>
+                    <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest"><?php echo $single_project_asset_list ? 'Local Assets' : 'Shared Assets'; ?></h1>
                     <span class="tw-bg-slate-50 tw-text-slate-400 tw-text-[9px] tw-font-black tw-px-2 tw-py-0.5 tw-rounded-full tw-border tw-border-slate-100">
                         <?php echo count($assets); ?>
                     </span>
@@ -160,18 +160,23 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                 </div>
                 <div class="tw-mt-6 tw-text-center">
                     <h4 class="tw-text-slate-900 tw-font-extrabold tw-text-base">Add New Asset</h4>
-                    <p class="tw-text-slate-400 tw-text-xs tw-mt-1 tw-font-bold tw-uppercase tw-tracking-wider"><?php echo $single_project_asset_list ? 'Private to Project' : 'Global Access'; ?></p>
+                    <p class="tw-text-slate-400 tw-text-xs tw-mt-1 tw-font-bold tw-uppercase tw-tracking-wider"><?php echo $single_project_asset_list ? 'Private to Project' : 'Shared Across Projects'; ?></p>
                 </div>
             </a>
 			<?php endif; ?>
 
             <?php
-            foreach ( $assets as $asset ) :
+			foreach ( $assets as $asset_index => $asset ) :
 				$pGameId = absint( $asset['owner_project_id'] ?? 0 );
 				$can_edit_asset = ! empty( $asset['can_edit'] );
                 $edit_link = $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0';
                 $asset_icon = vrodos_get_asset_category_icon( $asset['category_slug'] );
                 $asset_preview_icon = vrodos_get_asset_preview_fallback_icon( $asset['category_slug'] );
+				$asset_preview_url = $asset['screenshot_path'];
+				if ( is_numeric( $asset['screenshot_id'] ) && (int) $asset['screenshot_id'] > 0 ) {
+					$thumbnail_url = wp_get_attachment_image_url( (int) $asset['screenshot_id'], 'medium' );
+					$asset_preview_url = $thumbnail_url ?: $asset_preview_url;
+				}
             ?>
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
@@ -187,14 +192,16 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                     <div class="tw-block tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-overflow-hidden tw-group/thumb">
                     <?php endif; ?>
 
-                        <?php if ( $asset['screenshot_path'] ) : ?>
-                            <img src="<?php echo $asset['screenshot_path']; ?>"
-                                 alt="<?php echo $asset['asset_name']; ?>"
-                                 class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-110 tw-transition-transform tw-duration-500">
-                        <?php else : ?>
-                            <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
-                                <i data-lucide="<?php echo esc_attr( $asset_preview_icon ); ?>" class="tw-w-12 tw-h-12"></i>
-                            </div>
+                        <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-slate-300">
+                            <i data-lucide="<?php echo esc_attr( $asset_preview_icon ); ?>" class="tw-w-12 tw-h-12"></i>
+                        </div>
+                        <?php if ( $asset_preview_url ) : ?>
+                            <img src="<?php echo esc_url( $asset_preview_url ); ?>"
+                                 alt="<?php echo esc_attr( $asset['asset_name'] ); ?>"
+                                 loading="<?php echo $asset_index < 4 ? 'eager' : 'lazy'; ?>"
+                                 decoding="async"
+                                 onerror="this.style.display='none'"
+                                 class="tw-relative tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-110 tw-transition-transform tw-duration-500">
                         <?php endif; ?>
 
                         <!-- Hover Overlay -->
@@ -256,7 +263,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                         <div class="tw-mt-auto tw-flex tw-items-center tw-justify-between tw-pt-4 tw-border-t tw-border-slate-50">
                             <div class="tw-flex tw-items-center tw-gap-2">
-                                <img src="<?php echo get_avatar_url( $asset['author_id'] ); ?>" alt="Avatar" class="tw-w-5 tw-h-5 tw-rounded-full shadow-sm">
+                                <img src="<?php echo esc_url( get_avatar_url( $asset['author_id'] ) ); ?>" alt="Avatar" loading="lazy" decoding="async" class="tw-w-5 tw-h-5 tw-rounded-full shadow-sm">
                                 <span class="tw-text-[10px] tw-font-bold tw-text-slate-400 tw-truncate tw-max-w-[80px]">
                                     <?php echo $asset['author_displayname']; ?>
                                 </span>
@@ -314,9 +321,6 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         };
 
         initIcons();
-        // Fallback for slower loads
-        setTimeout(initIcons, 500);
-        setTimeout(initIcons, 2000);
 
         // Filtering Logic
         let activeCategory = 'all';
@@ -335,7 +339,6 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 					: (activeSource === 'all' || cardSource === activeSource);
                 card.style.display = (catMatch && visMatch && sourceMatch) ? '' : 'none';
             });
-            initIcons();
         }
 
         document.querySelectorAll('.category-filter-btn').forEach(function(btn) {
