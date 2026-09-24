@@ -106,6 +106,26 @@ VRODOS.ui = VRODOS.ui || {};
         }
     }
 
+    function orbitPanKeydownHandler(event) {
+        const directions = {
+            ArrowLeft: [-1, 0],
+            ArrowRight: [1, 0],
+            ArrowUp: [0, 1],
+            ArrowDown: [0, -1]
+        };
+        const direction = directions[event.key];
+        const target = event.target;
+        const envir = VRODOS.editor && VRODOS.editor.envir;
+        if (!direction || !envir || isAvatarControlsEnabled() || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+            (target && target.closest && target.closest('input, textarea, select, button, a, [contenteditable], [role="tab"], [role="dialog"]'))) {
+            return;
+        }
+        if (typeof envir.panOrbitOnGround === 'function' && envir.orbitControls && envir.orbitControls.enabled) {
+            event.preventDefault();
+            envir.panOrbitOnGround(direction[0], direction[1]);
+        }
+    }
+
     function keyupHandler(event) {
         if (setMovementFlag(event.keyCode, false)) {
             if (isAvatarControlsEnabled()) event.preventDefault();
@@ -140,6 +160,7 @@ VRODOS.ui = VRODOS.ui || {};
     document.addEventListener('add_movement', () => {
         bindMovementListeners();
     });
+    document.addEventListener('keydown', orbitPanKeydownHandler);
     window.addEventListener('blur', () => VRODOS.api.resetAvatarMovement());
 
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');

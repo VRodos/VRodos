@@ -303,6 +303,34 @@ VRODOS.ui = VRODOS.ui || {};
         }
     }
 
+    function panOrbitOnGround(horizontal, depth) {
+        if (!this.orbitControls || !this.orbitControls.enabled || !this.cameraOrbit) return;
+
+        const camera = this.cameraOrbit;
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        if (forward.lengthSq() < 0.000001) {
+            forward.set(0, 1, 0).applyQuaternion(camera.quaternion);
+            forward.y = 0;
+        }
+        forward.normalize();
+
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+        const distance = camera.position.distanceTo(this.orbitControls.target);
+        const visibleHeight = camera.isOrthographicCamera
+            ? (camera.top - camera.bottom) / camera.zoom
+            : 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+        const step = Math.max(0.05, visibleHeight * 0.04);
+        const offset = right.multiplyScalar(horizontal).addScaledVector(forward, depth).normalize().multiplyScalar(step);
+
+        camera.position.add(offset);
+        this.orbitControls.target.add(offset);
+        (this.is2d ? this.orbitTarget2D : this.orbitTarget3D).copy(this.orbitControls.target);
+        this.orbitControls.update();
+        requestEditorRender('orbit-keyboard-pan');
+    }
+
     function getObjectFocus(object) {
         object.updateWorldMatrix(true, true);
         const registry = VRODOS.editor.sceneRegistry;
@@ -381,6 +409,7 @@ VRODOS.ui = VRODOS.ui || {};
         prototype.fitCameraToSceneLimits = fitCameraToSceneLimits;
         prototype.setOrbitCameraMode = setOrbitCameraMode;
         prototype.setOrbitProjection = setOrbitProjection;
+        prototype.panOrbitOnGround = panOrbitOnGround;
         prototype.centerOrbitOnObject = centerOrbitOnObject;
         prototype.frameOrbitObject = frameOrbitObject;
     };
