@@ -52,7 +52,6 @@ extract($data);
         #video_options_section,
         #video_screenshot_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'audio' ) : ?>
-        #glb_file_section,
         #screenshot_section { display: none !important; }
         #audio_section,
         #audio_options_section { display: block !important; }
@@ -680,8 +679,8 @@ else { ?>
                                         <i data-lucide="volume-2" class="tw-h-5 tw-w-5 tw-text-primary"></i>
                                     </div>
                                     <div class="tw-min-w-0">
-                                        <div class="tw-text-sm tw-font-black tw-text-slate-800">Bundled positional audio marker</div>
-                                        <div class="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-slate-400">Marker GLB is fixed in v1</div>
+                                        <div class="tw-text-sm tw-font-black tw-text-slate-800">Positional audio model</div>
+                                        <div class="tw-text-[10px] tw-font-bold tw-text-slate-400">Upload an optional 3D file in 3D Content. Without one, the default speaker model is used.</div>
                                     </div>
                                 </div>
 
@@ -1339,7 +1338,6 @@ else { ?>
 							document.getElementById('image_flat_file_section').style.display = "block";
 							break;
 						case "audio":
-							document.getElementById('glb_file_section').style.display = "none";
 							document.getElementById('screenshot_section').style.display = "none";
 							document.getElementById('audio_section').style.display = "block";
 							document.getElementById('audio_options_section').style.display = "block";

@@ -55,8 +55,12 @@ trait VRodos_Asset_CPT_Shared {
 			return;
 		}
 
-		update_post_meta( $asset_id, 'vrodos_asset3d_glb', VRodos_Core_Manager::get_builtin_audio_marker_url() );
-		update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', VRodos_Core_Manager::get_builtin_audio_thumbnail_url() );
+		if ( ! get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_glb', VRodos_Core_Manager::get_builtin_audio_marker_url() );
+		}
+		if ( ! get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ) ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', VRodos_Core_Manager::get_builtin_audio_thumbnail_url() );
+		}
 
 		$defaults = self::get_audio_settings_defaults();
 		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) === '' ) {
