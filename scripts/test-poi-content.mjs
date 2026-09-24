@@ -58,7 +58,7 @@ function fixture({ title = '', description = '', image = '', vr = false }) {
     component.data = 'sample';
     component.init();
     component.onMenuButtonClick({ detail: {} });
-    return { opened, elements, component };
+    return { opened, elements, component, attributes };
 }
 
 for (const vr of [false, true]) {
@@ -95,9 +95,21 @@ for (const vr of [false, true]) {
             assert.equal(elements['poi-img-dialog-content-area'].style.display === 'none', !hasTitle && !hasDescription);
             assert.equal(elements['poi-img-dialog-description'].style.display === 'none', !hasDescription);
             assert.equal(elements['poi-img-dialog-title'].style.display === 'none', !hasTitle);
+            assert.equal(elements['poi-img-dialog-image-area'].style.borderBottomWidth, hasImage && (hasTitle || hasDescription) ? '' : '0');
+            assert.equal(elements['poi-img-dialog-content-area'].style.padding, hasTitle && !hasDescription ? '1.5rem 4.5rem 1.5rem 2rem' : '');
         }
         component.remove();
     }
 }
+
+const reused = fixture({ title: 'First', image: '/photo.jpg' });
+reused.attributes['data-vrodos-poi-title'] = '';
+reused.attributes['data-vrodos-poi-description'] = 'Description';
+reused.attributes['data-vrodos-poi-image-src'] = '';
+reused.component.onMenuButtonClick({ detail: {} });
+assert.equal(reused.elements['poi-img-dialog-image-area'].style.display, 'none');
+assert.equal(reused.elements['poi-img-dialog-title'].style.display, 'none');
+assert.equal(reused.elements['poi-img-dialog-content-area'].style.padding, '');
+reused.component.remove();
 
 console.log('POI content-specific desktop and VR dialog checks passed.');

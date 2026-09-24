@@ -320,7 +320,10 @@ AFRAME.registerComponent('info-panel', {
             titleEl.style.display = title ? "" : "none";
             titleEl.style.marginBottom = description ? "" : "0";
         }
-        if (imageArea) imageArea.style.display = hasImage ? "" : "none";
+        if (imageArea) {
+            imageArea.style.display = hasImage ? "" : "none";
+            imageArea.style.borderBottomWidth = hasImage && (title || description) ? "" : "0";
+        }
         if (imageEl) {
             if (hasImage) {
                 imageEl.src = imageUrl;
@@ -332,7 +335,10 @@ AFRAME.registerComponent('info-panel', {
             descriptionEl.textContent = description;
             descriptionEl.style.display = description ? "" : "none";
         }
-        if (contentArea) contentArea.style.display = title || description ? "" : "none";
+        if (contentArea) {
+            contentArea.style.display = title || description ? "" : "none";
+            contentArea.style.padding = title && !description ? "1.5rem 4.5rem 1.5rem 2rem" : "";
+        }
         if (dialogBox) dialogBox.style.maxWidth = title && !description && !hasImage ? "min(92vw, 30rem)" : "";
 
         let imageDialog = document.querySelector('#poi-img-dialog');
