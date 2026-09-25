@@ -75,7 +75,21 @@ class VRodos_Text_Asset_Helper {
 			];
 		}
 
-		$text = $format === 'rtf' ? self::rtf_to_plain_text( $raw ) : $raw;
+		try {
+			$text = $format === 'rtf' ? self::rtf_to_plain_text( $raw ) : self::decode_plain_text( $raw );
+			if ( ! self::is_valid_utf8( $text ) ) {
+				throw new RuntimeException( 'Text file contains invalid UTF-8.' );
+			}
+		} catch ( RuntimeException $error ) {
+			return [
+				'success'         => false,
+				'text'            => '',
+				'format'          => $format,
+				'original_length' => 0,
+				'truncated'       => false,
+				'error'           => $error->getMessage(),
+			];
+		}
 		$text = self::normalize_text( $text );
 		$original_length = self::text_length( $text );
 
@@ -182,8 +196,42 @@ class VRodos_Text_Asset_Helper {
 		return function_exists( 'mb_strlen' ) ? (int) mb_strlen( $text ) : strlen( $text );
 	}
 
+	private static function is_valid_utf8( string $text ): bool {
+		return 1 === preg_match( '//u', $text );
+	}
+
+	private static function decode_plain_text( string $raw ): string {
+		if ( str_starts_with( $raw, "\xEF\xBB\xBF" ) ) {
+			$raw = substr( $raw, 3 );
+		}
+		if ( str_starts_with( $raw, "\xFF\xFE" ) || str_starts_with( $raw, "\xFE\xFF" ) || str_contains( $raw, "\0" ) ) {
+			throw new RuntimeException( 'Unsupported TXT encoding. Use UTF-8 or Windows-1252.' );
+		}
+
+		return self::is_valid_utf8( $raw ) ? $raw : self::convert_text_bytes( $raw, 'Windows-1252' );
+	}
+
+	private static function convert_text_bytes( string $bytes, string $encoding ): string {
+		if ( ! function_exists( 'iconv' ) ) {
+			throw new RuntimeException( 'Text decoding requires the PHP iconv extension.' );
+		}
+		$converted = @iconv( $encoding, 'UTF-8', $bytes );
+		if ( ! is_string( $converted ) || ! self::is_valid_utf8( $converted ) ) {
+			throw new RuntimeException( 'Unsupported or invalid text encoding: ' . $encoding . '.' );
+		}
+		return $converted;
+	}
+
+	private static function append_rtf_bytes( string &$output, string &$bytes, string $encoding ): void {
+		if ( $bytes !== '' ) {
+			$output .= self::convert_text_bytes( $bytes, $encoding );
+			$bytes = '';
+		}
+	}
+
 	private static function rtf_to_plain_text( string $rtf ): string {
 		$output       = '';
+		$bytes        = '';
 		$stack        = [];
 		$ignorable    = false;
 		$uc_skip      = 1;
@@ -194,6 +242,19 @@ class VRodos_Text_Asset_Helper {
 			'pict' => true, 'object' => true, 'datastore' => true, 'themedata' => true,
 			'xmlnstbl' => true, 'header' => true, 'footer' => true, 'footnote' => true,
 		];
+		$encoding = 'Windows-1252';
+		if ( preg_match( '/\\\\ansicpg([0-9]+)/', $rtf, $code_page ) ) {
+			$number   = (int) $code_page[1];
+			$encoding = match ( $number ) {
+				1252  => 'Windows-1252',
+				65001 => 'UTF-8',
+				28591 => 'ISO-8859-1',
+				default => 'CP' . $number,
+			};
+		} elseif ( preg_match( '/\\\\(?:mac|pc|pca)\\b/', $rtf ) ) {
+			throw new RuntimeException( 'Unsupported RTF character set.' );
+		}
+		self::convert_text_bytes( 'A', $encoding );
 
 		for ( $i = 0; $i < $length; $i++ ) {
 			$char = $rtf[ $i ];
@@ -218,7 +279,7 @@ class VRodos_Text_Asset_Helper {
 					continue;
 				}
 				if ( ! $ignorable ) {
-					$output .= $char;
+					$bytes .= $char;
 				}
 				continue;
 			}
@@ -229,8 +290,10 @@ class VRodos_Text_Asset_Helper {
 
 			$next = $rtf[ ++$i ];
 			if ( in_array( $next, [ '\\', '{', '}' ], true ) ) {
-				if ( ! $ignorable ) {
-					$output .= $next;
+				if ( $skip_chars > 0 ) {
+					$skip_chars--;
+				} elseif ( ! $ignorable ) {
+					$bytes .= $next;
 				}
 				continue;
 			}
@@ -238,8 +301,10 @@ class VRodos_Text_Asset_Helper {
 			if ( $next === "'" && $i + 2 < $length ) {
 				$hex = substr( $rtf, $i + 1, 2 );
 				if ( preg_match( '/^[0-9a-fA-F]{2}$/', $hex ) ) {
-					if ( ! $ignorable ) {
-						$output .= chr( hexdec( $hex ) );
+					if ( $skip_chars > 0 ) {
+						$skip_chars--;
+					} elseif ( ! $ignorable ) {
+						$bytes .= chr( hexdec( $hex ) );
 					}
 					$i += 2;
 				}
@@ -247,8 +312,10 @@ class VRodos_Text_Asset_Helper {
 			}
 
 			if ( ! preg_match( '/[A-Za-z*]/', $next ) ) {
-				if ( ! $ignorable && $next === '~' ) {
-					$output .= ' ';
+				if ( $skip_chars > 0 ) {
+					$skip_chars--;
+				} elseif ( ! $ignorable && $next === '~' ) {
+					$bytes .= ' ';
 				}
 				continue;
 			}
@@ -296,15 +363,19 @@ class VRodos_Text_Asset_Helper {
 			}
 
 			if ( in_array( $control, [ 'par', 'line', 'page' ], true ) ) {
+				self::append_rtf_bytes( $output, $bytes, $encoding );
 				$output .= "\n";
 			} elseif ( $control === 'tab' ) {
+				self::append_rtf_bytes( $output, $bytes, $encoding );
 				$output .= "\t";
 			} elseif ( $control === 'u' && $number !== '' ) {
+				self::append_rtf_bytes( $output, $bytes, $encoding );
 				$output .= self::codepoint_to_utf8( (int) $number );
 				$skip_chars = $uc_skip;
 			}
 		}
 
+		self::append_rtf_bytes( $output, $bytes, $encoding );
 		return $output;
 	}
 

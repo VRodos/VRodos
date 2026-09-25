@@ -104,7 +104,7 @@ class VRodos_Scene_AJAX {
 		];
 
 		$previous_scene = [ 'ID' => $scene_id, 'post_title' => (string) get_post_field( 'post_title', $scene_id ), 'post_content' => (string) get_post_field( 'post_content', $scene_id ) ];
-		$res = wp_update_post( $scene_new_info, true );
+		$res = wp_update_post( wp_slash( $scene_new_info ), true );
 		if ( is_wp_error( $res ) ) {
 			if ( $pending_screenshot_id ) { VRodos_Storage_Manager::delete_attachment_if_owned_by( $pending_screenshot_id, 'scene', $scene_id ); }
 			wp_send_json_error( 'Scene save failed: ' . $res->get_error_message(), 500 );
@@ -116,7 +116,7 @@ class VRodos_Scene_AJAX {
 		if ( $pending_screenshot_id ) {
 			$switched = VRodos_Storage_Manager::replace_attachment_references( $scene_id, 'scene', [ '_thumbnail_id' ], $pending_screenshot_id );
 			if ( is_wp_error( $switched ) ) {
-				wp_update_post( $previous_scene );
+				wp_update_post( wp_slash( $previous_scene ) );
 				wp_send_json_error( 'Scene screenshot switch failed: ' . $switched->get_error_message(), 500 );
 			}
 		}
@@ -181,10 +181,10 @@ class VRodos_Scene_AJAX {
 			wp_send_json_error( 'Scene settings could not be encoded.', 500 );
 		}
 		$result = wp_update_post(
-			[
+			wp_slash( [
 				'ID'           => $scene_id,
 				'post_content' => $encoded_scene,
-			],
+			] ),
 			true
 		);
 		if ( is_wp_error( $result ) ) {

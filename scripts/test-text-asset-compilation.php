@@ -5,7 +5,7 @@ define( 'ABSPATH', __DIR__ . DIRECTORY_SEPARATOR );
 // A previously uploaded source remains attached after a manual edit.
 $text_meta = [
     'vrodos_asset3d_text_file' => 99,
-    'vrodos_asset3d_text_content' => "Updated Ελληνικά\nSecond line",
+    'vrodos_asset3d_text_content' => "¿Puedes identificar todos los ingredientes?\nAsegúrate con la sartén. Ελληνικά",
     'vrodos_asset3d_text_format' => 'manual',
     'vrodos_asset3d_text_truncated' => '0',
 ];

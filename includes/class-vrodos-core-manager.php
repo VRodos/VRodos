@@ -983,10 +983,10 @@ class VRodos_Core_Manager {
 		}
 		$applied = [];
 		foreach ( $updates as $scene_id => $scene_update ) {
-			$result = wp_update_post( [ 'ID' => $scene_id, 'post_content' => $scene_update['next'] ], true );
+			$result = wp_update_post( wp_slash( [ 'ID' => $scene_id, 'post_content' => $scene_update['next'] ] ), true );
 			if ( is_wp_error( $result ) ) {
 				foreach ( array_reverse( $applied, true ) as $applied_id => $previous ) {
-					wp_update_post( [ 'ID' => $applied_id, 'post_content' => $previous ] );
+					wp_update_post( wp_slash( [ 'ID' => $applied_id, 'post_content' => $previous ] ) );
 				}
 				return $result;
 			}

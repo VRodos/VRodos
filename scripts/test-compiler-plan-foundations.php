@@ -350,7 +350,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 			'uuid' => 'poi-' . $physical, 'glb_path' => '/same-model.glb', 'asset_id' => 701,
 			'vrodosAssetOriginMode' => 'bounds-center',
 			'vrodosCollisionBounds' => [ 'schemaVersion' => 1, 'min' => [ -1, -1, -1 ], 'max' => [ 1, 1, 1 ], 'center' => [ 0, 0, 0 ] ],
-			'poi_img_title' => 'Έκθεμα', 'poi_img_content' => "Πρώτη γραμμή\nΔεύτερη γραμμή",
+			'poi_img_title' => 'Έκθεμα', 'poi_img_content' => "Πρώτη γραμμή\nAsegúrate de que encaja con la sartén. ¿Puedes continuar?",
 			'poi_img_path' => 'decoration' === $physical ? '/published/photo.jpg' : '',
 			'compiledCollisionEnabled' => true, 'walkableBehavior' => 'auto',
 			'position' => [ 2, 3, 4 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 2, 2, 2 ],
@@ -361,7 +361,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	foreach ( $poi_objects as $physical => $poi ) {
 		$entity = $poi_xpath->query( '//*[@info-panel="poi-' . $physical . '"]' )->item( 0 );
 		vrodos_foundation_assert( $entity instanceof DOMElement, 'converted model has POI interaction' );
-		vrodos_foundation_assert( 'Έκθεμα' === $entity->getAttribute( 'data-vrodos-poi-title' ) && str_contains( $entity->getAttribute( 'data-vrodos-poi-description' ), "\n" ), 'POI preserves Greek multiline content' );
+		vrodos_foundation_assert( 'Έκθεμα' === $entity->getAttribute( 'data-vrodos-poi-title' ) && $poi->poi_img_content === $entity->getAttribute( 'data-vrodos-poi-description' ), 'POI preserves Greek and Spanish multiline content' );
 		vrodos_foundation_assert( $poi->poi_img_path === $entity->getAttribute( 'data-vrodos-poi-image-src' ), 'each placement has its own optional photo' );
 		vrodos_foundation_assert( ! str_contains( $entity->getAttribute( 'class' ), 'menu-button' ), 'converted model does not adopt POI button presentation' );
 		vrodos_foundation_assert( ( 'decoration' === $physical ) === $entity->hasAttribute( 'vrodos-door-indicator' ) && ! $entity->hasAttribute( 'vrodos-hypnotic-hover' ), 'converted decorative POIs replace floating with a diamond indicator' );
