@@ -776,6 +776,16 @@
 	z-index: 1001;
 }
 
+#create-object-menu {
+	flex-shrink: 0;
+}
+
+#create-object-menu > summary {
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	width: max-content;
+}
+
 
 .SaveBtnContainerStyle {
 	text-align: center;
