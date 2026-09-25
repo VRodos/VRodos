@@ -1690,9 +1690,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$play_hint->setAttribute( 'vrodos-3d-play-icon', '' );
 			$play_hint->setAttribute( 'class', 'raycastable' );
 			$play_hint->setAttribute( 'highlight', 'video-playhint_' . $uuid );
-			if ( $this->isHoverEnabled ) {
-				$play_hint->setAttribute( 'vrodos-door-indicator', '' );
-			}
 			$play_hint->setAttribute( 'position', '0 0 0.1' );
 			$play_hint->setAttribute( 'scale', '0.28 0.28 0.28' );
 			$display->appendChild( $play_hint );

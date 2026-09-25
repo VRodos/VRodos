@@ -3087,6 +3087,10 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         const spatialUiPanel = getActiveSpatialUiPanelState(scene);
         const spatialUiGroup = spatialUiPanel && spatialUiPanel.group ? spatialUiPanel.group : null;
         const spatialUiGroupWasVisible = spatialUiGroup ? spatialUiGroup.visible : false;
+        const spatialUi = window.VRODOSSpatialUI || null;
+        const progressGroup = spatialUi && typeof spatialUi.getAssessmentProgressGroup === 'function'
+            ? spatialUi.getAssessmentProgressGroup() : null;
+        const progressGroupWasVisible = Boolean(progressGroup && progressGroup.visible);
         const spatialUiRayOverlayRecords = spatialUiPanel
             ? captureSpatialUiOverlayObjectVisibility(collectSpatialUiRayOverlayObjects(spatialUiPanel))
             : [];
@@ -3099,6 +3103,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             if (spatialUiGroup) {
                 spatialUiGroup.visible = false;
             }
+            if (progressGroup) progressGroup.visible = false;
             setSpatialUiOverlayObjectsVisible(spatialUiRayOverlayRecords, false);
             for (let i = 0; i < eyeCameras.length; i += 1) {
                 const eyeCamera = eyeCameras[i];
@@ -3122,6 +3127,13 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                     renderedSpatialUiRayOverlays += renderSpatialUiRayOverlayObjects(self, spatialUiRayOverlayRecords, eyeCamera, viewport);
                     spatialUiGroup.visible = false;
                 }
+                if (progressGroup && progressGroupWasVisible) {
+                    progressGroup.visible = true;
+                    if (renderSpatialUiPanelOverlay(self, progressGroup, eyeCamera, viewport)) {
+                        renderedSpatialUiOverlay += 1;
+                    }
+                    progressGroup.visible = false;
+                }
                 renderedEyes += 1;
             }
         } finally {
@@ -3129,8 +3141,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 spatialUiGroup.visible = spatialUiGroupWasVisible;
                 self._pmndrsSpatialUiOverlayEyes = renderedSpatialUiOverlay;
             } else {
-                self._pmndrsSpatialUiOverlayEyes = 0;
+                self._pmndrsSpatialUiOverlayEyes = renderedSpatialUiOverlay;
             }
+            if (progressGroup) progressGroup.visible = progressGroupWasVisible;
             restoreSpatialUiOverlayObjectVisibility(spatialUiRayOverlayRecords);
             self._pmndrsSpatialUiRayOverlayObjects = renderedSpatialUiRayOverlays;
             xr.enabled = oldXrEnabled;

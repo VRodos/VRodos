@@ -214,6 +214,8 @@
             }
 
             runtime.levelApplied = true;
+            const session = getAssessmentSessionRuntime();
+            if (session && typeof session.setStageLevel === "function") session.setStageLevel(normalizedLevel);
             runtime.elements.forEach((element) => {
                 setCefrControlledVisible(element, runtime.matchesLevel(element, normalizedLevel));
             });
@@ -542,6 +544,7 @@
             const session = getAssessmentSessionRuntime();
             if (session && typeof session.clearSession === "function") {
                 session.clearSession();
+                session.setStageLevel("");
             }
 
             runtime.sessionPromptResolved = true;

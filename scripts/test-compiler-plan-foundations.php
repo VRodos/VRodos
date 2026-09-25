@@ -422,7 +422,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( str_contains( $video_display->getAttribute( 'material' ), 'side: front' ), 'video renders only outward faces' );
 	vrodos_foundation_assert( 1 === $media_xpath->query( 'self::*[@video-controls]', $video_display )->length, 'both video faces share one playback controller' );
 	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon]', $video_display )->length, 'video has two play hints' );
-	vrodos_foundation_assert( 2 === $media_xpath->query( './a-entity[@vrodos-3d-play-icon and @vrodos-door-indicator]', $video_display )->length && 0 === $media_xpath->query( '//*[@vrodos-hypnotic-hover]' )->length, 'video play hints use diamonds without floating' );
+	vrodos_foundation_assert( 0 === $media_xpath->query( './/*[@vrodos-door-indicator or @vrodos-hypnotic-hover]', $video_display )->length, 'video play hints have no floating indicators' );
 	$rear_hint = $media_xpath->query( './a-entity[@id="video-playhint-back_two-faced-video"]', $video_display )->item( 0 );
 	vrodos_foundation_assert( '0 0 -0.1' === $rear_hint->getAttribute( 'position' ) && '0 180 0' === $rear_hint->getAttribute( 'rotation' ), 'rear play hint faces outwards' );
 	$text_panel = $media_xpath->query( '//*[@id="text-panel_two-faced-text"]' )->item( 0 );

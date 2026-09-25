@@ -152,6 +152,7 @@ Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` 
 - Script planning/cache busting: `includes/class-vrodos-compiler-runtime-manifest.php` and `includes/class-vrodos-compiler-runtime-script-planner.php`
 - CEFR runtime: `assets/js/runtime/assessment/assessment-cefr-runtime.js`
 - Assessment runtime: `assets/js/runtime/assessment/assessment-overlay-runtime.js` and `assets/js/runtime/assessment/assessment-vr-overlay-runtime.js`
+- Assessment progress: `assets/js/runtime/assessment/assessment-session-runtime.js` and `assessment-progress-runtime.js`
 - Image/text POI runtime: `assets/js/runtime/components/poi-image_component.js`
 - Video component: `assets/js/runtime/components/video_component.js`
 - Legacy overlay diagnostics and spatial loader helper: `assets/js/runtime/vrodos_runtime_overlay.js`
@@ -160,11 +161,13 @@ Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` 
 
 Desktop and VR assessment surfaces share renderer-key resolution through `window.VRodosImmerseAssessment.resolveAssessmentRendererKey()`. The desktop DOM runtime exports the resolver, and the VR runtime consumes it before falling back to its local alias table. Keep aliases for question/image quiz/pair/grid/text assessment families in this shared resolver so supported desktop assessment types do not regress into the VR unsupported state.
 
+Finishing an assessment shows a dismissible result card with correct, incorrect, and ungraded item counts. Scene progress counts each playable assessment once for the selected CEFR level, persists for the browser session, and remains complete after a retake. Desktop/inline mode uses a small DOM viewport label; immersive VR uses a passive PMNDRS spatial label that hides while a modal is open. This local progress works without the optional Immerse results service.
+
 The resolver maps raw `group` values first, then normalized `group` and `type` aliases. The VR runtime may call the resolver with `{ ignoreSupported: true }` because compiled immersive metadata can arrive from older generated clients while still containing playable normalized content. A VR unsupported panel should mean there is no renderer family or no playable normalized content, not merely that an alias differed from the exact desktop group key.
 
 ### Spatial UI API
 
-`window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `prewarm()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
+`window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `setAssessmentProgress(text)`, `refreshInteractionTargets()`, `dispose()`, `prewarm()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
 
 Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Mutable controls can be updated through `updateText()` and `updateButton()` when the same panel remains open. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
 

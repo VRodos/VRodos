@@ -42,6 +42,7 @@ export const runtimeBuildChunks = Object.freeze([
     sourceFiles: [
       'assessment/assessment-utils.js',
       'assessment/assessment-session-runtime.js',
+      'assessment/assessment-progress-runtime.js',
       'assessment/assessment-cefr-runtime.js',
       'assessment/assessment-renderers.js',
       'assessment/assessment-vr-overlay-runtime.js',

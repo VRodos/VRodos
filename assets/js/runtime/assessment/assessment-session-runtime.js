@@ -14,13 +14,17 @@
     const MAX_NAME_LENGTH = 120;
 
     function getConfig() {
-        const config = window.VRODOS_IMMERSE_RESULTS_CONFIG || {};
-        return config && config.enabled !== false ? config : {};
+        const context = window.VRODOS_RUNTIME_CONTEXT || {};
+        return Object.assign({
+            projectId: context.projectId,
+            sceneId: context.sceneId,
+            sceneTitle: context.sceneTitle
+        }, window.VRODOS_IMMERSE_RESULTS_CONFIG || context.immerseResults || {});
     }
 
     function isEnabled() {
         const config = getConfig();
-        return Boolean(config.restUrl && config.projectId && config.sceneId && config.token);
+        return Boolean(config.enabled !== false && config.restUrl && config.projectId && config.sceneId && config.token);
     }
 
     function storage() {
@@ -88,6 +92,7 @@
             useCaseId: String(config.useCaseId || ""),
             sceneVisits: [],
             completedAssessmentKeys: [],
+            completedByScene: {},
             pendingWrites: [],
             createdAt: nowIso(),
             updatedAt: nowIso()
@@ -124,6 +129,7 @@
                     useCaseId: String(config.useCaseId || parsed.useCaseId || ""),
                     sceneVisits: Array.isArray(parsed.sceneVisits) ? parsed.sceneVisits : [],
                     completedAssessmentKeys: Array.isArray(parsed.completedAssessmentKeys) ? parsed.completedAssessmentKeys : [],
+                    completedByScene: parsed.completedByScene && typeof parsed.completedByScene === "object" ? parsed.completedByScene : {},
                     pendingWrites: Array.isArray(parsed.pendingWrites) ? parsed.pendingWrites : []
                 });
             }
@@ -176,9 +182,29 @@
     }
 
     function normalizeAssessmentKey(payload) {
-        const sourceId = String(payload && (payload.assessmentSourceId || payload.immerseAssessmentId || payload.sourceId) || "");
+        const sourceId = String(payload && (payload.assessmentSourceId || payload.immerseAssessmentId) || "");
         const assetId = toInt(payload && payload.assetId);
-        return sourceId || (assetId ? "asset:" + assetId : "");
+        return sourceId || (assetId ? "asset:" + assetId : String(payload && (payload.sourceId || payload.sceneObjectId) || ""));
+    }
+
+    function isPlayableAssessment(payload) {
+        if (!payload || !payload.supported) return false;
+        const rendererKey = namespace.resolveAssessmentRendererKey(payload);
+        const normalized = namespace.normalizeAssessmentPayloadForRenderer(payload, rendererKey);
+        if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+            return namespace.normalizeQuestionItems(normalized).some((item) => item.answers.length > 0);
+        }
+        if (rendererKey === "Pair") return namespace.normalizePairEntries(normalized).length > 0;
+        if (rendererKey === "Grid") return namespace.normalizeGridEntries(normalized).length > 0;
+        if (rendererKey === "Text") {
+            const content = normalized && normalized.content || {};
+            const source = namespace.normalizeAssessmentLineBreaks(content.text || "");
+            return Boolean(source && (
+                namespace.normalizeTextAnnotations(source, content.annotations, "highlight").length ||
+                namespace.normalizeTextAnnotations(source, content.annotations, "blank").length
+            ));
+        }
+        return false;
     }
 
     function pendingWriteAttemptUuid(item) {
@@ -238,9 +264,13 @@
 
         const config = getConfig();
         const runtime = {
-            state: isEnabled() ? loadState(config) : defaultState(config),
+            state: config.enabled === false ? defaultState(config) : loadState(config),
             flushing: false,
-            bootstrapped: false
+            bootstrapped: false,
+            assessmentLaunchers: new Map(),
+            progressListeners: new Set(),
+            localStateLoaded: config.enabled !== false,
+            activeLevel: ""
         };
 
         runtime.isEnabled = function () {
@@ -248,9 +278,7 @@
         };
 
         runtime.save = function () {
-            if (!isEnabled()) {
-                return;
-            }
+            if (getConfig().enabled === false && !runtime.assessmentLaunchers.size) return;
             runtime.state.updatedAt = nowIso();
             const store = storage();
             if (!store) {
@@ -293,9 +321,7 @@
         };
 
         runtime.clearSession = function () {
-            if (!isEnabled()) {
-                return runtime.getIdentity();
-            }
+            if (getConfig().enabled === false && !runtime.assessmentLaunchers.size) return runtime.getIdentity();
             const cfg = getConfig();
             const store = storage();
             if (store) {
@@ -306,8 +332,9 @@
                 }
             }
             runtime.state = defaultState(cfg);
-            runtime.recordSceneVisit();
+            if (isEnabled()) runtime.recordSceneVisit();
             runtime.save();
+            runtime.notifyProgress();
             return runtime.getIdentity();
         };
 
@@ -331,6 +358,7 @@
             if (identityChanged) {
                 runtime.state.attemptUuid = makeUuid();
                 runtime.state.completedAssessmentKeys = [];
+                runtime.state.completedByScene = {};
                 runtime.state.sceneVisits = [];
                 runtime.state.pendingWrites = (runtime.state.pendingWrites || []).filter((item) => {
                     return pendingWriteAttemptUuid(item) !== previousAttemptUuid;
@@ -339,10 +367,63 @@
             }
             runtime.state.displayName = normalizedName;
             runtime.state.cefrLevel = normalizedLevel;
+            runtime.activeLevel = normalizedLevel;
             runtime.recordSceneVisit();
             runtime.save();
             runtime.ensureAttemptStarted();
+            runtime.notifyProgress();
             return true;
+        };
+
+        runtime.setStageLevel = function (level) {
+            runtime.activeLevel = normalizeLevel(level);
+            runtime.notifyProgress();
+        };
+
+        runtime.registerAssessment = function (element, payload) {
+            if (!element || !isPlayableAssessment(payload)) return;
+            if (!runtime.localStateLoaded) {
+                runtime.state = loadState(getConfig());
+                runtime.localStateLoaded = true;
+            }
+            runtime.assessmentLaunchers.set(element, payload);
+            runtime.notifyProgress();
+        };
+
+        runtime.unregisterAssessment = function (element) {
+            runtime.assessmentLaunchers.delete(element);
+            runtime.notifyProgress();
+        };
+
+        runtime.getStageProgress = function () {
+            const level = runtime.activeLevel || normalizeLevel(runtime.state.cefrLevel);
+            const sceneId = String(toInt(getConfig().sceneId));
+            const keys = new Set();
+            runtime.assessmentLaunchers.forEach((payload) => {
+                if (String(toInt(payload.sceneId)) !== sceneId) return;
+                const levels = namespace.normalizeLevels(payload.levels);
+                if (levels.length && (!level || !levels.includes(level))) return;
+                const key = normalizeAssessmentKey(payload);
+                if (key) keys.add(key);
+            });
+            const completed = runtime.state.completedByScene[sceneId] || {};
+            const completedKeys = Array.isArray(completed[level]) ? completed[level] : [];
+            return {
+                level,
+                total: keys.size,
+                completed: Array.from(keys).filter((key) => completedKeys.includes(key)).length
+            };
+        };
+
+        runtime.subscribeProgress = function (listener) {
+            runtime.progressListeners.add(listener);
+            listener(runtime.getStageProgress());
+            return () => runtime.progressListeners.delete(listener);
+        };
+
+        runtime.notifyProgress = function () {
+            const progress = runtime.getStageProgress();
+            runtime.progressListeners.forEach((listener) => listener(progress));
         };
 
         runtime.buildAttemptPayload = function () {
@@ -475,12 +556,24 @@
         };
 
         runtime.recordAssessmentResult = function (payload, result) {
-            if (!isEnabled() || !runtime.hasIdentity() || !payload || !result) {
+            if (!payload || !result) {
                 return;
             }
-            runtime.recordSceneVisit();
+            if (!isEnabled() && !runtime.assessmentLaunchers.size) return;
             const cfg = getConfig();
             const assessmentKey = normalizeAssessmentKey(payload);
+            const sceneId = String(toInt(payload.sceneId || cfg.sceneId));
+            const level = runtime.activeLevel || normalizeLevel(runtime.state.cefrLevel);
+            const sceneProgress = runtime.state.completedByScene[sceneId] || {};
+            const completedForLevel = Array.isArray(sceneProgress[level]) ? sceneProgress[level] : [];
+            if (assessmentKey && !completedForLevel.includes(assessmentKey)) {
+                sceneProgress[level] = completedForLevel.concat(assessmentKey);
+                runtime.state.completedByScene[sceneId] = sceneProgress;
+            }
+            runtime.save();
+            runtime.notifyProgress();
+            if (!isEnabled() || !runtime.hasIdentity()) return;
+            runtime.recordSceneVisit();
             if (assessmentKey && !runtime.state.completedAssessmentKeys.includes(assessmentKey)) {
                 runtime.state.completedAssessmentKeys.push(assessmentKey);
             }

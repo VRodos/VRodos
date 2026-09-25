@@ -223,6 +223,7 @@ const context = vm.createContext({
 });
 
 const namespace = windowStub.VRodosImmerseAssessment;
+namespace.getAssessmentProgressRuntime = () => ({ setModalOpen() {} });
 const runtime = namespace.getVrOverlayRuntime();
 
 function makePayload(title, group, type, content) {
@@ -413,6 +414,8 @@ assert(finishPrimary && typeof finishPrimary.options.onClick === "function", "Fi
 finishPrimary.options.onClick();
 assert(recordedAssessmentResults.length === 1, "Assessment finish did not notify session recorder");
 assert(recordedAssessmentResults[0].result.completionState === "completed", "Recorded result is not completed");
+assert(activePanel.config.id === "vrodos-assessment-result", "Finish did not replace the VR assessment with a result card");
+assert(activePanel.api.texts.some((entry) => String(entry.text).includes("1 correct")), "VR result card omitted the correct count");
 windowStub.VRODOSSpatialUI.closePanel("test-reset");
 
 const unsupported = makePayload("Prompt", "Prompt", "Prompt", {
@@ -964,4 +967,85 @@ await runAssessmentFreeSceneHarness();
 await runSessionRuntimeHarness();
 await runSessionIdentityChangeHarness();
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 16} cases.`);
+{
+    const summary = namespace.summarizeAssessmentResult({ response: {
+        answers: [{ isCorrect: true }, { isCorrect: false }, { isCorrect: null }]
+    } });
+    assert(summary.correct === 1 && summary.incorrect === 1 && summary.ungraded === 1,
+        "Mixed assessment answers were not summarized correctly");
+    for (const [field, entries] of [
+        ["placements", [{ isCorrect: true }, { isCorrect: false }]],
+        ["words", [{ found: true }, { found: false }]],
+        ["prompts", [{ wasMarked: true }, { wasMarked: false }]],
+        ["blanks", [{ isCorrect: true }, { isCorrect: false }]]
+    ]) {
+        const counts = namespace.summarizeAssessmentResult({ response: { [field]: entries } });
+        assert(counts.correct === 1 && counts.incorrect === 1 && counts.ungraded === 0,
+            `${field} assessment counts were not summarized correctly`);
+    }
+    const store = new Map();
+    function localSession(search, deliveryDisabled = false, sceneId = 11) {
+        const localWindow = {
+            console,
+            VRODOS_RUNTIME_CONTEXT: { projectId: 7, sceneId },
+            VRODOS_IMMERSE_RESULTS_CONFIG: deliveryDisabled ? { enabled: false, projectId: 7, sceneId } : undefined,
+            location: { search: search || "" },
+            sessionStorage: {
+                getItem: (key) => store.get(key) || null,
+                setItem: (key, value) => store.set(key, value),
+                removeItem: (key) => store.delete(key)
+            }
+        };
+        localWindow.window = localWindow;
+        const localContext = vm.createContext({ window: localWindow, console, URLSearchParams, TextDecoder, Uint8Array });
+        ["assessment-utils.js", "assessment-session-runtime.js"].forEach((file) => {
+            vm.runInContext(readFileSync(resolve(root, "assets/js/runtime/assessment", file), "utf8"), localContext, { filename: file });
+        });
+        return localWindow.VRodosImmerseAssessment.getAssessmentSessionRuntime();
+    }
+    const first = localSession();
+    const playable = (assessmentSourceId, levels = ["B1"]) => ({
+        supported: true, group: "Question", assessmentSourceId, sceneId: 11, levels,
+        content: { questions: [{ question: "Ready?", answers: ["Yes", "No"], correctIndex: 0 }] }
+    });
+    const a = playable("a"), b = playable("b"), otherLevel = playable("a2", ["A2"]);
+    const repeatedAsset = { ...playable(""), assetId: 555, sourceId: "placement-1" };
+    const repeatedAssetOtherPlacement = { ...repeatedAsset, sourceId: "placement-2" };
+    first.registerAssessment({}, a);
+    first.registerAssessment({}, a);
+    first.registerAssessment({}, b);
+    first.registerAssessment({}, repeatedAsset);
+    first.registerAssessment({}, repeatedAssetOtherPlacement);
+    first.registerAssessment({}, otherLevel);
+    first.registerAssessment({}, { ...playable("read-only"), supported: false });
+    first.setStageLevel("B1");
+    assert(first.getStageProgress().total === 3, "Stage total included duplicates, another CEFR level, or read-only content");
+    first.recordAssessmentResult(a, { response: { answers: [{ isCorrect: false }] } });
+    first.recordAssessmentResult(a, { response: { answers: [{ isCorrect: true }] } });
+    assert(first.getStageProgress().completed === 1, "Retaking an assessment incremented stage progress");
+    const restored = localSession();
+    restored.registerAssessment({}, a);
+    restored.registerAssessment({}, b);
+    restored.setStageLevel("B1");
+    assert(restored.getStageProgress().completed === 1, "Stage progress did not survive reload");
+    const nextScene = localSession("", false, 12);
+    nextScene.registerAssessment({}, { ...a, sceneId: 12 });
+    nextScene.setStageLevel("B1");
+    assert(nextScene.getStageProgress().completed === 0, "Completion in one scene counted in another scene");
+    const restarted = localSession("?vrodos_new_attempt=1");
+    restarted.registerAssessment({}, a);
+    restarted.registerAssessment({}, b);
+    restarted.setStageLevel("B1");
+    assert(restarted.getStageProgress().completed === 0, "A new attempt retained previous stage progress");
+    const disabledDelivery = localSession("", true);
+    disabledDelivery.registerAssessment({}, a);
+    disabledDelivery.setStageLevel("B1");
+    disabledDelivery.recordAssessmentResult(a, { response: { answers: [{ isCorrect: true }] } });
+    const disabledReload = localSession("", true);
+    disabledReload.registerAssessment({}, a);
+    disabledReload.setStageLevel("B1");
+    assert(disabledReload.getStageProgress().completed === 1,
+        "Progress with results delivery disabled did not survive reload");
+}
+
+console.log(`Assessment runtime harness passed ${fixtures.length + 18} cases.`);

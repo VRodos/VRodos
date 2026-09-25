@@ -423,6 +423,19 @@
         response: response || {}
       }, extra || {});
     }
+    function summarizeAssessmentResult(result) {
+      const response = result && result.response || {};
+      const entries = response.answers || response.placements || response.matches || response.prompts || response.words || response.selections || response.blanks || [];
+      const summary = { correct: 0, incorrect: 0, ungraded: 0 };
+      entries.forEach((entry) => {
+        const grade = Object.prototype.hasOwnProperty.call(entry, "isCorrect") ? entry.isCorrect : Object.prototype.hasOwnProperty.call(entry, "found") ? entry.found : entry.wasMarked;
+        if (grade === true) summary.correct += 1;
+        else if (grade === false) summary.incorrect += 1;
+        else summary.ungraded += 1;
+      });
+      return summary;
+    }
+    namespace.summarizeAssessmentResult = summarizeAssessmentResult;
     function buildQuestionAnswers(state) {
       return state.items.map((question, index) => {
         const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
@@ -564,12 +577,16 @@
     const MAX_PENDING_WRITES = 60;
     const MAX_NAME_LENGTH = 120;
     function getConfig() {
-      const config = window.VRODOS_IMMERSE_RESULTS_CONFIG || {};
-      return config && config.enabled !== false ? config : {};
+      const context = window.VRODOS_RUNTIME_CONTEXT || {};
+      return Object.assign({
+        projectId: context.projectId,
+        sceneId: context.sceneId,
+        sceneTitle: context.sceneTitle
+      }, window.VRODOS_IMMERSE_RESULTS_CONFIG || context.immerseResults || {});
     }
     function isEnabled() {
       const config = getConfig();
-      return Boolean(config.restUrl && config.projectId && config.sceneId && config.token);
+      return Boolean(config.enabled !== false && config.restUrl && config.projectId && config.sceneId && config.token);
     }
     function storage() {
       try {
@@ -625,6 +642,7 @@
         useCaseId: String(config.useCaseId || ""),
         sceneVisits: [],
         completedAssessmentKeys: [],
+        completedByScene: {},
         pendingWrites: [],
         createdAt: nowIso(),
         updatedAt: nowIso()
@@ -656,6 +674,7 @@
             useCaseId: String(config.useCaseId || parsed.useCaseId || ""),
             sceneVisits: Array.isArray(parsed.sceneVisits) ? parsed.sceneVisits : [],
             completedAssessmentKeys: Array.isArray(parsed.completedAssessmentKeys) ? parsed.completedAssessmentKeys : [],
+            completedByScene: parsed.completedByScene && typeof parsed.completedByScene === "object" ? parsed.completedByScene : {},
             pendingWrites: Array.isArray(parsed.pendingWrites) ? parsed.pendingWrites : []
           });
         }
@@ -697,9 +716,25 @@
       return base + "/" + suffix;
     }
     function normalizeAssessmentKey(payload) {
-      const sourceId = String(payload && (payload.assessmentSourceId || payload.immerseAssessmentId || payload.sourceId) || "");
+      const sourceId = String(payload && (payload.assessmentSourceId || payload.immerseAssessmentId) || "");
       const assetId = toInt(payload && payload.assetId);
-      return sourceId || (assetId ? "asset:" + assetId : "");
+      return sourceId || (assetId ? "asset:" + assetId : String(payload && (payload.sourceId || payload.sceneObjectId) || ""));
+    }
+    function isPlayableAssessment(payload) {
+      if (!payload || !payload.supported) return false;
+      const rendererKey = namespace.resolveAssessmentRendererKey(payload);
+      const normalized = namespace.normalizeAssessmentPayloadForRenderer(payload, rendererKey);
+      if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+        return namespace.normalizeQuestionItems(normalized).some((item) => item.answers.length > 0);
+      }
+      if (rendererKey === "Pair") return namespace.normalizePairEntries(normalized).length > 0;
+      if (rendererKey === "Grid") return namespace.normalizeGridEntries(normalized).length > 0;
+      if (rendererKey === "Text") {
+        const content = normalized && normalized.content || {};
+        const source = namespace.normalizeAssessmentLineBreaks(content.text || "");
+        return Boolean(source && (namespace.normalizeTextAnnotations(source, content.annotations, "highlight").length || namespace.normalizeTextAnnotations(source, content.annotations, "blank").length));
+      }
+      return false;
     }
     function pendingWriteAttemptUuid(item) {
       const payload = item && item.payload || {};
@@ -746,17 +781,19 @@
       }
       const config = getConfig();
       const runtime = {
-        state: isEnabled() ? loadState(config) : defaultState(config),
+        state: config.enabled === false ? defaultState(config) : loadState(config),
         flushing: false,
-        bootstrapped: false
+        bootstrapped: false,
+        assessmentLaunchers: /* @__PURE__ */ new Map(),
+        progressListeners: /* @__PURE__ */ new Set(),
+        localStateLoaded: config.enabled !== false,
+        activeLevel: ""
       };
       runtime.isEnabled = function() {
         return isEnabled();
       };
       runtime.save = function() {
-        if (!isEnabled()) {
-          return;
-        }
+        if (getConfig().enabled === false && !runtime.assessmentLaunchers.size) return;
         runtime.state.updatedAt = nowIso();
         const store = storage();
         if (!store) {
@@ -793,9 +830,7 @@
         };
       };
       runtime.clearSession = function() {
-        if (!isEnabled()) {
-          return runtime.getIdentity();
-        }
+        if (getConfig().enabled === false && !runtime.assessmentLaunchers.size) return runtime.getIdentity();
         const cfg = getConfig();
         const store = storage();
         if (store) {
@@ -805,8 +840,9 @@
           }
         }
         runtime.state = defaultState(cfg);
-        runtime.recordSceneVisit();
+        if (isEnabled()) runtime.recordSceneVisit();
         runtime.save();
+        runtime.notifyProgress();
         return runtime.getIdentity();
       };
       runtime.setIdentity = function(displayName, cefrLevel) {
@@ -827,6 +863,7 @@
         if (identityChanged) {
           runtime.state.attemptUuid = makeUuid();
           runtime.state.completedAssessmentKeys = [];
+          runtime.state.completedByScene = {};
           runtime.state.sceneVisits = [];
           runtime.state.pendingWrites = (runtime.state.pendingWrites || []).filter((item) => {
             return pendingWriteAttemptUuid(item) !== previousAttemptUuid;
@@ -835,10 +872,57 @@
         }
         runtime.state.displayName = normalizedName;
         runtime.state.cefrLevel = normalizedLevel;
+        runtime.activeLevel = normalizedLevel;
         runtime.recordSceneVisit();
         runtime.save();
         runtime.ensureAttemptStarted();
+        runtime.notifyProgress();
         return true;
+      };
+      runtime.setStageLevel = function(level) {
+        runtime.activeLevel = normalizeLevel(level);
+        runtime.notifyProgress();
+      };
+      runtime.registerAssessment = function(element, payload) {
+        if (!element || !isPlayableAssessment(payload)) return;
+        if (!runtime.localStateLoaded) {
+          runtime.state = loadState(getConfig());
+          runtime.localStateLoaded = true;
+        }
+        runtime.assessmentLaunchers.set(element, payload);
+        runtime.notifyProgress();
+      };
+      runtime.unregisterAssessment = function(element) {
+        runtime.assessmentLaunchers.delete(element);
+        runtime.notifyProgress();
+      };
+      runtime.getStageProgress = function() {
+        const level = runtime.activeLevel || normalizeLevel(runtime.state.cefrLevel);
+        const sceneId = String(toInt(getConfig().sceneId));
+        const keys = /* @__PURE__ */ new Set();
+        runtime.assessmentLaunchers.forEach((payload) => {
+          if (String(toInt(payload.sceneId)) !== sceneId) return;
+          const levels = namespace.normalizeLevels(payload.levels);
+          if (levels.length && (!level || !levels.includes(level))) return;
+          const key = normalizeAssessmentKey(payload);
+          if (key) keys.add(key);
+        });
+        const completed = runtime.state.completedByScene[sceneId] || {};
+        const completedKeys = Array.isArray(completed[level]) ? completed[level] : [];
+        return {
+          level,
+          total: keys.size,
+          completed: Array.from(keys).filter((key) => completedKeys.includes(key)).length
+        };
+      };
+      runtime.subscribeProgress = function(listener) {
+        runtime.progressListeners.add(listener);
+        listener(runtime.getStageProgress());
+        return () => runtime.progressListeners.delete(listener);
+      };
+      runtime.notifyProgress = function() {
+        const progress = runtime.getStageProgress();
+        runtime.progressListeners.forEach((listener) => listener(progress));
       };
       runtime.buildAttemptPayload = function() {
         const cfg = getConfig();
@@ -964,12 +1048,24 @@
         return true;
       };
       runtime.recordAssessmentResult = function(payload, result) {
-        if (!isEnabled() || !runtime.hasIdentity() || !payload || !result) {
+        if (!payload || !result) {
           return;
         }
-        runtime.recordSceneVisit();
+        if (!isEnabled() && !runtime.assessmentLaunchers.size) return;
         const cfg = getConfig();
         const assessmentKey = normalizeAssessmentKey(payload);
+        const sceneId = String(toInt(payload.sceneId || cfg.sceneId));
+        const level = runtime.activeLevel || normalizeLevel(runtime.state.cefrLevel);
+        const sceneProgress = runtime.state.completedByScene[sceneId] || {};
+        const completedForLevel = Array.isArray(sceneProgress[level]) ? sceneProgress[level] : [];
+        if (assessmentKey && !completedForLevel.includes(assessmentKey)) {
+          sceneProgress[level] = completedForLevel.concat(assessmentKey);
+          runtime.state.completedByScene[sceneId] = sceneProgress;
+        }
+        runtime.save();
+        runtime.notifyProgress();
+        if (!isEnabled() || !runtime.hasIdentity()) return;
+        runtime.recordSceneVisit();
         if (assessmentKey && !runtime.state.completedAssessmentKeys.includes(assessmentKey)) {
           runtime.state.completedAssessmentKeys.push(assessmentKey);
         }
@@ -1040,6 +1136,98 @@
       return runtime;
     }
     namespace.getAssessmentSessionRuntime = getSessionRuntime;
+  })();
+  (function() {
+    "use strict";
+    const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
+    function getAssessmentProgressRuntime() {
+      if (window.__vrodosAssessmentProgressRuntime) return window.__vrodosAssessmentProgressRuntime;
+      const session = namespace.getAssessmentSessionRuntime();
+      const runtime = { label: null, modalOpen: false, spatialLoadPending: false, dialogObserver: null, progress: { completed: 0, total: 0, level: "" } };
+      const scene = document.querySelector("a-scene");
+      const resources = window.VRODOSMaster && window.VRODOSMaster.RuntimeResources ? window.VRODOSMaster.RuntimeResources.createRegistry() : null;
+      runtime.ensureLabel = function() {
+        if (runtime.label) return runtime.label;
+        const label = document.createElement("div");
+        label.id = "vrodos-assessment-progress";
+        label.setAttribute("aria-live", "polite");
+        Object.assign(label.style, {
+          position: "fixed",
+          top: "16px",
+          right: "16px",
+          zIndex: "1000",
+          padding: "7px 11px",
+          borderRadius: "999px",
+          pointerEvents: "none",
+          background: "rgba(15,23,42,0.58)",
+          color: "#fff",
+          font: "500 12px/1.3 system-ui, sans-serif",
+          letterSpacing: "0.01em",
+          display: "none"
+        });
+        document.body.appendChild(label);
+        runtime.label = label;
+        return label;
+      };
+      runtime.isImmersive = function() {
+        const overlay = window.VRODOSRuntimeOverlay;
+        return Boolean(overlay && overlay.shouldUseVrPanel && overlay.shouldUseVrPanel());
+      };
+      runtime.update = function() {
+        const { completed, total, level } = runtime.progress;
+        const visible = Boolean(level && total > 0 && !runtime.modalOpen);
+        const text = "Assessments " + completed + " / " + total;
+        const label = runtime.ensureLabel();
+        label.textContent = text;
+        const dialogOpen = Boolean(document.querySelector("dialog[open]"));
+        label.style.display = visible && !dialogOpen && !runtime.isImmersive() ? "block" : "none";
+        const spatial = window.VRODOSSpatialUI;
+        if (spatial && typeof spatial.setAssessmentProgress === "function") {
+          spatial.setAssessmentProgress(visible && runtime.isImmersive() ? text : "");
+        } else if (visible && runtime.isImmersive()) {
+          const overlay = window.VRODOSRuntimeOverlay;
+          const load = overlay && (overlay.prewarmSpatialUiRuntime || overlay.ensureSpatialUiRuntime);
+          if (typeof load === "function" && !runtime.spatialLoadPending) {
+            runtime.spatialLoadPending = true;
+            Promise.resolve(load.call(overlay)).then((available) => {
+              runtime.spatialLoadPending = false;
+              if (available) runtime.update();
+            }, () => {
+              runtime.spatialLoadPending = false;
+            });
+          }
+        }
+      };
+      runtime.setModalOpen = function(open) {
+        runtime.modalOpen = Boolean(open);
+        runtime.update();
+      };
+      runtime.dispose = function() {
+        if (resources) resources.disposeAll();
+        if (runtime.dialogObserver) runtime.dialogObserver.disconnect();
+        if (window.VRODOSSpatialUI && window.VRODOSSpatialUI.setAssessmentProgress) {
+          window.VRODOSSpatialUI.setAssessmentProgress("");
+        }
+        if (runtime.label) runtime.label.remove();
+        runtime.label = null;
+      };
+      session.subscribeProgress((progress) => {
+        runtime.progress = progress;
+        runtime.update();
+      });
+      if (scene && resources) {
+        resources.listen(scene, "enter-vr", () => runtime.update());
+        resources.listen(scene, "exit-vr", () => runtime.update());
+      }
+      if (typeof MutationObserver !== "undefined" && document.body) {
+        runtime.dialogObserver = new MutationObserver(() => runtime.update());
+        runtime.dialogObserver.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
+      }
+      if (resources) resources.listen(window, "pagehide", () => runtime.dispose());
+      window.__vrodosAssessmentProgressRuntime = runtime;
+      return runtime;
+    }
+    namespace.getAssessmentProgressRuntime = getAssessmentProgressRuntime;
   })();
   (function() {
     "use strict";
@@ -1223,6 +1411,8 @@
           return;
         }
         runtime.levelApplied = true;
+        const session = getAssessmentSessionRuntime();
+        if (session && typeof session.setStageLevel === "function") session.setStageLevel(normalizedLevel);
         runtime.elements.forEach((element) => {
           setCefrControlledVisible(element, runtime.matchesLevel(element, normalizedLevel));
         });
@@ -1512,6 +1702,7 @@
         const session = getAssessmentSessionRuntime();
         if (session && typeof session.clearSession === "function") {
           session.clearSession();
+          session.setStageLevel("");
         }
         runtime.sessionPromptResolved = true;
         runtime.sessionPromptShown = false;
@@ -3072,6 +3263,7 @@
     const normalizeGridEntries = namespace.normalizeGridEntries;
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
     const buildAssessmentResult = namespace.buildAssessmentResult;
+    const summarizeAssessmentResult = namespace.summarizeAssessmentResult;
     const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
     const normalizeAssessmentPayloadForRenderer = namespace.normalizeAssessmentPayloadForRenderer;
     const PANEL_WIDTH = 2.05;
@@ -4426,15 +4618,54 @@
         if (!runtime.payload) {
           return;
         }
+        const title = value(runtime.payload.title, "Assessment");
         runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
+        const summary = summarizeAssessmentResult(runtime.lastResult);
         runtime.payload.result = runtime.lastResult;
         window.__vrodosLastAssessmentResult = runtime.lastResult;
         if (typeof namespace.getAssessmentSessionRuntime === "function") {
           namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
         }
         const spatialUi = window.VRODOSSpatialUI || null;
-        if (spatialUi && typeof spatialUi.closePanel === "function") {
-          spatialUi.closePanel("assessment-finish");
+        if (spatialUi && typeof spatialUi.openPanel === "function") {
+          const progress = namespace.getAssessmentProgressRuntime();
+          progress.setModalOpen(true);
+          spatialUi.openPanel({
+            id: "vrodos-assessment-result",
+            width: 1.65,
+            height: 0.85,
+            distance: 2.15,
+            centerAtEyeLevel: true,
+            anchorRefreshFrames: 2,
+            lockInteraction: true,
+            trimControllerRays: true,
+            showRayHitDot: true,
+            blockSceneRaycasts: true,
+            cleanup: function() {
+              progress.setModalOpen(false);
+            },
+            render: function(api) {
+              const frame = api.frame({
+                title,
+                status: "Assessment complete",
+                onClose: function() {
+                  spatialUi.closePanel("result-close");
+                },
+                primary: {
+                  label: "Close",
+                  onClick: function() {
+                    spatialUi.closePanel("result-close");
+                  }
+                }
+              });
+              api.text(frame.content, {
+                text: summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : ""),
+                fontSize: 36,
+                lineHeight: "130%",
+                color: "#1e293b"
+              });
+            }
+          });
         } else {
           runtime.reset();
         }
@@ -4538,6 +4769,7 @@
           blockSceneRaycasts: true,
           cleanup: function() {
             runtime.reset();
+            namespace.getAssessmentProgressRuntime().setModalOpen(false);
           },
           render: function(api) {
             runtime.api = api;
@@ -4545,6 +4777,7 @@
           }
         };
         runtime.api = spatialUi.openPanel(panelOptions);
+        if (runtime.api) namespace.getAssessmentProgressRuntime().setModalOpen(true);
         recordVrDiagnostic(runtime.api ? "debug" : "warn", "assessment VR panel open result", Object.assign({}, runtime.lastOpenDiagnostics, {
           opened: Boolean(runtime.api),
           panelApi: runtime.api && runtime.api.__spatialUi ? "spatial-ui" : "unavailable"
@@ -4566,6 +4799,7 @@
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
     const decodeDisplayText = namespace.decodeDisplayText;
     const buildAssessmentResult = namespace.buildAssessmentResult;
+    const summarizeAssessmentResult = namespace.summarizeAssessmentResult;
     const renderEmptyState = namespace.renderEmptyState;
     const resolveRenderer = namespace.resolveRenderer;
     const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
@@ -4734,6 +4968,7 @@
         } else {
           runtime.root.setAttribute("open", "open");
         }
+        namespace.getAssessmentProgressRuntime().setModalOpen(true);
         return runtime.root.open || runtime.root.getAttribute("open") !== null || runtime.root.style.display === "flex";
       };
       runtime.resetState = function() {
@@ -4743,7 +4978,11 @@
         runtime.payload = null;
         runtime.renderer = null;
         runtime.state = null;
+        runtime.resultVisible = false;
         runtime.body.innerHTML = "";
+        runtime.body.style.display = "";
+        runtime.body.style.alignItems = "";
+        runtime.body.style.justifyContent = "";
         runtime.setStatus("");
         runtime.configurePrimaryAction({ visible: false });
         runtime.configureDialogFrame();
@@ -4756,6 +4995,7 @@
           runtime.root.removeAttribute("open");
         }
         setAssessmentSceneInteractionLocked(false);
+        namespace.getAssessmentProgressRuntime().setModalOpen(false);
         runtime.resetState();
         const host = document.getElementById("vrodos-runtime-overlay-host");
         if (host && !host.querySelector("dialog[open]")) {
@@ -4767,12 +5007,30 @@
           return;
         }
         runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
+        const summary = summarizeAssessmentResult(runtime.lastResult);
         runtime.payload.result = runtime.lastResult;
         window.__vrodosLastAssessmentResult = runtime.lastResult;
         if (typeof namespace.getAssessmentSessionRuntime === "function") {
           namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
         }
-        runtime.hide();
+        if (runtime.state && typeof runtime.state.cleanup === "function") runtime.state.cleanup();
+        runtime.payload = null;
+        runtime.state = null;
+        runtime.renderer = null;
+        runtime.resultVisible = true;
+        runtime.kicker.textContent = "Assessment complete";
+        runtime.body.replaceChildren();
+        runtime.body.style.display = "flex";
+        runtime.body.style.alignItems = "center";
+        runtime.body.style.justifyContent = "center";
+        const message = document.createElement("div");
+        message.style.textAlign = "center";
+        message.style.fontSize = "20px";
+        message.style.lineHeight = "1.7";
+        message.textContent = summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : "");
+        runtime.body.appendChild(message);
+        runtime.setStatus("You can close this result and retake the assessment.");
+        runtime.configurePrimaryAction({ visible: true, label: "Close" });
       };
       runtime.renderUnsupported = function() {
         const isPromptFamily = runtime.payload && runtime.payload.group === "Prompt";
@@ -4837,6 +5095,7 @@
         }
         runtime.root.style.display = "none";
         setAssessmentSceneInteractionLocked(false);
+        namespace.getAssessmentProgressRuntime().setModalOpen(false);
         runtime.resetState();
         const host = document.getElementById("vrodos-runtime-overlay-host");
         if (host && !host.querySelector("dialog[open]")) {
@@ -4844,6 +5103,10 @@
         }
       });
       nextButton.addEventListener("click", () => {
+        if (runtime.resultVisible) {
+          runtime.hide();
+          return;
+        }
         if (!runtime.renderer || typeof runtime.renderer.onPrimaryAction !== "function") {
           return;
         }
@@ -4898,6 +5161,8 @@
       AFRAME.registerComponent("immerse-assessment-launcher", {
         init: function() {
           namespace.getCefrRuntime().register(this.el);
+          namespace.getAssessmentSessionRuntime().registerAssessment(this.el, payloadFromElement(this.el));
+          namespace.getAssessmentProgressRuntime();
           this.onClick = () => {
             const runtime = namespace.getOverlayRuntime();
             runtime.open(payloadFromElement(this.el));
@@ -4906,6 +5171,7 @@
         },
         remove: function() {
           namespace.getCefrRuntime().unregister(this.el);
+          namespace.getAssessmentSessionRuntime().unregisterAssessment(this.el);
           const desktop = window.__vrodosImmerseAssessmentRuntime;
           if (desktop && desktop.payload && desktop.payload.anchorElement === this.el) desktop.hide();
           const immersive = window.__vrodosImmerseAssessmentVrRuntime;

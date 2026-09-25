@@ -17,6 +17,7 @@
     const normalizeGridEntries = namespace.normalizeGridEntries;
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
     const buildAssessmentResult = namespace.buildAssessmentResult;
+    const summarizeAssessmentResult = namespace.summarizeAssessmentResult;
     const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
     const normalizeAssessmentPayloadForRenderer = namespace.normalizeAssessmentPayloadForRenderer;
 
@@ -1446,15 +1447,49 @@
             if (!runtime.payload) {
                 return;
             }
+            const title = value(runtime.payload.title, "Assessment");
             runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
+            const summary = summarizeAssessmentResult(runtime.lastResult);
             runtime.payload.result = runtime.lastResult;
             window.__vrodosLastAssessmentResult = runtime.lastResult;
             if (typeof namespace.getAssessmentSessionRuntime === "function") {
                 namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
             }
             const spatialUi = window.VRODOSSpatialUI || null;
-            if (spatialUi && typeof spatialUi.closePanel === "function") {
-                spatialUi.closePanel("assessment-finish");
+            if (spatialUi && typeof spatialUi.openPanel === "function") {
+                const progress = namespace.getAssessmentProgressRuntime();
+                progress.setModalOpen(true);
+                spatialUi.openPanel({
+                    id: "vrodos-assessment-result",
+                    width: 1.65,
+                    height: 0.85,
+                    distance: 2.15,
+                    centerAtEyeLevel: true,
+                    anchorRefreshFrames: 2,
+                    lockInteraction: true,
+                    trimControllerRays: true,
+                    showRayHitDot: true,
+                    blockSceneRaycasts: true,
+                    cleanup: function () { progress.setModalOpen(false); },
+                    render: function (api) {
+                        const frame = api.frame({
+                            title,
+                            status: "Assessment complete",
+                            onClose: function () { spatialUi.closePanel("result-close"); },
+                            primary: {
+                                label: "Close",
+                                onClick: function () { spatialUi.closePanel("result-close"); }
+                            }
+                        });
+                        api.text(frame.content, {
+                            text: summary.correct + " correct · " + summary.incorrect + " incorrect" +
+                                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : ""),
+                            fontSize: 36,
+                            lineHeight: "130%",
+                            color: "#1e293b"
+                        });
+                    }
+                });
             } else {
                 runtime.reset();
             }
@@ -1579,6 +1614,7 @@
                 blockSceneRaycasts: true,
                 cleanup: function () {
                     runtime.reset();
+                    namespace.getAssessmentProgressRuntime().setModalOpen(false);
                 },
                 render: function (api) {
                     runtime.api = api;
@@ -1587,6 +1623,7 @@
             };
 
             runtime.api = spatialUi.openPanel(panelOptions);
+            if (runtime.api) namespace.getAssessmentProgressRuntime().setModalOpen(true);
 
             recordVrDiagnostic(runtime.api ? "debug" : "warn", "assessment VR panel open result", Object.assign({}, runtime.lastOpenDiagnostics, {
                 opened: Boolean(runtime.api),

@@ -16041,6 +16041,8 @@
     ];
     let activePanel = null;
     let controlsHint = null;
+    let assessmentProgress = null;
+    let assessmentProgressText = "";
     let hostComponentRegistered = false;
     let hostComponentScene = null;
     let hostComponentAttachAttempts = 0;
@@ -18720,6 +18722,62 @@
       disposeComponentTree(hint.root);
       disposeObject3D(hint.group);
     }
+    function hideAssessmentProgress() {
+      if (!assessmentProgress) return;
+      const progress = assessmentProgress;
+      assessmentProgress = null;
+      disposeComponentTree(progress.root);
+      disposeObject3D(progress.group);
+    }
+    function setAssessmentProgress(text) {
+      assessmentProgressText = String(text || "");
+      if (!assessmentProgressText || activePanel || getPresentationMode() !== "immersive-xr" || !isAvailable()) {
+        hideAssessmentProgress();
+        return;
+      }
+      ensureAFrameHostComponent();
+      configureRenderer(getScene());
+      try {
+        if (!assessmentProgress) {
+          assessmentProgress = createPanelState({
+            id: "assessment-progress",
+            width: 0.95,
+            height: 0.18,
+            designWidthPx: 760,
+            distance: 1.95,
+            horizontalOffset: 0.72,
+            verticalOffset: 0.55,
+            centerAtEyeLevel: true,
+            background: "rgba(15,23,42,0.6)",
+            borderRadius: 24,
+            pointerEvents: "none",
+            trimControllerRays: false,
+            showRayHitDot: false,
+            blockSceneRaycasts: false,
+            lockInteraction: false
+          });
+          assessmentProgress.root.setProperties(baseContainerProps({
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+            panelMaterialClass: getThreeRuntime().MeshBasicMaterial
+          }));
+          assessmentProgress.text = createPanelApi(assessmentProgress).text(assessmentProgress.root, {
+            text: assessmentProgressText,
+            fontSize: 26,
+            color: "#ffffff",
+            fontWeight: 500,
+            pointerEvents: "none"
+          });
+        } else {
+          assessmentProgress.text.setProperties({ text: assessmentProgressText });
+        }
+        assessmentProgress.root.update(0);
+      } catch (error2) {
+        hideAssessmentProgress();
+        recordDiagnostic("warn", "Could not show assessment progress.", { error: String(error2) });
+      }
+    }
     function showControlsHint(items) {
       hideControlsHint();
       if (!isAvailable() || activePanel || getPresentationMode() !== "immersive-xr") return false;
@@ -18779,6 +18837,7 @@
     }
     function openPanel(config) {
       hideControlsHint();
+      hideAssessmentProgress();
       if (!isAvailable()) {
         recordDiagnostic("warn", "Spatial UI unavailable; no A-Frame fallback will be opened.", {
           hasAFrame: Boolean(window.AFRAME),
@@ -18878,13 +18937,16 @@
         reason: reason || "close",
         renderCount: panelState.renderCount || 0
       });
+      if (reason !== "replace" && assessmentProgressText) setAssessmentProgress(assessmentProgressText);
     }
     function refreshInteractionTargets() {
     }
     function dispose() {
       if (hostComponentAttachTimer !== null) window.clearTimeout(hostComponentAttachTimer);
       hostComponentAttachTimer = null;
+      assessmentProgressText = "";
       hideControlsHint();
+      hideAssessmentProgress();
       closePanel("spatial-ui-dispose");
     }
     const api = {
@@ -18893,6 +18955,10 @@
       openPanel,
       showControlsHint,
       hideControlsHint,
+      setAssessmentProgress,
+      getAssessmentProgressGroup: function() {
+        return assessmentProgress && assessmentProgress.group || null;
+      },
       closePanel,
       refreshInteractionTargets,
       dispose,
@@ -18908,6 +18974,13 @@
       },
       recordDiagnostic,
       __tick: function(deltaMs) {
+        if (assessmentProgress) {
+          if (getPresentationMode() !== "immersive-xr") hideAssessmentProgress();
+          else {
+            refreshPanelAnchor(assessmentProgress);
+            assessmentProgress.root.update(Math.max(0, Number(deltaMs) || 0));
+          }
+        }
         if (controlsHint) {
           if (getPresentationMode() !== "immersive-xr") hideControlsHint();
           else controlsHint.root.update(Math.max(0, Number(deltaMs) || 0));

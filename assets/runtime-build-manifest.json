@@ -52,6 +52,7 @@
       "sourceFiles": [
         "assets/js/runtime/assessment/assessment-utils.js",
         "assets/js/runtime/assessment/assessment-session-runtime.js",
+        "assets/js/runtime/assessment/assessment-progress-runtime.js",
         "assets/js/runtime/assessment/assessment-cefr-runtime.js",
         "assets/js/runtime/assessment/assessment-renderers.js",
         "assets/js/runtime/assessment/assessment-vr-overlay-runtime.js",

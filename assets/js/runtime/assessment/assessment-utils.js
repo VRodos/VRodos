@@ -577,6 +577,22 @@
         }, extra || {});
     }
 
+    function summarizeAssessmentResult(result) {
+        const response = result && result.response || {};
+        const entries = response.answers || response.placements || response.matches ||
+            response.prompts || response.words || response.selections || response.blanks || [];
+        const summary = { correct: 0, incorrect: 0, ungraded: 0 };
+        entries.forEach((entry) => {
+            const grade = Object.prototype.hasOwnProperty.call(entry, "isCorrect") ? entry.isCorrect :
+                (Object.prototype.hasOwnProperty.call(entry, "found") ? entry.found : entry.wasMarked);
+            if (grade === true) summary.correct += 1;
+            else if (grade === false) summary.incorrect += 1;
+            else summary.ungraded += 1;
+        });
+        return summary;
+    }
+    namespace.summarizeAssessmentResult = summarizeAssessmentResult;
+
 
     // Shared response semantics; completion gating stays in each renderer.
     function buildQuestionAnswers(state) {

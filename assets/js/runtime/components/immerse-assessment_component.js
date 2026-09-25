@@ -38,6 +38,8 @@
         AFRAME.registerComponent("immerse-assessment-launcher", {
             init: function () {
                 namespace.getCefrRuntime().register(this.el);
+                namespace.getAssessmentSessionRuntime().registerAssessment(this.el, payloadFromElement(this.el));
+                namespace.getAssessmentProgressRuntime();
 
                 this.onClick = () => {
                     const runtime = namespace.getOverlayRuntime();
@@ -49,6 +51,7 @@
 
             remove: function () {
                 namespace.getCefrRuntime().unregister(this.el);
+                namespace.getAssessmentSessionRuntime().unregisterAssessment(this.el);
                 const desktop = window.__vrodosImmerseAssessmentRuntime;
                 if (desktop && desktop.payload && desktop.payload.anchorElement === this.el) desktop.hide();
                 const immersive = window.__vrodosImmerseAssessmentVrRuntime;

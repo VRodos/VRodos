@@ -4,6 +4,7 @@
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
     const decodeDisplayText = namespace.decodeDisplayText;
     const buildAssessmentResult = namespace.buildAssessmentResult;
+    const summarizeAssessmentResult = namespace.summarizeAssessmentResult;
     const renderEmptyState = namespace.renderEmptyState;
     const resolveRenderer = namespace.resolveRenderer;
     const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
@@ -190,6 +191,7 @@
             } else {
                 runtime.root.setAttribute("open", "open");
             }
+            namespace.getAssessmentProgressRuntime().setModalOpen(true);
             return runtime.root.open || runtime.root.getAttribute("open") !== null || runtime.root.style.display === "flex";
         };
 
@@ -201,7 +203,11 @@
             runtime.payload = null;
             runtime.renderer = null;
             runtime.state = null;
+            runtime.resultVisible = false;
             runtime.body.innerHTML = "";
+            runtime.body.style.display = "";
+            runtime.body.style.alignItems = "";
+            runtime.body.style.justifyContent = "";
             runtime.setStatus("");
             runtime.configurePrimaryAction({ visible: false });
             runtime.configureDialogFrame();
@@ -215,6 +221,7 @@
                 runtime.root.removeAttribute("open");
             }
             setAssessmentSceneInteractionLocked(false);
+            namespace.getAssessmentProgressRuntime().setModalOpen(false);
             runtime.resetState();
             const host = document.getElementById("vrodos-runtime-overlay-host");
             if (host && !host.querySelector("dialog[open]")) {
@@ -228,12 +235,31 @@
             }
 
             runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
+            const summary = summarizeAssessmentResult(runtime.lastResult);
             runtime.payload.result = runtime.lastResult;
             window.__vrodosLastAssessmentResult = runtime.lastResult;
             if (typeof namespace.getAssessmentSessionRuntime === "function") {
                 namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
             }
-            runtime.hide();
+            if (runtime.state && typeof runtime.state.cleanup === "function") runtime.state.cleanup();
+            runtime.payload = null;
+            runtime.state = null;
+            runtime.renderer = null;
+            runtime.resultVisible = true;
+            runtime.kicker.textContent = "Assessment complete";
+            runtime.body.replaceChildren();
+            runtime.body.style.display = "flex";
+            runtime.body.style.alignItems = "center";
+            runtime.body.style.justifyContent = "center";
+            const message = document.createElement("div");
+            message.style.textAlign = "center";
+            message.style.fontSize = "20px";
+            message.style.lineHeight = "1.7";
+            message.textContent = summary.correct + " correct · " + summary.incorrect + " incorrect" +
+                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : "");
+            runtime.body.appendChild(message);
+            runtime.setStatus("You can close this result and retake the assessment.");
+            runtime.configurePrimaryAction({ visible: true, label: "Close" });
         };
 
         runtime.renderUnsupported = function () {
@@ -317,6 +343,7 @@
             }
             runtime.root.style.display = "none";
             setAssessmentSceneInteractionLocked(false);
+            namespace.getAssessmentProgressRuntime().setModalOpen(false);
             runtime.resetState();
             const host = document.getElementById("vrodos-runtime-overlay-host");
             if (host && !host.querySelector("dialog[open]")) {
@@ -324,6 +351,10 @@
             }
         });
         nextButton.addEventListener("click", () => {
+            if (runtime.resultVisible) {
+                runtime.hide();
+                return;
+            }
             if (!runtime.renderer || typeof runtime.renderer.onPrimaryAction !== "function") {
                 return;
             }
