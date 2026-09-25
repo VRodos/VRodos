@@ -69,8 +69,46 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-    // Delegated event listener for project actions (deletion, rename)
-    document.getElementById('ExistingProjectsDivDOM').addEventListener('click', (e) => {
+    function setUseCasePillState(button, selected) {
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        button.classList.toggle('tw-border-primary/30', selected);
+        button.classList.toggle('tw-bg-primary/10', selected);
+        button.classList.toggle('tw-text-primary', selected);
+        button.classList.toggle('tw-border-base-300', !selected);
+        button.classList.toggle('tw-bg-base-100', !selected);
+        button.classList.toggle('tw-text-base-content/40', !selected);
+    }
+
+    // Delegated event listener for project actions (filtering, deletion, rename)
+    const projectList = document.getElementById('ExistingProjectsDivDOM');
+    projectList.addEventListener('click', (e) => {
+        const useCasePill = e.target.closest('.vrodos-use-case-all, .vrodos-use-case-toggle');
+        if (useCasePill) {
+            const allPill = projectList.querySelector('.vrodos-use-case-all');
+            const useCasePills = Array.from(projectList.querySelectorAll('.vrodos-use-case-toggle'));
+            if (useCasePill === allPill) {
+                useCasePills.forEach(pill => setUseCasePillState(pill, false));
+                setUseCasePillState(allPill, true);
+            } else {
+                const wasAllSelected = allPill.getAttribute('aria-pressed') === 'true';
+                setUseCasePillState(allPill, false);
+                if (wasAllSelected) {
+                    useCasePills.forEach(pill => setUseCasePillState(pill, pill === useCasePill));
+                } else {
+                    setUseCasePillState(useCasePill, useCasePill.getAttribute('aria-pressed') !== 'true');
+                }
+                if (!useCasePills.some(pill => pill.getAttribute('aria-pressed') === 'true')) {
+                    setUseCasePillState(allPill, true);
+                }
+            }
+            const showAll = allPill.getAttribute('aria-pressed') === 'true';
+            useCasePills.forEach(pill => {
+                const group = document.getElementById(`vrodos-use-case-group-${pill.dataset.useCaseGroup}`);
+                if (group) group.hidden = !showAll && pill.getAttribute('aria-pressed') !== 'true';
+            });
+            return;
+        }
+
         // Delete button
         const deleteBtn = e.target.closest('.vrodos-delete-project-btn');
         if (deleteBtn) {

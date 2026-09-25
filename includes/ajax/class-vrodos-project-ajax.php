@@ -225,6 +225,37 @@ class VRodos_Project_AJAX {
 
 		// Instantiate custom query
 		$custom_query = new WP_Query( $custom_query_args );
+		$immerse_groups = [];
+		$immerse_group_for_project = [];
+		if ( 'immerse' === $project_source ) {
+			foreach ( $custom_query->posts as $project_post ) {
+				$use_case_name = trim( (string) get_post_meta( $project_post->ID, '_immerse_use_case_name', true ) );
+				$use_case_id = trim( (string) get_post_meta( $project_post->ID, '_immerse_use_case_id', true ) );
+				$group_key = '' === $use_case_name ? 'unassigned' : ( '' !== $use_case_id ? 'id:' . $use_case_id : 'name:' . $use_case_name );
+				if ( ! isset( $immerse_groups[ $group_key ] ) ) {
+					$immerse_groups[ $group_key ] = [
+						'key'        => $group_key,
+						'name'       => '' === $use_case_name ? 'Unassigned' : $use_case_name,
+						'unassigned' => '' === $use_case_name,
+						'posts'      => [],
+					];
+				}
+				$immerse_groups[ $group_key ]['posts'][] = $project_post;
+				$immerse_group_for_project[ $project_post->ID ] = $group_key;
+			}
+			uasort( $immerse_groups, static function ( array $a, array $b ): int {
+				if ( $a['unassigned'] !== $b['unassigned'] ) {
+					return $a['unassigned'] ? 1 : -1;
+				}
+				return strcasecmp( $a['name'], $b['name'] ) ?: strcmp( $a['key'], $b['key'] );
+			} );
+			$custom_query->posts = [];
+			$group_index = 0;
+			foreach ( $immerse_groups as $group_key => $group ) {
+				$immerse_groups[ $group_key ]['index'] = $group_index++;
+				array_push( $custom_query->posts, ...$group['posts'] );
+			}
+		}
 
 		$runtime_url_resolver = new VRodos_Runtime_URL_Resolver();
 
@@ -232,7 +263,18 @@ class VRodos_Project_AJAX {
 		if ( $custom_query->have_posts() ) {
 
 			echo '<div id="vrodos-list-projects-container" class="tw-flex tw-flex-col tw-gap-6 tw-mt-4" data-project-source="' . esc_attr( $project_source ) . '" data-project-count="' . $custom_query->found_posts . '">';
+			if ( 'immerse' === $project_source ) {
+				echo '<div class="tw-flex tw-flex-wrap tw-gap-2" role="group" aria-label="Filter IMMERSE projects by use case">';
+				echo '<button type="button" class="vrodos-use-case-all tw-rounded-full tw-border tw-border-primary/30 tw-bg-primary/10 tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-text-primary" aria-pressed="true">All <span class="tw-font-medium">(' . $custom_query->found_posts . ')</span></button>';
+				foreach ( $immerse_groups as $group ) {
+					echo '<button type="button" class="vrodos-use-case-toggle tw-rounded-full tw-border tw-border-base-300 tw-bg-base-100 tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-text-base-content/40" data-use-case-group="' . $group['index'] . '" aria-pressed="false" aria-controls="vrodos-use-case-group-' . $group['index'] . '">';
+					echo esc_html( $group['name'] ) . ' <span class="tw-font-medium">(' . count( $group['posts'] ) . ')</span>';
+					echo '</button>';
+				}
+				echo '</div>';
+			}
 			$i = 1;
+			$active_immerse_group = null;
 			while ( $custom_query->have_posts() ) :
 
 				$custom_query->the_post();
@@ -240,6 +282,19 @@ class VRodos_Project_AJAX {
 				$game_id    = get_the_ID();
 				$game_title = get_the_title();
 				$game_date  = get_the_date();
+				if ( 'immerse' === $project_source ) {
+					$group_key = $immerse_group_for_project[ $game_id ];
+					if ( $active_immerse_group !== $group_key ) {
+						if ( null !== $active_immerse_group ) {
+							echo '</div></section>';
+						}
+						$group = $immerse_groups[ $group_key ];
+						echo '<section id="vrodos-use-case-group-' . $group['index'] . '" class="tw-space-y-3">';
+						echo '<h2 class="tw-text-sm tw-font-bold tw-text-base-content">' . esc_html( $group['name'] ) . '</h2>';
+						echo '<div class="tw-flex tw-flex-col tw-gap-3">';
+						$active_immerse_group = $group_key;
+					}
+				}
 
 				// Stagger limit to 4
 				$stagger = ( $i % 4 ) == 0 ? 4 : ( $i % 4 );
@@ -358,6 +413,9 @@ class VRodos_Project_AJAX {
 				echo '</div>'; // flex row
 				echo '</div>'; // card
 			endwhile;
+			if ( null !== $active_immerse_group ) {
+				echo '</div></section>';
+			}
 
 			echo '</div>';
 
