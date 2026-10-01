@@ -137,6 +137,12 @@
 
         // Initialize Lucide icons
         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('a[href$=".html"]').forEach((link) => {
+                const url = new URL(link.getAttribute('href'), window.location.href);
+                url.search = window.location.search;
+                url.hash = window.location.hash;
+                link.href = url.href;
+            });
             if (window.lucide) {
                 window.lucide.createIcons();
             }

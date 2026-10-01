@@ -140,10 +140,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function normalizeRuntimeTarget(value) {
-        if (value === 'vr-headset' || value === 'pc-rendered-vr') {
-            return value;
-        }
-        return 'desktop';
+        return ['automatic', 'desktop', 'headset', 'pc-rendered-vr'].includes(value) ? value : 'automatic';
     }
 
     function normalizeHeadsetSkyTime(value) {
@@ -159,32 +156,6 @@ VRodosCompileUI.General = (function () {
             default:
                 return 'off';
         }
-    }
-
-    function normalizeVrRuntimeProfile(value) {
-        if (value === 'desktop' || value === 'headset' || value === 'pc-rendered-vr') {
-            return value;
-        }
-        if (value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'hdr-reflections' || value === 'balanced' || value === 'max') {
-            return 'headset';
-        }
-        return 'desktop';
-    }
-
-    function runtimeTargetFromVrRuntimeProfile(value) {
-        const profile = normalizeVrRuntimeProfile(value);
-        if (profile === 'pc-rendered-vr') {
-            return 'pc-rendered-vr';
-        }
-        return profile === 'desktop' ? 'desktop' : 'vr-headset';
-    }
-
-    function runtimeTargetToVrRuntimeProfile(value) {
-        const target = normalizeRuntimeTarget(value);
-        if (target === 'pc-rendered-vr') {
-            return 'pc-rendered-vr';
-        }
-        return target === 'vr-headset' ? 'headset' : 'desktop';
     }
 
     function normalizeEdgeAAStrengthLevel(value) {
@@ -222,7 +193,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function isVrHeadsetTarget(controls) {
-        return Boolean(controls && controls.runtimeTarget && normalizeRuntimeTarget(controls.runtimeTarget.value) === 'vr-headset');
+        return Boolean(controls && controls.runtimeTarget && normalizeRuntimeTarget(controls.runtimeTarget.value) === 'headset');
     }
 
     function isPcRenderedVrTarget(controls) {
@@ -274,6 +245,7 @@ VRodosCompileUI.General = (function () {
     function applyRuntimeTargetUI(controls) {
         const headsetTarget = isVrHeadsetTarget(controls);
         const pcRenderedVrTarget = isPcRenderedVrTarget(controls);
+        const automaticTarget = normalizeRuntimeTarget(controls.runtimeTarget && controls.runtimeTarget.value) === 'automatic';
 
         if (!headsetTarget) {
             clearRuntimeTargetUI(controls);
@@ -283,11 +255,18 @@ VRodosCompileUI.General = (function () {
         }
 
         if (controls.vrHeadsetPolicyPanel) {
-            controls.vrHeadsetPolicyPanel.style.display = headsetTarget ? '' : 'none';
+            controls.vrHeadsetPolicyPanel.style.display = headsetTarget || automaticTarget ? '' : 'none';
         }
 
+        ['vrHeadsetSkyTime', 'vrHeadsetExposure'].forEach((key) => {
+            const label = controls[key] && controls[key].closest('label');
+            if (label) label.hidden = automaticTarget;
+        });
+
         if (controls.runtimeTargetHint) {
-            controls.runtimeTargetHint.textContent = headsetTarget
+            controls.runtimeTargetHint.textContent = automaticTarget
+                ? 'Builds PC, standalone VR and PCVR together. The shared link selects the device; Quest Browser always uses standalone VR.'
+                : headsetTarget
                 ? 'Uses the fixed headset rendering baseline: native anti-aliasing, ACES Filmic, render scale 1.0 and foveation 0.5.'
                 : (pcRenderedVrTarget
                     ? 'Uses the PC-rendered VR parent profile for later PCVR/WebXR validation with desktop rendering behavior.'
@@ -322,7 +301,7 @@ VRodosCompileUI.General = (function () {
     function syncToScene(controls) {
         if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-        VRODOS.editor.envir.scene.aframeVrRuntimeProfile = runtimeTargetToVrRuntimeProfile(controls.runtimeTarget ? controls.runtimeTarget.value : 'vr-headset');
+        VRODOS.editor.envir.scene.aframeBuildTarget = normalizeRuntimeTarget(controls.runtimeTarget && controls.runtimeTarget.value);
         if (controls.vrHeadsetAssetQuality) {
             VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality = controls.vrHeadsetAssetQuality.value;
         }
@@ -354,10 +333,7 @@ VRodosCompileUI.General = (function () {
         normalizeAmbientOcclusionPreset,
         normalizeContactShadowPreset,
         normalizeRuntimeTarget,
-        normalizeVrRuntimeProfile,
         normalizeHeadsetSkyTime,
-        runtimeTargetFromVrRuntimeProfile,
-        runtimeTargetToVrRuntimeProfile,
         normalizeEdgeAAStrengthLevel,
         getEdgeAAStrengthLabel,
         clampLegacyHorizonStageSize,

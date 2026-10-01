@@ -46,10 +46,14 @@ $html = <<<'HTML'
 <a-asset-item src="http://wp.local/wordpress/wp-content/uploads/vrodos/published/projects/765/media/terrain.glb"></a-asset-item>
 <img src="/wordpress/wp-content/uploads/vrodos/published/projects/765/media/poster.png">
 <a-asset-item src="../../assets/models/editor/checkmark.glb"></a-asset-item>
+<a-scene data-vrodos-device-variants="{&quot;headset&quot;:&quot;Master_Client_766_headset.html&quot;}"></a-scene>
 HTML;
 
 $method = new ReflectionMethod( VRodos_Scene_Standalone_Exporter::class, 'rewrite_html' );
 $result = $method->invoke( new VRodos_Scene_Standalone_Exporter(), $html );
+standalone_assert( ! str_contains( $result, 'Master_Client_766_headset.html' ), 'Single-client ZIPs must exclude hosted variant navigation.' );
+$single_quoted = str_replace( 'data-vrodos-device-variants="{&quot;headset&quot;:&quot;Master_Client_766_headset.html&quot;}"', "data-vrodos-device-variants='{\"headset\":\"Master_Client_766_headset.html\"}'", $html );
+standalone_assert( ! str_contains( $method->invoke( new VRodos_Scene_Standalone_Exporter(), $single_quoted ), 'data-vrodos-device-variants' ), 'Single-client ZIPs must remove the DOM serializer\'s single-quoted variant attribute.' );
 standalone_assert( str_contains( $result, 'import("./wp-content/plugins/VRodos/assets/vendor/stats-gl/main.js")' ), 'Exported module imports must be explicit relative URLs.' );
 standalone_assert( ! str_contains( $result, '/wordpress/' ), 'The package must not depend on the WordPress installation directory.' );
 foreach ( [

@@ -117,7 +117,7 @@ const VRODOS = {
     },
     config: { projectId: '88', sceneId: '89', compileNonce: 'test-nonce', isAdmin: 'front' },
     data: {},
-    editor: { envir: { scene: { aframeRuntimeMode: 'single-player', aframeVrRuntimeProfile: 'desktop' } } },
+    editor: { envir: { scene: { aframeRuntimeMode: 'single-player', aframeBuildTarget: 'desktop' } } },
     ui: {
         compileDialogState: {
             finishBuildState() { finished += 1; },
@@ -194,7 +194,7 @@ assert.match(uiSource, /Queued · \$\{percent\}%/, 'queued build rows should sho
 
 responses.push(
     response(202, pendingPayload),
-    response(200, { CurrentSceneMasterClient: 'http://localhost:8088/build/scene-89.html' })
+    response(200, { CurrentSceneIndex: 'http://localhost:8088/build/scene-89.html', CurrentSceneMasterClient: 'http://localhost:8088/build/direct-client.html' })
 );
 VRODOS.api.compileScene(false, { skipSave: true });
 await flushPromises();
@@ -204,7 +204,7 @@ assert.equal(started, 1, 'the build UI enters its running state once');
 assert.equal(requests[0].action, 'vrodos_compile_action', 'the first request starts the build');
 assert.match(requests[0].params.get('buildId'), /^[a-f0-9]{32}$/);
 assert.equal(requests[0].params.get('runtimeMode'), 'single-player');
-assert.equal(requests[0].params.get('vrRuntimeProfile'), 'desktop');
+assert.equal(requests[0].params.get('buildTarget'), 'desktop');
 assert.equal(requests[0].params.get('vrHeadsetAssetQuality'), 'low', 'absent authored quality defaults to Low');
 assert.equal(servedStatuses[0], 202, 'expected background work uses HTTP 202');
 assert.equal(progress.at(-1).ready, 1);
@@ -215,13 +215,13 @@ assert.equal(progress.at(-1).profiles[1].step, 6);
 assert.equal(timers.length, 1, 'pending work schedules one retry');
 
 VRODOS.editor.envir.scene.aframeRuntimeMode = 'networked';
-VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'headset';
+VRODOS.editor.envir.scene.aframeBuildTarget = 'headset';
 VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality = 'high';
 timers.shift()();
 await flushPromises();
 assert.equal(servedStatuses[1], 200, 'the retry can complete with HTTP 200');
 assert.equal(requests[1].params.get('runtimeMode'), 'single-player', 'a retry keeps the runtime mode captured when the build started');
-assert.equal(requests[1].params.get('vrRuntimeProfile'), 'desktop', 'a retry keeps the target captured when the build started');
+assert.equal(requests[1].params.get('buildTarget'), 'desktop', 'a retry keeps the target captured when the build started');
 assert.equal(requests[1].params.get('vrHeadsetAssetQuality'), 'low', 'a retry keeps its captured quality');
 assert.equal(VRODOS.api.isCompileRunning(), false, 'successful compile clears the active build');
 assert.equal(finished, 1, 'successful compile releases the build controls');
@@ -229,7 +229,7 @@ assert.equal(hidden, 1, 'successful compile hides the progress panel');
 assert.equal(links.at(-1), 'http://localhost:8088/build/scene-89.html');
 assert.equal(consoleErrors.length, 0, 'normal pending and successful responses do not log errors');
 VRODOS.editor.envir.scene.aframeRuntimeMode = 'single-player';
-VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
+VRODOS.editor.envir.scene.aframeBuildTarget = 'desktop';
 
 responses.push(response(202, pendingPayload));
 VRODOS.api.compileScene(false, { skipSave: true });
@@ -333,9 +333,9 @@ sceneSaveWait = new Promise((resolvePromise) => {
     releasePendingSceneSave = resolvePromise;
 });
 const compileRequestsBeforeSettingsSave = requests.filter((request) => request.action === 'vrodos_compile_action').length;
-responses.push(response(200, { CurrentSceneMasterClient: 'http://localhost:8088/build/scene-89-settings.html' }));
+responses.push(response(200, { CurrentSceneIndex: 'http://localhost:8088/build/scene-89-settings.html' }));
 VRODOS.editor.envir.scene.aframeRuntimeMode = 'networked';
-VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'headset';
+VRODOS.editor.envir.scene.aframeBuildTarget = 'headset';
 VRODOS.api.compileScene(false);
 await flushPromises();
 assert.equal(settingsSaveCount, 0, 'build preflight waits for an already-running full scene save');
@@ -346,7 +346,7 @@ assert.equal(
 );
 
 VRODOS.editor.envir.scene.aframeRuntimeMode = 'single-player';
-VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
+VRODOS.editor.envir.scene.aframeBuildTarget = 'desktop';
 releasePendingSceneSave();
 await flushPromises();
 await flushPromises();
@@ -360,7 +360,7 @@ assert.equal(
 );
 const savedSettingsCompileRequest = requests.filter((request) => request.action === 'vrodos_compile_action').at(-1);
 assert.equal(savedSettingsCompileRequest.params.get('runtimeMode'), 'networked', 'the build keeps the mode selected before its asynchronous save');
-assert.equal(savedSettingsCompileRequest.params.get('vrRuntimeProfile'), 'headset', 'the build keeps the unsaved target selected before its asynchronous save');
+assert.equal(savedSettingsCompileRequest.params.get('buildTarget'), 'headset', 'the build keeps the unsaved target selected before its asynchronous save');
 
 const compileRequestsBeforeSaveFailure = requests.filter((request) => request.action === 'vrodos_compile_action').length;
 sceneSaveWait = Promise.resolve();
@@ -377,5 +377,13 @@ assert.equal(
     'a failed metadata save blocks compilation'
 );
 assert.equal(saveFailures, 1, 'a failed metadata save displays the save failure state');
+
+delete VRODOS.editor.envir.scene.aframeBuildTarget;
+responses.push(response(200, { BuildTarget: 'automatic', CurrentSceneIndex: 'http://localhost:8088/build/index_89.html', CurrentSceneMasterClient: 'http://localhost:8088/build/Master_Client_89.html' }));
+VRODOS.api.compileScene(false, { skipSave: true });
+await flushPromises();
+assert.equal(requests.at(-1).params.get('buildTarget'), 'automatic', 'new builds default to Automatic');
+assert.equal(requests.at(-1).params.has('vrRuntimeProfile'), false, 'compile requests only carry buildTarget');
+assert.equal(links.at(-1), 'http://localhost:8088/build/index_89.html', 'Open/Copy Experience selects the entry index ahead of direct clients');
 
 console.log('Compile request lifecycle tests passed.');

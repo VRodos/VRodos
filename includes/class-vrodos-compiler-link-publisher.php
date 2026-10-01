@@ -37,25 +37,35 @@ final class VRodos_Compiler_Link_Publisher {
 			'DefaultLinkMode' => $this->default_link_mode,
 			'PrimaryLinkMode' => $plan->is_networked() ? $this->primary_runtime_mode : 'static',
 			'RuntimeMode'     => $runtime_mode,
-			'VrRuntimeProfile' => $plan->request->vr_runtime_profile,
+			'BuildTarget' => $plan->request->build_target,
 			'MasterClient'    => $this->url( $plan->request->project_id, $master_file, null, $runtime_mode ),
 			'CurrentSceneMasterClient' => $this->url( $plan->request->project_id, $selected_master_file, null, $runtime_mode ),
 		];
 
+		$index_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::INDEX, $master_scene );
+		$current_index_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::INDEX, $selected_scene );
+		$links['index'] = $this->url( $plan->request->project_id, $index_file, null, $runtime_mode );
+		$links['CurrentSceneIndex'] = $this->url( $plan->request->project_id, $current_index_file, null, $runtime_mode );
+		$links['CurrentSceneVariants'] = [];
+		foreach ( $plan->master_filenames( $selected_scene ) as $profile => $filename ) {
+			$links['CurrentSceneVariants'][ $profile ] = $this->url( $plan->request->project_id, $filename, null, $runtime_mode );
+		}
 		if ( $plan->is_networked() ) {
+			$this->append_variants( $links, 'Index', $plan->request->project_id, $index_file, $runtime_mode );
+			$this->append_variants( $links, 'CurrentSceneIndex', $plan->request->project_id, $current_index_file, $runtime_mode );
 			$this->append_variants( $links, 'MasterClient', $plan->request->project_id, $master_file, $runtime_mode );
 			$this->append_variants( $links, 'CurrentSceneMasterClient', $plan->request->project_id, $selected_master_file, $runtime_mode );
 		}
 
 		if ( $plan->is_networked() && ! $plan->is_vrexpo() ) {
-			$index_file          = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::INDEX, $plan->last_scene_id );
+			$roles_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::ROLES, $selected_scene );
 			$simple_file         = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::SIMPLE, $plan->last_scene_id );
 			$current_simple_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::SIMPLE, $selected_scene );
 
-			$links['index']                    = $this->url( $plan->request->project_id, $index_file, null, $runtime_mode );
+			$links['CurrentSceneRoles'] = $this->url( $plan->request->project_id, $roles_file, null, $runtime_mode );
 			$links['SimpleClient']             = $this->url( $plan->request->project_id, $simple_file, null, $runtime_mode );
 			$links['CurrentSceneSimpleClient'] = $this->url( $plan->request->project_id, $current_simple_file, null, $runtime_mode );
-			$this->append_variants( $links, 'Index', $plan->request->project_id, $index_file, $runtime_mode );
+			$this->append_variants( $links, 'CurrentSceneRoles', $plan->request->project_id, $roles_file, $runtime_mode );
 			$this->append_variants( $links, 'SimpleClient', $plan->request->project_id, $simple_file, $runtime_mode );
 			$this->append_variants( $links, 'CurrentSceneSimpleClient', $plan->request->project_id, $current_simple_file, $runtime_mode );
 		}

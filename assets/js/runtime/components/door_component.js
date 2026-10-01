@@ -2,7 +2,9 @@ AFRAME.registerComponent('door-listener', {
     schema: { type: "string", default: "default value" },
     init: function () {
         this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
-        this.el.setAttribute("link", "on: click; href: " + this.data);
+        const destination = new URL(this.data, window.location.href);
+        destination.search = window.location.search;
+        this.el.setAttribute("link", "on: click; href: " + destination.href);
         this.resources.listen(this.el, "click", evt => {
             if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
                 if (evt.detail.originalEvent.button !== 0) return;

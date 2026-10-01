@@ -65,7 +65,7 @@ final class VRodos_Compiler_Target_Assembler {
 	public function render( VRodos_Runtime_Target_Plan $target, VRodos_Project_Compile_Plan $project ): void {
 		$scene = $target->scene;
 		$default_desktop_profile = (string) ( $scene->desktop_profiles['defaultProfile'] ?? 'custom' );
-		$adaptive_desktop = 'desktop' === $project->request->vr_runtime_profile
+		$adaptive_desktop = 'desktop' === $scene->settings['vrRuntimeProfile']
 			&& 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' );
 		$this->entity_renderer->configure(
 			$this->plugin_path_url,
@@ -75,6 +75,10 @@ final class VRodos_Compiler_Target_Assembler {
 		);
 
 		if ( VRodos_Runtime_Target_Plan::INDEX === $target->kind ) {
+			$this->create_device_index( $target, $project );
+			return;
+		}
+		if ( VRodos_Runtime_Target_Plan::ROLES === $target->kind ) {
 			// Preserve the established index heading contract: every index uses the first scene title.
 			$this->create_index( $target, $project->project_title, $project->scenes[0]->title );
 			return;
@@ -89,13 +93,14 @@ final class VRodos_Compiler_Target_Assembler {
 				$project->request->project_id,
 				$project->scene_ids(),
 				$scene->settings,
-				$scene->diagnostics
+				$scene->diagnostics,
+				$project->master_filenames( $scene->scene_id )
 			);
 			return;
 		}
 
 		$simple_settings = $scene->settings;
-		if ( 'desktop' === $project->request->vr_runtime_profile ) {
+		if ( 'desktop' === $scene->settings['vrRuntimeProfile'] ) {
 			$simple_settings = (array) ( $scene->desktop_profiles['profiles'][ $default_desktop_profile ]['settings'] ?? $simple_settings );
 		}
 		$this->create_simple(
@@ -157,9 +162,22 @@ final class VRodos_Compiler_Target_Assembler {
 		$scene_id = $target->scene->scene_id;
 		$content  = $this->template_renderer->read_runtime_template( $target->template );
 		$content  = str_replace( 'Client.html', 'Client_' . $scene_id . '.html', $content );
+		$content  = str_replace( 'Master_Client_' . $scene_id . '.html', 'index_' . $scene_id . '.html', $content );
 		$content  = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title, $content );
 		$content  = $this->runtime_assets->replace_placeholders( $content );
 		$content  = str_replace( 'VRODOS_PLUGIN_URL_PLACEHOLDER', esc_url( $this->plugin_path_url ), $content );
+		$this->template_renderer->write_runtime_artifact( $target->filename, $content );
+	}
+
+	private function create_device_index( VRodos_Runtime_Target_Plan $target, VRodos_Project_Compile_Plan $project ): void {
+		$path = VRodos_Path_Manager::asset_path( 'js/runtime/vrodos_device_entry.js' );
+		$url = $this->runtime_assets->runtime_asset_url( 'js/runtime/vrodos_device_entry.js' ) . '?ver=' . filemtime( $path );
+		$content = $this->template_renderer->read_runtime_template( $target->template );
+		$content = str_replace(
+			[ 'VRODOS_DEVICE_TITLE_PLACEHOLDER', 'VRODOS_DEVICE_BOOTSTRAP_PLACEHOLDER', 'VRODOS_DEVICE_VARIANTS_PLACEHOLDER' ],
+			[ esc_html( $target->scene->title ), esc_url( $url ), wp_json_encode( $project->master_filenames( $target->scene->scene_id ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) ],
+			$content
+		);
 		$this->template_renderer->write_runtime_artifact( $target->filename, $content );
 	}
 
@@ -171,7 +189,8 @@ final class VRodos_Compiler_Target_Assembler {
 		int $project_id,
 		array $scene_ids,
 		array $settings,
-		array $diagnostics
+		array $diagnostics,
+		array $variants
 	): void {
 		$scene_id        = $target->scene->scene_id;
 		$runtime_mode    = $target->runtime_mode;
@@ -214,6 +233,9 @@ final class VRodos_Compiler_Target_Assembler {
 		$elements = $this->create_master_dom( $content, $scene_json, $project_id, $scene_id, $scene_ids );
 		$dom      = $elements['dom'];
 		$scene    = $elements['ascene'];
+		if ( count( $variants ) > 1 ) {
+			$scene->setAttribute( 'data-vrodos-device-variants', wp_json_encode( $variants ) );
+		}
 		$player   = $elements['ascenePlayer'];
 		$project_type = $this->scene_repository->get_project_type_slug( $project_id );
 		$title = $dom->getElementsByTagName( 'title' )->item( 0 );

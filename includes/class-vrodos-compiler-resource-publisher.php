@@ -27,7 +27,11 @@ final class VRodos_Compiler_Resource_Publisher {
 	private array $media = [];
 	private array $scene_previews = [];
 	private array $created_files = [];
+	private array $previous_media = [];
 	private string $runtime_mode = '';
+	private string $build_target = 'automatic';
+	private array $entrypoints = [];
+	private array $variants = [];
 	private string $runtime_profile = 'desktop';
 	private string $vr_asset_profile = 'web-low';
 	private bool $desktop_profiles_enabled = false;
@@ -49,9 +53,16 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->scene_previews = [];
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
-		$this->runtime_profile = $plan->request->vr_runtime_profile;
-		$this->vr_asset_profile = VRodos_Compiler_Asset_Policy::vr_profile( $this->runtime_profile, $plan->request->vr_headset_asset_quality );
-		$this->desktop_profiles_enabled = 'desktop' === $plan->request->vr_runtime_profile;
+		$this->build_target = $plan->request->build_target;
+		$this->entrypoints = [];
+		$this->variants = [];
+		foreach ( $plan->targets as $target ) {
+			if ( VRodos_Runtime_Target_Plan::INDEX === $target->kind ) {
+				$this->entrypoints[ $target->scene->scene_id ] = $target->filename;
+			} elseif ( VRodos_Runtime_Target_Plan::MASTER === $target->kind ) {
+				$this->variants[ $target->scene->scene_id ][ $target->scene->settings['vrRuntimeProfile'] ] = $target->filename;
+			}
+		}
 		$this->warnings = [];
 		$cache_policy = VRodos_Storage_Manager::ensure_published_cache_policy();
 		if ( is_wp_error( $cache_policy ) ) {
@@ -61,6 +72,9 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->acquire_lock();
 		try {
 			foreach ( $plan->scenes as $scene ) {
+				$this->runtime_profile = $scene->settings['vrRuntimeProfile'];
+				$this->vr_asset_profile = VRodos_Compiler_Asset_Policy::vr_profile( $this->runtime_profile, $plan->request->vr_headset_asset_quality );
+				$this->desktop_profiles_enabled = 'desktop' === $this->runtime_profile;
 				$this->desktop_profile_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
@@ -110,7 +124,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		return $this->warnings;
 	}
 
-	public function finalize( array $artifacts ): void {
+	public function publish_inventory( array $artifacts ): void {
 		$clients = [];
 		foreach ( $artifacts as $artifact ) {
 			if ( $artifact instanceof VRodos_Compile_Artifact ) {
@@ -119,23 +133,28 @@ final class VRodos_Compiler_Resource_Publisher {
 		}
 		sort( $clients, SORT_STRING );
 		$previous = get_post_meta( $this->project_id, self::INVENTORY_META, true );
-		$previous_media = is_array( $previous ) && is_array( $previous['media'] ?? null ) ? $previous['media'] : [];
+		$this->previous_media = is_array( $previous ) && is_array( $previous['media'] ?? null ) ? $previous['media'] : [];
 		$inventory = [
-			'schemaVersion' => 1,
+			'schemaVersion' => 2,
 			'projectId'     => $this->project_id,
 			'publishedAt'   => current_time( 'mysql', true ),
 			'runtimeMode'   => $this->runtime_mode,
-			'vrRuntimeProfile' => $this->runtime_profile,
+			'buildTarget'   => $this->build_target,
+			'entrypoints'   => $this->entrypoints,
+			'variants'      => $this->variants,
 			'scenePreviews' => $this->scene_previews,
 			'clients'       => $clients,
 			'media'         => array_values( $this->media ),
 		];
+		$updated = update_post_meta( $this->project_id, self::INVENTORY_META, $inventory );
+		if ( false === $updated && $previous !== $inventory ) {
+			throw new RuntimeException( '[VRodos] Could not store the project publication inventory.' );
+		}
+	}
+
+	public function finalize(): void {
 		try {
-			$updated = update_post_meta( $this->project_id, self::INVENTORY_META, $inventory );
-			if ( false === $updated && $previous !== $inventory ) {
-				throw new RuntimeException( '[VRodos] Could not store the project publication inventory.' );
-			}
-			$this->remove_stale_media( $previous_media, $inventory['media'] );
+			$this->remove_stale_media( $this->previous_media, array_values( $this->media ) );
 			$this->created_files = [];
 		} finally {
 			$this->release_lock();

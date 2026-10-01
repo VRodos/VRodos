@@ -6,6 +6,7 @@ function admin_url( string $path = '' ): string { return 'https://example.test/w
 function apply_filters( string $name, $value, ...$args ) {
 	if ( 'vrodos_compiled_runtime_context' === $name && isset( $GLOBALS['fixture_result_delivery'] ) ) {
 		$GLOBALS['fixture_context_calls']++;
+		$GLOBALS['fixture_context_profiles'][] = $args[3]['vrRuntimeProfile'];
 		$value['immerseResults'] = $GLOBALS['fixture_result_delivery'];
 	}
 	return $value;
@@ -845,8 +846,8 @@ $standard_result = $link_publisher->publish( $standard_plan, [] );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['MasterClient'], 'Master_Client_102.html' ), 'standard master link keeps last-scene convention' );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['index'], 'index_102.html' ), 'standard index filename remains stable' );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['SimpleClient'], 'Simple_Client_102.html' ), 'standard Simple filename remains stable' );
-vrodos_foundation_assert( 6 === count( $standard_plan->targets ), 'networked standard plan declares Master/Simple/Index for every scene' );
-vrodos_foundation_assert( 2 === count( $project_plan->targets ), 'VRExpo plan declares only Master targets' );
+vrodos_foundation_assert( 8 === count( $standard_plan->targets ), 'networked standard plan declares Master/Simple/Index/Roles for every scene' );
+vrodos_foundation_assert( 4 === count( $project_plan->targets ), 'VRExpo plan declares Master and entry targets' );
 $simple_target = $standard_plan->target( VRodos_Runtime_Target_Plan::SIMPLE, 102 );
 vrodos_foundation_assert( $simple_target instanceof VRodos_Runtime_Target_Plan, 'standard plan exposes selected Simple target' );
 vrodos_foundation_assert( [ 'scene-components' ] === $simple_target->chunk_ids, 'Simple target preserves its lean dependency plan' );
@@ -861,12 +862,47 @@ $single_player_plan = $plan_resolver->resolve(
 		'scene_json' => [ $scene_one, $scene_two ],
 	]
 );
-vrodos_foundation_assert( 2 === count( $single_player_plan->targets ), 'single-player plan declares one Master target per scene' );
+vrodos_foundation_assert( 4 === count( $single_player_plan->targets ), 'single-player plan declares Master and entry targets per scene' );
 foreach ( $single_player_plan->targets as $target ) {
-	vrodos_foundation_assert( VRodos_Runtime_Target_Plan::MASTER === $target->kind, 'single-player target matrix excludes network companion pages' );
+	vrodos_foundation_assert( in_array( $target->kind, [ VRodos_Runtime_Target_Plan::MASTER, VRodos_Runtime_Target_Plan::INDEX ], true ), 'single-player target matrix excludes network companion pages' );
 	vrodos_foundation_assert( ! in_array( 'networked-components', $target->chunk_ids, true ), 'single-player target excludes network chunk' );
 }
 $desktop_profiles = $single_player_plan->scenes[0]->desktop_profiles;
+// Automatic expands each scene independently and keeps authoring settings untouched.
+$automatic_plan = $plan_resolver->resolve(
+	new VRodos_Compile_Request( 9, 102, [ 101, 102 ], 'single-player', 'automatic', true, '', 'medium' ),
+	[ 'project_title' => 'Automatic fixture', 'project_type_slug' => 'vrexpo_games', 'valid_scene_ids' => [ 101, 102 ], 'scene_title' => [ 'One', 'Two' ], 'scene_json' => [ $scene_one, $scene_two ] ]
+);
+vrodos_foundation_assert( 6 === count( $automatic_plan->scenes ) && 8 === count( $automatic_plan->targets ), 'Automatic creates three variants and one entry for every scene' );
+vrodos_foundation_assert( [ 101, 102 ] === $automatic_plan->scene_ids(), 'Automatic scene IDs exclude repeated variant IDs' );
+$automatic_files = [ 'desktop' => 'Master_Client_102.html', 'headset' => 'Master_Client_102_headset.html', 'pc-rendered-vr' => 'Master_Client_102_pc-rendered-vr.html' ];
+vrodos_foundation_assert( $automatic_files === $automatic_plan->master_filenames( 102 ), 'Automatic variant filenames' );
+foreach ( $automatic_files as $profile => $filename ) {
+	$variant = $automatic_plan->target( VRodos_Runtime_Target_Plan::MASTER, 102, $profile )->scene;
+	vrodos_foundation_assert( $profile === $variant->settings['vrRuntimeProfile'], 'Automatic emits concrete profile ' . $profile );
+	vrodos_foundation_assert( 'medium' === $variant->settings['vrHeadsetAssetQuality'], 'Automatic retains requested headset quality' );
+	vrodos_foundation_assert( ( 'headset' === $profile ? 'high' : 'performance' ) === $variant->settings['renderQuality'], 'isolated target renderer settings ' . $profile );
+	vrodos_foundation_assert( ( 'headset' === $profile ? 'aces-filmic' : 'agx' ) === $variant->settings['pmndrsToneMappingMode'], 'headset baseline does not alter PC or PCVR artistic settings' );
+	vrodos_foundation_assert( ! in_array( 'networked-components', $variant->chunk_ids, true ), 'Automatic single-player chunks stay lean' );
+	$door_dom = new DOMDocument();
+	$door_scene = $door_dom->createElement( 'a-scene' );
+	$door_dom->appendChild( $door_scene );
+	$door_assets = $door_dom->createElement( 'a-assets' );
+	$door_scene->appendChild( $door_assets );
+	( new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), $plan_repository, static fn( $url ) => $url ) )->render_scene_objects( $door_dom, $door_scene, $door_assets, [ 'door' => (object) [
+		'category_slug' => 'door', 'sceneID_target' => 102, 'glb_path' => '/door.glb', 'position' => [ 0, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+	] ], 9, 101, [ 'scene_settings' => $variant->settings, 'buildTarget' => 'automatic', 'container' => $door_scene ] );
+	$door = ( new DOMXPath( $door_dom ) )->query( '//*[@door-listener]' )->item( 0 );
+	vrodos_foundation_assert( $door instanceof DOMElement && $filename === $door->getAttribute( 'door-listener' ), 'door retains destination variant ' . $profile );
+}
+$desktop_decoration = $automatic_plan->scenes[0]->scene_json->objects->decoration0;
+$headset_decoration = $automatic_plan->scenes[1]->scene_json->objects->decoration0;
+vrodos_foundation_assert( $desktop_decoration !== $headset_decoration && $desktop_decoration->uuid === $headset_decoration->uuid, 'variants clone one normalized entity identity' );
+$automatic_links = $link_publisher->publish( $automatic_plan, [] )->links;
+vrodos_foundation_assert( 'automatic' === $automatic_links['BuildTarget'] && str_ends_with( $automatic_links['CurrentSceneIndex'], 'index_102.html' ), 'Automatic result exposes shared selected-scene entry' );
+foreach ( $automatic_files as $profile => $filename ) {
+	vrodos_foundation_assert( str_ends_with( $automatic_links['CurrentSceneVariants'][ $profile ], $filename ), 'Automatic direct result link ' . $profile );
+}
 vrodos_foundation_assert( 2 === $desktop_profiles['schemaVersion'], 'desktop profiles use schema v2' );
 vrodos_foundation_assert( 'custom' === $desktop_profiles['buildMode'], 'desktop profiles default to Custom-only build mode' );
 vrodos_foundation_assert( 'custom' === $desktop_profiles['defaultProfile'], 'default desktop builds select the Custom cache identity' );
@@ -1081,24 +1117,58 @@ try {
 }
 vrodos_foundation_remove_tree( $test_dir );
 
+// A failure after several automatic variants were published restores the whole set.
+$test_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vrodos-automatic-rollback-' . bin2hex( random_bytes( 6 ) );
+$old_artifacts = array_map( static fn( $target ) => new VRodos_Compile_Artifact( $target->filename, 'previous-' . $target->filename, $target->kind, $target->scene->scene_id ), $automatic_plan->targets );
+$new_artifacts = array_map( static fn( $target ) => new VRodos_Compile_Artifact( $target->filename, 'next-' . $target->filename, $target->kind, $target->scene->scene_id ), $automatic_plan->targets );
+( new VRodos_Compiler_Artifact_Transaction( $test_dir ) )->commit( 99, $old_artifacts );
+$previous_inventory = file_get_contents( $test_dir . '/.manifests/project-99.json' );
+try {
+	( new VRodos_Compiler_Artifact_Transaction( $test_dir, static function ( $artifact, int $committed ): void {
+		if ( 6 === $committed ) throw new RuntimeException( 'Injected automatic variant failure.' );
+	} ) )->commit( 99, $new_artifacts );
+	vrodos_foundation_assert( false, 'automatic failure injection' );
+} catch ( RuntimeException $error ) {
+	foreach ( $old_artifacts as $artifact ) {
+		vrodos_foundation_assert( $artifact->content === file_get_contents( $test_dir . '/' . $artifact->filename ), 'automatic rollback restores ' . $artifact->filename );
+	}
+	vrodos_foundation_assert( $previous_inventory === file_get_contents( $test_dir . '/.manifests/project-99.json' ), 'automatic rollback retains the publication inventory' );
+}
+try {
+	( new VRodos_Compiler_Artifact_Transaction( $test_dir ) )->commit( 99, $new_artifacts, static function (): void {
+		throw new RuntimeException( 'Injected publication inventory failure.' );
+	} );
+	vrodos_foundation_assert( false, 'inventory publication failure injection' );
+} catch ( RuntimeException $error ) {
+	foreach ( $old_artifacts as $artifact ) {
+		vrodos_foundation_assert( $artifact->content === file_get_contents( $test_dir . '/' . $artifact->filename ), 'inventory failure restores automatic client ' . $artifact->filename );
+	}
+	vrodos_foundation_assert( $previous_inventory === file_get_contents( $test_dir . '/.manifests/project-99.json' ), 'inventory failure restores the previous artifact inventory' );
+}
+vrodos_foundation_remove_tree( $test_dir );
+
 // Every target/profile uses the same resolved result-delivery context, once per scene.
 $capability_resolver = new VRodos_Compiler_Plan_Resolver( $plan_settings, new VRodos_Compiler_Runtime_Script_Planner( new VRodos_Compiler_Runtime_Manifest() ) );
-foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
+foreach ( [ 'automatic', 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
 	foreach ( [ 'custom', 'adaptive' ] as $build_mode ) {
 		foreach ( [ 'single-player', 'networked' ] as $runtime_mode ) {
 			foreach ( [ false, true ] as $delivery ) {
 				$GLOBALS['fixture_result_delivery'] = [ 'enabled' => $delivery, 'restUrl' => '/results', 'projectId' => 9, 'sceneId' => 101, 'token' => 'fixture' ];
 				$GLOBALS['fixture_context_calls'] = 0;
+				$GLOBALS['fixture_context_profiles'] = [];
 				$scene = (object) [ 'metadata' => (object) [ 'desktopPerformanceProfiles' => (object) [ 'schemaVersion' => 2, 'buildMode' => $build_mode ] ], 'objects' => (object) [] ];
-				$plan = $capability_resolver->resolve( new VRodos_Compile_Request( 9, 101, [ 101 ], $runtime_mode, $target, false ), [
+				$project = $capability_resolver->resolve( new VRodos_Compile_Request( 9, 101, [ 101 ], $runtime_mode, $target, false ), [
 					'valid_scene_ids' => [ 101 ], 'scene_json' => [ $scene ], 'scene_title' => [ 'Capability fixture' ], 'project_type_slug' => 'vrexpo_games',
-				] )->scenes[0];
+				] );
 				vrodos_foundation_assert( 1 === $GLOBALS['fixture_context_calls'], 'resolve runtime context once per scene' );
-				vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->chunk_ids, true ), "$target/$build_mode/$runtime_mode delivery chunk" );
-				vrodos_foundation_assert( $plan->runtime_context['immerseResults'] === $GLOBALS['fixture_result_delivery'], 'emitted context equals capability selection context' );
-				if ( 'desktop' === $target ) {
-					foreach ( ( 'adaptive' === $build_mode ? [ 'low', 'medium', 'high' ] : [ 'custom' ] ) as $profile_id ) {
-						vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->desktop_profiles['profiles'][ $profile_id ]['chunkIds'], true ), "$profile_id delivery chunk" );
+				vrodos_foundation_assert( [ 'automatic' === $target ? 'desktop' : $target ] === $GLOBALS['fixture_context_profiles'], 'Automatic resolves extension context using desktop settings' );
+				foreach ( $project->scenes as $plan ) {
+					vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->chunk_ids, true ), "$target/$build_mode/$runtime_mode delivery chunk" );
+					vrodos_foundation_assert( $plan->runtime_context['immerseResults'] === $GLOBALS['fixture_result_delivery'], 'emitted context equals capability selection context' );
+					if ( 'desktop' === $plan->settings['vrRuntimeProfile'] ) {
+						foreach ( ( 'adaptive' === $build_mode ? [ 'low', 'medium', 'high' ] : [ 'custom' ] ) as $profile_id ) {
+							vrodos_foundation_assert( $delivery === in_array( 'assessment-runtime', $plan->desktop_profiles['profiles'][ $profile_id ]['chunkIds'], true ), "$profile_id delivery chunk" );
+						}
 					}
 				}
 			}

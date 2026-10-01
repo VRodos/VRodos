@@ -10,7 +10,8 @@ assert.match(compileAjax, /check_ajax_referer\( 'vrodos_compile_scene', 'nonce',
 assert.match(compileAjax, /current_user_can\( 'edit_post', \$project_id \)/);
 assert.match(compileAjax, /scene_project_mismatch/);
 assert.match(compileAjax, /\$_POST\['runtimeMode'\]/);
-assert.match(compileAjax, /\$_POST\['vrRuntimeProfile'\]/);
+assert.match(compileAjax, /\$_POST\['buildTarget'\]/);
+assert.doesNotMatch(compileAjax, /\$_POST\['vrRuntimeProfile'\]/);
 assert.doesNotMatch(compileAjax, /\$_GET\[/);
 assert.match(compileAjax, /runtime_contract_invalid/);
 assert.match(compileAjax, /wp_ajax_vrodos_cancel_compile_action/);

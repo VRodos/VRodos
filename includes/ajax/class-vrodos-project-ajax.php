@@ -326,11 +326,12 @@ class VRodos_Project_AJAX {
 				$edit_scene_page_id = $editscenePage[0]->ID;
 
 				$loadMainSceneLink = esc_url( ( get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type'] ) );
+				$publication = get_post_meta( $game_id, '_vrodos_published_inventory', true );
 				$loadMasterClientLink = $runtime_url_resolver->runtime_url_for_file(
 					$game_id,
-					'Master_Client_' . absint( $scene_data['id'] ) . '.html',
+					'index_' . absint( $scene_data['id'] ) . '.html',
 					null,
-					VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED
+					(string) ( $publication['runtimeMode'] ?? 'single-player' )
 				);
 
 				$assets_list_page    = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );

@@ -284,8 +284,8 @@ VRODOS.ui = VRODOS.ui || {};
 
     function currentTargetIsDesktop() {
         const target = document.getElementById('compileRuntimeTargetSelect');
-        if (target) return target.value === 'desktop';
-        return scene() && scene().aframeVrRuntimeProfile === 'desktop';
+        if (target) return ['automatic', 'desktop'].includes(target.value);
+        return scene() && ['automatic', 'desktop'].includes(scene().aframeBuildTarget);
     }
 
     function effectiveTierSettings(state, profileId) {

@@ -279,6 +279,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		progressProfiles: 'compileProgressProfiles',
 		progressStage: 'compileProgressStage',
 		resultMeta: 'compileResultMeta',
+		deviceResultLinks: 'compileDeviceResultLinks',
 		settingsSaveButton: 'compileSaveSettingsBtn',
         saveButton: 'save-scene-button',
         statusRow: 'compileStatusRow',
@@ -518,7 +519,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
         releaseBuildActions();
     }
 
-    function showPrimaryExperienceLink(primaryExperienceUrl) {
+    function showPrimaryExperienceLink(primaryExperienceUrl, variants = {}, rolesUrl = '') {
         if (!primaryExperienceUrl) {
             return;
         }
@@ -534,6 +535,23 @@ VRODOS.ui.compileDialogState = (function(existing) {
             setDisplay(openWebLink, '');
         }
         setDisplay(getElement('copyWebLink'), '');
+		const deviceLinks = getElement('deviceResultLinks');
+		if (deviceLinks) {
+			deviceLinks.replaceChildren();
+			const labels = { desktop: 'PC', headset: 'Standalone VR', 'pc-rendered-vr': 'PCVR' };
+			const links = Object.entries(variants).map(([profile, url]) => [labels[profile], url]);
+			if (rolesUrl) links.push(['Actor / Director', rolesUrl]);
+			links.forEach(([label, url]) => {
+				if (!label || !url) return;
+				const link = document.createElement('a');
+				link.href = url;
+				link.target = '_blank';
+				link.rel = 'noopener';
+				link.className = 'tw-btn tw-btn-xs tw-btn-outline tw-text-emerald-700';
+				link.textContent = label;
+				deviceLinks.appendChild(link);
+			});
+		}
         VRODOS.ui.refreshLucideIcons();
     }
 

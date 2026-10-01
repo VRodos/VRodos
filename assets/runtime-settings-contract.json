@@ -1,6 +1,14 @@
 {
   "schemaVersion": 2,
   "sceneSettings": {
+    "buildTarget": {
+      "metadataKey": "aframeBuildTarget",
+      "type": "enum",
+      "default": "automatic",
+      "allowed": ["automatic", "desktop", "headset", "pc-rendered-vr"],
+      "wireKey": "buildTarget",
+      "wireEnabled": false
+    },
     "runtimeMode": {
       "metadataKey": "aframeRuntimeMode",
       "type": "enum",

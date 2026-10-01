@@ -85,6 +85,7 @@
 							Launch
 						</a>
 					</div>
+					<div id="compileDeviceResultLinks" class="tw-w-full tw-flex tw-flex-wrap tw-items-center tw-gap-2 tw-text-xs" aria-label="Direct device and collaboration links"></div>
 				</div>
 			</div>
 
@@ -100,8 +101,9 @@
 					<label class="tw-form-control">
 						<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-slate-600">Runtime target</span>
 						<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1 tw-bg-white">
+							<option value="automatic">Automatic — PC, standalone VR and PCVR</option>
 							<option value="desktop">Desktop</option>
-							<option value="vr-headset">VR Headset Full</option>
+							<option value="headset">VR Headset Full</option>
 							<option value="pc-rendered-vr">VR Headset - PC Rendered</option>
 						</select>
 						<p id="compileRuntimeTargetHint" class="tw-text-xs tw-leading-relaxed tw-text-slate-500 tw-mt-1"></p>

@@ -96,7 +96,7 @@ windowObject.VRodosCompileUI = { Shared: {} };
 context.VRodosCompileUI = windowObject.VRodosCompileUI;
 vm.runInContext(generalSource, context);
 const qualityControls = {
-    runtimeTarget: { value: 'vr-headset' },
+    runtimeTarget: { value: 'headset' },
     vrHeadsetPolicyPanel: { style: {} },
     vrHeadsetAssetQuality: { value: 'high' },
     renderQuality: { value: 'standard' },
@@ -110,11 +110,11 @@ for (const control of Object.values(qualityControls)) {
     control.dataset = {};
     control.setAttribute = () => {};
 }
-for (const target of ['vr-headset', 'desktop', 'pc-rendered-vr', 'vr-headset']) {
+for (const target of ['headset', 'desktop', 'pc-rendered-vr', 'automatic']) {
     qualityControls.runtimeTarget.value = target;
     windowObject.VRodosCompileUI.General.applyRuntimeTargetUI(qualityControls);
     windowObject.VRodosCompileUI.General.syncToScene(qualityControls);
-    assert.equal(qualityControls.vrHeadsetPolicyPanel.style.display, target === 'vr-headset' ? '' : 'none');
+    assert.equal(qualityControls.vrHeadsetPolicyPanel.style.display, ['headset', 'automatic'].includes(target) ? '' : 'none');
     assert.equal(scene.aframeVrHeadsetAssetQuality, 'high', 'switching targets retains authored quality');
 }
 scene.aframeVrRuntimeProfile = 'desktop';

@@ -90,6 +90,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 			$project_id,
 			$scene_id,
 			array_merge( (array) ( $options['render_options'] ?? [] ), [
+				'buildTarget'    => $scene_json->metadata->aframeBuildTarget ?? 'desktop',
 				'scene_settings' => $scene_settings,
 				'container'      => $authored_world,
 			] )

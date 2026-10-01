@@ -81,6 +81,12 @@ Desktop compiled scenes use schema v2 of `assets/desktop-performance-profiles.js
 
 Compiler architecture and compatibility boundaries are documented in `documentation/compiler-architecture.md`. Compile requests are authenticated POST actions. Generated HTML must never contain MediaVerse node tokens; virtual-production recording upload goes through the authenticated WordPress proxy actions.
 
+Hosted builds default to `buildTarget=automatic`, persisted as `aframeBuildTarget`. Automatic normalizes each source scene once, clones desktop/headset/PC-rendered-VR variants, and resolves extension runtime context once with desktop settings for reuse across all variants and adaptive tiers. Keep emitted `scene-settings.vrRuntimeProfile` concrete. Apply the fixed Full headset renderer baseline only to its clone; Automatic exposes desktop Custom/Adaptive plus headset object quality and keeps shared artistic controls editable.
+
+Automatic publishes `Master_Client_{scene_id}.html`, `Master_Client_{scene_id}_headset.html`, `Master_Client_{scene_id}_pc-rendered-vr.html` and `index_{scene_id}.html` for every scene in one project transaction. Individual builds keep one unsuffixed Master plus an index selecting that sole client. Derivative preflight deduplicates the union by asset/recipe/cap/geometry policy; publish shared content-addressed media once. Inventory schema 2 records build target, scene entrypoints and concrete variants. Launch/hub/Open/Copy links use the index; Master response fields remain direct clients. ZIPs export only the unsuffixed PC client for Automatic.
+
+The lightweight index redirects before A-Frame/runtime/assets load: valid `vrodos_target` override, then Quest Browser identity (including desktop browsing mode) to standalone VR, then desktop immersive-vr capability to PCVR, otherwise PC. WebXR rejection/unavailability/three-second timeout selects PC and ignores late results. Never classify standalone rendering from screen size or WebXR alone. Other headset browsers use manual overrides. Preserve query/hash through entry routing and query parameters through doors, which link to the same destination variant. Enter VR retains user activation. Networked non-VRExpo role selection lives at `roles_{scene_id}.html`: Director opens the index, Actor the Simple client. Existing publications must be recompiled; do not add legacy routing.
+
 VR spatial UI current state:
 
 - `documentation/vrodos-compiled-scene-framework-integration.md` section 4.1 is the current handoff reference for immersive CEFR, assessment, and video interaction UI.

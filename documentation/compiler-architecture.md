@@ -2,7 +2,7 @@
 
 ## Scope
 
-The compiler remains a transactional WordPress/A-Frame pipeline. Target-specific Web derivatives may be prepared asynchronously before rendering, but no client or stable link changes until every required artifact is ready. The compiler preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
+The compiler remains a transactional WordPress/A-Frame pipeline. Target-specific Web derivatives may be prepared asynchronously before rendering, but no client or stable link changes until every required artifact is ready. Automatic builds publish PC, standalone VR and PCVR clients together, with one device-selecting index per scene. Individual builds publish one client and an index that selects it directly. Concrete `scene-settings`, compatibility globals, decoder configuration and lazy runtime chunks remain shared. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
 
 New compiler work should use this flow:
 
@@ -28,12 +28,13 @@ flowchart LR
 - project ID and selected scene ID
 - ordered scene IDs
 - `runtimeMode`
-- `vrRuntimeProfile`
+- `buildTarget`: `automatic` (default), `desktop`, `headset`, or `pc-rendered-vr`
+- `vrHeadsetAssetQuality`: `low` (default), `medium`, or `high`
 - `showPawnPositions`
 
-The runtime mode and VR profile apply to every scene in one project build. Render quality, atmosphere, post-processing, background, hover behavior, and other artistic choices remain scene-specific. Scene ordering must not change project target policy.
+The runtime mode and build target apply to every scene in one project build. The editor persists the selected target as `aframeBuildTarget`. Compile callers post `buildTarget`; `vrRuntimeProfile` is only a concrete emitted runtime setting. Render quality, atmosphere, post-processing, background, hover behavior, and other artistic choices remain scene-specific. Scene ordering must not change project target policy.
 
-`VRodos_Compiler_Plan_Resolver` clones source scene JSON, normalizes every entity once, applies project policy to the clone, resolves effective settings, derives capabilities, asks the manifest planner for ordered chunks, and returns immutable scene, target, and project plans. Source post metadata is not mutated.
+`VRodos_Compiler_Plan_Resolver` normalizes each isolated source scene once and clones that normalized scene for each concrete variant. Automatic expands into desktop, headset and PC-rendered VR scene plans. Each variant resolves its own settings, capabilities and ordered chunks. The fixed Full headset baseline applies only to the headset clone; Automatic keeps desktop Custom/Adaptive and shared artistic controls editable, alongside headset object quality. Source post metadata is not mutated.
 
 For the desktop runtime target, scene metadata stores schema v2 `desktopPerformanceProfiles`: `buildMode` (`custom` or `adaptive`), `activeTab`, and the bounded performance overrides plus preset baselines for Low/Medium/High. Ordinary scene metadata remains the canonical Custom/shared source. `assets/desktop-performance-profiles.json` is the shared PHP/browser preset and constraint source. Custom builds plan one Web High capability/chunk set; adaptive builds plan Low, Medium, and High slots using Web Medium assets for Low and Web High assets for Medium/High. Saved defaults follow the current preset; only differences from the saved baseline override it. Headset and PC-rendered-VR use the derivative family but do not consume this desktop settings contract.
 
@@ -51,7 +52,7 @@ An idempotent batched migration moves allowlisted legacy `composite_params`, atm
 
 Capabilities are derived once after effective scene policy is known. `activationCapabilities` in `assets/runtime-build-manifest.json` schema 2 maps capabilities to lazy chunks. The script planner adds baseline chunks, validates activation coverage, resolves dependencies, and preserves manifest order. Invalid paths, missing files, duplicate ordering, dependency cycles, undeclared dependencies, and uncovered capabilities are compile errors.
 
-`VRodos_Compiler_Runtime_Context` resolves the extension filter `vrodos_compiled_runtime_context` once per scene after target settings are applied. The immutable scene plan carries this context through capability selection and page assembly. Enabled `immerseResults` delivery (with URL, project, scene and token), recursive assessment content, or a CEFR-gated placement activates `assessment-runtime`. That chunk depends on `scene-components`, which initializes resource registries and the shared overlay first. Assessment code precedes consuming components; POI-only `spatial-ui` has no assessment dependency. The rule applies to Custom, each Adaptive tier, headset, PC-rendered VR, and networked clients. Standalone export collects the assessment bundle only when selected in the generated HTML. Recompile published clients when deploying this chunk split.
+`VRodos_Compiler_Runtime_Context` resolves the extension filter `vrodos_compiled_runtime_context` once per source scene after target settings are applied, using desktop settings for Automatic. Every variant and adaptive tier reuses that exact context. The immutable scene plan carries this context through capability selection and page assembly. Enabled `immerseResults` delivery (with URL, project, scene and token), recursive assessment content, or a CEFR-gated placement activates `assessment-runtime`. That chunk depends on `scene-components`, which initializes resource registries and the shared overlay first. Assessment code precedes consuming components; POI-only `spatial-ui` has no assessment dependency. The rule applies to Custom, each Adaptive tier, headset, PC-rendered VR, and networked clients. Standalone export collects the assessment bundle only when selected in the generated HTML. Recompile published clients when deploying this chunk split.
 
 When `vrodos_asset3d_glb` becomes active after a normal upload or Immerse import, `VRodos_Asset_Optimization_Manager` publishes the source immediately and queues one immutable `web-high` job. High completion queues `web-medium`, and Medium completion queues `web-low`; every import, status, dashboard, batch, and Build trigger joins the same source-hash-and-recipe job instead of duplicating work. Before target rendering, Build verifies its required derivative: Desktop Custom/Medium/High and PC-rendered-VR need `web-high`, Desktop Low needs `web-medium`, and standalone headset uses its selected asset quality (default `web-low`). Pending work returns HTTP `202 Accepted` with the build phase, overall percentage, ready/total counts, and per-asset/profile optimizer steps; HTTP `409` is reserved for cancellation or a real state conflict. A source over 100 MiB cannot be published when its required derivative failed or is unavailable; smaller sources may fall back with a compile warning, while the prior publication remains intact. All Web profiles require KTX-Software, cap textures at 4096/2048/1024px, use KTX2 textures and safe Draco, and keep source uploads unchanged. Web High gently simplifies dense eligible visuals under the shared geometry error limit. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification in every profile.
 
@@ -100,8 +101,9 @@ All HTML is rendered into `VRodos_Compile_Artifact` values before publication. `
 
 Each `VRodos_Runtime_Target_Plan` declares its template, filename, scene, runtime mode, capabilities, and ordered chunks. Current target policy remains:
 
-- Master for every scene;
-- Simple and Index only for networked, non-VRExpo projects;
+- One Index per scene, for every build target;
+- Three concrete Master variants per scene for Automatic, or one unsuffixed Master for an individual build;
+- Simple and Roles only for networked, non-VRExpo projects;
 - dedicated VRExpo/standard player rigs and explicit networking fragments through `VRodos_Compiler_Target_Renderer`.
 
 `VRodos_Compiler_Target_Assembler` is the single target-assembly path. It consumes the immutable target plan and delegates shared DOM, settings, decoder, entity, and diagnostics work to `VRodos_Compiler_Runtime_Page_Builder`; the compiler manager only sequences targets and publishes the captured artifact set.
@@ -110,7 +112,33 @@ Adaptive Desktop Master output embeds a small schema v2 manifest. Its capability
 
 The link publisher owns URL construction. Network runtime startup happens only after artifact commit; startup failure produces a warning and does not roll back valid HTML.
 
-Public integrations must consume `MasterClient` or `CurrentSceneMasterClient` from the compile result instead of reconstructing the former plugin-local `runtime/build` URL. A same-installation integration that resolves an already-published scene later may use `VRodos_Storage_Manager::published_project_url()` after validating the scene-to-project taxonomy relationship. Theme-owned demo exports are independent snapshots and must be refreshed explicitly when their embedded runtime packages change.
+Public integrations must consume `CurrentSceneIndex` (or the project `index`) from the compile result instead of reconstructing the former plugin-local `runtime/build` URL. A same-installation integration that resolves an already-published scene later may use `VRodos_Storage_Manager::published_project_url()` after validating the scene-to-project taxonomy relationship. Theme-owned demo exports are independent snapshots and must be refreshed explicitly when their embedded runtime packages change.
+
+## Device entries and publication links
+
+| Automatic artifact | Filename |
+| --- | --- |
+| PC | `Master_Client_{scene_id}.html` |
+| Standalone VR | `Master_Client_{scene_id}_headset.html` |
+| PCVR | `Master_Client_{scene_id}_pc-rendered-vr.html` |
+| Shared entry | `index_{scene_id}.html` |
+
+Individual builds keep `Master_Client_{scene_id}.html` and publish an index with their sole concrete variant. The index loads only `assets/js/runtime/vrodos_device_entry.js`; it redirects before A-Frame, runtime bundles, GLBs or textures load. Automatic selection order is:
+
+1. A valid `vrodos_target=desktop|headset|pc-rendered-vr` query override.
+2. Quest Browser identity (`OculusBrowser` or Quest device token), including desktop browsing mode: standalone VR.
+3. A desktop browser reporting `navigator.xr.isSessionSupported('immersive-vr') === true`: PCVR.
+4. Otherwise PC. Missing, throwing, rejected or unresolved probes after three seconds choose PC. Late results cannot redirect again.
+
+Host identity and immersive capability are separate: Quest identity selects where rendering runs; WebXR capability decides whether immersive entry is available. Screen size and WebXR support alone never identify a headset. Other headset browsers use the manual override in this release. Meta's [browser guidance](https://developers.meta.com/vr/documentation/web/browser-specs/) documents Quest identity and desktop browsing mode; capability checks remain runtime feature detection. Redirects preserve query parameters and fragments. Session creation remains behind the existing Enter VR action, following the [WebXR user activation requirement](https://www.w3.org/TR/webxr/#user-activation).
+
+The compile response includes `BuildTarget`, `CurrentSceneIndex` and `CurrentSceneVariants` keyed by concrete runtime profile. Open/Copy Experience uses the index, while `MasterClient` and `CurrentSceneMasterClient` retain direct client URLs. The result shows direct device links and, when applicable, `CurrentSceneRoles`. Inline scene controls offer manual device selection. Scene doors target the destination's same concrete variant and preserve query parameters.
+
+Networking is independent of device selection. `roles_{scene_id}.html` retains Actor/Director selection for networked non-VRExpo projects: Director opens `index_{scene_id}.html`, Actor opens the existing Simple client. VRExpo retains its existing networking/rig policy.
+
+Preflight prepares the union of derivative requirements, deduplicated by asset, recipe, texture cap and geometry policy. Content-addressed media is shared, including identical target-specific surface textures. All clients, indices and companions use one project artifact transaction; failure restores the previous complete set. The publication inventory is saved while client backups are still available, so a failed inventory update also rolls back publication. Stale media is removed only after a successful commit. Publication inventory schema 2 records `buildTarget`, scene `entrypoints` and concrete `variants`, alongside clients/media/previews. Project launch and the Immerse hub consume entrypoints. Existing publications require recompilation; no legacy device-routing shim is installed.
+
+Automatic applies to hosted experiences. ZIP export uses only its unsuffixed PC client and strips hosted variant controls; individual exports keep their selected single client. Do not export the automatic router or the other device clients.
 
 ## Entity rendering
 
@@ -136,7 +164,7 @@ Compiled virtual-production pages contain only the same-origin WordPress AJAX UR
 
 Run `node scripts/run-compiler-runtime-tests.mjs` with PHP 8.3. The runner checks `PHP_BINARY`, `PHP`, and `PATH` in that order; on Windows it also discovers versioned LocalWP and WampServer PHP installations. The suite covers manifest/capability order, cycles and unsafe paths, DOM target transformations, target uniformity across scenes, settings precedence, light aliases, deterministic IDs, source isolation, rig strategies, unknown-category diagnostics, stale artifact cleanup, and artifact rollback.
 
-After compiler/runtime source changes, also run `node --check`, PHP syntax checks, `npm run lint`, the direct runtime build fallback when necessary, and `git diff --check`. Recompile representative single-player, networked, desktop, and headset scenes before deployment.
+After compiler/runtime source changes, also run `node --check`, PHP syntax checks, `npm run lint`, the direct runtime build fallback when necessary, and `git diff --check`. Recompile representative single-player, networked and Immerse projects before deployment. Verify Custom/Adaptive PC settings, headset object quality, lazy chunks, variant-preserving doors, hub entries and Actor/Director links. Quest routing fixtures cover desktop mode, overrides and WebXR failures/timeouts; verify native rendering on a Quest headset separately. PCVR renderer policy is unchanged and requires separate PC/headset hardware validation.
 
 ## Deferred boundaries
 

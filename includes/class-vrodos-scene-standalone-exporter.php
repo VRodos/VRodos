@@ -250,6 +250,8 @@ final class VRodos_Scene_Standalone_Exporter {
 	}
 
 	private function rewrite_html( string $html ): string {
+		// Hosted device clients are deliberately excluded from the single-client ZIP.
+		$html = preg_replace( '/\sdata-vrodos-device-variants=(["\']).*?\1/s', '', $html );
 		$plugin_url      = VRodos_Path_Manager::plugin_url();
 		$plugin_url_path = (string) wp_parse_url( $plugin_url, PHP_URL_PATH );
 		$upload_dir      = wp_upload_dir();

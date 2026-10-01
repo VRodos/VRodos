@@ -21,12 +21,12 @@ final class VRodos_Compiler_Artifact_Transaction {
 	}
 
 	/** @param VRodos_Compile_Artifact[] $artifacts */
-	public function commit( int $project_id, array $artifacts ): void {
+	public function commit( int $project_id, array $artifacts, ?callable $publish_inventory = null ): void {
 		if ( empty( $artifacts ) ) {
 			throw new RuntimeException( '[VRodos] Compiler produced no artifacts.' );
 		}
 		if ( null === $this->build_dir ) {
-			$this->commit_project_publication( $project_id, $artifacts );
+			$this->commit_project_publication( $project_id, $artifacts, $publish_inventory );
 			return;
 		}
 		if ( ! is_dir( $this->build_dir ) && ! wp_mkdir_p( $this->build_dir ) ) {
@@ -50,7 +50,7 @@ final class VRodos_Compiler_Artifact_Transaction {
 		}
 
 		try {
-			$this->commit_locked( $project_id, $artifacts );
+			$this->commit_locked( $project_id, $artifacts, $publish_inventory );
 		} finally {
 			flock( $lock, LOCK_UN );
 			fclose( $lock );
@@ -58,7 +58,7 @@ final class VRodos_Compiler_Artifact_Transaction {
 	}
 
 	/** @param VRodos_Compile_Artifact[] $artifacts */
-	private function commit_project_publication( int $project_id, array $artifacts ): void {
+	private function commit_project_publication( int $project_id, array $artifacts, ?callable $publish_inventory ): void {
 		$build_dir = VRodos_Storage_Manager::published_project_directory( $project_id, 'clients' );
 		$lock_dir  = VRodos_Storage_Manager::temporary_directory( 'compiler-locks', 'shared' );
 		$stage_dir = VRodos_Storage_Manager::temporary_directory( 'compile', wp_generate_uuid4() );
@@ -119,6 +119,9 @@ final class VRodos_Compiler_Artifact_Transaction {
 				}
 				$committed[] = $final;
 			}
+			if ( $publish_inventory ) {
+				$publish_inventory();
+			}
 			foreach ( $backups as $backup ) {
 				wp_delete_file( $backup );
 			}
@@ -145,7 +148,7 @@ final class VRodos_Compiler_Artifact_Transaction {
 	}
 
 	/** @param VRodos_Compile_Artifact[] $artifacts */
-	private function commit_locked( int $project_id, array $artifacts ): void {
+	private function commit_locked( int $project_id, array $artifacts, ?callable $publish_inventory ): void {
 		$token       = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : bin2hex( random_bytes( 16 ) );
 		$staging_dir = $this->build_dir . DIRECTORY_SEPARATOR . '.staging-project-' . max( 0, $project_id ) . '-' . preg_replace( '/[^a-zA-Z0-9-]/', '', $token );
 		if ( ! wp_mkdir_p( $staging_dir ) ) {
@@ -248,6 +251,9 @@ final class VRodos_Compiler_Artifact_Transaction {
 				throw new RuntimeException( '[VRodos] Compiler could not publish the artifact inventory.' );
 			}
 			$committed[] = $inventory_path;
+			if ( $publish_inventory ) {
+				$publish_inventory();
+			}
 		} catch ( Throwable $error ) {
 			foreach ( array_reverse( $committed ) as $final_path ) {
 				if ( is_file( $final_path ) ) {

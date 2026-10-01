@@ -58,16 +58,16 @@ final class VRodos_Immerse_Hub {
 				continue;
 			}
 			$mode = (string) ( $inventory['runtimeMode'] ?? '' );
-			$profile = (string) ( $inventory['vrRuntimeProfile'] ?? '' );
-			if ( ! in_array( $mode, [ 'single-player', 'networked' ], true ) || ! in_array( $profile, [ 'desktop', 'headset', 'pc-rendered-vr' ], true ) ) {
+			$profile = (string) ( $inventory['buildTarget'] ?? '' );
+			if ( ! in_array( $mode, [ 'single-player', 'networked' ], true ) || ! in_array( $profile, [ 'automatic', 'desktop', 'headset', 'pc-rendered-vr' ], true ) ) {
 				continue;
 			}
 			// Every client in this inventory is published together by the project build.
 			$published_at = (string) ( $inventory['publishedAt'] ?? '' );
 			$built_at = '' !== $published_at ? (int) strtotime( $published_at . ' UTC' ) : 0;
 			$scenes = [];
-			foreach ( $inventory['clients'] as $filename ) {
-				if ( ! is_string( $filename ) || ! preg_match( '/^Master_Client_([1-9][0-9]*)\.html$/', $filename, $matches ) ) {
+			foreach ( (array) ( $inventory['entrypoints'] ?? [] ) as $filename ) {
+				if ( ! is_string( $filename ) || ! preg_match( '/^index_([1-9][0-9]*)\.html$/', $filename, $matches ) ) {
 					continue;
 				}
 				$scene_id = absint( $matches[1] );
@@ -124,7 +124,7 @@ final class VRodos_Immerse_Hub {
 			if ( ! $repository->scene_belongs_to_project( $scene_id, (string) $project->post_name ) ) {
 				continue;
 			}
-			$filename = 'Master_Client_' . $scene_id . '.html';
+			$filename = 'index_' . $scene_id . '.html';
 			$lock_dir = VRodos_Storage_Manager::temporary_directory( 'compiler-locks', 'shared' );
 			if ( is_wp_error( $lock_dir ) ) {
 				return $lock_dir;
@@ -174,6 +174,9 @@ final class VRodos_Immerse_Hub {
 			$project_id = absint( $project->ID );
 			$inventory = get_post_meta( $project_id, self::INVENTORY_META, true );
 			if ( ! is_array( $inventory ) || absint( $inventory['projectId'] ?? 0 ) !== $project_id || ! is_array( $inventory['clients'] ?? null ) ) {
+				continue;
+			}
+			if ( 2 === (int) ( $inventory['schemaVersion'] ?? 0 ) ) {
 				continue;
 			}
 			$master_clients = [];

@@ -454,11 +454,11 @@ class VRodos_Scene_AJAX {
 		if ( ! in_array( $runtime_mode, [ 'networked', 'single-player' ], true ) ) {
 			wp_send_json_error( [ 'code' => 'invalid_runtime_mode', 'message' => 'Invalid compile runtime mode.' ], 400 );
 		}
-		$vr_runtime_profile = sanitize_text_field( wp_unslash( $_POST['vrRuntimeProfile'] ?? '' ) );
-		$profile_setting    = VRodos_Runtime_Settings_Contract::setting( 'vrRuntimeProfile' );
+		$build_target = sanitize_text_field( wp_unslash( $_POST['buildTarget'] ?? '' ) );
+		$profile_setting    = VRodos_Runtime_Settings_Contract::setting( 'buildTarget' );
 		$allowed_profiles   = is_array( $profile_setting['allowed'] ?? null ) ? $profile_setting['allowed'] : [];
-		if ( ! in_array( $vr_runtime_profile, $allowed_profiles, true ) ) {
-			wp_send_json_error( [ 'code' => 'invalid_vr_runtime_profile', 'message' => 'Invalid compile VR target.' ], 400 );
+		if ( ! in_array( $build_target, $allowed_profiles, true ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_build_target', 'message' => 'Invalid compile build target.' ], 400 );
 		}
 
 		$headset_quality = wp_unslash( $_POST['vrHeadsetAssetQuality'] ?? 'low' );
@@ -472,7 +472,7 @@ class VRodos_Scene_AJAX {
 			$scene_id,
 			$scene_ids,
 			$runtime_mode,
-			$vr_runtime_profile,
+			$build_target,
 			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false ),
 			VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) ),
 			$headset_quality

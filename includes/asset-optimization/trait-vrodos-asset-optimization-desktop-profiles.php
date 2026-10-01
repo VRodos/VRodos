@@ -19,18 +19,29 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$assets = [];
 		$scene_assets = [];
 		$scene_slots = [];
+		$slot_profiles = [];
+		$slot_definitions = [];
 		foreach ( $plan->scenes as $scene ) {
 			$current_scene_assets = [];
 			self::collect_desktop_profile_assets( $scene->scene_json, $current_scene_assets );
 			$scene_assets[ $scene->scene_id ] = $current_scene_assets;
-			if ( 'desktop' === $plan->request->vr_runtime_profile ) {
+			$runtime_profile = $scene->settings['vrRuntimeProfile'];
+			if ( 'desktop' === $runtime_profile ) {
 				$current_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
 			} else {
-				$current_slots = [ $plan->request->vr_runtime_profile ];
+				$current_slots = [ $runtime_profile ];
 			}
-			$scene_slots[ $scene->scene_id ] = $current_slots;
+			if ( 'desktop' === $runtime_profile ) {
+				$scene_slots[ $scene->scene_id ] = $current_slots;
+			}
+			foreach ( $current_slots as $slot ) {
+				$slot_profiles[ $slot ] = self::runtime_derivative_profile_for_slot( $slot, $runtime_profile, $scene->desktop_profiles, $plan->request->vr_headset_asset_quality );
+				$slot_definitions[ $slot ] = 'desktop' === $runtime_profile
+					? self::runtime_derivative_definition_for_slot( $slot, $scene->desktop_profiles )
+					: [ 'textureMaxSize' => self::runtime_derivative_texture_cap( $slot_profiles[ $slot ] ) ];
+			}
 			foreach ( $current_scene_assets as $asset_id => $asset ) {
 				$assets[ $asset_id ] = [
 					'protections' => array_values( array_unique( array_merge( $asset['protections'], $assets[ $asset_id ]['protections'] ?? [] ), SORT_REGULAR ) ),
@@ -39,6 +50,19 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				];
 			}
 		}
+		// Share requirements across slots consuming the same derivative recipe and cap.
+		foreach ( $assets as &$asset ) {
+			$requirements = [];
+			$aliases = [];
+			foreach ( $asset['slots'] as $slot ) {
+				$key = $slot_profiles[ $slot ] . ':' . $slot_definitions[ $slot ]['textureMaxSize'];
+				$representative = $requirements[ $key ] ??= $slot;
+				$aliases[ $representative ][] = $slot;
+			}
+			$asset['slots'] = array_values( $requirements );
+			$asset['aliases'] = $aliases;
+		}
+		unset( $asset );
 		ksort( $assets, SORT_NUMERIC );
 		$total = array_sum( array_map( static fn( array $asset ): int => count( $asset['slots'] ) * count( $asset['protections'] ), $assets ) );
 		$ready = 0;
@@ -53,7 +77,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			if ( is_wp_error( $source ) ) {
 				$errors[] = sprintf( 'Asset #%d: %s', $asset_id, $source->get_error_message() );
 				foreach ( (array) $asset['slots'] as $slot ) {
-					$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [], $plan->request->vr_headset_asset_quality );
+					$profile = $slot_profiles[ $slot ];
 					$profile_progress[] = self::desktop_profile_progress_item(
 						(int) $asset_id,
 						(string) $slot,
@@ -84,10 +108,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
 					continue;
 				}
-				$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [], $plan->request->vr_headset_asset_quality );
-				$definition = 'desktop' === $plan->request->vr_runtime_profile
-					? self::runtime_derivative_definition_for_slot( (string) $slot, $plan->scenes[0]->desktop_profiles ?? [] )
-					: [ 'textureMaxSize' => self::runtime_derivative_texture_cap( $profile ) ];
+				$profile = $slot_profiles[ $slot ];
+				$definition = $slot_definitions[ $slot ];
 				$texture_max_size = absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) );
 				$is_standard_profile = $texture_max_size === self::runtime_derivative_texture_cap( $profile );
 				$options = [
@@ -105,7 +127,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				if ( self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
 					self::activate_desktop_profile_variant( (int) $asset_id, $profile, (string) $record['jobKey'] );
 					++$ready;
-					$records[ $slot ][ $asset_id ] = $record;
+					foreach ( $asset['aliases'][ $slot ] as $alias ) {
+						$records[ $alias ][ $asset_id ] = $record;
+					}
 					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'ready', 'Ready' );
 					continue;
 				}
@@ -208,7 +232,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			];
 		}
 
-		$memory_gate = 'desktop' === $plan->request->vr_runtime_profile
+		$memory_gate = $scene_slots
 			? self::apply_desktop_texture_memory_gates( $plan, $assets, $scene_assets, $scene_slots, $records )
 			: [ 'status' => 'ready', 'message' => '' ];
 		if ( 'ready' !== $memory_gate['status'] ) {
@@ -1005,6 +1029,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	protected static function apply_desktop_texture_memory_gates( VRodos_Project_Compile_Plan $plan, array $assets, array $scene_assets, array $scene_slots, array $records ): array {
 		foreach ( $plan->scenes as $scene ) {
+			if ( 'desktop' !== $scene->settings['vrRuntimeProfile'] ) {
+				continue;
+			}
 			foreach ( [ 'low', 'medium' ] as $slot ) {
 				if ( ! in_array( $slot, $scene_slots[ $scene->scene_id ] ?? [], true ) ) {
 					continue;

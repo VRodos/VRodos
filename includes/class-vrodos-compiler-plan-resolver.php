@@ -42,92 +42,97 @@ final class VRodos_Compiler_Plan_Resolver {
 
 			$normalized_scene = $this->clone_scene( $source );
 			$this->normalize_entities( $normalized_scene, (int) $scene_id );
-			$metadata         = is_object( $normalized_scene->metadata ?? null ) ? $normalized_scene->metadata : new stdClass();
-			$normalized_scene->metadata = $metadata;
+			$runtime_context = null;
+			foreach ( $request->runtime_profiles() as $runtime_profile ) {
+				$variant_scene = $this->clone_scene( $normalized_scene );
+				$metadata         = is_object( $variant_scene->metadata ?? null ) ? $variant_scene->metadata : new stdClass();
+				$variant_scene->metadata = $metadata;
+				$metadata->aframeBuildTarget = $request->build_target;
 
-			// These two fields are build-target policy, not per-scene artistic settings.
-			$metadata->aframeRuntimeMode = $request->runtime_mode;
-			$profile_key                  = VRodos_Runtime_Settings_Contract::metadata_key( 'vrRuntimeProfile' );
-			$metadata->{$profile_key}     = $request->vr_runtime_profile;
-			$quality_key = VRodos_Runtime_Settings_Contract::metadata_key( 'vrHeadsetAssetQuality' );
-			$metadata->{$quality_key} = $request->vr_headset_asset_quality;
+				// These two fields are build-target policy, not per-scene artistic settings.
+				$metadata->aframeRuntimeMode = $request->runtime_mode;
+				$profile_key                  = VRodos_Runtime_Settings_Contract::metadata_key( 'vrRuntimeProfile' );
+				$metadata->{$profile_key}     = $runtime_profile;
+				$quality_key = VRodos_Runtime_Settings_Contract::metadata_key( 'vrHeadsetAssetQuality' );
+				$metadata->{$quality_key} = $request->vr_headset_asset_quality;
 
-			// Full headset rendering is a build policy, never a saved UI override.
-			$headset_baseline = 'headset' === $request->vr_runtime_profile ? [
-				'postFXEngine' => 'pmndrs',
-				'postFXEnabled' => '1',
-				'vrHeadsetStereoPostFxEnabled' => '1',
-				'renderQuality' => 'high',
-				'pmndrsAAMode' => 'none',
-				'pmndrsToneMappingMode' => 'aces-filmic',
-				'pmndrsAtmosphereEnabled' => 'true',
-				'pmndrsAtmosphereQuality' => 'quality',
-				'vrFramebufferScale' => '1',
-				'vrFoveationStrength' => '0.5',
-			] : [];
-			foreach ( $headset_baseline as $key => $value ) {
-				$metadata_key = VRodos_Runtime_Settings_Contract::metadata_key( $key );
-				$metadata->{$metadata_key} = $value;
-			}
-
-			$diagnostics = [];
-			$settings    = $this->scene_settings->build_settings(
-				$metadata,
-				$normalized_scene,
-				$request->project_id,
-				$diagnostics
-			);
-			$settings['runtimeMode']     = $request->runtime_mode;
-			$settings['vrRuntimeProfile'] = $request->vr_runtime_profile;
-			$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
-			// Legacy composite metadata must not override the target policy either.
-			$settings = array_replace( $settings, $headset_baseline );
-			$runtime_context = VRodos_Compiler_Runtime_Context::resolve(
-				$request->project_id, (int) $scene_id, (string) ( $scene_title[ $index ] ?? '' ), $normalized_scene, $settings
-			);
-
-			$desktop_profiles = [];
-			if ( 'desktop' === $request->vr_runtime_profile ) {
-				$desktop_profiles = VRodos_Desktop_Performance_Profiles::resolve( $metadata, $settings );
-				$profile_errors = VRodos_Desktop_Performance_Profiles::validate_monotonic( $desktop_profiles );
-				if ( $profile_errors ) {
-					throw new RuntimeException( implode( ' ', $profile_errors ), 409 );
+				// Full headset rendering is a build policy, never a saved UI override.
+				$headset_baseline = 'headset' === $runtime_profile ? [
+					'postFXEngine' => 'pmndrs',
+					'postFXEnabled' => '1',
+					'vrHeadsetStereoPostFxEnabled' => '1',
+					'renderQuality' => 'high',
+					'pmndrsAAMode' => 'none',
+					'pmndrsToneMappingMode' => 'aces-filmic',
+					'pmndrsAtmosphereEnabled' => 'true',
+					'pmndrsAtmosphereQuality' => 'quality',
+					'vrFramebufferScale' => '1',
+					'vrFoveationStrength' => '0.5',
+				] : [];
+				foreach ( $headset_baseline as $key => $value ) {
+					$metadata_key = VRodos_Runtime_Settings_Contract::metadata_key( $key );
+					$metadata->{$metadata_key} = $value;
 				}
-				$capabilities = [];
-				$chunk_ids = [];
-				$compiled_profile_ids = 'adaptive' === (string) ( $desktop_profiles['buildMode'] ?? 'custom' )
-					? [ 'low', 'medium', 'high' ]
-					: [ 'custom' ];
-				foreach ( $compiled_profile_ids as $profile_id ) {
-					$desktop_profile = &$desktop_profiles['profiles'][ $profile_id ];
-					$profile_capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $desktop_profile['settings'], $runtime_context );
-					$profile_chunk_ids = $this->script_planner->script_ids_for_capabilities( $profile_capabilities );
-					$desktop_profile['capabilities'] = $profile_capabilities;
-					$desktop_profile['chunkIds'] = $profile_chunk_ids;
-					$capabilities = array_merge( $capabilities, $profile_capabilities );
-					$chunk_ids = array_merge( $chunk_ids, $profile_chunk_ids );
-				}
-				unset( $desktop_profile );
-				$capabilities = array_values( array_unique( $capabilities ) );
-				$chunk_ids = array_values( array_unique( $chunk_ids ) );
-			} else {
-				$capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $settings, $runtime_context );
-				$chunk_ids    = $this->script_planner->script_ids_for_capabilities( $capabilities );
-			}
-			$hover        = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeHoveringInteractables ?? true, true );
 
-			$scene_plans[] = new VRodos_Scene_Compile_Plan(
-				(int) $scene_id,
-				(string) ( $scene_title[ $index ] ?? '' ),
-				$normalized_scene,
-				$settings,
-				$capabilities,
-				$chunk_ids,
-				$diagnostics,
-				$hover,
-				$desktop_profiles,
-				$runtime_context
-			);
+				$diagnostics = [];
+				$settings    = $this->scene_settings->build_settings(
+					$metadata,
+					$variant_scene,
+					$request->project_id,
+					$diagnostics
+				);
+				$settings['runtimeMode']     = $request->runtime_mode;
+				$settings['vrRuntimeProfile'] = $runtime_profile;
+				$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
+				// Legacy composite metadata must not override the target policy either.
+				$settings = array_replace( $settings, $headset_baseline );
+				$runtime_context ??= VRodos_Compiler_Runtime_Context::resolve(
+					$request->project_id, (int) $scene_id, (string) ( $scene_title[ $index ] ?? '' ), $variant_scene, $settings
+				);
+
+				$desktop_profiles = [];
+				if ( 'desktop' === $runtime_profile ) {
+					$desktop_profiles = VRodos_Desktop_Performance_Profiles::resolve( $metadata, $settings );
+					$profile_errors = VRodos_Desktop_Performance_Profiles::validate_monotonic( $desktop_profiles );
+					if ( $profile_errors ) {
+						throw new RuntimeException( implode( ' ', $profile_errors ), 409 );
+					}
+					$capabilities = [];
+					$chunk_ids = [];
+					$compiled_profile_ids = 'adaptive' === (string) ( $desktop_profiles['buildMode'] ?? 'custom' )
+						? [ 'low', 'medium', 'high' ]
+						: [ 'custom' ];
+					foreach ( $compiled_profile_ids as $profile_id ) {
+						$desktop_profile = &$desktop_profiles['profiles'][ $profile_id ];
+						$profile_capabilities = $this->script_planner->capabilities_for_resolved_scene( $variant_scene, $desktop_profile['settings'], $runtime_context );
+						$profile_chunk_ids = $this->script_planner->script_ids_for_capabilities( $profile_capabilities );
+						$desktop_profile['capabilities'] = $profile_capabilities;
+						$desktop_profile['chunkIds'] = $profile_chunk_ids;
+						$capabilities = array_merge( $capabilities, $profile_capabilities );
+						$chunk_ids = array_merge( $chunk_ids, $profile_chunk_ids );
+					}
+					unset( $desktop_profile );
+					$capabilities = array_values( array_unique( $capabilities ) );
+					$chunk_ids = array_values( array_unique( $chunk_ids ) );
+				} else {
+					$capabilities = $this->script_planner->capabilities_for_resolved_scene( $variant_scene, $settings, $runtime_context );
+					$chunk_ids    = $this->script_planner->script_ids_for_capabilities( $capabilities );
+				}
+				$hover        = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeHoveringInteractables ?? true, true );
+
+				$scene_plans[] = new VRodos_Scene_Compile_Plan(
+					(int) $scene_id,
+					(string) ( $scene_title[ $index ] ?? '' ),
+					$variant_scene,
+					$settings,
+					$capabilities,
+					$chunk_ids,
+					$diagnostics,
+					$hover,
+					$desktop_profiles,
+					$runtime_context
+				);
+			}
 		}
 
 		$project_type_slug = (string) ( $context['project_type_slug'] ?? '' );
@@ -165,38 +170,30 @@ final class VRodos_Compiler_Plan_Resolver {
 		$networked        = VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED === $request->runtime_mode;
 		$include_companions = $networked && 'vrexpo_games' !== $project_type_slug;
 
+		$entries = [];
 		foreach ( $scene_plans as $scene_plan ) {
-			if ( $include_companions ) {
+			$scene_id = $scene_plan->scene_id;
+			$primary = ! isset( $entries[ $scene_id ] );
+			if ( $primary ) {
+				$entries[ $scene_id ] = true;
 				$targets[] = new VRodos_Runtime_Target_Plan(
-					VRodos_Runtime_Target_Plan::INDEX,
-					'index_prototype.html',
-					'index_' . $scene_plan->scene_id . '.html',
-					$scene_plan,
-					$request->runtime_mode,
-					[ 'index-ui' ],
-					[]
+					VRodos_Runtime_Target_Plan::INDEX, 'device_index_prototype.html', 'index_' . $scene_id . '.html',
+					$scene_plan, $request->runtime_mode, [], []
 				);
 			}
-
 			$targets[] = new VRodos_Runtime_Target_Plan(
-				VRodos_Runtime_Target_Plan::MASTER,
-				'Master_Client_prototype.html',
-				'Master_Client_' . $scene_plan->scene_id . '.html',
-				$scene_plan,
-				$request->runtime_mode,
-				$scene_plan->capabilities,
-				$scene_plan->chunk_ids
+				VRodos_Runtime_Target_Plan::MASTER, 'Master_Client_prototype.html',
+				VRodos_Runtime_Target_Plan::master_filename( $scene_id, $scene_plan->settings['vrRuntimeProfile'], 'automatic' === $request->build_target ),
+				$scene_plan, $request->runtime_mode, $scene_plan->capabilities, $scene_plan->chunk_ids
 			);
-
-			if ( $include_companions ) {
+			if ( $primary && $include_companions ) {
 				$targets[] = new VRodos_Runtime_Target_Plan(
-					VRodos_Runtime_Target_Plan::SIMPLE,
-					'Simple_Client_prototype.html',
-					'Simple_Client_' . $scene_plan->scene_id . '.html',
-					$scene_plan,
-					$request->runtime_mode,
-					[],
-					[ 'scene-components' ]
+					VRodos_Runtime_Target_Plan::ROLES, 'index_prototype.html', 'roles_' . $scene_id . '.html',
+					$scene_plan, $request->runtime_mode, [ 'index-ui' ], []
+				);
+				$targets[] = new VRodos_Runtime_Target_Plan(
+					VRodos_Runtime_Target_Plan::SIMPLE, 'Simple_Client_prototype.html', 'Simple_Client_' . $scene_id . '.html',
+					$scene_plan, $request->runtime_mode, [], [ 'scene-components' ]
 				);
 			}
 		}

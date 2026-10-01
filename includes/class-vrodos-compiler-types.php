@@ -15,17 +15,20 @@ final readonly class VRodos_Compile_Request {
 	/** @var int[] */
 	public array $scene_ids;
 	public string $runtime_mode;
-	public string $vr_runtime_profile;
+	public string $build_target;
 	public bool $show_pawn_positions;
 	public string $build_id;
 	public string $vr_headset_asset_quality;
 
-	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $vr_runtime_profile, bool $show_pawn_positions, string $build_id = '', string $vr_headset_asset_quality = 'low' ) {
+	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $build_target, bool $show_pawn_positions, string $build_id = '', string $vr_headset_asset_quality = 'low' ) {
 		$this->project_id          = max( 0, $project_id );
 		$this->selected_scene_id   = max( 0, $selected_scene_id );
 		$this->scene_ids           = array_values( array_unique( array_filter( array_map( 'intval', $scene_ids ), static fn ( int $scene_id ): bool => $scene_id > 0 ) ) );
 		$this->runtime_mode        = VRodos_Compiler_Runtime_Feature_Flags::normalize_runtime_mode_value( $runtime_mode );
-		$this->vr_runtime_profile  = (string) VRodos_Runtime_Settings_Contract::normalize( 'vrRuntimeProfile', $vr_runtime_profile, 'desktop' );
+		if ( ! in_array( $build_target, VRodos_Runtime_Settings_Contract::setting( 'buildTarget' )['allowed'], true ) ) {
+			throw new InvalidArgumentException( '[VRodos] Invalid build target.' );
+		}
+		$this->build_target = $build_target;
 		$this->show_pawn_positions = $show_pawn_positions;
 		$this->build_id            = VRodos_Compiler_Build_State::normalize_build_id( $build_id );
 		$this->vr_headset_asset_quality = VRodos_Compiler_Asset_Policy::validate_headset_quality( $vr_headset_asset_quality );
@@ -33,6 +36,10 @@ final readonly class VRodos_Compile_Request {
 
 	public function show_pawn_positions_attr(): string {
 		return $this->show_pawn_positions ? 'true' : 'false';
+	}
+
+	public function runtime_profiles(): array {
+		return 'automatic' === $this->build_target ? [ 'desktop', 'headset', 'pc-rendered-vr' ] : [ $this->build_target ];
 	}
 }
 
@@ -86,6 +93,12 @@ final readonly class VRodos_Runtime_Target_Plan {
 	public const MASTER = 'master';
 	public const SIMPLE = 'simple';
 	public const INDEX  = 'index';
+	public const ROLES  = 'roles';
+
+	public static function master_filename( int $scene_id, string $profile, bool $automatic ): string {
+		$suffix = $automatic && 'desktop' !== $profile ? '_' . $profile : '';
+		return 'Master_Client_' . $scene_id . $suffix . '.html';
+	}
 
 	public array $capabilities;
 	public array $chunk_ids;
@@ -99,7 +112,7 @@ final readonly class VRodos_Runtime_Target_Plan {
 		array $capabilities,
 		array $chunk_ids
 	) {
-		if ( ! in_array( $kind, [ self::MASTER, self::SIMPLE, self::INDEX ], true ) ) {
+		if ( ! in_array( $kind, [ self::MASTER, self::SIMPLE, self::INDEX, self::ROLES ], true ) ) {
 			throw new InvalidArgumentException( '[VRodos] Unknown runtime target kind: ' . $kind );
 		}
 		if ( basename( $filename ) !== $filename ) {
@@ -171,15 +184,27 @@ final readonly class VRodos_Project_Compile_Plan {
 
 	/** @return int[] */
 	public function scene_ids(): array {
-		return array_map( static fn ( VRodos_Scene_Compile_Plan $scene ): int => $scene->scene_id, $this->scenes );
+		return array_values( array_unique( array_map( static fn ( VRodos_Scene_Compile_Plan $scene ): int => $scene->scene_id, $this->scenes ) ) );
 	}
 
-	public function target( string $kind, int $scene_id ): ?VRodos_Runtime_Target_Plan {
+	public function target( string $kind, int $scene_id, ?string $profile = null ): ?VRodos_Runtime_Target_Plan {
 		foreach ( $this->targets as $target ) {
-			if ( $target->kind === $kind && $target->scene->scene_id === $scene_id ) {
+			if ( $target->kind === $kind && $target->scene->scene_id === $scene_id && ( null === $profile || $target->scene->settings['vrRuntimeProfile'] === $profile ) ) {
 				return $target;
 			}
 		}
 		return null;
+	}
+
+	public function master_filenames( int $scene_id ): array {
+		$files = [];
+		foreach ( $this->request->runtime_profiles() as $profile ) {
+			$target = $this->target( VRodos_Runtime_Target_Plan::MASTER, $scene_id, $profile );
+			if ( ! $target ) {
+				throw new RuntimeException( '[VRodos] Missing client variant for scene #' . $scene_id );
+			}
+			$files[ $profile ] = $target->filename;
+		}
+		return $files;
 	}
 }

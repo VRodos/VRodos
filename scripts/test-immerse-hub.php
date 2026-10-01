@@ -97,9 +97,16 @@ $backfill = VRodos_Immerse_Hub::backfill_existing();
 check( true === $backfill, 'Existing build backfill failed.' );
 check( 'headset' === $test_inventory[11]['vrRuntimeProfile'] && 'single-player' === $test_inventory[11]['runtimeMode'], 'Backfill did not use the published client build type.' );
 check( is_file( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) . $test_inventory[11]['scenePreviews'][21] ), 'Backfill did not publish the scene preview.' );
+// Simulate a recompile publishing all device clients and one entry per scene.
+$test_inventory[11]['schemaVersion'] = 2;
+$test_inventory[11]['buildTarget'] = 'automatic';
+$test_inventory[11]['entrypoints'] = [ 21 => 'index_21.html', 22 => 'index_22.html', 23 => 'index_23.html' ];
+$test_inventory[11]['clients'][] = 'index_21.html';
+file_put_contents( $clients . 'index_21.html', '<html>automatic scene entry</html>' );
+file_put_contents( $clients . 'index_23.html', '<html>detached scene entry</html>' );
 $groups = VRodos_Immerse_Hub::catalog();
 check( 1 === count( $groups ) && 1 === count( $groups[0]['scenes'] ), 'Catalog included a missing or detached scene.' );
-check( 'https://wp.test/uploads/vrodos/published/projects/11/clients/Master_Client_21.html' === $groups[0]['scenes'][0]['url'], 'Single-player scene used the wrong public URL.' );
+check( 'https://wp.test/uploads/vrodos/published/projects/11/clients/index_21.html' === $groups[0]['scenes'][0]['url'], 'Single-player scene used the wrong public URL.' );
 check( '' !== $groups[0]['scenes'][0]['preview'], 'Published preview is missing from the card.' );
 $original_preview = $groups[0]['scenes'][0]['preview'];
 $original_build_time = $groups[0]['scenes'][0]['builtAt'];
@@ -124,7 +131,7 @@ $groups = VRodos_Immerse_Hub::catalog();
 check( '' === $groups[0]['scenes'][0]['url'], 'Networked scene exposed a local runtime URL without a public base URL.' );
 $test_options['vrodos_general_settings']['vrodos_runtime_public_base_url'] = 'https://runtime.test/';
 $groups = VRodos_Immerse_Hub::catalog();
-check( 'https://runtime.test/vrodos-published/projects/11/clients/Master_Client_21.html' === $groups[0]['scenes'][0]['url'], 'Networked scene did not use the public runtime URL.' );
+check( 'https://runtime.test/vrodos-published/projects/11/clients/index_21.html' === $groups[0]['scenes'][0]['url'], 'Networked scene did not use the public runtime URL.' );
 check( true === ( VRodos_Immerse_Hub::robots( [] )['noindex'] ?? false ), 'Hub page must be noindex.' );
 
 $settings_manager = new VRodos_Settings_Manager();
@@ -157,6 +164,8 @@ check( str_ends_with( $pages_manager->view_project_template( 'theme-page.php' ),
 
 unlink( $clients . 'Master_Client_21.html' );
 unlink( $clients . 'Master_Client_23.html' );
+unlink( $clients . 'index_21.html' );
+unlink( $clients . 'index_23.html' );
 unlink( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) . $test_inventory[11]['scenePreviews'][21] );
 unlink( VRodos_Storage_Manager::published_project_directory( 11, 'media' ) . basename( $original_preview ) );
 unlink( $test_preview );

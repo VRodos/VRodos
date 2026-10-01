@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
+require_once __DIR__ . '/class-vrodos-compiler-types.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-dispatcher.php';
 require_once __DIR__ . '/asset-optimization/class-vrodos-asset-collision-bounds.php';
@@ -37,6 +38,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private bool $suppress_flat_media_shadow_casting = false;
 	private bool $use_flat_media_materials = false;
 	private string $runtime_profile = 'desktop';
+	private bool $automatic_build = false;
 	private bool $adaptive_desktop_sources = false;
 	private string $desktop_profile_slot = 'high';
 	private int $diagnostic_object_count = 0;
@@ -1000,7 +1002,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function includeDoorFunctionality( $a_entity, $door_link ) {
 		// Use a relative path for the baked HTML door link so it works across IPs/localhost without CORS.
-		$a_entity->setAttribute( 'door-listener', "Master_Client_{$door_link}.html" );
+		$a_entity->setAttribute( 'door-listener', VRodos_Runtime_Target_Plan::master_filename( (int) $door_link, $this->runtime_profile, $this->automatic_build ) );
 	}
 
 
@@ -1039,6 +1041,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->suppress_flat_media_shadow_casting = $this->should_suppress_flat_media_shadow_casting( $scene_settings );
 		$this->use_flat_media_materials = $this->should_use_flat_media_materials( $scene_settings );
 		$this->runtime_profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
+		$this->automatic_build = 'automatic' === (string) ( $config['buildTarget'] ?? 'desktop' );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( ! is_object( $obj ) ) {
 				continue;

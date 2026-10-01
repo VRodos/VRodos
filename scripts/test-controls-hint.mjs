@@ -14,25 +14,26 @@ function events(target = {}) {
     });
 }
 function element(tagName = 'DIV') {
-    return events({ tagName, children: [], hidden: false,
+    return events({ tagName, children: [], hidden: false, style: {},
         append(...children) { children.forEach(child => { child.remove(); child.parent = this; this.children.push(child); }); },
         replaceChildren() { this.children.forEach(child => { child.parent = null; }); this.children = []; },
         remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); this.parent = null; },
         setAttribute() {}
     });
 }
-function fixture() {
+function fixture({ variants, hasLoaded = true } = {}) {
     let mode = 'inline', definition, load = Promise.resolve(true), collisions = true;
     const timers = new Map();
     let timerId = 0, vrShows = 0, vrVisible = false, modal = false;
     const settings = { movement_disabled: false, navigationMode: 'walkable' };
     const movement = { getNavigationMode: () => settings.navigationMode, areCollisionsEnabled: () => collisions };
-    const scene = events({ hasLoaded: true, components: {},
-        getAttribute: () => settings,
+    const scene = events({ hasLoaded, components: {},
+        getAttribute: name => name === 'scene-settings' ? settings : name === 'data-vrodos-device-variants' && variants ? JSON.stringify(variants) : null,
         querySelector: selector => selector === '[custom-movement]' ? { components: { 'custom-movement': movement } } : null
     });
     const document = events({ body: element('BODY'), head: element('HEAD'), fullscreenElement: null, createElement: tag => element(tag.toUpperCase()) });
     const window = events({
+        location: { href: 'https://scene.test/clients/Master_Client_101.html?learner=QA#arrival', search: '?learner=QA', hash: '#arrival' },
         setTimeout(callback, duration) { assert.equal(duration, 5000); timers.set(++timerId, callback); return timerId; },
         clearTimeout(id) { timers.delete(id); },
         VRODOSRuntimeOverlay: { getPresentationMode: () => mode, ensureSpatialUiRuntime: () => load, recordDiagnostic() {} },
@@ -41,7 +42,7 @@ function fixture() {
             hideControlsHint() { vrVisible = false; }
         }
     });
-    vm.runInNewContext(source, { AFRAME: { registerComponent(name, value) { assert.equal(name, 'vrodos-controls-hint'); definition = value; } }, window, document });
+    vm.runInNewContext(source, { AFRAME: { registerComponent(name, value) { assert.equal(name, 'vrodos-controls-hint'); definition = value; } }, window, document, URL });
     const component = Object.assign({ el: scene, events: {} }, definition);
     component.init();
     assert.deepEqual(component.events, {}, 'Hint must not override A-Frame lifecycle event handlers');
@@ -55,6 +56,17 @@ function fixture() {
 }
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 const actions = items => Array.from(items, item => item.action);
+
+const automatic = fixture({ hasLoaded: false, variants: { desktop: 'Master_Client_101.html', headset: 'Master_Client_101_headset.html', 'pc-rendered-vr': 'Master_Client_101_pc-rendered-vr.html' } });
+assert.equal(automatic.document.body.children.length, 0, 'Device controls wait for scene readiness');
+automatic.scene.hasLoaded = true;
+automatic.scene.emit('loaded');
+assert.deepEqual(automatic.component.desktop.children.map(link => link.textContent), ['PC', 'Standalone VR', 'PCVR']);
+assert.equal(automatic.component.desktop.children[1].href, 'https://scene.test/clients/Master_Client_101_headset.html?learner=QA&vrodos_target=headset#arrival');
+assert.equal(automatic.timers.size, 0, 'Inline device controls stay available');
+automatic.mode('immersive-xr');
+assert.equal(automatic.component.desktop.hidden, true, 'Device DOM controls stay outside immersive presentation');
+automatic.component.remove();
 
 const desktop = fixture();
 assert.equal(desktop.document.body.children.length, 0, 'Inline scenes must not show hints');

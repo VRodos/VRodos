@@ -382,7 +382,7 @@ VRodosCompileUI.Atmosphere = (function () {
             ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
             : false;
         const desktopProfilesActive = Boolean(
-            controls.runtimeTarget && controls.runtimeTarget.value === 'desktop' &&
+            controls.runtimeTarget && ['automatic', 'desktop'].includes(controls.runtimeTarget.value) &&
             VRODOS.editor.envir && VRODOS.editor.envir.scene &&
             VRODOS.editor.envir.scene.desktopPerformanceProfiles
         );
@@ -480,7 +480,7 @@ VRodosCompileUI.Atmosphere = (function () {
             ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
             : false;
         const desktopProfilesActive = Boolean(
-            controls.runtimeTarget && controls.runtimeTarget.value === 'desktop' &&
+            controls.runtimeTarget && ['automatic', 'desktop'].includes(controls.runtimeTarget.value) &&
             VRODOS.editor.envir && VRODOS.editor.envir.scene &&
             VRODOS.editor.envir.scene.desktopPerformanceProfiles
         );

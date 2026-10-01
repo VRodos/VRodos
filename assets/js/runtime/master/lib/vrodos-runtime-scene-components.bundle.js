@@ -1352,7 +1352,7 @@
     AFRAME.registerComponent("vrodos-controls-hint", {
       init: function() {
         this.hostFullscreen = false;
-        this.mode = "inline";
+        this.mode = null;
         this.generation = 0;
         this.timeout = 0;
         this.removed = false;
@@ -1404,10 +1404,16 @@
         const presentation = window.VRODOSRuntimeOverlay.getPresentationMode();
         const mode = presentation === "immersive-xr" ? presentation : this.hostFullscreen ? "desktop-fullscreen" : presentation;
         const nextMode = ready ? mode : "inline";
-        if (nextMode === this.mode) return;
+        if (nextMode === this.mode) {
+          if (ready && nextMode === "inline" && this.el.getAttribute("data-vrodos-device-variants") && (!this.desktop || this.desktop.hidden)) this.showDesktop([]);
+          return;
+        }
         this.hide();
         this.mode = nextMode;
-        if (nextMode === "inline") return;
+        if (nextMode === "inline") {
+          if (ready && this.el.getAttribute("data-vrodos-device-variants")) this.showDesktop([]);
+          return;
+        }
         const generation = this.generation;
         if (nextMode === "immersive-xr") {
           this.showVr(generation);
@@ -1469,6 +1475,19 @@
           label.textContent = action;
           pill.append(keys, label);
           this.desktop.append(pill);
+        });
+        const variants = JSON.parse(this.el.getAttribute("data-vrodos-device-variants") || "{}");
+        Object.entries(variants).forEach(([profile, filename]) => {
+          const link = document.createElement("a");
+          const url = new URL(filename, window.location.href);
+          url.search = window.location.search;
+          url.searchParams.set("vrodos_target", profile);
+          url.hash = window.location.hash;
+          link.href = url.href;
+          link.textContent = { desktop: "PC", headset: "Standalone VR", "pc-rendered-vr": "PCVR" }[profile];
+          link.className = "vrodos-controls-hint__pill";
+          link.style.pointerEvents = "auto";
+          this.desktop.append(link);
         });
         const fullscreen = document.fullscreenElement;
         const host = fullscreen && !["CANVAS", "IFRAME"].includes(fullscreen.tagName) ? fullscreen : document.body;
@@ -1969,7 +1988,9 @@
     schema: { type: "string", default: "default value" },
     init: function() {
       this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
-      this.el.setAttribute("link", "on: click; href: " + this.data);
+      const destination = new URL(this.data, window.location.href);
+      destination.search = window.location.search;
+      this.el.setAttribute("link", "on: click; href: " + destination.href);
       this.resources.listen(this.el, "click", (evt) => {
         if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== void 0) {
           if (evt.detail.originalEvent.button !== 0) return;

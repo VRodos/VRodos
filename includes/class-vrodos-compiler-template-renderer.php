@@ -35,10 +35,14 @@ class VRodos_Compiler_Template_Renderer {
 
 	public function write_runtime_artifact( string $filename, string $content ) {
 		if ( $this->capture_enabled ) {
-			$scene_id = preg_match( '/_(\d+)\.html$/', $filename, $matches ) ? (int) $matches[1] : 0;
-			$kind     = str_starts_with( $filename, 'Master_Client_' )
-				? 'master'
-				: ( str_starts_with( $filename, 'Simple_Client_' ) ? 'simple' : ( str_starts_with( $filename, 'index_' ) ? 'index' : 'html' ) );
+			$scene_id = preg_match( '/_(\d+)(?:_(?:headset|pc-rendered-vr))?\.html$/', $filename, $matches ) ? (int) $matches[1] : 0;
+			$kind = match ( true ) {
+				str_starts_with( $filename, 'Master_Client_' ) => 'master',
+				str_starts_with( $filename, 'Simple_Client_' ) => 'simple',
+				str_starts_with( $filename, 'index_' ) => 'index',
+				str_starts_with( $filename, 'roles_' ) => 'roles',
+				default => 'html',
+			};
 			$this->captured_artifacts[ $filename ] = new VRodos_Compile_Artifact( $filename, $content, $kind, $scene_id );
 			return strlen( $content );
 		}

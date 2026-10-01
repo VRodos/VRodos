@@ -576,7 +576,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ensureCompileSceneSettingsDefaults();
 
         if (controls.runtimeTarget) {
-            controls.runtimeTarget.value = VRodosCompileUI.General.runtimeTargetFromVrRuntimeProfile(VRODOS.editor.envir.scene.aframeVrRuntimeProfile);
+            controls.runtimeTarget.value = VRodosCompileUI.General.normalizeRuntimeTarget(VRODOS.editor.envir.scene.aframeBuildTarget);
         }
         if (controls.vrHeadsetAssetQuality) {
             controls.vrHeadsetAssetQuality.value = VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality;

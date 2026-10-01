@@ -130,7 +130,7 @@ class VRodos_Compiler_Manager {
 
 			foreach ( $plan->targets as $target_plan ) {
 				$this->target_assembler->render( $target_plan, $plan );
-				if ( VRodos_Runtime_Target_Plan::INDEX !== $target_plan->kind ) {
+				if ( in_array( $target_plan->kind, [ VRodos_Runtime_Target_Plan::MASTER, VRodos_Runtime_Target_Plan::SIMPLE ], true ) ) {
 					$render_warnings = array_merge( $render_warnings, (array) ( $this->target_assembler->last_compile_diagnostics()['warnings'] ?? [] ) );
 				}
 			}
@@ -139,9 +139,13 @@ class VRodos_Compiler_Manager {
 			}
 
 			$artifacts = $this->template_renderer->finish_capture();
-			$this->artifact_transaction->commit( $request->project_id, $artifacts );
+			$this->artifact_transaction->commit(
+				$request->project_id,
+				$artifacts,
+				fn() => $this->resource_publisher->publish_inventory( $artifacts )
+			);
 			$clients_published = true;
-			$this->resource_publisher->finalize( $artifacts );
+			$this->resource_publisher->finalize();
 
 			$warnings = array_merge( $render_warnings, (array) ( $profile_assets['warnings'] ?? [] ), $this->resource_publisher->warnings() );
 			foreach ( $plan->scenes as $scene_plan ) {

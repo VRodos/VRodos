@@ -15,24 +15,14 @@ VRODOS.utils = VRODOS.utils || {};
 	let activeBuild = null;
 
 	function resolvePrimaryExperienceUrl(urls) {
-		return urls.CurrentSceneMasterClient ||
-			urls.LocalCurrentSceneMasterClient ||
-			urls.PublicCurrentSceneMasterClient ||
-			urls.MasterClient ||
-			urls.LocalMasterClient ||
-			urls.PublicMasterClient ||
-			urls.index ||
-			urls.LocalIndex ||
-			urls.PublicIndex ||
-			urls.SimpleClient ||
-			'';
+		return urls.CurrentSceneIndex || '';
 	}
 
 	function captureCompileSettings() {
 		const scene = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene : {};
 		return Object.freeze({
 			runtimeMode: scene.aframeRuntimeMode === 'networked' ? 'networked' : 'single-player',
-			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop',
+			buildTarget: scene.aframeBuildTarget || 'automatic',
 			vrHeadsetAssetQuality: scene.aframeVrHeadsetAssetQuality || 'low'
 		});
 	}
@@ -44,7 +34,7 @@ VRODOS.utils = VRODOS.utils || {};
 			showPawnPositions: build.showPawnPositions,
 			vrodos_scene: build.sceneId,
 			runtimeMode: build.compileSettings.runtimeMode,
-			vrRuntimeProfile: build.compileSettings.vrRuntimeProfile,
+			buildTarget: build.compileSettings.buildTarget,
 			vrHeadsetAssetQuality: build.compileSettings.vrHeadsetAssetQuality,
 			buildId: build.id,
 			nonce: VRODOS.config.compileNonce || VRODOS.data.compile_nonce || (window.vrodos_api_config && window.vrodos_api_config.compileNonce) || ''
@@ -220,7 +210,7 @@ VRODOS.utils = VRODOS.utils || {};
 				activeBuild = null;
 				dialogState.finishBuildState();
 				dialogState.hideBuildProgress();
-				dialogState.showPrimaryExperienceLink(primaryExperienceUrl);
+				dialogState.showPrimaryExperienceLink(primaryExperienceUrl, urls.CurrentSceneVariants, urls.CurrentSceneRoles);
 			})
 			.catch((err) => {
 				if (build.cancelled || (err && err.name === 'AbortError') || !activeBuild || activeBuild.id !== build.id) return;
