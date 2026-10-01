@@ -137,6 +137,7 @@ class VRodos_Editor_Preview_Test_Harness {
 	use VRodos_Asset_Optimization_Editor_Preview;
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
+	private const DESKTOP_PROFILE_PIPELINE_VERSION = 8;
 	private const EDITOR_PREVIEW_PROFILE = 'editor-preview';
 	private const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
 	private const EDITOR_PREVIEW_QUEUE_DELAY_SECONDS = 10;
@@ -278,5 +279,15 @@ vrodos_preview_assert( false === invoke_preview_method( 'editor_preview_protects
 
 $decision = invoke_preview_method( 'editor_preview_decision', [ 10 * 1024 * 1024, [] ] );
 vrodos_preview_assert( true === $decision['shouldPreview'] && in_array( 'source-size', $decision['reasons'], true ), 'the preview size threshold must be 10 MiB' );
+
+$preview_path = tempnam( sys_get_temp_dir(), 'vrodos-preview-version-' );
+try {
+	$ready_preview = [ 'status' => 'ready', 'url' => '/preview.glb', 'path' => $preview_path, 'sourceFingerprint' => $fingerprint, 'profile' => [ 'pipelineVersion' => 7 ] ];
+	vrodos_preview_assert( false === invoke_preview_method( 'editor_preview_record_is_ready', [ $ready_preview, $source ] ), 'old preview recipes must be regenerated after the decimation fix' );
+	$ready_preview['profile'] = invoke_preview_method( 'editor_preview_profile_record' );
+	vrodos_preview_assert( true === invoke_preview_method( 'editor_preview_record_is_ready', [ $ready_preview, $source ] ), 'current preview recipes may be reused for the same source' );
+} finally {
+	unlink( $preview_path );
+}
 
 echo "Editor preview pipeline tests passed.\n";

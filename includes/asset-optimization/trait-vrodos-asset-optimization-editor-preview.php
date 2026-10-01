@@ -503,7 +503,8 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			return false;
 		}
 
-		return (string) ( $record['sourceFingerprint'] ?? '' ) === self::source_fingerprint( $source );
+		return (string) ( $record['sourceFingerprint'] ?? '' ) === self::source_fingerprint( $source )
+			&& (int) ( $record['profile']['pipelineVersion'] ?? 0 ) === self::DESKTOP_PROFILE_PIPELINE_VERSION;
 	}
 
 	protected static function editor_preview_decision( int $source_size_bytes, array $analysis ): array {
@@ -538,6 +539,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	protected static function editor_preview_profile_record(): array {
 		return [
 			'id'              => self::EDITOR_PREVIEW_PROFILE,
+			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 			'maxTriangles'    => 250000,
 			'textureMaxSize'  => 1024,
 			'compression'     => 'none',

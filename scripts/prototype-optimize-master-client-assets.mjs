@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
-import { dedup, draco, meshopt, simplify, textureCompress, weld } from '@gltf-transform/functions';
+import { dedup, draco, meshopt, textureCompress } from '@gltf-transform/functions';
 import { prepareAssetMaterials } from './prepare-asset-materials.mjs';
 import { simplifyAssetGeometry } from './asset-geometry-policy.mjs';
 import { Mode, toktx } from '@gltf-transform/cli';
@@ -954,22 +954,11 @@ async function optimizeAsset(asset, index, options) {
         }
     }
 
-    if (isWebProfile(options.profile)) {
+    if (isWebProfile(options.profile) || options.profile === 'editor-preview') {
         operations.push({
             id: 'simplify',
             label: 'Applying visual geometry budget',
             run: async () => { record.geometrySimplification = await simplifyAssetGeometry(document, options.profile, protectGeometry); }
-        });
-    }
-
-    if (options.profile === 'editor-preview' && !protectGeometry) {
-        const ratio = 0.35;
-        const error = 0.01;
-        operations.push({ id: 'weld', label: 'Welding visual geometry', run: () => document.transform(weld()) });
-        operations.push({
-            id: 'simplify',
-            label: 'Simplifying visual geometry',
-            run: () => document.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error, lockBorder: true }))
         });
     }
 
