@@ -987,6 +987,8 @@ try:
     max_dim = max(size.x, size.y, size.z, 0.001)
     scale = 2.0 / max_dim
     for obj in root_objects:
+        # Normalize the whole scene, including spacing between independent roots.
+        obj.location *= scale
         obj.scale *= scale
 
     mins, maxs = scene_bounds()
