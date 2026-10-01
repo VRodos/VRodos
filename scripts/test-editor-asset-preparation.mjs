@@ -31,6 +31,7 @@ scene.name = 'vrodosScene';
 const records = {};
 let selected = null;
 let selections = 0;
+let syncedProxy = null;
 let loadCalls = 0;
 let nextMetadata;
 let resolveDownload;
@@ -52,6 +53,7 @@ const context = {
         exporter: {}, importer: {}, editorScene: {}, loader: {}, ui: {}, api: {},
         editor: {
             requestRender() {},
+            transforms: { syncProxyToObject(object) { syncedProxy = object; } },
             envir: { scene, renderer: {}, animationMixers: [], selectableMeshes: new Set() },
             selection: { get: () => selected, clear() { selected = null; }, select(object) { selected = object; selections++; } }
         },
@@ -172,6 +174,7 @@ assert.equal(VRODOS.editor.sceneRegistry.get('tree'), tree, 'replacement preserv
 assert.equal(tree.uuid, id);
 assert.equal(selected, tree);
 assert.equal(selections, 1, 'automatic replacement must not select or finalize again');
+assert.equal(syncedProxy, tree, 'replacement resynchronizes the selected root with its transform proxy');
 assert.deepEqual(tree.position.toArray(), [8, 9, 10]);
 assert.deepEqual(tree.scale.toArray(), [2, 3, 4]);
 assert.equal(tree.rotation.y, 0.2);

@@ -41,8 +41,11 @@ function fixture({ disabled = 'true', mode = 'fly', standard = false, yaw = 180,
     (standard ? rig : cameraGroup).position.copy(start);
     const settings = { cam_position: start.toArray().join(' '), cam_rotation_y: String(yaw), cam_rotation_x: String(pitch),
         movement_disabled: disabled, navigationMode: mode, collisionMode: 'off' };
+    let viewerPose = null;
+    const referenceSpace = { ...events };
+    const frame = { getViewerPose: () => viewerPose };
     const scene = { ...events, object3D: sceneObject, components: {}, camera,
-        renderer: { xr: { isPresenting: false } }, is: () => false,
+        renderer: { xr: { isPresenting: false, getFrame: () => frame, getReferenceSpace: () => referenceSpace } }, is: () => false,
         getAttribute: () => settings, querySelector: () => world, querySelectorAll: () => [] };
     const cameraEl = { ...events, object3D: cameraGroup, components: { camera: { camera } }, sceneEl: scene };
     const player = { ...events, object3D: rig, components: {}, sceneEl: scene };
@@ -62,7 +65,9 @@ function fixture({ disabled = 'true', mode = 'fly', standard = false, yaw = 180,
         updateWASDControlsState: noop, applyRightThumbstickTurn: noop, updateVerticalMotion: noop,
         requestShadowMapRefresh: noop, beginImmersiveEntryPoseSettle: noop
     });
-    return { nav, rig, cameraGroup, camera, look, scene, settings, world };
+    return { nav, rig, cameraGroup, camera, look, scene, settings, world,
+        setViewerPose(position) { viewerPose = { transform: { position } }; }
+    };
 }
 
 // Both compiler rig layouts must retain yaw and pitch through the first and subsequent look updates.
@@ -122,7 +127,11 @@ for (const cachedDesktop of [false, true]) {
     f.cameraGroup.position.copy(physicalPosition);
     f.nav.getImmersivePhysicalAnchorPosition = (target) => target.copy(physicalPosition);
     f.nav.getImmersivePhysicalForwardDirection = (target) => target.copy(physicalForward);
-    f.nav.resetImmersiveWorldLocomotion();
+    assert.equal(f.nav.resetImmersiveWorldLocomotion(), false, 'XR entry waits for a valid viewer pose instead of using the A-Frame camera pose');
+    assert.equal(f.nav.hasImmersiveSessionAnchor, false, 'missing XR pose cannot initialize the session anchor');
+    vectorNear(f.cameraGroup.position, physicalPosition, 'waiting for XR pose leaves tracking untouched');
+    f.setViewerPose(physicalPosition);
+    assert.equal(f.nav.resetImmersiveWorldLocomotion(), true, 'a valid XR viewer pose initializes navigation');
     vectorNear(f.nav.immersiveVirtualNavPosition, desired, 'XR entry retains authored/current navigation position');
     vectorNear(f.nav.lastResolvedPosition, desired, 'XR movement lock starts from initialized virtual position');
     vectorNear(f.rig.position, new THREE.Vector3(), 'XR rig remains an unpositioned tracking rig');
@@ -150,7 +159,7 @@ for (const cachedDesktop of [false, true]) {
     f.nav.tick(16, 16);
     f.scene.renderer.xr.isPresenting = true;
     f.cameraGroup.position.copy(physicalPosition);
-    f.nav.resetImmersiveWorldLocomotion();
+    assert.equal(f.nav.resetImmersiveWorldLocomotion(), true, 'XR re-entry initializes from the current viewer pose');
     vectorNear(f.nav.immersiveVirtualNavPosition, exitPosition, 'XR re-entry retains the exit position instead of resetting to Director spawn');
     vectorNear(f.nav.authoredToRenderedDirection(desiredForward, new THREE.Vector3()), physicalForward, 'XR re-entry retains the current heading');
 }

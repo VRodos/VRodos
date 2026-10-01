@@ -1,6 +1,6 @@
 # Runtime library audit
 
-Validated against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, and generated runtime manifests on 2026-09-10. Package peer metadata and the linked official documentation were last audited on 2026-09-09. Lockfiles are the exact-version authority; generated manifests must agree with them.
+Version inventory validated against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, and generated runtime manifests on 2026-10-01. Package peer metadata and the linked official documentation were last audited on 2026-09-09. Lockfiles are the exact-version authority; generated manifests must agree with them.
 
 ## Browser and compiled-runtime libraries
 
@@ -17,14 +17,14 @@ Validated against `package-lock.json`, `services/vrodos-network-runtime/package-
 | @pmndrs/uikit | 1.0.76; root lock | Three `>=0.162` | vanilla `Root`, containers/text/input lifecycle | `build-runtime-master-bundles.mjs`; lazy spatial UI | `vrodos-runtime-spatial-ui.bundle.js` | [UIKit vanilla guide](https://pmndrs.github.io/uikit/docs/getting-started/vanilla) |
 | @pmndrs/uikit-horizon | 1.0.76; root lock | UIKit/Three through package graph | Horizon components | spatial UI bundle; lazy | spatial UI bundle | [UIKit Horizon](https://pmndrs.github.io/uikit/docs/) |
 | @pmndrs/uikit-lucide | 1.0.76; root lock | UIKit/Three through package graph | icon components | spatial UI bundle; lazy | spatial UI bundle | [UIKit icons](https://pmndrs.github.io/uikit/docs/) |
-| @pmndrs/pointer-events | 6.6.30; root lock | package graph | pointer registration/update/teardown | spatial UI bundle; lazy | spatial UI bundle | [pointer-events](https://github.com/pmndrs/xr/tree/main/packages/pointer-events) |
+| @pmndrs/pointer-events | 6.6.31; root lock | package graph | pointer registration/update/teardown | spatial UI bundle; lazy | spatial UI bundle | [pointer-events](https://github.com/pmndrs/xr/tree/main/packages/pointer-events) |
 | @pmndrs/msdfonts | 1.0.76; direct root lock | package graph | font/MSDF support imported by UIKit | spatial UI bundle; lazy | spatial UI/font assets | [UIKit text](https://pmndrs.github.io/uikit/docs/) |
 | @zappar/msdf-generator | 1.2.4; root lock | none declared | documented worker/WASM runtime files | runtime build; lazy spatial UI | `assets/vendor/zappar-msdf-generator/` | [Zappar MSDF generator](https://github.com/zappar-xr/msdf-generator) |
 | aframe-extras | 7.7.0; direct root lock | A-Frame runtime | distributed A-Frame components | browser vendor copy; omitted only for lean headset | `assets/vendor/aframe-extras/` | [A-Frame Extras](https://github.com/c-frame/aframe-extras) |
 | aframe-environment-component | 1.5.0; direct root lock | A-Frame runtime | `environment` component | browser vendor copy; legacy-background capability | `assets/vendor/aframe-environment/` | [Environment component](https://github.com/supermedium/aframe-environment-component) |
 | stats-gl | 4.2.3; direct root lock | none declared | default `Stats` package export | generated single-file ESM bundle; lazy FPS capability | `assets/vendor/stats-gl/main.js` | [stats-gl](https://github.com/RenanMConcepts/stats-gl) |
 | lil-gui | 0.21.0; direct root lock | none declared | `lil.GUI` UMD API and CSS | browser vendor copy; editor/Simple UI | `assets/vendor/lil-gui/` | [lil-gui](https://lil-gui.georgealways.com/) |
-| Lucide | 1.43.0; direct root lock | none declared | `lucide.createIcons()` UMD API | browser vendor copy; UI | `assets/vendor/lucide/` | [Lucide guide](https://lucide.dev/guide/) |
+| Lucide | 1.49.0; direct root lock | none declared | `lucide.createIcons()` UMD API | browser vendor copy; UI | `assets/vendor/lucide/` | [Lucide guide](https://lucide.dev/guide/) |
 | NoSleep.js | 0.12.0; vendored file banner | none declared | `new NoSleep()`, `enable()` | manually vendored legacy actor-client wake lock; Simple only | `assets/js/runtime/NoSleep.min.js` | [NoSleep.js](https://github.com/richtr/NoSleep.js) |
 | SpectorJS | 0.9.30; pinned jsDelivr URL | none declared | `SPECTOR.Spector` capture API | diagnostics-only dynamic loader; absent unless explicitly requested | no local artifact | [SpectorJS](https://github.com/BabylonJS/Spector.js) |
 | Networked-AFrame | 0.14.3; `patches/networked-aframe/config.json` | A-Frame/adapter runtime | `NAF.entities`, schemas, connection/data-channel APIs | `build-networked-aframe-vendor.mjs`; networked only | `assets/vendor/networked-aframe/dist/` | [Networked-AFrame](https://github.com/networked-aframe/networked-aframe) |
@@ -33,20 +33,20 @@ Validated against `package-lock.json`, `services/vrodos-network-runtime/package-
 
 | Library | Locked version / source | Relevant peer range | Use / build owner | Lazy/local result | Official documentation |
 |---|---|---|---|---|---|
-| @gltf-transform/cli | 4.5.0; root lock | none declared | GLB audit/derivative tooling; programmatic NodeIO/functions pipeline with the `toktx` bridge | build/worker only | [glTF Transform](https://gltf-transform.dev/) |
-| @gltf-transform/core | 4.5.0; root lock | none declared | programmatic GLB read/write and document graph | build/worker only | [glTF Transform Core](https://gltf-transform.dev/modules/core.html) |
-| @gltf-transform/extensions | 4.5.0; root lock | `@gltf-transform/core` `^4.5.0` | Draco, Meshopt, and KTX2 extension registration | build/worker only | [glTF Transform Extensions](https://gltf-transform.dev/modules/extensions.html) |
-| @gltf-transform/functions | 4.5.0; root lock | `@gltf-transform/core` and extensions `^4.5.0` | in-memory prune, dedup, simplify, compression, and texture transforms | build/worker only | [glTF Transform Functions](https://gltf-transform.dev/modules/functions.html) |
+| @gltf-transform/cli | 4.5.1; root lock | none declared | GLB audit/derivative tooling; programmatic NodeIO/functions pipeline with the `toktx` bridge | build/worker only | [glTF Transform](https://gltf-transform.dev/) |
+| @gltf-transform/core | 4.5.1; root lock | none declared | programmatic GLB read/write and document graph | build/worker only | [glTF Transform Core](https://gltf-transform.dev/modules/core.html) |
+| @gltf-transform/extensions | 4.5.1; root lock | `@gltf-transform/core` `^4.5.1` | Draco, Meshopt, and KTX2 extension registration | build/worker only | [glTF Transform Extensions](https://gltf-transform.dev/modules/extensions.html) |
+| @gltf-transform/functions | 4.5.1; root lock | `@gltf-transform/core` and extensions `^4.5.1` | in-memory prune, dedup, simplify, compression, and texture transforms | build/worker only | [glTF Transform Functions](https://gltf-transform.dev/modules/functions.html) |
 | draco3dgltf | 1.5.7; root lock | none declared | Node Draco encoder/decoder modules for GLB transforms | build/worker only | [Draco](https://github.com/google/draco) |
 | esbuild | 0.28.2; root lock | none declared | all generated browser bundles | build only | [esbuild](https://esbuild.github.io/) |
-| meshoptimizer | 1.2.0; root lock | none declared | decoder copy/asset tooling | `assets/vendor/three-r185/meshopt/` | [meshoptimizer](https://github.com/zeux/meshoptimizer) |
-| sharp | 0.35.4; root lock | none declared | libvips/SIMD texture analysis, conversion, and resizing | build/worker only | [Sharp](https://sharp.pixelplumbing.com/) |
+| meshoptimizer | 1.3.0; root lock | none declared | decoder copy/asset tooling | `assets/vendor/three-r185/meshopt/` | [meshoptimizer](https://github.com/zeux/meshoptimizer) |
+| sharp | 0.35.5; root lock | none declared | libvips/SIMD texture analysis, conversion, and resizing | build/worker only | [Sharp](https://sharp.pixelplumbing.com/) |
 | Tailwind CSS | 3.4.19; root lock | PostCSS toolchain | prefixed source CSS build | generated CSS | [Tailwind v3](https://v3.tailwindcss.com/docs/installation) |
 | DaisyUI | 4.12.24; root lock | Tailwind plugin | prefixed component styles | generated CSS | [DaisyUI v4](https://v4.daisyui.com/docs/install/) |
 | PostCSS | 8.5.28; root lock | none declared | CSS pipeline | build only | [PostCSS](https://postcss.org/) |
-| Autoprefixer | 10.5.5; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
-| ESLint | 10.10.0; root lock | optional `jiti` | JS static checks | build only | [ESLint](https://eslint.org/docs/latest/) |
-| Prettier | 3.9.6; root lock | none declared | formatting | build only | [Prettier](https://prettier.io/docs/) |
+| Autoprefixer | 10.6.1; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
+| ESLint | 10.11.0; root lock | optional `jiti` | JS static checks | build only | [ESLint](https://eslint.org/docs/latest/) |
+| Prettier | 3.9.9; root lock | none declared | formatting | build only | [Prettier](https://prettier.io/docs/) |
 | Express | 4.22.2; service lock | none declared | HTTP/static/health routes | network service only | [Express 4](https://expressjs.com/en/4x/api.html) |
 | Socket.IO | 4.8.3; service lock | matching server-served browser client | signaling transport and `/socket.io/socket.io.js` | networked only | [Socket.IO client installation](https://socket.io/docs/v4/client-installation/) |
 | open-easyrtc | 2.1.8; service lock | Socket.IO/Express service graph | EasyRTC adapter server | networked only | [Open-EasyRTC](https://github.com/open-easyrtc/open-easyrtc) |
