@@ -69,7 +69,7 @@
       "aframe-extras": "7.7.0",
       "aframe-environment-component": "1.5.0",
       "lil-gui": "0.21.0",
-      "lucide": "1.43.0",
+      "lucide": "1.49.0",
       "stats-gl": "4.2.3"
     },
     "files": {
