@@ -281,7 +281,7 @@ $source = [
 $options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 4096,
-	'pipelineVersion' => 7,
+	'pipelineVersion' => 8,
 	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
@@ -406,7 +406,7 @@ vrodos_desktop_assert( false === $dense_record['profileOptions']['protectGeometr
 $medium_options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 2048,
-	'pipelineVersion' => 7,
+	'pipelineVersion' => 8,
 	'recipe'          => 'web-medium',
 ];
 $low_options = array_merge( $medium_options, [ 'textureMaxSize' => 1024, 'recipe' => 'web-low' ] );

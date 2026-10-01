@@ -9,6 +9,7 @@ The shared policy is `assets/asset-geometry-policy.json`. Each Web derivative st
 | Web High | Up to 250,000; smaller models keep their triangles | 0.001 |
 | Web Medium | Lower of 100,000 or 80% of source triangles | 0.005 |
 | Web Low | Lower of 50,000 or 50% of source triangles | 0.01 |
+| Editor preview | Lower of 250,000 or 35% of source triangles | 0.01 |
 
 These are soft triangle targets. The simplifier may stop early to respect topology and its error limit. Error is the library's geometric estimate relative to primitive extent, not a guarantee of perceptual equivalence or a bound on subsequent compression quantization.
 
@@ -17,17 +18,20 @@ Safeguards:
 - Assets below 10,000 triangles bypass simplification.
 - Triangle primitives with 1,000 or fewer triangles are untouched by simplification; larger primitives retain a minimum target of 1,000.
 - Meshoptimizer locks open borders and uses its normal topology-preserving mode. No sloppy or permissive simplification is enabled.
+- Faceted primitives whose normals match their geometric faces temporarily omit normals during welding and simplification, then rebuild flat normals on the reduced faces. This removes artificial normal seams from flat-shaded scan exports while retaining UV seams, small parts, and the flat shading style. Smooth/custom normals and primitives with tangents retain their authored inputs.
 - Explicit geometry protection, walkable/collision mesh policy, skins, and morph targets bypass simplification at every quality level.
 - Materials, node hierarchy, placement transforms, source-owned origins, and decoration collision boxes retain their existing ownership. Decoration boxes continue to use source bounds.
 - Non-triangle primitives bypass this policy.
 
-Upload activation queues the existing High → editor preview → Medium → Low family when a source reaches 50,000 triangles, the existing 20 MiB source threshold, or the existing 8 MiB uncompressed-image threshold. Build joins the required immutable job. Pipeline version 7 invalidates older recipe results, and protected/unprotected variants have distinct identities at every level. Existing assets are reconsidered when their build requests preparation; this change does not bulk regenerate all historical uploads immediately.
+Upload activation queues the existing High → editor preview → Medium → Low family when a source reaches 50,000 triangles, the existing 20 MiB source threshold, or the existing 8 MiB uncompressed-image threshold. Build joins the required immutable job. Pipeline version 8 invalidates older recipe results, including editor previews, and protected/unprotected variants have distinct identities at every level. Existing assets are reconsidered when their build requests preparation; this change does not bulk regenerate all historical uploads immediately.
 
-The optimizer manifest and stored derivative metadata record original/result triangle counts, requested target, error limit, skip reason, and whether the target was reached.
+The optimizer manifest and stored derivative metadata record original/result triangle counts, requested target, error limit, skip reason, rebuilt flat-normal primitive count, and whether the target was reached. Failed workers report the manifest's actual error to WordPress; crashes without a completed manifest retain the process output.
 
 ## Validation
 
 - Preservation tests cover small parts, planar geometry, attributes/materials, transforms, explicit protection, skins, morph targets, and GLB reloading.
 - Queue tests cover dense small files, repeated requests, ordered family preparation, profile selection, and protected variant separation.
 - The complete High optimizer on the Acropolis columns produced 309,109 triangles from 1,241,316 (75.1% fewer), stopping above its 250,000 target. The compressed GLB shrank from 2,279,136 to 1,033,444 bytes and passed the optimizer's runtime-substitution checks.
+- The uploaded Artec Blue Coffin scan reproduced the previous 8,491,017 → 8,490,971 triangle result, followed by a Draco encoder abort locally. Rebuilding geometric flat normals reduced its 25,457,506 split render vertices to weldable input and produced a complete Web High derivative with 249,989 triangles. The GLB shrank from 1,032,565,852 to 4,105,852 bytes, with 4096px KTX2 textures and Draco. Runtime-substitution checks passed; the measured transform stages took 50.4 seconds with 3.33 GiB peak RSS on the local Windows host. The production UI confirmed the failed Web High job, but its truncated message does not establish the production encoder's exact failure.
+- The same source completed the uncompressed editor-preview recipe at 249,989 triangles and 27,246,608 bytes with 1024px textures. A real Draco decode of the High result retained position/normal/UV attributes and its 4096px KTX2 texture.
 - This result is offline validation. Published scenes need regeneration/recompilation and headset visual/FPS measurement before claiming a live performance gain.

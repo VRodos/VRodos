@@ -203,12 +203,15 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 
 		$command = implode( ' ', array_map( 'escapeshellarg', $args ) ) . ' 2>&1';
+		if ( is_file( $paths['manifest'] ) ) {
+			wp_delete_file( $paths['manifest'] );
+		}
 		$output = [];
 		$code   = 0;
 		exec( $command, $output, $code );
 
 		if ( 0 !== $code ) {
-			$message = trim( implode( "\n", array_slice( $output, -12 ) ) );
+			$message = self::optimizer_failure_message( $paths['manifest'], $output );
 			if ( preg_match( '/(?:node:\s*not found|node.*not recognized)/i', $message ) ) {
 				$message = 'Node.js is not available to the WordPress PHP process. Configure the vrodos_asset_optimizer_node_command filter with the Node executable path.';
 			}
@@ -252,6 +255,13 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'record'   => $record,
 			'options'  => $options,
 		];
+	}
+
+	protected static function optimizer_failure_message( string $manifest_path, array $output ): string {
+		$manifest = is_file( $manifest_path ) ? json_decode( (string) file_get_contents( $manifest_path ), true ) : null;
+		$record = is_array( $manifest ) ? ( $manifest['assets'][0] ?? [] ) : [];
+		$message = is_array( $record ) && 'error' === ( $record['status'] ?? '' ) ? trim( (string) ( $record['error'] ?? '' ) ) : '';
+		return '' !== $message ? $message : trim( implode( "\n", array_slice( $output, -12 ) ) );
 	}
 
 	protected static function build_derivative_paths( int $asset_id, array $source, string $profile, string $job_key = '' ): array {

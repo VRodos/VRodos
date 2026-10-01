@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { Document, NodeIO } from '@gltf-transform/core';
-import { PlaneGeometry } from 'three';
+import { PlaneGeometry, SphereGeometry } from 'three';
 import { simplifyAssetGeometry } from './asset-geometry-policy.mjs';
 
-function fixture(segments = 400) {
+function fixture(segments = 400, geometry = new PlaneGeometry(10, 10, segments, segments)) {
     const document = new Document();
     const buffer = document.createBuffer();
     const material = document.createMaterial('surface');
@@ -13,15 +13,51 @@ function fixture(segments = 400) {
             const attribute = geometry.getAttribute(name);
             result.setAttribute(semantic, document.createAccessor().setType(attribute.itemSize === 2 ? 'VEC2' : 'VEC3').setBuffer(buffer).setArray(attribute.array));
         }
-        result.setIndices(document.createAccessor().setType('SCALAR').setBuffer(buffer).setArray(geometry.index.array));
+        if (geometry.index) result.setIndices(document.createAccessor().setType('SCALAR').setBuffer(buffer).setArray(geometry.index.array));
         return result;
     }
-    const dense = primitive(new PlaneGeometry(10, 10, segments, segments));
+    const dense = primitive(geometry);
     const small = primitive(new PlaneGeometry(1, 1));
     const mesh = document.createMesh('decoration').addPrimitive(dense).addPrimitive(small);
     const node = document.createNode('placement').setMesh(mesh).setTranslation([2, 3, 4]);
     document.createScene().addChild(node);
     return { document, dense, small, node, material };
+}
+
+for (const profile of ['web-high', 'web-medium', 'web-low', 'editor-preview']) {
+    const geometry = new SphereGeometry(10, 400, 400).toNonIndexed();
+    geometry.computeVertexNormals();
+    const { document, dense } = fixture(400, geometry);
+    const report = await simplifyAssetGeometry(document, profile);
+    assert.ok(report.after <= report.target + 10, `${profile} must decimate a faceted scan within its geometry budget`);
+    assert.equal(report.rebuiltFlatNormalPrimitives, 1, 'rebuild the scan normals after simplifying across face boundaries');
+    const indices = dense.getIndices().getArray();
+    const normals = dense.getAttribute('NORMAL').getArray();
+    for (let i = 0; i < indices.length; i += 3) {
+        for (let axis = 0; axis < 3; axis++) {
+            assert.equal(normals[indices[i] * 3 + axis], normals[indices[i + 1] * 3 + axis], 'retain flat shading');
+            assert.equal(normals[indices[i] * 3 + axis], normals[indices[i + 2] * 3 + axis], 'retain flat shading');
+        }
+    }
+    assert.deepEqual(dense.listSemantics().sort(), ['NORMAL', 'POSITION', 'TEXCOORD_0'], 'retain texture coordinates and normals');
+}
+
+for (const variant of ['smooth', 'tangent', 'custom-normal', 'protected']) {
+    const geometry = new SphereGeometry(10, 240, 240);
+    if (variant !== 'smooth') {
+        const flat = geometry.toNonIndexed();
+        flat.computeVertexNormals();
+        geometry.copy(flat);
+    }
+    const { document, dense } = fixture(400, geometry);
+    if (variant === 'tangent') dense.setAttribute('TANGENT', document.createAccessor().setType('VEC4').setBuffer(document.getRoot().listBuffers()[0]).setArray(new Float32Array(dense.getAttribute('POSITION').getCount() * 4)));
+    if (variant === 'custom-normal') {
+        const normals = dense.getAttribute('NORMAL').getArray();
+        for (let i = 0; i < normals.length; i++) normals[i] *= -1;
+    }
+    const report = await simplifyAssetGeometry(document, 'web-medium', variant === 'protected');
+    assert.equal(report.rebuiltFlatNormalPrimitives, 0, `${variant} must retain its authored normal/tangent inputs`);
+    if (variant === 'protected') assert.equal(report.after, report.before);
 }
 
 let previous = Infinity;
