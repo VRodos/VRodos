@@ -193,7 +193,7 @@ $source = [
 	'sha256'       => str_repeat( 'a', 64 ),
 	'generation'   => 1,
 ];
-$analysis = [ 'geometry' => [ 'estimatedTriangles' => 700000 ] ];
+$analysis = [ 'geometry' => [ 'estimatedTriangles' => 700000, 'placedTriangles' => 700000 ] ];
 $result = [
 	'record' => [
 		'sourceSizeBytes'     => $source['sizeBytes'],

@@ -9,7 +9,7 @@ require_once dirname( __DIR__ ) . '/class-vrodos-compiler-entity-policy.php';
 require_once dirname( __DIR__ ) . '/class-vrodos-compiler-asset-policy.php';
 
 trait VRodos_Asset_Optimization_Desktop_Profiles {
-	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 8;
+	protected const DESKTOP_PROFILE_PIPELINE_VERSION = 9;
 	protected const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
 	protected const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
 	protected const DESKTOP_PROFILE_STALE_SECONDS = 720;
@@ -253,7 +253,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$source_bytes = (int) ( $source['sizeBytes'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$has_uncompressed_textures = $image_bytes > 0 && (int) ( $analysis['counts']['images'] ?? 0 ) > 0;
-		$geometry_candidate = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 ) >= VRodos_Compiler_Asset_Policy::automatic_geometry_min_triangles();
+		$geometry_candidate = (int) ( $analysis['geometry']['placedTriangles'] ?? 0 ) >= VRodos_Compiler_Asset_Policy::automatic_geometry_min_triangles();
 		if ( ! $geometry_candidate && $source_bytes < 20 * 1024 * 1024 && ( ! $has_uncompressed_textures || $image_bytes < 8 * 1024 * 1024 ) ) {
 			return false;
 		}

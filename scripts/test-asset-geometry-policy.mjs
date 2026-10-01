@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { Document, NodeIO } from '@gltf-transform/core';
+import { EXTMeshGPUInstancing } from '@gltf-transform/extensions';
 import { PlaneGeometry, SphereGeometry } from 'three';
 import { simplifyAssetGeometry } from './asset-geometry-policy.mjs';
 
@@ -89,6 +90,32 @@ for (const protection of ['explicit', 'skin', 'morph', 'small']) {
         const report = await simplifyAssetGeometry(document, profile, protection === 'explicit');
         assert.equal(report.before, report.after, `${protection} must remain unchanged at ${profile}`);
         assert.deepEqual(Array.from(dense.getIndices().getArray()), indices);
+    }
+}
+// A mesh under the unique-geometry budget can exceed it when placed repeatedly.
+for (const variant of ['ordinary', 'gpu', 'shared-primitive', 'protected']) {
+    const protectedGeometry = variant === 'protected';
+    const { document, node } = fixture(100);
+    const scene = document.getRoot().listScenes()[0];
+    if (variant === 'gpu') {
+        const instancing = document.createExtension(EXTMeshGPUInstancing);
+        const translations = document.createAccessor().setType('VEC3').setBuffer(document.getRoot().listBuffers()[0]).setArray(new Float32Array(55 * 3));
+        node.setExtension('EXT_mesh_gpu_instancing', instancing.createInstancedMesh().setAttribute('TRANSLATION', translations));
+    } else {
+        const mesh = variant === 'shared-primitive' ? document.createMesh() : node.getMesh();
+        if (variant === 'shared-primitive') for (const primitive of node.getMesh().listPrimitives()) mesh.addPrimitive(primitive);
+        for (let i = 1; i < 55; i++) scene.addChild(document.createNode().setMesh(mesh));
+    }
+    const report = await simplifyAssetGeometry(document, 'web-high', protectedGeometry);
+    assert.ok(report.before < report.target, 'fixture is below budget when counted once');
+    assert.equal(report.placedBefore, report.before * 55);
+    assert.equal(report.placedAfter, report.after * 55);
+    if (protectedGeometry) {
+        assert.equal(report.skipped, 'protected');
+        assert.equal(report.placedAfter, report.placedBefore, 'navigation protection still wins over the budget');
+    } else {
+        assert.ok(report.placedAfter < report.placedBefore / 2, 'repeated mesh placements must drive simplification');
+        assert.equal(report.targetReached, report.placedAfter <= report.target, 'target status must describe placed triangles');
     }
 }
 console.log('Automatic geometry budgets and preservation tests passed.');

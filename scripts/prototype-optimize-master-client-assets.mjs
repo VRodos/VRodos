@@ -344,8 +344,9 @@ function analyzeGltf(gltf) {
     let submittedVertexCount = 0;
     let estimatedTriangles = 0;
     let morphTargetPrimitiveCount = 0;
+    const meshTriangles = meshes.map(() => 0);
 
-    meshes.forEach((mesh) => {
+    meshes.forEach((mesh, meshIndex) => {
         (mesh.primitives || []).forEach((primitive) => {
             primitiveCount += 1;
             const mode = primitive.mode === undefined ? TRIANGLES_MODE : primitive.mode;
@@ -356,9 +357,20 @@ function analyzeGltf(gltf) {
             submittedVertexCount += submitted;
             vertexCount += primitiveVertexCount(gltf, primitive);
             estimatedTriangles += estimatePrimitiveTriangles(mode, submitted);
+            meshTriangles[meshIndex] += estimatePrimitiveTriangles(mode, submitted);
             if (Array.isArray(primitive.targets) && primitive.targets.length) morphTargetPrimitiveCount += 1;
         });
     });
+
+    let placedTriangles = 0;
+    let placedPrimitives = 0;
+    for (const node of nodes) {
+        if (node.mesh === undefined) continue;
+        const attributes = node.extensions?.EXT_mesh_gpu_instancing?.attributes;
+        const instances = attributes ? gltf.accessors[Object.values(attributes)[0]].count : 1;
+        placedTriangles += meshTriangles[node.mesh] * instances;
+        placedPrimitives += meshes[node.mesh].primitives.length;
+    }
 
     return {
         generator: gltf.asset && gltf.asset.generator ? gltf.asset.generator : '',
@@ -366,6 +378,7 @@ function analyzeGltf(gltf) {
             nodes: nodes.length,
             meshes: meshes.length,
             primitives: primitiveCount,
+            placedPrimitives,
             materials: materials.length,
             usedMaterials: usedMaterials.size,
             textures: textures.length,
@@ -374,6 +387,7 @@ function analyzeGltf(gltf) {
         },
         geometry: {
             estimatedTriangles,
+            placedTriangles,
             vertexCount,
             submittedVertexCount
         },
@@ -789,7 +803,7 @@ async function optimizeAsset(asset, index, options) {
     if ((isWebProfile(options.profile) || options.profile === 'editor-preview') && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
         try {
             const prepared = JSON.parse(await readFile(options.preparedAnalysis, 'utf8'));
-            if (prepared.schemaVersion === 4 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
+            if (prepared.schemaVersion === 5 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
                 const candidateBuffer = await readFile(options.preparedBaseline);
                 if (prepared.preparedSha256 && sourceDigest(candidateBuffer) === prepared.preparedSha256) {
                     inputBuffer = candidateBuffer;
@@ -937,7 +951,7 @@ async function optimizeAsset(asset, index, options) {
                         await atomicWriteFile(options.preparedBaseline, preparedBinary);
                     }
                     await atomicWriteFile(options.preparedAnalysis, `${JSON.stringify({
-                        schemaVersion: 4,
+                        schemaVersion: 5,
                         sourcePath,
                         sourceSha256,
                         preparedSha256: sourceDigest(preparedBinary),
@@ -1099,6 +1113,11 @@ async function optimizeAsset(asset, index, options) {
         record.reductionBytes = delta.bytes;
         record.reductionPercent = delta.percent;
         record.derivative = analyzeGltf(parsedDerivative.gltf);
+        if (protectGeometry && record.derivative.geometry.placedTriangles >= 500000) {
+            record.runtimeNotes.push(`Protected geometry still places ${record.derivative.geometry.placedTriangles.toLocaleString('en-US')} triangles before culling. Optimize the source or separate decorations from the navigation mesh.`);
+        } else if (record.geometrySimplification?.targetReached === false) {
+            record.runtimeNotes.push(`Geometry simplification did not reach the placement budget (${record.geometrySimplification.placedAfter} / ${record.geometrySimplification.target} triangles); preserved borders, small parts, and the error limit may require source optimization or authored LODs.`);
+        }
         record.derivative.textureMemory = await estimateTextureMemory(parsedDerivative.gltf, parsedDerivative.binary);
         const hasSourceTextures = Number(record.original?.counts?.images || 0) > 0;
         const uncompressedTextures = document.getRoot().listTextures().filter((texture) => texture.getMimeType() !== 'image/ktx2').length;

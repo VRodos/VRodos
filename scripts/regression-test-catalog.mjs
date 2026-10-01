@@ -95,6 +95,7 @@ export const testGroups = Object.freeze({
     "scripts/test-text-asset-compilation.php",
     "scripts/test-text-asset-encoding.php",
     "scripts/test-asset-optimization-lifecycle.php",
+    "scripts/test-glb-placement-analysis.php",
     "scripts/test-asset-origin-contract.php",
     "scripts/test-glb-legacy-material-normalizer.php",
     "scripts/test-surface-material-package.php",

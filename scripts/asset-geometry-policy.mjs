@@ -46,19 +46,29 @@ function rebuildFlatNormals(document, primitive, buffer) {
 export async function simplifyAssetGeometry(document, profile, protectGeometry = false) {
     const policy = geometryPolicy.profiles[profile];
     if (!policy) throw new Error(`Unknown geometry profile: ${profile}`);
-    const primitives = document.getRoot().listMeshes().flatMap((mesh) => mesh.listPrimitives());
+    const primitives = [...new Set(document.getRoot().listMeshes().flatMap((mesh) => mesh.listPrimitives()))];
     const before = primitives.reduce((total, primitive) => total + triangles(primitive), 0);
+    const placements = new Map(primitives.map((primitive) => [primitive, 0]));
+    for (const node of document.getRoot().listNodes()) {
+        const instances = node.getExtension('EXT_mesh_gpu_instancing')?.listAttributes()[0]?.getCount() ?? 1;
+        for (const primitive of node.getMesh()?.listPrimitives() ?? []) {
+            placements.set(primitive, placements.get(primitive) + instances);
+        }
+    }
+    const placedTriangles = (parts) => parts.reduce((total, primitive) => total + triangles(primitive) * placements.get(primitive), 0);
+    const placedBefore = placedTriangles(primitives);
     const protectedContent = document.getRoot().listSkins().length > 0 || primitives.some((primitive) => primitive.listTargets().length > 0);
-    const target = Math.floor(Math.min(policy.targetTriangles, before * policy.ratio));
-    const report = { before, after: before, target, error: policy.error, simplifiedPrimitives: 0, rebuiltFlatNormalPrimitives: 0 };
-    if (protectGeometry || protectedContent || before < geometryPolicy.minimumAssetTriangles || target >= before) {
+    const target = Math.floor(Math.min(policy.targetTriangles, placedBefore * policy.ratio));
+    const report = { before, after: before, placedBefore, placedAfter: placedBefore, target, error: policy.error, simplifiedPrimitives: 0, rebuiltFlatNormalPrimitives: 0 };
+    if (protectGeometry || protectedContent || placedBefore < geometryPolicy.minimumAssetTriangles || target >= placedBefore) {
         return { ...report, skipped: protectGeometry || protectedContent ? 'protected' : 'below-budget' };
     }
     await MeshoptSimplifier.ready;
     const eligible = primitives.filter((primitive) => triangles(primitive) > geometryPolicy.minimumPrimitiveTriangles);
     if (!eligible.length) return { ...report, skipped: 'small-parts' };
-    const eligibleTriangles = eligible.reduce((total, primitive) => total + triangles(primitive), 0);
-    const reserved = before - eligibleTriangles;
+    const eligibleTriangles = placedTriangles(eligible);
+    if (!eligibleTriangles) return { ...report, skipped: 'unplaced' };
+    const reserved = placedBefore - eligibleTriangles;
     const ratio = Math.max(0, target - reserved) / eligibleTriangles;
     for (const primitive of eligible) {
         const count = triangles(primitive);
@@ -84,6 +94,7 @@ export async function simplifyAssetGeometry(document, profile, protectGeometry =
         report.simplifiedPrimitives++;
     }
     report.after = primitives.reduce((total, primitive) => total + triangles(primitive), 0);
-    report.targetReached = report.after <= target;
+    report.placedAfter = placedTriangles(primitives);
+    report.targetReached = report.placedAfter <= target;
     return report;
 }

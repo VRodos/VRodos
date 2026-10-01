@@ -281,7 +281,7 @@ $source = [
 $options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 4096,
-	'pipelineVersion' => 8,
+	'pipelineVersion' => 9,
 	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
@@ -397,7 +397,7 @@ vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a
 $auto_record = invoke_desktop_profile_method( 'desktop_profile_record', [ 55, 'web-high' ] );
 vrodos_desktop_assert( 1 === $auto_record['attempts'] && ! empty( $auto_record['queuedAt'] ), 'an idempotent queued job must retain one attempt and its original queue timestamp' );
 
-$dense_analysis = array_merge( $small_analysis, [ 'geometry' => [ 'estimatedTriangles' => 50000 ] ] );
+$dense_analysis = array_merge( $small_analysis, [ 'geometry' => [ 'estimatedTriangles' => 10000, 'placedTriangles' => 50000 ] ] );
 $GLOBALS['vrodos_desktop_test_terms'][ 56 ] = [ 'decoration' ];
 vrodos_desktop_assert( true === VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 56, $small_source, $dense_analysis ), 'dense GLBs below byte thresholds must enter the automatic family' );
 $dense_record = invoke_desktop_profile_method( 'desktop_profile_record', [ 56, 'web-high' ] );
@@ -406,7 +406,7 @@ vrodos_desktop_assert( false === $dense_record['profileOptions']['protectGeometr
 $medium_options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 2048,
-	'pipelineVersion' => 8,
+	'pipelineVersion' => 9,
 	'recipe'          => 'web-medium',
 ];
 $low_options = array_merge( $medium_options, [ 'textureMaxSize' => 1024, 'recipe' => 'web-low' ] );

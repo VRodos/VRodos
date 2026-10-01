@@ -94,7 +94,7 @@ try {
     assert.ok(Number.isFinite(highManifest.assets[0].performance.systemCpuUtilizationPercent), 'system CPU utilization must be recorded');
     assert.ok(highManifest.encoderVersions.sharp && highManifest.encoderVersions.libvips, 'encoder versions must be recorded');
     const preparedMetadata = JSON.parse(await readFile(preparedAnalysis, 'utf8'));
-    assert.equal(preparedMetadata.schemaVersion, 4);
+    assert.equal(preparedMetadata.schemaVersion, 5);
     assert.match(preparedMetadata.preparedSha256, /^[a-f0-9]{64}$/, 'prepared baselines must store their own checksum');
 
     const mediumDir = path.join(familyRoot, 'medium');

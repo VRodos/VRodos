@@ -508,8 +508,8 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	}
 
 	protected static function editor_preview_decision( int $source_size_bytes, array $analysis ): array {
-		$triangles = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
-		$primitives = (int) ( $analysis['counts']['primitives'] ?? 0 );
+		$triangles = (int) ( $analysis['geometry']['placedTriangles'] ?? 0 );
+		$primitives = (int) ( $analysis['counts']['placedPrimitives'] ?? 0 );
 		$materials = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$reasons = [];

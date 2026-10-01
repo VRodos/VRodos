@@ -20,7 +20,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 			return $source;
 		}
 
-		$analysis = self::build_glb_analysis( $source );
+		$analysis = self::build_glb_analysis( $source, $asset_id );
 		if ( is_wp_error( $analysis ) ) {
 			$record = self::build_analysis_error_record( $analysis->get_error_message(), $source );
 			update_post_meta( $asset_id, self::ANALYSIS_META_KEY, $record );
@@ -33,7 +33,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 	protected static function build_analysis_error_record( string $message, ?array $source = null ): array {
 		return [
-			'schemaVersion'     => 2,
+			'schemaVersion'     => 3,
 			'status'            => 'unsupported',
 			'error'             => wp_strip_all_tags( $message ),
 			'sourceUrl'         => isset( $source['url'] ) ? esc_url_raw( (string) $source['url'] ) : '',
@@ -49,14 +49,14 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		];
 	}
 
-	protected static function build_glb_analysis( array $source ) {
+	protected static function build_glb_analysis( array $source, int $asset_id ) {
 		$gltf = VRodos_Glb_Analysis::read_glb_json( (string) $source['path'] );
 		if ( is_wp_error( $gltf ) ) {
 			return $gltf;
 		}
 
 		$analysis = VRodos_Glb_Analysis::analyze_gltf_json( $gltf );
-		$analysis['schemaVersion']     = 2;
+		$analysis['schemaVersion']     = 3;
 		$analysis['status']            = 'analyzed';
 		$analysis['sourceUrl']         = esc_url_raw( (string) $source['url'] );
 		$analysis['sourcePath']        = wp_normalize_path( (string) $source['path'] );
@@ -66,6 +66,9 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		$analysis['analyzedAt']        = current_time( 'mysql', true );
 
 		$recommendation = VRodos_Glb_Analysis::recommendations_for_analysis( $analysis );
+		if ( ! empty( $recommendation['recommendations']['lodDerivative'] ) && self::automatic_profile_protects_geometry( $asset_id ) ) {
+			$recommendation['reasons'][] = 'Walkable/collision geometry is protected from automatic simplification. Separate dense decorative meshes from the navigation surface or optimize the source; compression alone will not reduce triangles.';
+		}
 		return array_merge( $analysis, $recommendation );
 	}
 
@@ -88,7 +91,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 
 	protected static function analysis_needs_refresh( array $analysis, array $source ): bool {
-		if ( (int) ( $analysis['schemaVersion'] ?? 0 ) !== 2 || empty( $analysis ) || ( $analysis['sourceFingerprint'] ?? '' ) !== self::source_fingerprint( $source ) ) {
+		if ( (int) ( $analysis['schemaVersion'] ?? 0 ) !== 3 || empty( $analysis ) || ( $analysis['sourceFingerprint'] ?? '' ) !== self::source_fingerprint( $source ) ) {
 			return true;
 		}
 		return false;
@@ -101,8 +104,8 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 	protected static function analysis_priority_score( array $analysis ): int {
 		$size_bytes = (int) ( $analysis['sourceSizeBytes'] ?? 0 );
-		$triangles  = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
-		$primitives = (int) ( $analysis['counts']['primitives'] ?? 0 );
+		$triangles  = (int) ( $analysis['geometry']['placedTriangles'] ?? 0 );
+		$primitives = (int) ( $analysis['counts']['placedPrimitives'] ?? 0 );
 		$materials  = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
 

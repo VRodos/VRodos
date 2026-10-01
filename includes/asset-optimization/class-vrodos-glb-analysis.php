@@ -98,13 +98,18 @@ class VRodos_Glb_Analysis {
 		$estimated_triangles = 0;
 		$max_primitive_submitted_count = 0;
 		$max_primitive_triangles = 0;
+		$mesh_triangles = [];
+		$mesh_primitives = [];
 
-		foreach ( $meshes as $mesh ) {
+		foreach ( $meshes as $mesh_index => $mesh ) {
+			$mesh_triangles[ $mesh_index ] = 0;
+			$mesh_primitives[ $mesh_index ] = 0;
 			foreach ( is_array( $mesh['primitives'] ?? null ) ? $mesh['primitives'] : [] as $primitive ) {
 				if ( ! is_array( $primitive ) ) {
 					continue;
 				}
 				++$primitive_count;
+				++$mesh_primitives[ $mesh_index ];
 				$mode = isset( $primitive['mode'] ) ? (int) $primitive['mode'] : self::GLTF_TRIANGLES_MODE;
 				if ( isset( $primitive['indices'] ) ) {
 					++$indexed_primitive_count;
@@ -132,9 +137,28 @@ class VRodos_Glb_Analysis {
 				$submitted_vertex_count += $submitted;
 				$vertex_count += $vertices;
 				$estimated_triangles += $triangles;
+				$mesh_triangles[ $mesh_index ] += $triangles;
 				$max_primitive_submitted_count = max( $max_primitive_submitted_count, $submitted );
 				$max_primitive_triangles = max( $max_primitive_triangles, $triangles );
 			}
+		}
+
+		// Sharing a mesh saves storage, but every placement still submits triangles.
+		$placed_triangles = 0;
+		$placed_primitives = 0;
+		foreach ( $nodes as $node ) {
+			if ( ! isset( $node['mesh'], $mesh_triangles[ $node['mesh'] ] ) ) {
+				continue;
+			}
+			$instances = 1;
+			$instance_attributes = $node['extensions']['EXT_mesh_gpu_instancing']['attributes'] ?? [];
+			if ( $instance_attributes ) {
+				$instance_accessor = reset( $instance_attributes );
+				$instances = (int) ( $accessors[ $instance_accessor ]['count'] ?? 0 );
+			}
+			$placed_triangles += $mesh_triangles[ $node['mesh'] ] * $instances;
+			// GPU instances share a draw call; ordinary placements do not.
+			$placed_primitives += $mesh_primitives[ $node['mesh'] ];
 		}
 
 		foreach ( $textures as $texture ) {
@@ -171,6 +195,7 @@ class VRodos_Glb_Analysis {
 				'nodes'             => count( $nodes ),
 				'meshes'            => count( $meshes ),
 				'primitives'        => $primitive_count,
+				'placedPrimitives'  => $placed_primitives,
 				'indexedPrimitives' => $indexed_primitive_count,
 				'materials'         => count( $materials ),
 				'usedMaterials'     => count( $used_materials ),
@@ -180,6 +205,7 @@ class VRodos_Glb_Analysis {
 			],
 			'geometry'     => [
 				'estimatedTriangles'          => $estimated_triangles,
+				'placedTriangles'             => $placed_triangles,
 				'vertexCount'                 => $vertex_count,
 				'submittedVertexCount'        => $submitted_vertex_count,
 				'maxPrimitiveSubmittedCount'  => $max_primitive_submitted_count,
@@ -265,8 +291,8 @@ class VRodos_Glb_Analysis {
 
 	public static function recommendations_for_analysis( array $analysis ): array {
 		$size_bytes     = (int) ( $analysis['sourceSizeBytes'] ?? 0 );
-		$triangles      = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
-		$primitives     = (int) ( $analysis['counts']['primitives'] ?? 0 );
+		$triangles      = (int) ( $analysis['geometry']['placedTriangles'] ?? 0 );
+		$primitives     = (int) ( $analysis['counts']['placedPrimitives'] ?? 0 );
 		$materials      = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
 		$images         = (int) ( $analysis['counts']['images'] ?? 0 );
 		$geometry_bytes = (int) ( $analysis['geometry']['estimatedGeometryBytes'] ?? 0 );
@@ -275,6 +301,9 @@ class VRodos_Glb_Analysis {
 		$flags          = [];
 		$reasons        = [];
 		$recommendations = self::empty_recommendations();
+		if ( $triangles > (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 ) ) {
+			$reasons[] = sprintf( 'Mesh placements submit %s triangles before culling; sharing meshes and compressing geometry reduce file size, not this rendering cost.', number_format( $triangles ) );
+		}
 
 		if ( $size_bytes >= 50 * 1024 * 1024 ) {
 			$flags[] = 'very_large_file';
