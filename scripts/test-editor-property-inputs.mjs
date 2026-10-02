@@ -12,7 +12,7 @@ scene.add(light);
 let selected = light;
 let saves = 0;
 const inputs = new Map();
-for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title', 'poi_image_title_text', 'poi_image_desc_text']) {
+for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title', 'poi_image_title_text', 'poi_image_desc_text', 'teleport_point_name']) {
     const handlers = {};
     inputs.set(id, { value: '', addEventListener(type, callback) { handlers[type] = callback; },
         fire(type, value) { if (value !== undefined) this.value = value; handlers[type]?.call(this); } });
@@ -101,6 +101,8 @@ manager.undo();
 assert.equal(other.poi_img_content, undefined, 'POI text can be undone independently.');
 manager.redo();
 assert.equal(other.poi_img_content, 'Πρώτη γραμμή\nΔεύτερη γραμμή', 'POI text redo restores content.');
+inputs.get('teleport_point_name').fire('change', 'Είσοδος ναού');
+assert.equal(other.asset_name, 'Είσοδος ναού', 'Destination names use the placement display name consumed by compilation.');
 selected = null;
 power.fire('focus');
 power.fire('change', '1');

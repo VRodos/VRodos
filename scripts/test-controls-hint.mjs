@@ -177,6 +177,9 @@ assert.equal(vr.vrShows, 1);
 assert.equal(vr.timers.size, 1);
 assert.deepEqual(Array.from(vr.component.getItems(true), item => item.input), ['Left stick', 'Right stick', 'Point + right trigger (RT)', 'A / X', 'B / Y']);
 assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['left-stick', 'right-stick', 'right-trigger', 'jump-buttons', 'reset-buttons']);
+vr.scene.components['vrodos-teleport-destinations'] = { points: new Set([{}]) };
+assert.equal(vr.component.getItems(true).at(-1).input, 'Press either stick', 'VR hints expose the destination shortcut');
+delete vr.scene.components['vrodos-teleport-destinations'];
 assert.deepEqual(Array.from(vr.component.getItems(false), item => item.icon?.name), [undefined, 'mouse-drag', 'mouse-click', undefined]);
 assert(!actions(vr.component.getItems(true)).includes('Look'), 'Headset look is implicit in VR');
 for (const item of [...vr.component.getItems(true), ...vr.component.getItems(false)].filter(item => item.icon)) {

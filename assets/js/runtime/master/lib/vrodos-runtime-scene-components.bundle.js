@@ -1388,7 +1388,7 @@
         canvas.requestFullscreen = this.requestSceneFullscreen;
       },
       getItems: function(immersive) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         const movement = (_b = (_a = this.el.querySelector("[custom-movement]")) == null ? void 0 : _a.components) == null ? void 0 : _b["custom-movement"];
         const settings = this.el.getAttribute("scene-settings");
         const disabled = [true, "true", "1"].includes(settings == null ? void 0 : settings.movement_disabled);
@@ -1405,6 +1405,9 @@
           add(immersive ? "A / X" : "Space", "Jump", immersive ? "jump-buttons" : void 0);
         }
         if (immersive && movement) add("B / Y", "Reset height", "reset-buttons");
+        if (immersive && ((_e = this.el.components["vrodos-teleport-destinations"]) == null ? void 0 : _e.points.size)) {
+          add("Press either stick", "Destinations", "left-stick");
+        }
         return items;
       },
       syncPresentation: function() {

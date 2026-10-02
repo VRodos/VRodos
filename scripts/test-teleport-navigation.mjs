@@ -8,7 +8,7 @@ import * as BVH from 'three-mesh-bvh';
 const root = resolve(import.meta.dirname, '..');
 const definitions = {};
 const noop = () => {};
-const events = { addEventListener: noop, removeEventListener: noop };
+const events = { addEventListener: noop, removeEventListener: noop, emit: noop };
 const timers = new Map();
 let timerId = 0;
 const context = {
@@ -220,7 +220,32 @@ context.window.VRODOSRuntimeOverlay = { interactionLocked: true };
 assert.equal(loading.nav.teleportToPoint(point(3, 0, 0)), false, 'modal interactions block teleporting');
 context.window.VRODOSRuntimeOverlay = null;
 
-// Visible pin and floor surfaces all forward the marker's authored origin, never the hit point.
+// The destination panel pauses navigation without freezing tracked camera/controller poses.
+for (const immersive of [false, true]) {
+    const paused = fixture({ disabled: false });
+    if (immersive) paused.enterVr();
+    paused.nav.ensureNavigationStatePrimed();
+    const start = paused.nav.getNavigationWorldPosition().clone();
+    const cameraPosition = paused.cameraGroup.position.clone();
+    const yaw = paused.nav.immersiveRenderYaw;
+    paused.nav.keyboardInput.x = 1;
+    Object.assign(paused.nav.leftThumbInput, { x: 1, y: 1 });
+    Object.assign(paused.nav.rightThumbInput, { x: 1, y: 1 });
+    paused.nav.pause();
+    paused.nav.tick(0, 100);
+    near(paused.nav.getNavigationWorldPosition(), start, 'paused menu ignores ordinary movement');
+    near(paused.cameraGroup.position, cameraPosition, 'paused menu leaves the camera pose untouched');
+    assert.equal(paused.nav.immersiveRenderYaw, yaw, 'paused menu ignores thumbstick turning');
+    assert.equal(paused.nav.requestJump('controller'), false, 'jump cannot interrupt destination selection');
+    let resetCalls = 0;
+    paused.nav.resetImmersiveHeight = () => { resetCalls++; };
+    paused.nav.handleHeightResetButtonDown({});
+    assert.equal(resetCalls, 0, 'height reset cannot interrupt destination selection');
+    paused.nav.play();
+    assert(paused.nav.teleportToPoint(point(6, 0, -2), { isConnected: true }), 'closing the menu permits teleporting');
+}
+
+// Floor surfaces and the selector activation API use the authored origin, never the hit point.
 const markerNavigation = fixture();
 markerNavigation.scene.querySelector = selector => selector === '[custom-movement]' ? markerNavigation.player : markerNavigation.world;
 const markerListeners = new Map();
@@ -229,7 +254,8 @@ const markerElement = {
     setObject3D(_name, object) { this.object3D.add(object); },
     removeObject3D() { this.object3D.clear(); },
     addEventListener(type, callback) { markerListeners.set(type, callback); },
-    removeEventListener(type) { markerListeners.delete(type); }
+    removeEventListener(type) { markerListeners.delete(type); },
+    getAttribute: name => name === 'data-vrodos-teleport-order' ? '1' : 'Temple'
 };
 markerElement.object3D.position.set(3, 2, -4);
 markerElement.object3D.rotation.y = 0.4;
@@ -238,26 +264,19 @@ markerNavigation.world.object3D.add(markerElement.object3D);
 const markerComponent = Object.assign(Object.create(definitions['vrodos-teleport-point']), { el: markerElement });
 markerElement.components['vrodos-teleport-point'] = markerComponent;
 markerComponent.init();
-const [ring, center, body, tip] = markerComponent.marker.children;
-body.geometry.computeBoundingBox();
-tip.geometry.computeBoundingBox();
-const bodyBounds = body.geometry.boundingBox.clone().translate(body.position);
-const tipBounds = tip.geometry.boundingBox.clone().translate(tip.position);
-assert(Math.abs(bodyBounds.max.y - 3.2) < 1e-6 && Math.abs(tipBounds.min.y - 2.5) < 1e-6,
-    'the 70 cm pin hovers above eye level, 2.5 m above the authored floor');
-assert(Math.abs(bodyBounds.max.x - bodyBounds.min.x - 0.22) < 1e-6, 'pin is 22 cm wide');
+const [ring, center] = markerComponent.marker.children;
+assert.equal(markerComponent.marker.children.length, 2, 'only the floor ring and clickable centre remain');
+assert.equal(ring.geometry.parameters.outerRadius * 2, 1.5, 'floor circle is 1.5 metres across');
 const raycaster = new THREE.Raycaster();
 for (const [mesh, localTarget, direction] of [
-    [ring, point(0.44, 0, 0), point(0, -1, 0)],
-    [center, point(0.25, 0, 0), point(0, -1, 0)],
-    [body, point(0, 0, 0), point(0, 0, -1)],
-    [tip, point(0, 0, 0), point(0, 0, -1)]
+    [ring, point(0.66, 0, 0), point(0, -1, 0)],
+    [center, point(0.25, 0, 0), point(0, -1, 0)]
 ]) {
     markerElement.object3D.updateWorldMatrix(true, true);
     const target = mesh.localToWorld(localTarget);
     raycaster.set(target.clone().addScaledVector(direction, -4), direction);
     const hit = raycaster.intersectObject(markerElement.object3D, true)[0];
-    assert(hit && hit.object === mesh, 'the visible pin and floor each have their own clickable surface');
+    assert(hit && hit.object === mesh, 'ring and centre are both clickable surfaces');
     markerListeners.get('click')({ detail: { intersection: hit } });
     assert(markerNavigation.nav.teleportTravel, 'clicking a marker surface starts travel');
     markerNavigation.nav.tickTeleport(markerNavigation.nav.teleportTravel.duration);
@@ -265,6 +284,13 @@ for (const [mesh, localTarget, direction] of [
     markerNavigation.nav.setNavigationWorldPosition(point(0, 1.6, 0));
     markerNavigation.nav.lastResolvedPosition.set(0, 1.6, 0);
 }
+assert(markerComponent.activate(), 'menu activation starts the same curved travel');
+assert.equal(markerNavigation.nav.teleportTravel.source, markerElement, 'the marker owns menu-triggered travel');
+assert.equal(markerComponent.activate(), false, 'menu repeats cannot interrupt travel');
+markerNavigation.nav.tickTeleport(markerNavigation.nav.teleportTravel.duration);
+near(markerNavigation.nav.getNavigationWorldPosition(), point(3, 3.6, -4), 'menu uses the same transformed landing origin');
+markerNavigation.nav.setNavigationWorldPosition(point(0, 1.6, 0));
+markerNavigation.nav.lastResolvedPosition.set(0, 1.6, 0);
 function assertMarkerColors(accent, centerColor) {
     markerComponent.marker.traverse(mesh => {
         if (mesh.isMesh) assert.equal(mesh.material.color.getHexString(), mesh.userData.teleportColorRole === 'center' ? centerColor : accent);
@@ -280,7 +306,7 @@ markerListeners.get('mouseleave')();
 assertMarkerColors('14b8a6', '0f766e');
 markerListeners.get('click')({ detail: {} });
 markerComponent.remove();
-assert.equal(markerNavigation.nav.teleportTravel, null, 'removing a pin cancels travel from the component');
-near(markerNavigation.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'pin removal restores the starting position');
+assert.equal(markerNavigation.nav.teleportTravel, null, 'removing a marker cancels travel from the component');
+near(markerNavigation.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'marker removal restores the starting position');
 
 console.log('Teleport navigation acceptance tests passed.');

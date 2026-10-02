@@ -76,6 +76,9 @@
                 add(immersive ? 'A / X' : 'Space', 'Jump', immersive ? 'jump-buttons' : undefined);
             }
             if (immersive && movement) add('B / Y', 'Reset height', 'reset-buttons');
+            if (immersive && this.el.components['vrodos-teleport-destinations']?.points.size) {
+                add('Press either stick', 'Destinations', 'left-stick');
+            }
             return items;
         },
 

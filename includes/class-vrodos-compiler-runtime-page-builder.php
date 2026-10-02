@@ -75,6 +75,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		$ascene->setAttribute( 'gltf-model', (string) call_user_func( $this->decoder_config ) );
 		$this->apply_runtime_pipeline_components( $ascene, $scene_settings );
 		$ascene->setAttribute( 'vrodos-controls-hint', '' );
+		$ascene->setAttribute( 'vrodos-teleport-destinations', '' );
 
 		if ( ! empty( $options['scene_loader'] ) ) {
 			$ascene->setAttribute( 'vrodos-scene-loader', '' );

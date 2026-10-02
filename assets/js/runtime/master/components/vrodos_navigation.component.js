@@ -639,7 +639,7 @@ AFRAME.registerComponent('custom-movement', {
         return output;
     },
     requestJump: function (source) {
-        if (this.teleportTravel) return false;
+        if (this.teleportPaused || this.teleportTravel) return false;
         const settings = this.getSceneSettings();
         const movementDisabled = settings && (
             settings.movement_disabled === true ||
@@ -1515,7 +1515,7 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     handleHeightResetButtonDown: function (event) {
-        if (this.teleportTravel) return;
+        if (this.teleportPaused || this.teleportTravel) return;
         if (this.resetImmersiveHeight() && event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
@@ -5098,6 +5098,11 @@ AFRAME.registerComponent('custom-movement', {
             this.measureImmersiveSmoothness(smoothnessFrame, 'primeNavigationMs', this.ensureNavigationStatePrimed);
 
             if (this.tickTeleport(timeDelta)) return;
+
+            if (this.teleportPaused) {
+                this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', this.setNavigationWorldPosition, this.lastResolvedPosition);
+                return;
+            }
 
             const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {

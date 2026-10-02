@@ -1,5 +1,15 @@
 <!--Object property sections: shown inside the floating Object Controls panel on selection -->
 
+<div id="teleportPointProperties" class="object-property-section" style="display:none;">
+	<div class="prop-section-title">Teleport point</div>
+	<div class="prop-row">
+		<label for="teleport_point_name" class="prop-label">Destination name</label>
+		<input type="text" id="teleport_point_name" class="prop-input" maxlength="120"
+			placeholder="Temple entrance" aria-describedby="teleport_point_name_help" />
+	</div>
+	<p id="teleport_point_name_help" class="tw-text-xs tw-text-slate-400 tw-px-3 tw-pb-2">Shown in the published destination controls.</p>
+</div>
+
 <!-- Sun Properties -->
 <div id="popUpSunPropertiesDiv" class="object-property-section" style="display:none;">
 	<div class="prop-section-title">Sun Properties</div>

@@ -45,6 +45,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private int $diagnostic_collider_count = 0;
 	private int $current_project_id = 0;
 	private int $current_scene_id = 0;
+	private int $teleport_order = 0;
 
 	public function __construct( VRodos_Compiler_Runtime_Assets $runtime_assets, VRodos_Compiler_Scene_Repository $scene_repository, callable $normalize_url ) {
 		$this->runtime_assets   = $runtime_assets;
@@ -1033,6 +1034,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	 */
 	public function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
 		$this->reset_compile_diagnostics();
+		$this->teleport_order = 0;
 		$this->current_project_id = absint( $project_id );
 		$this->current_scene_id = absint( $scene_id );
 		$this->compile_camera_position = $this->extract_camera_position( $objects );
@@ -1237,6 +1239,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'id', 'teleport_' . sanitize_key( (string) $obj->uuid ) );
 		$entity->setAttribute( 'class', 'raycastable hideable' );
 		$entity->setAttribute( 'vrodos-teleport-point', '' );
+		$entity->setAttribute( 'data-vrodos-teleport-order', (string) ++$this->teleport_order );
+		$label = trim( (string) ( $obj->asset_name ?? '' ) );
+		$entity->setAttribute( 'data-vrodos-teleport-label', $this->sanitize_text_attr( '' !== $label ? $label : (string) $obj->name ) );
 		$entity->setAttribute( 'shadow', 'cast: false; receive: false' );
 		VRodos_Compiler_AFrame_DOM_Helper::apply_transform( $entity, $obj, true );
 		$ascene->appendChild( $entity );

@@ -36,6 +36,7 @@ export const testGroups = Object.freeze({
     "scripts/test-shared-model-textures.mjs",
     "scripts/test-navigation-math.mjs",
     "scripts/test-teleport-navigation.mjs",
+    "scripts/test-teleport-destinations.mjs",
     "scripts/test-camera-spawn.mjs",
     "scripts/test-assessment-runtime.mjs",
     "scripts/test-xr-exit-handoff.mjs",

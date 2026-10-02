@@ -15,17 +15,26 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         this.hovered = false;
         this.rejected = false;
         this.clearRejection = null;
+        this.order = Number(this.el.getAttribute('data-vrodos-teleport-order'));
+        this.label = this.el.getAttribute('data-vrodos-teleport-label');
         this.resources.listen(this.el, 'mouseenter', () => { this.hovered = true; this.updateColor(); });
         this.resources.listen(this.el, 'mouseleave', () => { this.hovered = false; this.updateColor(); });
         this.resources.listen(this.el, 'click', event => {
             if (event.detail?.originalEvent?.button !== undefined && event.detail.originalEvent.button !== 0) return;
-            const movement = this.getMovement();
-            if (!movement || !movement.canStartTeleport()) return;
-            this.el.object3D.updateWorldMatrix(true, false);
-            this.el.object3D.getWorldPosition(this.destination);
-            movement.renderedToAuthoredPosition(this.destination, this.destination);
-            if (!movement.teleportToPoint(this.destination, this.el)) this.showRejection();
+            this.activate();
         });
+        this.el.sceneEl.emit('vrodos-teleport-point-added', { point: this });
+    },
+
+    activate: function () {
+        const movement = this.getMovement();
+        if (!this.el.isConnected || !movement || !movement.canStartTeleport()) return false;
+        this.el.object3D.updateWorldMatrix(true, false);
+        this.el.object3D.getWorldPosition(this.destination);
+        movement.renderedToAuthoredPosition(this.destination, this.destination);
+        const started = movement.teleportToPoint(this.destination, this.el);
+        if (!started) this.showRejection();
+        return started;
     },
 
     getMovement: function () {
@@ -44,6 +53,7 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         if (this.clearRejection) this.clearRejection();
         this.rejected = true;
         this.updateColor();
+        this.el.sceneEl.emit('vrodos-teleport-point-rejected', { point: this });
         this.clearRejection = this.resources.timeout(() => {
             this.clearRejection = null;
             this.rejected = false;
@@ -52,6 +62,7 @@ AFRAME.registerComponent('vrodos-teleport-point', {
     },
 
     remove: function () {
+        this.el.sceneEl.emit('vrodos-teleport-point-removed', { point: this });
         const movement = this.getMovement();
         if (movement?.teleportTravel?.source === this.el) movement.cancelTeleport();
         this.el.removeObject3D('mesh');

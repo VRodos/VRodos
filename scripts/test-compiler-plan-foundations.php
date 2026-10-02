@@ -237,9 +237,17 @@ if ( class_exists( 'DOMDocument' ) ) {
 		$world = $renderer->get_or_create_authored_world_container( $teleport_dom, $teleport_scene );
 		$renderer->render_scene_objects( $teleport_dom, $teleport_scene, $teleport_assets, [ 'destination' => (object) [
 			'category_slug' => 'teleport-point', 'uuid' => 'destination',
+			'asset_name' => 'Temple "entrance" & gallery',
 			'position' => [ 8, 3, -4 ], 'rotation' => [ 0, M_PI / 2, 0 ], 'scale' => [ 2, 1, 2 ],
+		], 'second' => (object) [
+			'category_slug' => 'teleport-point', 'uuid' => 'second', 'asset_name' => 'Courtyard',
+			'position' => [ 1, 0, 2 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
 		] ], 1, 42, [ 'container' => $world, 'scene_settings' => [ 'vrRuntimeProfile' => $teleport_profile ] ] );
 		$teleport = ( new DOMXPath( $teleport_dom ) )->query( '//*[@vrodos-teleport-point]' )->item( 0 );
+		$second = ( new DOMXPath( $teleport_dom ) )->query( '//*[@vrodos-teleport-point]' )->item( 1 );
+		vrodos_foundation_assert( '1' === $teleport->getAttribute( 'data-vrodos-teleport-order' ) && '2' === $second->getAttribute( 'data-vrodos-teleport-order' ), "$teleport_profile numbers follow authoring order and reset per variant" );
+		vrodos_foundation_assert( 'Temple "entrance" & gallery' === $teleport->getAttribute( 'data-vrodos-teleport-label' ), 'authored display names reach the destination menu' );
+		vrodos_foundation_assert( str_contains( $teleport_dom->saveHTML(), '&amp; gallery' ), 'destination labels are escaped as HTML attributes' );
 		vrodos_foundation_assert( $teleport instanceof DOMElement && $teleport->parentNode === $world, "$teleport_profile teleport belongs to the authored world" );
 		vrodos_foundation_assert( '8 3 -4' === $teleport->getAttribute( 'position' ), 'teleport position is the authored floor destination' );
 		vrodos_foundation_assert( '0 90 0' === $teleport->getAttribute( 'rotation' ) && '2 1 2' === $teleport->getAttribute( 'scale' ), 'teleport appearance preserves authored transforms' );

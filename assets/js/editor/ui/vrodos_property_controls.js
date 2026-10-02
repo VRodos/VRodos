@@ -326,6 +326,11 @@ function displaySharedPropertySections(event, object) {
     let hasProperties = false;
 
     switch (vrodosGetEffectiveObjectCategory(object)) {
+        case 'teleport-point':
+            document.getElementById('teleportPointProperties').style.display = 'block';
+            _setEditorInputValue('teleport_point_name', object.asset_name);
+            hasProperties = true;
+            break;
         case '3d-text':
             VRODOS.ui.displayTextAssetProperties(object);
             hasProperties = true;
@@ -553,6 +558,7 @@ function initPersistentPropertyListeners() {
     bindPoiImageControls();
 
     bindPropEntries([
+        { id: 'teleport_point_name', prop: 'asset_name' },
         { id: 'poi_image_title_text', prop: 'poi_img_title' },
         { id: 'poi_image_desc_text', prop: 'poi_img_content' },
         { id: 'poi_chat_title', prop: 'poi_chat_title' },

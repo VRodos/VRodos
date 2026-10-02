@@ -162,6 +162,7 @@ export const runtimeBuildChunks = Object.freeze([
       'components/vrodos_navigation.component.js',
       'vrodos_teleport.js',
       'components/vrodos_teleport_point.component.js',
+      'components/vrodos_teleport_destinations.component.js',
       'components/vrodos_misc.component.js'
     ].map(masterSource)
   }
