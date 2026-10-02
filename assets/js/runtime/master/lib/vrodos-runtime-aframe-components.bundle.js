@@ -9102,9 +9102,10 @@
   window.VRODOSTeleport = {
     createMarker: function() {
       const group = new THREE.Group();
+      const accent = new THREE.MeshBasicMaterial({ color: "#14b8a6", side: THREE.DoubleSide, toneMapped: false });
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.38, 0.5, 48),
-        new THREE.MeshBasicMaterial({ color: "#14b8a6", side: THREE.DoubleSide, toneMapped: false })
+        accent
       );
       const center = new THREE.Mesh(
         new THREE.CircleGeometry(0.38, 48),
@@ -9113,6 +9114,18 @@
       for (const mesh of [ring, center]) {
         mesh.rotation.x = -Math.PI / 2;
         mesh.position.y = 0.025;
+      }
+      const pinTipHeight = 2.5;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 0.16), accent);
+      body.position.y = pinTipHeight + 0.45;
+      const tipGeometry = new THREE.ConeGeometry(0.22 / Math.SQRT2, 0.2, 4);
+      tipGeometry.rotateY(Math.PI / 4);
+      tipGeometry.rotateZ(Math.PI);
+      tipGeometry.scale(1, 1, 0.16 / 0.22);
+      const tip = new THREE.Mesh(tipGeometry, accent);
+      tip.position.y = pinTipHeight + 0.1;
+      for (const mesh of [ring, center, body, tip]) {
+        mesh.userData.teleportColorRole = mesh === center ? "center" : "accent";
         group.add(mesh);
       }
       return group;
@@ -9173,8 +9186,10 @@
       return (_a = this.el.sceneEl.querySelector("[custom-movement]")) == null ? void 0 : _a.components["custom-movement"];
     },
     updateColor: function() {
-      const colors = this.rejected ? ["#ef4444", "#991b1b"] : this.hovered ? ["#5eead4", "#14b8a6"] : ["#14b8a6", "#0f766e"];
-      this.marker.children.forEach((mesh, index) => mesh.material.color.set(colors[index]));
+      const colors = this.rejected ? { accent: "#ef4444", center: "#991b1b" } : this.hovered ? { accent: "#5eead4", center: "#14b8a6" } : { accent: "#14b8a6", center: "#0f766e" };
+      this.marker.traverse((mesh) => {
+        if (mesh.isMesh) mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+      });
     },
     showRejection: function() {
       if (this.clearRejection) this.clearRejection();

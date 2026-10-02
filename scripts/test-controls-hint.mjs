@@ -4,28 +4,39 @@ import vm from 'node:vm';
 import { parse } from 'espree';
 
 const source = readFileSync(new URL('../assets/js/runtime/components/vrodos_controls_hint.component.js', import.meta.url), 'utf8');
+const resourceSource = readFileSync(new URL('../assets/js/runtime/master/vrodos_runtime_resources.js', import.meta.url), 'utf8');
 function events(target = {}) {
     const listeners = new Map();
     return Object.assign(target, {
         addEventListener(type, handler) { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type).add(handler); },
         removeEventListener(type, handler) { listeners.get(type)?.delete(handler); },
-        emit(type) { for (const handler of listeners.get(type) || []) handler(); },
+        emit(type, detail = {}) {
+            const event = { target: this, preventDefault() { this.defaultPrevented = true; },
+                stopPropagation() { this.propagationStopped = true; }, ...detail };
+            for (const handler of listeners.get(type) || []) handler(event);
+            return event;
+        },
         listenerCount() { return [...listeners.values()].reduce((sum, set) => sum + set.size, 0); }
     });
 }
 function element(tagName = 'DIV') {
+    const attributes = new Map();
     return events({ tagName, children: [], hidden: false, style: {},
         append(...children) { children.forEach(child => { child.remove(); child.parent = this; this.children.push(child); }); },
+        get parentNode() { return this.parent; },
         replaceChildren() { this.children.forEach(child => { child.parent = null; }); this.children = []; },
         remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); this.parent = null; },
-        setAttribute() {}
+        setAttribute(name, value) { attributes.set(name, value); },
+        getAttribute(name) { return attributes.get(name) ?? null; },
+        contains(target) { return this === target || this.children.some(child => child.contains(target)); },
+        focus() { this.focused = true; }
     });
 }
 function fixture({ variants, hasLoaded = true } = {}) {
     let mode = 'inline', definition, load = Promise.resolve(true), collisions = true;
     const timers = new Map();
     let timerId = 0, vrShows = 0, vrVisible = false, modal = false;
-    const settings = { movement_disabled: false, navigationMode: 'walkable' };
+    const settings = { movement_disabled: false, navigationMode: 'walkable', vrRuntimeProfile: 'desktop' };
     const movement = { getNavigationMode: () => settings.navigationMode, areCollisionsEnabled: () => collisions };
     const scene = events({ hasLoaded, components: {},
         getAttribute: name => name === 'scene-settings' ? settings : name === 'data-vrodos-device-variants' && variants ? JSON.stringify(variants) : null,
@@ -34,7 +45,12 @@ function fixture({ variants, hasLoaded = true } = {}) {
     const document = events({ body: element('BODY'), head: element('HEAD'), fullscreenElement: null, createElement: tag => element(tag.toUpperCase()) });
     const window = events({
         location: { href: 'https://scene.test/clients/Master_Client_101.html?learner=QA#arrival', search: '?learner=QA', hash: '#arrival' },
-        setTimeout(callback, duration) { assert.equal(duration, 5000); timers.set(++timerId, callback); return timerId; },
+        setTimeout(callback, duration) {
+            assert.equal(duration, 5000);
+            const id = ++timerId;
+            timers.set(id, () => { timers.delete(id); callback(); });
+            return id;
+        },
         clearTimeout(id) { timers.delete(id); },
         VRODOSRuntimeOverlay: { getPresentationMode: () => mode, ensureSpatialUiRuntime: () => load, recordDiagnostic() {} },
         VRODOSSpatialUI: { prewarm: async () => true,
@@ -42,6 +58,7 @@ function fixture({ variants, hasLoaded = true } = {}) {
             hideControlsHint() { vrVisible = false; }
         }
     });
+    vm.runInNewContext(resourceSource, { window, console });
     vm.runInNewContext(source, { AFRAME: { registerComponent(name, value) { assert.equal(name, 'vrodos-controls-hint'); definition = value; } }, window, document, URL });
     const component = Object.assign({ el: scene, events: {} }, definition);
     component.init();
@@ -61,12 +78,49 @@ const automatic = fixture({ hasLoaded: false, variants: { desktop: 'Master_Clien
 assert.equal(automatic.document.body.children.length, 0, 'Device controls wait for scene readiness');
 automatic.scene.hasLoaded = true;
 automatic.scene.emit('loaded');
-assert.deepEqual(automatic.component.desktop.children.map(link => link.textContent), ['PC', 'Standalone VR', 'PCVR']);
-assert.equal(automatic.component.desktop.children[1].href, 'https://scene.test/clients/Master_Client_101_headset.html?learner=QA&vrodos_target=headset#arrival');
+assert.deepEqual(automatic.component.viewPanel.children.map(link => link.textContent), ['PC', 'Standalone VR', 'PCVR']);
+assert.equal(automatic.component.viewPanel.children[1].href, 'https://scene.test/clients/Master_Client_101_headset.html?learner=QA&vrodos_target=headset#arrival');
+assert.equal(automatic.component.viewPanel.children[0].getAttribute('aria-current'), 'page');
+assert.equal(automatic.component.viewPanel.hidden, true, 'View choices start collapsed');
+automatic.component.viewToggle.emit('click');
+assert.equal(automatic.component.viewPanel.hidden, false);
+assert.equal(automatic.component.viewToggle.getAttribute('aria-expanded'), 'true');
+automatic.component.viewToggle.emit('click');
+assert.equal(automatic.component.viewPanel.hidden, true, 'The same button closes view choices');
+automatic.component.viewToggle.emit('click');
+automatic.document.emit('pointerdown', { target: automatic.component.viewPanel.children[0] });
+assert.equal(automatic.component.viewPanel.hidden, false, 'Clicks inside the menu do not dismiss it');
+automatic.document.emit('keydown', { key: 'Escape' });
+assert.equal(automatic.component.viewPanel.hidden, true, 'Escape dismisses choices');
+assert(automatic.component.viewToggle.focused, 'Escape returns focus to the toggle');
+automatic.component.viewToggle.emit('click');
+automatic.document.emit('pointerdown', { target: automatic.document.body });
+assert.equal(automatic.component.viewPanel.hidden, true, 'An outside click dismisses choices');
+for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) {
+    assert(automatic.component.viewMenu.emit(type).propagationStopped, 'Menu interaction never reaches scene selection');
+}
 assert.equal(automatic.timers.size, 0, 'Inline device controls stay available');
+automatic.document.fullscreenElement = element('A-SCENE');
+automatic.mode('desktop-fullscreen');
+assert.equal(automatic.component.viewMenu.parent, automatic.document.fullscreenElement, 'Menu mounts inside the fullscreen host');
+automatic.component.viewToggle.emit('click');
+for (const callback of [...automatic.timers.values()]) callback();
+assert.equal(automatic.component.desktop.hidden, true, 'Timed help still disappears');
+assert.equal(automatic.component.viewMenu.hidden, false, 'View-mode toggle remains after help expires');
+assert.equal(automatic.component.viewPanel.hidden, false, 'An open view menu remains after help expires');
 automatic.mode('immersive-xr');
-assert.equal(automatic.component.desktop.hidden, true, 'Device DOM controls stay outside immersive presentation');
+assert.equal(automatic.component.viewMenu.hidden, true, 'Device DOM controls stay outside immersive presentation');
+automatic.document.fullscreenElement = null;
+automatic.mode('inline');
+assert.equal(automatic.component.viewMenu.hidden, false, 'View-mode toggle returns after XR exit');
+assert.equal(automatic.component.viewPanel.hidden, true, 'XR exit restores collapsed choices');
+const ownedMenu = automatic.component.viewMenu;
 automatic.component.remove();
+assert.equal(ownedMenu.listenerCount(), 0, 'Menu listeners are released with their owner');
+
+const singleVariant = fixture({ variants: { desktop: 'Master_Client_101.html' } });
+assert.equal(singleVariant.component.viewMenu, undefined, 'A single published modality needs no selector');
+singleVariant.component.remove();
 
 const desktop = fixture();
 assert.equal(desktop.document.body.children.length, 0, 'Inline scenes must not show hints');

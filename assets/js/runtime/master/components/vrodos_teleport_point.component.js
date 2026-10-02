@@ -33,9 +33,11 @@ AFRAME.registerComponent('vrodos-teleport-point', {
     },
 
     updateColor: function () {
-        const colors = this.rejected ? ['#ef4444', '#991b1b']
-            : this.hovered ? ['#5eead4', '#14b8a6'] : ['#14b8a6', '#0f766e'];
-        this.marker.children.forEach((mesh, index) => mesh.material.color.set(colors[index]));
+        const colors = this.rejected ? { accent: '#ef4444', center: '#991b1b' }
+            : this.hovered ? { accent: '#5eead4', center: '#14b8a6' } : { accent: '#14b8a6', center: '#0f766e' };
+        this.marker.traverse(mesh => {
+            if (mesh.isMesh) mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+        });
     },
 
     showRejection: function () {

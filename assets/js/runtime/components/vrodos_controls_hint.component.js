@@ -19,17 +19,28 @@
 
     AFRAME.registerComponent('vrodos-controls-hint', {
         init: function () {
+            this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
             this.hostFullscreen = false;
             this.mode = null;
             this.generation = 0;
-            this.timeout = 0;
+            this.timeout = null;
             this.removed = false;
             this.syncPresentation = this.syncPresentation.bind(this);
             this.onPageHide = this.hide.bind(this);
             this.sceneEventNames = ['loaded', 'enter-vr', 'exit-vr', 'vrodos-scene-loader-ready'];
-            this.sceneEventNames.forEach((event) => this.el.addEventListener(event, this.syncPresentation));
-            document.addEventListener('fullscreenchange', this.syncPresentation);
-            window.addEventListener('pagehide', this.onPageHide);
+            this.sceneEventNames.forEach((event) => this.resources.listen(this.el, event, this.syncPresentation));
+            this.resources.listen(document, 'fullscreenchange', this.syncPresentation);
+            this.resources.listen(window, 'pagehide', this.onPageHide);
+            this.resources.listen(document, 'pointerdown', event => {
+                if (this.viewMenu && !this.viewMenu.contains(event.target)) this.setViewMenuOpen(false);
+            });
+            this.resources.listen(document, 'keydown', event => {
+                if (event.key === 'Escape' && this.viewPanel && !this.viewPanel.hidden) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.setViewMenuOpen(false, true);
+                }
+            });
             this.syncPresentation();
         },
 
@@ -78,13 +89,13 @@
                 : this.hostFullscreen ? 'desktop-fullscreen' : presentation;
             const nextMode = ready ? mode : 'inline';
             if (nextMode === this.mode) {
-                if (ready && nextMode === 'inline' && this.el.getAttribute('data-vrodos-device-variants') && (!this.desktop || this.desktop.hidden)) this.showDesktop([]);
+                if (ready && nextMode !== 'immersive-xr') this.showViewMenu();
                 return;
             }
             this.hide();
             this.mode = nextMode;
+            if (ready && nextMode !== 'immersive-xr') this.showViewMenu();
             if (nextMode === 'inline') {
-                if (ready && this.el.getAttribute('data-vrodos-device-variants')) this.showDesktop([]);
                 return;
             }
             const generation = this.generation;
@@ -109,11 +120,12 @@
         },
 
         startTimer: function () {
-            this.timeout = window.setTimeout(() => this.hide(), 5000);
+            if (this.timeout) this.timeout();
+            this.timeout = this.resources.timeout(() => this.hideHints(), 5000);
         },
 
-        showDesktop: function (items) {
-            if (!this.desktop) {
+        ensureDesktopStyle: function () {
+            if (!this.style) {
                 this.style = document.createElement('style');
                 this.style.textContent = `
 .vrodos-controls-hint { position:fixed; left:50%; bottom:clamp(22px,3vw,40px); z-index:10000; display:flex; justify-content:center; flex-wrap:wrap; gap:8px; width:max-content; max-width:calc(100% - 24px); transform:translateX(-50%); pointer-events:none; font-family:"Segoe UI",sans-serif; }
@@ -122,8 +134,81 @@
 .vrodos-controls-hint__keys { display:inline-flex; gap:3px; }
 .vrodos-controls-hint__keys svg { display:block; width:26px; height:26px; }
 .vrodos-controls-hint kbd { min-width:21px; height:21px; padding:0 3px; box-sizing:border-box; display:grid; place-items:center; border:1px solid rgb(255 255 255 / 46%); border-radius:5px; background:rgb(255 255 255 / 8%); box-shadow:inset 0 -1px 0 rgb(255 255 255 / 16%); color:#fff; font:inherit; font-size:10px; font-weight:760; }
+.vrodos-view-mode { position:fixed; left:max(16px,env(safe-area-inset-left)); bottom:max(16px,env(safe-area-inset-bottom)); z-index:10000; font-family:"Segoe UI",sans-serif; color:#fff; }
+.vrodos-view-mode[hidden], .vrodos-view-mode__panel[hidden] { display:none; }
+.vrodos-view-mode__toggle, .vrodos-view-mode__panel { box-sizing:border-box; border:1px solid rgb(255 255 255 / 20%); border-radius:12px; background:rgb(18 24 32 / 65%); box-shadow:0 10px 28px rgb(0 0 0 / 16%); backdrop-filter:blur(10px) saturate(1.2); }
+.vrodos-view-mode__toggle { min-height:44px; padding:12px 16px; display:flex; align-items:center; gap:14px; color:inherit; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+.vrodos-view-mode__toggle::after { content:""; width:6px; height:6px; border-top:2px solid currentColor; border-left:2px solid currentColor; transform:rotate(45deg); }
+.vrodos-view-mode__toggle[aria-expanded="true"]::after { transform:rotate(225deg); }
+.vrodos-view-mode__panel { position:absolute; left:0; bottom:calc(100% + 8px); display:flex; flex-direction:column; gap:4px; padding:6px; width:min(220px,calc(100vw - 32px)); max-height:60vh; overflow:auto; }
+.vrodos-view-mode__option { min-height:44px; box-sizing:border-box; display:flex; align-items:center; padding:10px 12px; border-radius:8px; color:inherit; font-size:13px; font-weight:650; text-decoration:none; }
+.vrodos-view-mode__option:hover { background:rgb(255 255 255 / 12%); }
+.vrodos-view-mode__option[aria-current="page"] { background:rgb(20 184 166 / 25%); }
+.vrodos-view-mode__option[aria-current="page"]::after { content:"✓"; margin-left:auto; padding-left:12px; }
+.vrodos-view-mode__toggle:focus-visible, .vrodos-view-mode__option:focus-visible { outline:2px solid #5eead4; outline-offset:2px; }
 `;
                 document.head.append(this.style);
+            }
+        },
+
+        getDesktopHost: function () {
+            const fullscreen = document.fullscreenElement;
+            return fullscreen && !['CANVAS', 'IFRAME'].includes(fullscreen.tagName) ? fullscreen : document.body;
+        },
+
+        showViewMenu: function () {
+            const variants = Object.entries(JSON.parse(this.el.getAttribute('data-vrodos-device-variants') || '{}'));
+            if (variants.length < 2) return;
+            this.ensureDesktopStyle();
+            if (!this.viewMenu) {
+                this.viewMenu = document.createElement('div');
+                this.viewMenu.className = 'vrodos-view-mode';
+                this.viewToggle = document.createElement('button');
+                this.viewToggle.type = 'button';
+                this.viewToggle.className = 'vrodos-view-mode__toggle';
+                this.viewToggle.textContent = 'View mode';
+                this.viewToggle.setAttribute('aria-controls', 'vrodos-view-mode-options');
+                this.viewPanel = document.createElement('div');
+                this.viewPanel.id = 'vrodos-view-mode-options';
+                this.viewPanel.className = 'vrodos-view-mode__panel';
+                this.viewPanel.setAttribute('role', 'group');
+                this.viewPanel.setAttribute('aria-label', 'View mode');
+                const currentProfile = this.el.getAttribute('scene-settings').vrRuntimeProfile;
+                variants.forEach(([profile, filename]) => {
+                    const link = document.createElement('a');
+                    const url = new URL(filename, window.location.href);
+                    url.search = window.location.search;
+                    url.searchParams.set('vrodos_target', profile);
+                    url.hash = window.location.hash;
+                    link.href = url.href;
+                    link.textContent = { desktop: 'PC', headset: 'Standalone VR', 'pc-rendered-vr': 'PCVR' }[profile];
+                    link.className = 'vrodos-view-mode__option';
+                    if (profile === currentProfile) link.setAttribute('aria-current', 'page');
+                    this.viewPanel.append(link);
+                });
+                this.viewMenu.append(this.viewToggle, this.viewPanel);
+                this.setViewMenuOpen(false);
+                this.resources.listen(this.viewToggle, 'click', () => this.setViewMenuOpen(this.viewPanel.hidden));
+                this.resources.listen(this.viewPanel, 'click', () => this.setViewMenuOpen(false));
+                ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend', 'wheel'].forEach(type => {
+                    this.resources.listen(this.viewMenu, type, event => event.stopPropagation());
+                });
+            }
+            const host = this.getDesktopHost();
+            if (this.viewMenu.parentNode !== host) host.append(this.viewMenu);
+            this.viewMenu.hidden = false;
+        },
+
+        setViewMenuOpen: function (open, restoreFocus) {
+            if (!this.viewPanel) return;
+            this.viewPanel.hidden = !open;
+            this.viewToggle.setAttribute('aria-expanded', String(open));
+            if (restoreFocus) this.viewToggle.focus();
+        },
+
+        showDesktop: function (items) {
+            this.ensureDesktopStyle();
+            if (!this.desktop) {
                 this.desktop = document.createElement('div');
                 this.desktop.className = 'vrodos-controls-hint';
                 this.desktop.setAttribute('role', 'status');
@@ -152,44 +237,34 @@
                 pill.append(keys, label);
                 this.desktop.append(pill);
             });
-            const variants = JSON.parse(this.el.getAttribute('data-vrodos-device-variants') || '{}');
-            Object.entries(variants).forEach(([profile, filename]) => {
-                const link = document.createElement('a');
-                const url = new URL(filename, window.location.href);
-                url.search = window.location.search;
-                url.searchParams.set('vrodos_target', profile);
-                url.hash = window.location.hash;
-                link.href = url.href;
-                link.textContent = { desktop: 'PC', headset: 'Standalone VR', 'pc-rendered-vr': 'PCVR' }[profile];
-                link.className = 'vrodos-controls-hint__pill';
-                link.style.pointerEvents = 'auto';
-                this.desktop.append(link);
-            });
-            const fullscreen = document.fullscreenElement;
-            const host = fullscreen && !['CANVAS', 'IFRAME'].includes(fullscreen.tagName) ? fullscreen : document.body;
-            host.append(this.desktop);
+            this.getDesktopHost().append(this.desktop);
             this.desktop.hidden = false;
         },
 
-        hide: function () {
+        hideHints: function () {
             this.generation += 1;
-            window.clearTimeout(this.timeout);
-            this.timeout = 0;
+            if (this.timeout) this.timeout();
+            this.timeout = null;
             if (this.desktop) this.desktop.hidden = true;
             window.VRODOSSpatialUI?.hideControlsHint();
+        },
+
+        hide: function () {
+            this.hideHints();
+            this.setViewMenuOpen(false);
+            if (this.viewMenu) this.viewMenu.hidden = true;
         },
 
         remove: function () {
             this.removed = true;
             this.hide();
-            this.sceneEventNames.forEach((event) => this.el.removeEventListener(event, this.syncPresentation));
-            document.removeEventListener('fullscreenchange', this.syncPresentation);
-            window.removeEventListener('pagehide', this.onPageHide);
+            this.resources.disposeAll();
             if (this.fullscreenCanvas && this.fullscreenCanvas.requestFullscreen === this.requestSceneFullscreen) {
                 if (this.fullscreenDescriptor) Object.defineProperty(this.fullscreenCanvas, 'requestFullscreen', this.fullscreenDescriptor);
                 else delete this.fullscreenCanvas.requestFullscreen;
             }
             this.desktop?.remove();
+            this.viewMenu?.remove();
             this.style?.remove();
         }
     });

@@ -18,7 +18,8 @@ const context = {
     AFRAME: { registerComponent: (name, definition) => { definitions[name] = definition; } }
 };
 vm.createContext(context);
-for (const file of ['vrodos_runtime_resources.js', 'vrodos_teleport.js', 'components/vrodos_navigation.component.js']) {
+for (const file of ['vrodos_runtime_resources.js', 'vrodos_teleport.js', 'components/vrodos_navigation.component.js',
+    'components/vrodos_teleport_point.component.js']) {
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master', file), 'utf8'), context, { filename: file });
 }
 const Teleport = context.window.VRODOSTeleport;
@@ -218,5 +219,68 @@ loading.scene.components['vrodos-scene-loader'].isReady = true;
 context.window.VRODOSRuntimeOverlay = { interactionLocked: true };
 assert.equal(loading.nav.teleportToPoint(point(3, 0, 0)), false, 'modal interactions block teleporting');
 context.window.VRODOSRuntimeOverlay = null;
+
+// Visible pin and floor surfaces all forward the marker's authored origin, never the hit point.
+const markerNavigation = fixture();
+markerNavigation.scene.querySelector = selector => selector === '[custom-movement]' ? markerNavigation.player : markerNavigation.world;
+const markerListeners = new Map();
+const markerElement = {
+    isConnected: true, object3D: new THREE.Group(), sceneEl: markerNavigation.scene, components: {},
+    setObject3D(_name, object) { this.object3D.add(object); },
+    removeObject3D() { this.object3D.clear(); },
+    addEventListener(type, callback) { markerListeners.set(type, callback); },
+    removeEventListener(type) { markerListeners.delete(type); }
+};
+markerElement.object3D.position.set(3, 2, -4);
+markerElement.object3D.rotation.y = 0.4;
+markerElement.object3D.scale.set(1.5, 1.2, 1.5);
+markerNavigation.world.object3D.add(markerElement.object3D);
+const markerComponent = Object.assign(Object.create(definitions['vrodos-teleport-point']), { el: markerElement });
+markerElement.components['vrodos-teleport-point'] = markerComponent;
+markerComponent.init();
+const [ring, center, body, tip] = markerComponent.marker.children;
+body.geometry.computeBoundingBox();
+tip.geometry.computeBoundingBox();
+const bodyBounds = body.geometry.boundingBox.clone().translate(body.position);
+const tipBounds = tip.geometry.boundingBox.clone().translate(tip.position);
+assert(Math.abs(bodyBounds.max.y - 3.2) < 1e-6 && Math.abs(tipBounds.min.y - 2.5) < 1e-6,
+    'the 70 cm pin hovers above eye level, 2.5 m above the authored floor');
+assert(Math.abs(bodyBounds.max.x - bodyBounds.min.x - 0.22) < 1e-6, 'pin is 22 cm wide');
+const raycaster = new THREE.Raycaster();
+for (const [mesh, localTarget, direction] of [
+    [ring, point(0.44, 0, 0), point(0, -1, 0)],
+    [center, point(0.25, 0, 0), point(0, -1, 0)],
+    [body, point(0, 0, 0), point(0, 0, -1)],
+    [tip, point(0, 0, 0), point(0, 0, -1)]
+]) {
+    markerElement.object3D.updateWorldMatrix(true, true);
+    const target = mesh.localToWorld(localTarget);
+    raycaster.set(target.clone().addScaledVector(direction, -4), direction);
+    const hit = raycaster.intersectObject(markerElement.object3D, true)[0];
+    assert(hit && hit.object === mesh, 'the visible pin and floor each have their own clickable surface');
+    markerListeners.get('click')({ detail: { intersection: hit } });
+    assert(markerNavigation.nav.teleportTravel, 'clicking a marker surface starts travel');
+    markerNavigation.nav.tickTeleport(markerNavigation.nav.teleportTravel.duration);
+    near(markerNavigation.nav.getNavigationWorldPosition(), point(3, 3.6, -4), 'all surfaces use the floor origin despite appearance transforms');
+    markerNavigation.nav.setNavigationWorldPosition(point(0, 1.6, 0));
+    markerNavigation.nav.lastResolvedPosition.set(0, 1.6, 0);
+}
+function assertMarkerColors(accent, centerColor) {
+    markerComponent.marker.traverse(mesh => {
+        if (mesh.isMesh) assert.equal(mesh.material.color.getHexString(), mesh.userData.teleportColorRole === 'center' ? centerColor : accent);
+    });
+}
+markerListeners.get('mouseenter')();
+assertMarkerColors('5eead4', '14b8a6');
+markerComponent.showRejection();
+assertMarkerColors('ef4444', '991b1b');
+timers.get(timerId)();
+assertMarkerColors('5eead4', '14b8a6');
+markerListeners.get('mouseleave')();
+assertMarkerColors('14b8a6', '0f766e');
+markerListeners.get('click')({ detail: {} });
+markerComponent.remove();
+assert.equal(markerNavigation.nav.teleportTravel, null, 'removing a pin cancels travel from the component');
+near(markerNavigation.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'pin removal restores the starting position');
 
 console.log('Teleport navigation acceptance tests passed.');
