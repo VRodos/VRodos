@@ -9170,6 +9170,46 @@
       group.add(shadow);
       return group;
     },
+    createHoverPillar: function() {
+      const geometry = new THREE.CylinderGeometry(1.4, 0.72, 60, 48, 1, true);
+      geometry.translate(0, 30, 0);
+      const material = new THREE.ShaderMaterial({
+        uniforms: { color: { value: new THREE.Color("#5eead4") } },
+        vertexShader: `
+                varying float height;
+                varying vec3 viewNormal;
+                varying vec3 viewPosition;
+                void main() {
+                    height = uv.y;
+                    viewNormal = normalMatrix * normal;
+                    vec4 positionView = modelViewMatrix * vec4(position, 1.0);
+                    viewPosition = -positionView.xyz;
+                    gl_Position = projectionMatrix * positionView;
+                }`,
+        fragmentShader: `
+                uniform vec3 color;
+                varying float height;
+                varying vec3 viewNormal;
+                varying vec3 viewPosition;
+                void main() {
+                    float facing = abs(dot(normalize(viewNormal), normalize(viewPosition)));
+                    float fade = 1.0 - smoothstep(0.4, 1.0, height);
+                    gl_FragColor = vec4(color, 0.28 * facing * facing * fade);
+                    #include <colorspace_fragment>
+                }`,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        toneMapped: false
+      });
+      const pillar = new THREE.Mesh(geometry, material);
+      pillar.name = "TeleportHoverPillar";
+      pillar.visible = false;
+      pillar.renderOrder = 50;
+      pillar.raycast = () => null;
+      return pillar;
+    },
     createGroundProbe: function() {
       return {
         raycaster: new THREE.Raycaster(),
@@ -9239,6 +9279,8 @@
         }
       });
       this.el.setObject3D("mesh", this.marker);
+      this.center = this.marker.children.find((mesh) => mesh.userData.teleportColorRole === "center");
+      this.pillarPosition = new THREE.Vector3();
       this.destination = new THREE.Vector3();
       this.lastGroundUpdate = -Infinity;
       this.lastGroundOrigin = new THREE.Vector3(Infinity, Infinity, Infinity);
@@ -9261,10 +9303,12 @@
       this.resources.listen(this.el, "mouseenter", () => {
         this.hovered = true;
         this.updateColor();
+        this.updateHoverPillar();
       });
       this.resources.listen(this.el, "mouseleave", () => {
         this.hovered = false;
         this.updateColor();
+        this.updateHoverPillar();
       });
       this.resources.listen(this.el, "click", (event) => {
         var _a, _b;
@@ -9274,6 +9318,10 @@
       this.el.sceneEl.emit("vrodos-teleport-point-added", { point: this });
     },
     tick: function(time) {
+      this.updateGroundProjection(time);
+      this.updateHoverPillar();
+    },
+    updateGroundProjection: function(time) {
       if (time - this.lastGroundUpdate < 250) return;
       this.lastGroundUpdate = time;
       const loader = this.el.sceneEl.components["vrodos-scene-loader"];
@@ -9305,14 +9353,42 @@
       movement.renderedToAuthoredPosition(this.destination, this.destination);
       const started = movement.teleportToPoint(this.destination, this.el);
       if (!started) this.showRejection();
+      this.updateHoverPillar();
       return started;
     },
     getMovement: function() {
       var _a;
       return (_a = this.el.sceneEl.querySelector("[custom-movement]")) == null ? void 0 : _a.components["custom-movement"];
     },
+    setMenuHovered: function(hovered) {
+      this.menuHovered = hovered;
+      this.updateColor();
+      this.updateHoverPillar();
+    },
+    updateHoverPillar: function() {
+      var _a, _b;
+      const scene = this.el.sceneEl;
+      const movement = this.getMovement();
+      const loader = scene.components["vrodos-scene-loader"];
+      const ownPanel = (_a = scene.components["vrodos-teleport-destinations"]) == null ? void 0 : _a.panel;
+      const visible = Boolean((this.hovered || this.menuHovered) && scene.hasLoaded && (!loader || loader.isReady) && movement && !movement.teleportTravel && (!((_b = window.VRODOSRuntimeOverlay) == null ? void 0 : _b.interactionLocked) || this.menuHovered && ownPanel));
+      if (visible && !this.pillar) {
+        this.pillar = window.VRODOSTeleport.createHoverPillar();
+        this.resources.track(this.pillar.geometry);
+        this.resources.track(this.pillar.material);
+        scene.object3D.add(this.pillar);
+      }
+      if (!this.pillar) return;
+      this.pillar.visible = visible;
+      if (!visible) return;
+      this.center.updateWorldMatrix(true, false);
+      this.center.getWorldPosition(this.pillarPosition);
+      scene.object3D.worldToLocal(this.pillarPosition);
+      this.pillar.position.copy(this.pillarPosition);
+      this.pillar.material.uniforms.color.value.set(this.rejected ? "#ef4444" : "#5eead4");
+    },
     updateColor: function() {
-      const colors = this.rejected ? { accent: "#ef4444", center: "#991b1b" } : this.hovered ? { accent: "#5eead4", center: "#14b8a6" } : { accent: "#14b8a6", center: "#0f766e" };
+      const colors = this.rejected ? { accent: "#ef4444", center: "#991b1b" } : this.hovered || this.menuHovered ? { accent: "#5eead4", center: "#14b8a6" } : { accent: "#14b8a6", center: "#0f766e" };
       this.marker.traverse((mesh) => {
         if (mesh.isMesh && mesh.userData.teleportColorRole !== "shadow") {
           mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
@@ -9330,12 +9406,19 @@
         this.updateColor();
       }, 600);
     },
+    pause: function() {
+      this.hovered = false;
+      this.menuHovered = false;
+      if (this.pillar) this.pillar.visible = false;
+    },
     remove: function() {
-      var _a;
+      var _a, _b;
+      this.pause();
       this.el.sceneEl.emit("vrodos-teleport-point-removed", { point: this });
       const movement = this.getMovement();
       if (((_a = movement == null ? void 0 : movement.teleportTravel) == null ? void 0 : _a.source) === this.el) movement.cancelTeleport();
       this.el.removeObject3D("mesh");
+      (_b = this.pillar) == null ? void 0 : _b.removeFromParent();
       this.resources.disposeAll();
     }
   });
@@ -9376,6 +9459,7 @@
       this.refreshPoints();
     },
     unregisterPoint: function(point) {
+      if (this.previewPoint === point) this.setPreviewPoint(null);
       this.points.delete(point);
       if (this.rejectedPoint === point) this.rejectedPoint = null;
       this.refreshPoints();
@@ -9420,12 +9504,18 @@
       if (this.removed) return;
       this.movement = (_a = this.el.querySelector("[custom-movement]")) == null ? void 0 : _a.components["custom-movement"];
       if (!this.isImmersive()) this.closePanel("presentation-change");
+      else if (!this.panel) {
+        this.pointerPoint = null;
+        this.focusedPoint = null;
+        this.setPreviewPoint(null);
+      }
       if (!this.desktop) return;
       const fullscreen = document.fullscreenElement;
       const host = fullscreen && !["CANVAS", "IFRAME"].includes(fullscreen.tagName) ? fullscreen : document.body;
       if (this.desktop.parentNode !== host) host.append(this.desktop);
       this.desktop.hidden = !this.isReady() || this.isImmersive() || !this.points.size;
       this.updateAvailability();
+      this.syncDesktopPreview();
     },
     // Observe cached navigation state, without searching the scene every frame.
     tick: function() {
@@ -9439,6 +9529,21 @@
       (_a = this.buttons) == null ? void 0 : _a.forEach((button) => {
         button.disabled = !available;
       });
+      this.syncDesktopPreview();
+    },
+    setPreviewPoint: function(point) {
+      var _a;
+      if (this.previewPoint === point) return;
+      (_a = this.previewPoint) == null ? void 0 : _a.setMenuHovered(false);
+      this.previewPoint = point;
+      point == null ? void 0 : point.setMenuHovered(true);
+    },
+    syncDesktopPreview: function() {
+      if (!this.desktop || this.isImmersive()) return;
+      const point = !this.desktop.hidden && this.canActivate() ? this.pointerPoint || this.focusedPoint : null;
+      this.setPreviewPoint(point);
+      this.tooltip.textContent = point ? point.label : "";
+      this.tooltip.hidden = !point;
     },
     renderDesktop: function() {
       if (!this.desktop && !this.points.size) return;
@@ -9475,11 +9580,14 @@
         });
         ["mouseover", "focusin"].forEach((type) => this.resources.listen(this.desktop, type, (event) => {
           const point = pointForEvent(event);
-          this.tooltip.textContent = point ? `${point.order}. ${point.label}` : "";
-          this.tooltip.hidden = !point;
+          if (type === "mouseover") this.pointerPoint = point;
+          else this.focusedPoint = point;
+          this.syncDesktopPreview();
         }));
         ["mouseleave", "focusout"].forEach((type) => this.resources.listen(this.desktop, type, () => {
-          this.tooltip.hidden = true;
+          if (type === "mouseleave") this.pointerPoint = null;
+          else this.focusedPoint = null;
+          this.syncDesktopPreview();
         }));
         ["pointerdown", "pointerup", "mousedown", "mouseup", "click", "dblclick", "touchstart", "touchend", "wheel", "keydown", "keyup"].forEach((type) => {
           this.resources.listen(this.desktop, type, (event) => event.stopPropagation());
@@ -9495,6 +9603,9 @@
         return button;
       });
       this.list.replaceChildren(...this.buttons);
+      this.pointerPoint = null;
+      this.focusedPoint = null;
+      this.setPreviewPoint(null);
       this.tooltip.hidden = true;
       this.available = null;
       this.updateAvailability();
@@ -9526,6 +9637,7 @@
           borderWidth: 0,
           render: (api) => this.renderPanel(api),
           cleanup: () => {
+            this.setPreviewPoint(null);
             this.panel = null;
             this.spatialButtons = null;
           }
@@ -9537,6 +9649,7 @@
       }
     },
     renderPanel: function(api) {
+      this.setPreviewPoint(null);
       api.frame({
         title: "Destinations",
         titleSize: 32,
@@ -9555,6 +9668,10 @@
           height: 68,
           fontSize: 26,
           variant: point === this.rejectedPoint ? "negative" : "secondary",
+          onHoverChange: (hovered) => {
+            if (hovered && this.panel === api) this.setPreviewPoint(point);
+            else if (!hovered && this.previewPoint === point) this.setPreviewPoint(null);
+          },
           onClick: (event) => {
             event == null ? void 0 : event.stopPropagation();
             this.selectDestination(point);
@@ -9622,6 +9739,7 @@
       }
     },
     closePanel: function(reason) {
+      this.setPreviewPoint(null);
       this.generation++;
       this.opening = false;
       if (this.panel) this.panel.close(reason);
@@ -9634,6 +9752,8 @@
     },
     pause: function() {
       this.paused = true;
+      this.pointerPoint = null;
+      this.focusedPoint = null;
       this.closePanel("pause");
       if (this.desktop) this.desktop.hidden = true;
     },

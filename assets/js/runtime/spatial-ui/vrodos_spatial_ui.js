@@ -2369,7 +2369,8 @@ import { MSDF } from "@zappar/msdf-generator";
                 flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 0,
                 pointerEvents: disabled ? "none" : "auto",
                 zIndex: opts.zIndex || 30,
-                onClick: disabled ? undefined : opts.onClick
+                onClick: disabled ? undefined : opts.onClick,
+                onHoverChange: disabled ? undefined : opts.onHoverChange
             });
         }
 

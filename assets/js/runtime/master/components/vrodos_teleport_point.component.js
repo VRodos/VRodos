@@ -11,6 +11,8 @@ AFRAME.registerComponent('vrodos-teleport-point', {
             }
         });
         this.el.setObject3D('mesh', this.marker);
+        this.center = this.marker.children.find(mesh => mesh.userData.teleportColorRole === 'center');
+        this.pillarPosition = new THREE.Vector3();
         this.destination = new THREE.Vector3();
         this.lastGroundUpdate = -Infinity;
         this.lastGroundOrigin = new THREE.Vector3(Infinity, Infinity, Infinity);
@@ -29,8 +31,8 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         this.clearRejection = null;
         this.order = Number(this.el.getAttribute('data-vrodos-teleport-order'));
         this.label = this.el.getAttribute('data-vrodos-teleport-label');
-        this.resources.listen(this.el, 'mouseenter', () => { this.hovered = true; this.updateColor(); });
-        this.resources.listen(this.el, 'mouseleave', () => { this.hovered = false; this.updateColor(); });
+        this.resources.listen(this.el, 'mouseenter', () => { this.hovered = true; this.updateColor(); this.updateHoverPillar(); });
+        this.resources.listen(this.el, 'mouseleave', () => { this.hovered = false; this.updateColor(); this.updateHoverPillar(); });
         this.resources.listen(this.el, 'click', event => {
             if (event.detail?.originalEvent?.button !== undefined && event.detail.originalEvent.button !== 0) return;
             this.activate();
@@ -39,6 +41,11 @@ AFRAME.registerComponent('vrodos-teleport-point', {
     },
 
     tick: function (time) {
+        this.updateGroundProjection(time);
+        this.updateHoverPillar();
+    },
+
+    updateGroundProjection: function (time) {
         if (time - this.lastGroundUpdate < 250) return;
         this.lastGroundUpdate = time;
         const loader = this.el.sceneEl.components['vrodos-scene-loader'];
@@ -73,6 +80,7 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         movement.renderedToAuthoredPosition(this.destination, this.destination);
         const started = movement.teleportToPoint(this.destination, this.el);
         if (!started) this.showRejection();
+        this.updateHoverPillar();
         return started;
     },
 
@@ -80,9 +88,39 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         return this.el.sceneEl.querySelector('[custom-movement]')?.components['custom-movement'];
     },
 
+    setMenuHovered: function (hovered) {
+        this.menuHovered = hovered;
+        this.updateColor();
+        this.updateHoverPillar();
+    },
+
+    updateHoverPillar: function () {
+        const scene = this.el.sceneEl;
+        const movement = this.getMovement();
+        const loader = scene.components['vrodos-scene-loader'];
+        const ownPanel = scene.components['vrodos-teleport-destinations']?.panel;
+        const visible = Boolean((this.hovered || this.menuHovered) && scene.hasLoaded &&
+            (!loader || loader.isReady) && movement && !movement.teleportTravel &&
+            (!window.VRODOSRuntimeOverlay?.interactionLocked || (this.menuHovered && ownPanel)));
+        if (visible && !this.pillar) {
+            this.pillar = window.VRODOSTeleport.createHoverPillar();
+            this.resources.track(this.pillar.geometry);
+            this.resources.track(this.pillar.material);
+            scene.object3D.add(this.pillar);
+        }
+        if (!this.pillar) return;
+        this.pillar.visible = visible;
+        if (!visible) return;
+        this.center.updateWorldMatrix(true, false);
+        this.center.getWorldPosition(this.pillarPosition);
+        scene.object3D.worldToLocal(this.pillarPosition);
+        this.pillar.position.copy(this.pillarPosition);
+        this.pillar.material.uniforms.color.value.set(this.rejected ? '#ef4444' : '#5eead4');
+    },
+
     updateColor: function () {
         const colors = this.rejected ? { accent: '#ef4444', center: '#991b1b' }
-            : this.hovered ? { accent: '#5eead4', center: '#14b8a6' } : { accent: '#14b8a6', center: '#0f766e' };
+            : this.hovered || this.menuHovered ? { accent: '#5eead4', center: '#14b8a6' } : { accent: '#14b8a6', center: '#0f766e' };
         this.marker.traverse(mesh => {
             if (mesh.isMesh && mesh.userData.teleportColorRole !== 'shadow') {
                 mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
@@ -102,11 +140,19 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         }, 600);
     },
 
+    pause: function () {
+        this.hovered = false;
+        this.menuHovered = false;
+        if (this.pillar) this.pillar.visible = false;
+    },
+
     remove: function () {
+        this.pause();
         this.el.sceneEl.emit('vrodos-teleport-point-removed', { point: this });
         const movement = this.getMovement();
         if (movement?.teleportTravel?.source === this.el) movement.cancelTeleport();
         this.el.removeObject3D('mesh');
+        this.pillar?.removeFromParent();
         this.resources.disposeAll();
     }
 });

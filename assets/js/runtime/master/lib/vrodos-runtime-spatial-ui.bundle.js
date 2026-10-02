@@ -18104,7 +18104,8 @@
           flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 0,
           pointerEvents: disabled ? "none" : "auto",
           zIndex: opts.zIndex || 30,
-          onClick: disabled ? void 0 : opts.onClick
+          onClick: disabled ? void 0 : opts.onClick,
+          onHoverChange: disabled ? void 0 : opts.onHoverChange
         });
       }
       function resolveButtonTextProps(options) {

@@ -39,6 +39,7 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
     },
 
     unregisterPoint: function (point) {
+        if (this.previewPoint === point) this.setPreviewPoint(null);
         this.points.delete(point);
         if (this.rejectedPoint === point) this.rejectedPoint = null;
         this.refreshPoints();
@@ -90,12 +91,18 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
         if (this.removed) return;
         this.movement = this.el.querySelector('[custom-movement]')?.components['custom-movement'];
         if (!this.isImmersive()) this.closePanel('presentation-change');
+        else if (!this.panel) {
+            this.pointerPoint = null;
+            this.focusedPoint = null;
+            this.setPreviewPoint(null);
+        }
         if (!this.desktop) return;
         const fullscreen = document.fullscreenElement;
         const host = fullscreen && !['CANVAS', 'IFRAME'].includes(fullscreen.tagName) ? fullscreen : document.body;
         if (this.desktop.parentNode !== host) host.append(this.desktop);
         this.desktop.hidden = !this.isReady() || this.isImmersive() || !this.points.size;
         this.updateAvailability();
+        this.syncDesktopPreview();
     },
 
     // Observe cached navigation state, without searching the scene every frame.
@@ -108,6 +115,22 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
         if (available === this.available) return;
         this.available = available;
         this.buttons?.forEach(button => { button.disabled = !available; });
+        this.syncDesktopPreview();
+    },
+
+    setPreviewPoint: function (point) {
+        if (this.previewPoint === point) return;
+        this.previewPoint?.setMenuHovered(false);
+        this.previewPoint = point;
+        point?.setMenuHovered(true);
+    },
+
+    syncDesktopPreview: function () {
+        if (!this.desktop || this.isImmersive()) return;
+        const point = !this.desktop.hidden && this.canActivate() ? this.pointerPoint || this.focusedPoint : null;
+        this.setPreviewPoint(point);
+        this.tooltip.textContent = point ? point.label : '';
+        this.tooltip.hidden = !point;
     },
 
     renderDesktop: function () {
@@ -145,10 +168,15 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
             });
             ['mouseover', 'focusin'].forEach(type => this.resources.listen(this.desktop, type, event => {
                 const point = pointForEvent(event);
-                this.tooltip.textContent = point ? `${point.order}. ${point.label}` : '';
-                this.tooltip.hidden = !point;
+                if (type === 'mouseover') this.pointerPoint = point;
+                else this.focusedPoint = point;
+                this.syncDesktopPreview();
             }));
-            ['mouseleave', 'focusout'].forEach(type => this.resources.listen(this.desktop, type, () => { this.tooltip.hidden = true; }));
+            ['mouseleave', 'focusout'].forEach(type => this.resources.listen(this.desktop, type, () => {
+                if (type === 'mouseleave') this.pointerPoint = null;
+                else this.focusedPoint = null;
+                this.syncDesktopPreview();
+            }));
             ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend', 'wheel', 'keydown', 'keyup'].forEach(type => {
                 this.resources.listen(this.desktop, type, event => event.stopPropagation());
             });
@@ -163,6 +191,9 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
             return button;
         });
         this.list.replaceChildren(...this.buttons);
+        this.pointerPoint = null;
+        this.focusedPoint = null;
+        this.setPreviewPoint(null);
         this.tooltip.hidden = true;
         this.available = null;
         this.updateAvailability();
@@ -188,7 +219,7 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
                 distance: 2, centerAtEyeLevel: true, anchorRefreshFrames: 0,
                 background: '#18202b', borderWidth: 0,
                 render: api => this.renderPanel(api),
-                cleanup: () => { this.panel = null; this.spatialButtons = null; }
+                cleanup: () => { this.setPreviewPoint(null); this.panel = null; this.spatialButtons = null; }
             });
         } catch (error) {
             window.VRODOSRuntimeOverlay.recordDiagnostic('warn', 'Could not open teleport destinations.', { error: String(error) });
@@ -198,12 +229,17 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
     },
 
     renderPanel: function (api) {
+        this.setPreviewPoint(null);
         api.frame({ title: 'Destinations', titleSize: 32, headerHeight: 78,
             paddingX: 24, paddingY: 16, gapY: 10, footerHeight: 64, footerPaddingBottom: 16 });
         this.spatialButtons = new Map();
         this.orderedPoints.slice(this.page * 6, this.page * 6 + 6).forEach(point => {
             const button = api.button(api.content, { label: `${point.order}. ${point.label}`, width: '100%',
                 height: 68, fontSize: 26, variant: point === this.rejectedPoint ? 'negative' : 'secondary',
+                onHoverChange: hovered => {
+                    if (hovered && this.panel === api) this.setPreviewPoint(point);
+                    else if (!hovered && this.previewPoint === point) this.setPreviewPoint(null);
+                },
                 onClick: event => {
                     event?.stopPropagation();
                     this.selectDestination(point);
@@ -257,6 +293,7 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
     },
 
     closePanel: function (reason) {
+        this.setPreviewPoint(null);
         this.generation++;
         this.opening = false;
         if (this.panel) this.panel.close(reason);
@@ -271,6 +308,8 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
 
     pause: function () {
         this.paused = true;
+        this.pointerPoint = null;
+        this.focusedPoint = null;
         this.closePanel('pause');
         if (this.desktop) this.desktop.hidden = true;
     },

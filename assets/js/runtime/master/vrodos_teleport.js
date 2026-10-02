@@ -41,6 +41,44 @@ window.VRODOSTeleport = {
         return group;
     },
 
+    createHoverPillar: function () {
+        const geometry = new THREE.CylinderGeometry(1.4, 0.72, 60, 48, 1, true);
+        geometry.translate(0, 30, 0);
+        const material = new THREE.ShaderMaterial({
+            uniforms: { color: { value: new THREE.Color('#5eead4') } },
+            vertexShader: `
+                varying float height;
+                varying vec3 viewNormal;
+                varying vec3 viewPosition;
+                void main() {
+                    height = uv.y;
+                    viewNormal = normalMatrix * normal;
+                    vec4 positionView = modelViewMatrix * vec4(position, 1.0);
+                    viewPosition = -positionView.xyz;
+                    gl_Position = projectionMatrix * positionView;
+                }`,
+            fragmentShader: `
+                uniform vec3 color;
+                varying float height;
+                varying vec3 viewNormal;
+                varying vec3 viewPosition;
+                void main() {
+                    float facing = abs(dot(normalize(viewNormal), normalize(viewPosition)));
+                    float fade = 1.0 - smoothstep(0.4, 1.0, height);
+                    gl_FragColor = vec4(color, 0.28 * facing * facing * fade);
+                    #include <colorspace_fragment>
+                }`,
+            transparent: true, depthWrite: false, depthTest: false,
+            side: THREE.DoubleSide, toneMapped: false
+        });
+        const pillar = new THREE.Mesh(geometry, material);
+        pillar.name = 'TeleportHoverPillar';
+        pillar.visible = false;
+        pillar.renderOrder = 50;
+        pillar.raycast = () => null;
+        return pillar;
+    },
+
     createGroundProbe: function () {
         return { raycaster: new THREE.Raycaster(), origin: new THREE.Vector3(),
             down: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3() };
