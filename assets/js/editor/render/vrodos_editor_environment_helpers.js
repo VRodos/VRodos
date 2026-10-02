@@ -124,7 +124,7 @@ VRODOS.utils = VRODOS.utils || {};
         let current = object || null;
 
         while (current) {
-            if (current.vrodos_internal_helper === true) {
+            if (current.vrodos_internal_helper === true || current.category_slug === 'teleport-point') {
                 return true;
             }
 

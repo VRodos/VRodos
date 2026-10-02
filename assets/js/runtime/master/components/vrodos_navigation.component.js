@@ -3189,17 +3189,37 @@ AFRAME.registerComponent('custom-movement', {
             Boolean(this.getSceneSettings()) && (!loader || loader.isReady) &&
             !window.VRODOSRuntimeOverlay?.interactionLocked;
     },
-    resolveTeleportLanding: function (floorPosition, eyeHeight) {
+    getTeleportGround: function (floorPosition) {
+        if (!this.teleportGroundProbe) this.teleportGroundProbe = window.VRODOSTeleport.createGroundProbe();
+        this.refreshNavMeshRoots();
+        const renderedFloor = this.authoredToRenderedPosition(floorPosition, new THREE.Vector3());
+        const hit = window.VRODOSTeleport.findGroundBelow(renderedFloor, this.navMeshCollisionTargets,
+            this.teleportGroundProbe, this.data.maxSlope, this.groundSnapDistance, true);
+        if (!hit) return null;
+        const ground = this.createGroundHit();
+        this.renderedToAuthoredPosition(hit.point, ground.point);
+        ground.rawPoint.copy(ground.point);
+        this.renderedToAuthoredDirection(this.teleportGroundProbe.normal, ground.normal);
+        ground.slope = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(ground.normal.y, -1, 1)));
+        ground.behavior = this.getWalkBehaviorFromIntersection(hit);
+        return ground;
+    },
+    resolveTeleportLanding: function (floorPosition, eyeHeight, projectBelow = true) {
         const settings = this.getSceneSettings();
         const floor = floorPosition.clone();
-        const collisionPolicy = this.getNavigationMode(settings) === 'walkable' && settings.collisionMode !== 'off';
-        if (!collisionPolicy) return { floor, ground: null };
-        if (!this.areCollisionsEnabled(settings)) return null;
+        const mode = this.getNavigationMode(settings);
+        if (mode === 'fly') return { floor, ground: null };
+        const collisionPolicy = mode === 'walkable' && settings.collisionMode !== 'off';
+        if (collisionPolicy && !this.areCollisionsEnabled(settings)) return null;
 
         const limits = { maxStepHeight: this.groundSnapDistance, maxDropHeight: this.groundSnapDistance };
-        const ground = this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
-        if (!ground || Math.abs(ground.point.y - floor.y) > this.groundSnapDistance) return null;
+        const ground = projectBelow ? this.getTeleportGround(floor)
+            : this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
+        if (!ground || (!projectBelow && Math.abs(ground.point.y - floor.y) > this.groundSnapDistance)) {
+            return collisionPolicy ? null : { floor, ground: null };
+        }
         floor.y = ground.point.y;
+        if (!collisionPolicy) return { floor, ground };
         // Require support across the same footprint used by normal navigation.
         for (const offset of this.verticalCapsuleOffsets) {
             const probe = floor.clone().add(new THREE.Vector3(offset.x, 0, offset.y));
@@ -3326,7 +3346,7 @@ AFRAME.registerComponent('custom-movement', {
         travel.elapsed += Math.max(0, Number(timeDelta) || 0);
         const progress = Math.min(1, travel.elapsed / travel.duration);
         if (progress === 1) {
-            const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight);
+            const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight, false);
             if (!landing) {
                 travel.source?.components['vrodos-teleport-point']?.showRejection();
                 this.cancelTeleport();

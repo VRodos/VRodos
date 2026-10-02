@@ -184,7 +184,7 @@ assert(collision.nav.teleportToPoint(point(8, 0, 0), { isConnected: true }), 'ro
 collision.nav.tickTeleport(collision.nav.teleportTravel.duration);
 near(collision.nav.getNavigationWorldPosition(), point(8, 1.6, 0), 'walkable arrival reaches the marker');
 const arrival = collision.nav.getNavigationWorldPosition().clone();
-for (const invalid of [point(3, 0, 0), point(2.7, 0, 0), point(16, 0, 0), point(8, 1, 0)]) {
+for (const invalid of [point(3, 0, 0), point(2.7, 0, 0), point(16, 0, 0)]) {
     assert.equal(collision.nav.teleportToPoint(invalid), false, 'invalid or blocked landing is rejected');
     near(collision.nav.getNavigationWorldPosition(), arrival, 'rejection does not move the user');
 }
@@ -211,6 +211,56 @@ snap.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
 assert(snap.nav.teleportToPoint(point(3, 0.2, 0)), 'nearby ground within the snap tolerance is accepted');
 snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
 near(snap.nav.getNavigationWorldPosition(), point(3, 1.6, 0), 'accepted landing snaps to its supported floor');
+assert(snap.nav.teleportToPoint(point(7, 25, 0)), 'a raised walking destination projects to ground below');
+snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
+near(snap.nav.getNavigationWorldPosition(), point(7, 1.6, 0), 'raised marker preserves eye height at its ground projection');
+
+const stacked = fixture({ mode: 'walkable', collisions: true });
+stacked.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+const upperPlatform = new THREE.PlaneGeometry(10, 10);
+upperPlatform.rotateX(-Math.PI / 2);
+stacked.addMesh(upperPlatform, point(8, 4, 0), true);
+assert(stacked.nav.teleportToPoint(point(8, 10, 0)), 'nearest walkable floor below is selected');
+stacked.nav.tickTeleport(stacked.nav.teleportTravel.duration);
+near(stacked.nav.getNavigationWorldPosition(), point(8, 5.6, 0), 'upper walkable floor wins over terrain below');
+
+const fly = fixture({ mode: 'fly', collisions: true });
+fly.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+assert(fly.nav.teleportToPoint(point(4, 12, 0)), 'flying destinations can stay in the air');
+fly.nav.tickTeleport(fly.nav.teleportTravel.duration);
+near(fly.nav.getNavigationWorldPosition(), point(4, 13.6, 0), 'Fly preserves authored elevation above available terrain');
+
+const walking = fixture({ mode: 'walk', collisions: false });
+walking.addMesh(floorGeometry.clone(), point(0, -4, 0), true);
+walking.nav.setNavigationWorldPosition(point(0, -2.4, 0));
+assert(walking.nav.teleportToPoint(point(4, 5, 0)), 'walking without collision still projects onto scene ground');
+walking.nav.tickTeleport(walking.nav.teleportTravel.duration);
+near(walking.nav.getNavigationWorldPosition(), point(4, -2.4, 0), 'ground projection does not depend on collision being enabled');
+
+const hiddenGround = fixture({ mode: 'walkable', collisions: true });
+hiddenGround.addMesh(floorGeometry.clone(), point(0, 0, 0), true).visible = false;
+assert(hiddenGround.nav.teleportToPoint(point(4, 10, 0)), 'runtime ground projection includes hidden navigation geometry');
+hiddenGround.nav.tickTeleport(hiddenGround.nav.teleportTravel.duration);
+near(hiddenGround.nav.getNavigationWorldPosition(), point(4, 1.6, 0), 'hidden collider ground supports a safe landing');
+
+const changedFloor = fixture({ mode: 'walkable', collisions: true });
+const movingFloor = changedFloor.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+assert(changedFloor.nav.teleportToPoint(point(4, 5, 0)));
+movingFloor.position.y = -5;
+movingFloor.updateMatrixWorld(true);
+changedFloor.nav.tickTeleport(changedFloor.nav.teleportTravel.duration);
+near(changedFloor.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'arrival cannot resnap far below a disappeared landing');
+
+const groundedXr = fixture({ mode: 'walkable', collisions: true });
+groundedXr.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+groundedXr.enterVr();
+const trackedCameraPosition = groundedXr.cameraGroup.position.clone();
+const trackedControllerPositions = groundedXr.controllers.map(controller => controller.position.clone());
+assert(groundedXr.nav.teleportToPoint(point(6, 20, -3)), 'immersive walking also projects raised destinations');
+near(groundedXr.nav.teleportTravel.landing.floor, point(6, 0, -3), 'immersive landing uses authored ground coordinates');
+groundedXr.nav.tickTeleport(groundedXr.nav.teleportTravel.duration);
+near(groundedXr.cameraGroup.position, trackedCameraPosition, 'ground projection preserves the tracked headset pose');
+groundedXr.controllers.forEach((controller, index) => near(controller.position, trackedControllerPositions[index], 'ground projection preserves controller tracking'));
 
 const loading = fixture();
 loading.scene.components['vrodos-scene-loader'] = { isReady: false };
@@ -264,8 +314,8 @@ markerNavigation.world.object3D.add(markerElement.object3D);
 const markerComponent = Object.assign(Object.create(definitions['vrodos-teleport-point']), { el: markerElement });
 markerElement.components['vrodos-teleport-point'] = markerComponent;
 markerComponent.init();
-const [ring, center] = markerComponent.marker.children;
-assert.equal(markerComponent.marker.children.length, 2, 'only the floor ring and clickable centre remain');
+const [ring, center, shadow] = markerComponent.marker.children;
+assert.equal(markerComponent.marker.children.length, 3, 'floor ring, clickable centre and ground shadow remain');
 assert.equal(ring.geometry.parameters.outerRadius * 2, 1.5, 'floor circle is 1.5 metres across');
 const raycaster = new THREE.Raycaster();
 for (const [mesh, localTarget, direction] of [
@@ -293,9 +343,17 @@ markerNavigation.nav.setNavigationWorldPosition(point(0, 1.6, 0));
 markerNavigation.nav.lastResolvedPosition.set(0, 1.6, 0);
 function assertMarkerColors(accent, centerColor) {
     markerComponent.marker.traverse(mesh => {
-        if (mesh.isMesh) assert.equal(mesh.material.color.getHexString(), mesh.userData.teleportColorRole === 'center' ? centerColor : accent);
+        if (mesh.isMesh) {
+            const expected = mesh.userData.teleportColorRole === 'shadow' ? '0f172a'
+                : mesh.userData.teleportColorRole === 'center' ? centerColor : accent;
+            assert.equal(mesh.material.color.getHexString(), expected);
+        }
     });
 }
+markerElement.object3D.updateWorldMatrix(true, true);
+const shadowTarget = shadow.localToWorld(point(0.82, 0, 0));
+raycaster.set(shadowTarget.clone().add(point(0, 4, 0)), point(0, -1, 0));
+assert.equal(raycaster.intersectObject(markerElement.object3D, true).length, 0, 'shadow cannot activate or select a teleport destination');
 markerListeners.get('mouseenter')();
 assertMarkerColors('5eead4', '14b8a6');
 markerComponent.showRejection();
@@ -308,5 +366,63 @@ markerListeners.get('click')({ detail: {} });
 markerComponent.remove();
 assert.equal(markerNavigation.nav.teleportTravel, null, 'removing a marker cancels travel from the component');
 near(markerNavigation.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'marker removal restores the starting position');
+
+// Editor projection shares the same ray and marker placement rules as runtime.
+const editor = { editor: {}, editorRender: {}, utils: {} };
+context.window.VRODOS = context.VRODOS = editor;
+for (const file of ['vrodos_editor_environment_helpers.js', 'vrodos_editor_director_helpers.js']) {
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/editor/render', file), 'utf8'), context);
+}
+const editorMethods = {};
+editor.editorRender.installDirectorHelperMethods(editorMethods);
+const editorScene = new THREE.Scene();
+editorScene.aframeNavigationMode = 'walkable';
+const editorFloor = new THREE.Mesh(floorGeometry.clone(), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+editorFloor.category_slug = 'primitive-plane';
+editorFloor.position.y = -4;
+const editorPoint = Teleport.createMarker();
+editorPoint.category_slug = 'teleport-point';
+editorPoint.position.set(5, 7, -2);
+editorPoint.rotation.y = 0.5;
+editorPoint.scale.set(1.5, 1.2, 1.5);
+editorScene.add(editorFloor, editorPoint);
+const editorEnvironment = Object.assign(Object.create(editorMethods), { scene: editorScene });
+editorEnvironment.updateTeleportGroundGuides();
+editorPoint.updateWorldMatrix(true, true);
+near(editorPoint.children[0].getWorldPosition(point(0, 0, 0)), point(5, -4 + 0.025 * 1.2, -2), 'editor ring sits at its projected landing with authored scale');
+near(editorPoint.children[2].getWorldPosition(point(0, 0, 0)), point(5, -4 + 0.01 * 1.2, -2), 'editor shadow and floor circle share the ground projection');
+near(editorPoint.position, point(5, 7, -2), 'projection preserves authored height for later Fly use');
+editorScene.aframeNavigationMode = 'fly';
+editorEnvironment.updateTeleportGroundGuides();
+editorPoint.updateWorldMatrix(true, true);
+near(editorPoint.children[0].getWorldPosition(point(0, 0, 0)), point(5, 7 + 0.025 * 1.2, -2), 'switching to Fly restores the authored air destination');
+
+const lateGround = fixture({ mode: 'walk', collisions: false });
+lateGround.scene.hasLoaded = true;
+lateGround.scene.querySelector = selector => selector === '[custom-movement]' ? lateGround.player : lateGround.world;
+const lateElement = { ...events, object3D: new THREE.Group(), sceneEl: lateGround.scene, components: {},
+    setObject3D(_name, mesh) { this.object3D.add(mesh); }, removeObject3D() { this.object3D.clear(); },
+    getAttribute: name => name === 'data-vrodos-teleport-order' ? '1' : 'Raised destination', isConnected: true };
+lateElement.object3D.position.set(3, 7, 0);
+lateGround.world.object3D.add(lateElement.object3D);
+const lateMarker = Object.assign(Object.create(definitions['vrodos-teleport-point']), { el: lateElement });
+lateElement.components['vrodos-teleport-point'] = lateMarker;
+lateMarker.init();
+lateMarker.tick(0);
+lateGround.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+lateMarker.tick(250);
+lateElement.object3D.updateWorldMatrix(true, true);
+near(lateMarker.marker.children[0].getWorldPosition(point(0, 0, 0)), point(3, 0.025, 0), 'ground arriving after the marker is projected instead of caching a missing surface');
+assert(lateMarker.activate());
+lateGround.nav.tickTeleport(lateGround.nav.teleportTravel.duration);
+near(lateGround.nav.getNavigationWorldPosition(), point(3, 1.6, 0), 'projected floor click uses the same landing as its visible circle');
+lateGround.settings.navigationMode = 'fly';
+lateMarker.tick(500);
+lateElement.object3D.updateWorldMatrix(true, true);
+near(lateMarker.marker.children[0].getWorldPosition(point(0, 0, 0)), point(3, 7.025, 0), 'runtime mode change restores the authored visual height');
+assert(lateMarker.activate());
+lateGround.nav.tickTeleport(lateGround.nav.teleportTravel.duration);
+near(lateGround.nav.getNavigationWorldPosition(), point(3, 8.6, 0), 'the same marker becomes an air destination in Fly');
+lateMarker.remove();
 
 console.log('Teleport navigation acceptance tests passed.');

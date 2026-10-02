@@ -321,6 +321,7 @@ VRODOS.api = VRODOS.api || {};
             envir.syncDirectorVisualOrientation();
             envir.updateDirectorMarkerOpacity(camera);
             updateDirectorGroundGuide(envir, isCameraInteraction);
+            envir.updateTeleportGroundGuides();
             renderEditorScene(envir, camera);
             renderLabels(envir, camera, isContinuous, isCameraInteraction);
             updateCompassUi(envir);

@@ -99,6 +99,7 @@ VRODOS.ui.setAframeNavigationMode = function(mode) {
         navigationModeSelect.value = normalizedMode;
     }
 
+    VRODOS.editor.requestRender('navigation-mode');
     VRODOS.api.saveChanges();
 };
 

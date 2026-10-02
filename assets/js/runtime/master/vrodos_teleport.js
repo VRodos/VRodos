@@ -19,9 +19,63 @@ window.VRODOSTeleport = {
         }
         for (const mesh of [ring, center]) {
             mesh.userData.teleportColorRole = mesh === center ? 'center' : 'accent';
+            mesh.userData.teleportSurfaceOffset = mesh.position.y;
             group.add(mesh);
         }
+        const shadow = new THREE.Mesh(
+            new THREE.CircleGeometry(0.87, 64),
+            new THREE.MeshBasicMaterial({
+                color: '#0f172a', transparent: true, opacity: 0.42,
+                depthWrite: false, depthTest: true, side: THREE.DoubleSide,
+                toneMapped: false
+            })
+        );
+        shadow.name = 'TeleportGroundShadow';
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.position.y = 0.01;
+        shadow.userData.teleportColorRole = 'shadow';
+        shadow.userData.teleportSurfaceOffset = shadow.position.y;
+        // The ground shadow is visual feedback; the teal surfaces own selection.
+        shadow.raycast = () => null;
+        group.add(shadow);
         return group;
+    },
+
+    createGroundProbe: function () {
+        return { raycaster: new THREE.Raycaster(), origin: new THREE.Vector3(),
+            down: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3() };
+    },
+
+    findGroundBelow: function (position, targets, probe, maxSlope = 45, tolerance = 0.35, includeHidden = false) {
+        probe.origin.copy(position);
+        probe.origin.y += tolerance;
+        probe.raycaster.set(probe.origin, probe.down);
+        probe.raycaster.near = 0;
+        probe.raycaster.far = Infinity;
+        const hits = probe.raycaster.intersectObjects(targets, false);
+        for (const hit of hits) {
+            if (!hit.face) continue;
+            let visible = true;
+            if (!includeHidden) {
+                for (let node = hit.object; node; node = node.parent) {
+                    if (!node.visible) { visible = false; break; }
+                }
+            }
+            if (!visible) continue;
+            probe.normal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
+            if (probe.normal.y <= 0.01) continue;
+            const slope = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(probe.normal.y, -1, 1)));
+            return slope <= maxSlope + 0.5 ? hit : null;
+        }
+        return null;
+    },
+
+    setMarkerGroundPosition: function (marker, worldFloorPosition) {
+        const localFloor = worldFloorPosition ? marker.worldToLocal(worldFloorPosition.clone()) : new THREE.Vector3();
+        for (const mesh of marker.children) {
+            mesh.position.copy(localFloor);
+            mesh.position.y += mesh.userData.teleportSurfaceOffset;
+        }
     },
 
     createTravel: function (start, end) {

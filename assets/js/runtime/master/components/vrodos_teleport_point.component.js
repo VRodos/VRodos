@@ -12,6 +12,18 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         });
         this.el.setObject3D('mesh', this.marker);
         this.destination = new THREE.Vector3();
+        this.lastGroundUpdate = -Infinity;
+        this.lastGroundOrigin = new THREE.Vector3(Infinity, Infinity, Infinity);
+        this.groundDirty = true;
+        for (const type of ['loaded', 'model-loaded', 'object3dset', 'object3dremove', 'child-attached', 'child-detached', 'vrodos-scene-loader-ready']) {
+            this.resources.listen(this.el.sceneEl, type, event => {
+                this.groundDirty = true;
+                if (event.target.classList.contains('vrodos-navmesh')) this.getMovement()?.markNavMeshDirty();
+            }, true);
+        }
+        this.resources.listen(this.el.sceneEl, 'componentchanged', event => {
+            if (event.target.classList.contains('vrodos-navmesh')) this.groundDirty = true;
+        }, true);
         this.hovered = false;
         this.rejected = false;
         this.clearRejection = null;
@@ -24,6 +36,33 @@ AFRAME.registerComponent('vrodos-teleport-point', {
             this.activate();
         });
         this.el.sceneEl.emit('vrodos-teleport-point-added', { point: this });
+    },
+
+    tick: function (time) {
+        if (time - this.lastGroundUpdate < 250) return;
+        this.lastGroundUpdate = time;
+        const loader = this.el.sceneEl.components['vrodos-scene-loader'];
+        if (!this.el.sceneEl.hasLoaded || (loader && !loader.isReady)) return;
+        const movement = this.getMovement();
+        if (!movement) return;
+        const mode = movement.getNavigationMode(movement.getSceneSettings());
+        this.el.object3D.updateWorldMatrix(true, true);
+        this.el.object3D.getWorldPosition(this.destination);
+        movement.renderedToAuthoredPosition(this.destination, this.destination);
+        if (!this.groundDirty && mode === this.lastGroundMode &&
+            this.destination.distanceToSquared(this.lastGroundOrigin) < 1e-8) return;
+        this.groundDirty = false;
+        this.lastGroundMode = mode;
+        this.lastGroundOrigin.copy(this.destination);
+        if (mode === 'fly') {
+            window.VRODOSTeleport.setMarkerGroundPosition(this.marker, null);
+            return;
+        }
+        const ground = movement.getTeleportGround(this.destination);
+        // Keep retrying pending geometry until a surface can be resolved.
+        this.groundDirty = !ground;
+        const renderedFloor = ground ? movement.authoredToRenderedPosition(ground.point, this.destination) : null;
+        window.VRODOSTeleport.setMarkerGroundPosition(this.marker, renderedFloor);
     },
 
     activate: function () {
@@ -45,7 +84,9 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         const colors = this.rejected ? { accent: '#ef4444', center: '#991b1b' }
             : this.hovered ? { accent: '#5eead4', center: '#14b8a6' } : { accent: '#14b8a6', center: '#0f766e' };
         this.marker.traverse(mesh => {
-            if (mesh.isMesh) mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+            if (mesh.isMesh && mesh.userData.teleportColorRole !== 'shadow') {
+                mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+            }
         });
     },
 

@@ -519,6 +519,44 @@ VRODOS.utils = VRODOS.utils || {};
         }
     }
 
+    function updateTeleportGroundGuides() {
+        const roots = this.getDirectorGroundGuideTargetRoots();
+        const points = roots.filter(root => root.category_slug === 'teleport-point');
+        if (!points.length) return;
+        if (!this.teleportGroundProbe) this.teleportGroundProbe = window.VRODOSTeleport.createGroundProbe();
+        this.scene.updateMatrixWorld(true);
+        const targets = [];
+        for (const root of roots) {
+            const category = root.category_slug || root.category_name;
+            if (category !== 'walkable-surface' && category !== 'primitive-plane') continue;
+            targets.push(...this.getDirectorGroundGuideRootTargets(root));
+        }
+        const previous = this.teleportGroundSurfaces || [];
+        const surfacesChanged = targets.length !== previous.length || targets.some((mesh, index) => {
+            const cached = previous[index];
+            return mesh !== cached.mesh || mesh.geometry !== cached.geometry ||
+                !mesh.matrixWorld.equals(cached.matrix) || directorGroundGuideObjectVisible(mesh) !== cached.visible;
+        });
+        if (surfacesChanged || !this.teleportPointMatrices) {
+            this.teleportGroundSurfaces = targets.map(mesh => ({ mesh, geometry: mesh.geometry,
+                matrix: mesh.matrixWorld.clone(), visible: directorGroundGuideObjectVisible(mesh) }));
+            this.teleportPointMatrices = new WeakMap();
+        }
+        for (const point of points) {
+            const cached = this.teleportPointMatrices.get(point);
+            if (cached && cached.mode === this.scene.aframeNavigationMode && cached.matrix.equals(point.matrixWorld)) continue;
+            this.teleportPointMatrices.set(point, { mode: this.scene.aframeNavigationMode, matrix: point.matrixWorld.clone() });
+            let ground = null;
+            if (this.scene.aframeNavigationMode !== 'fly') {
+                point.getWorldPosition(this.teleportGroundProbe.origin);
+                const hit = window.VRODOSTeleport.findGroundBelow(this.teleportGroundProbe.origin,
+                    targets, this.teleportGroundProbe);
+                ground = hit?.point;
+            }
+            window.VRODOSTeleport.setMarkerGroundPosition(point, ground);
+        }
+    }
+
     function updateDirectorGroundGuide() {
         if (!this.scene) {
             return;
@@ -637,5 +675,6 @@ VRODOS.utils = VRODOS.utils || {};
         prototype.refreshDirectorGroundGuideTargets = refreshDirectorGroundGuideTargets;
         prototype.hideDirectorGroundGuide = hideDirectorGroundGuide;
         prototype.updateDirectorGroundGuide = updateDirectorGroundGuide;
+        prototype.updateTeleportGroundGuides = updateTeleportGroundGuides;
     };
 })();

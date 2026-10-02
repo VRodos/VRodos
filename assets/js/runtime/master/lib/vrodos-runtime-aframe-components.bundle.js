@@ -7398,16 +7398,41 @@
       const loader = (_a = this.sceneEl) == null ? void 0 : _a.components["vrodos-scene-loader"];
       return !this.removed && !this.teleportPaused && !this.teleportTravel && Boolean(this.getSceneSettings()) && (!loader || loader.isReady) && !((_b = window.VRODOSRuntimeOverlay) == null ? void 0 : _b.interactionLocked);
     },
-    resolveTeleportLanding: function(floorPosition, eyeHeight) {
+    getTeleportGround: function(floorPosition) {
+      if (!this.teleportGroundProbe) this.teleportGroundProbe = window.VRODOSTeleport.createGroundProbe();
+      this.refreshNavMeshRoots();
+      const renderedFloor = this.authoredToRenderedPosition(floorPosition, new THREE.Vector3());
+      const hit = window.VRODOSTeleport.findGroundBelow(
+        renderedFloor,
+        this.navMeshCollisionTargets,
+        this.teleportGroundProbe,
+        this.data.maxSlope,
+        this.groundSnapDistance,
+        true
+      );
+      if (!hit) return null;
+      const ground = this.createGroundHit();
+      this.renderedToAuthoredPosition(hit.point, ground.point);
+      ground.rawPoint.copy(ground.point);
+      this.renderedToAuthoredDirection(this.teleportGroundProbe.normal, ground.normal);
+      ground.slope = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(ground.normal.y, -1, 1)));
+      ground.behavior = this.getWalkBehaviorFromIntersection(hit);
+      return ground;
+    },
+    resolveTeleportLanding: function(floorPosition, eyeHeight, projectBelow = true) {
       const settings = this.getSceneSettings();
       const floor = floorPosition.clone();
-      const collisionPolicy = this.getNavigationMode(settings) === "walkable" && settings.collisionMode !== "off";
-      if (!collisionPolicy) return { floor, ground: null };
-      if (!this.areCollisionsEnabled(settings)) return null;
+      const mode = this.getNavigationMode(settings);
+      if (mode === "fly") return { floor, ground: null };
+      const collisionPolicy = mode === "walkable" && settings.collisionMode !== "off";
+      if (collisionPolicy && !this.areCollisionsEnabled(settings)) return null;
       const limits = { maxStepHeight: this.groundSnapDistance, maxDropHeight: this.groundSnapDistance };
-      const ground = this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
-      if (!ground || Math.abs(ground.point.y - floor.y) > this.groundSnapDistance) return null;
+      const ground = projectBelow ? this.getTeleportGround(floor) : this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
+      if (!ground || !projectBelow && Math.abs(ground.point.y - floor.y) > this.groundSnapDistance) {
+        return collisionPolicy ? null : { floor, ground: null };
+      }
       floor.y = ground.point.y;
+      if (!collisionPolicy) return { floor, ground };
       for (const offset of this.verticalCapsuleOffsets) {
         const probe = floor.clone().add(new THREE.Vector3(offset.x, 0, offset.y));
         const support = this.sampleGroundAtSingle(probe, floor.y, this.createGroundHit(), limits);
@@ -7539,7 +7564,7 @@
       travel.elapsed += Math.max(0, Number(timeDelta) || 0);
       const progress = Math.min(1, travel.elapsed / travel.duration);
       if (progress === 1) {
-        const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight);
+        const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight, false);
         if (!landing) {
           (_b = (_a = travel.source) == null ? void 0 : _a.components["vrodos-teleport-point"]) == null ? void 0 : _b.showRejection();
           this.cancelTeleport();
@@ -9121,9 +9146,70 @@
       }
       for (const mesh of [ring, center]) {
         mesh.userData.teleportColorRole = mesh === center ? "center" : "accent";
+        mesh.userData.teleportSurfaceOffset = mesh.position.y;
         group.add(mesh);
       }
+      const shadow = new THREE.Mesh(
+        new THREE.CircleGeometry(0.87, 64),
+        new THREE.MeshBasicMaterial({
+          color: "#0f172a",
+          transparent: true,
+          opacity: 0.42,
+          depthWrite: false,
+          depthTest: true,
+          side: THREE.DoubleSide,
+          toneMapped: false
+        })
+      );
+      shadow.name = "TeleportGroundShadow";
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.y = 0.01;
+      shadow.userData.teleportColorRole = "shadow";
+      shadow.userData.teleportSurfaceOffset = shadow.position.y;
+      shadow.raycast = () => null;
+      group.add(shadow);
       return group;
+    },
+    createGroundProbe: function() {
+      return {
+        raycaster: new THREE.Raycaster(),
+        origin: new THREE.Vector3(),
+        down: new THREE.Vector3(0, -1, 0),
+        normal: new THREE.Vector3()
+      };
+    },
+    findGroundBelow: function(position, targets, probe, maxSlope = 45, tolerance = 0.35, includeHidden = false) {
+      probe.origin.copy(position);
+      probe.origin.y += tolerance;
+      probe.raycaster.set(probe.origin, probe.down);
+      probe.raycaster.near = 0;
+      probe.raycaster.far = Infinity;
+      const hits = probe.raycaster.intersectObjects(targets, false);
+      for (const hit of hits) {
+        if (!hit.face) continue;
+        let visible = true;
+        if (!includeHidden) {
+          for (let node = hit.object; node; node = node.parent) {
+            if (!node.visible) {
+              visible = false;
+              break;
+            }
+          }
+        }
+        if (!visible) continue;
+        probe.normal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
+        if (probe.normal.y <= 0.01) continue;
+        const slope = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(probe.normal.y, -1, 1)));
+        return slope <= maxSlope + 0.5 ? hit : null;
+      }
+      return null;
+    },
+    setMarkerGroundPosition: function(marker, worldFloorPosition) {
+      const localFloor = worldFloorPosition ? marker.worldToLocal(worldFloorPosition.clone()) : new THREE.Vector3();
+      for (const mesh of marker.children) {
+        mesh.position.copy(localFloor);
+        mesh.position.y += mesh.userData.teleportSurfaceOffset;
+      }
     },
     createTravel: function(start, end) {
       const distance = start.distanceTo(end);
@@ -9154,6 +9240,19 @@
       });
       this.el.setObject3D("mesh", this.marker);
       this.destination = new THREE.Vector3();
+      this.lastGroundUpdate = -Infinity;
+      this.lastGroundOrigin = new THREE.Vector3(Infinity, Infinity, Infinity);
+      this.groundDirty = true;
+      for (const type of ["loaded", "model-loaded", "object3dset", "object3dremove", "child-attached", "child-detached", "vrodos-scene-loader-ready"]) {
+        this.resources.listen(this.el.sceneEl, type, (event) => {
+          var _a;
+          this.groundDirty = true;
+          if (event.target.classList.contains("vrodos-navmesh")) (_a = this.getMovement()) == null ? void 0 : _a.markNavMeshDirty();
+        }, true);
+      }
+      this.resources.listen(this.el.sceneEl, "componentchanged", (event) => {
+        if (event.target.classList.contains("vrodos-navmesh")) this.groundDirty = true;
+      }, true);
       this.hovered = false;
       this.rejected = false;
       this.clearRejection = null;
@@ -9174,6 +9273,30 @@
       });
       this.el.sceneEl.emit("vrodos-teleport-point-added", { point: this });
     },
+    tick: function(time) {
+      if (time - this.lastGroundUpdate < 250) return;
+      this.lastGroundUpdate = time;
+      const loader = this.el.sceneEl.components["vrodos-scene-loader"];
+      if (!this.el.sceneEl.hasLoaded || loader && !loader.isReady) return;
+      const movement = this.getMovement();
+      if (!movement) return;
+      const mode = movement.getNavigationMode(movement.getSceneSettings());
+      this.el.object3D.updateWorldMatrix(true, true);
+      this.el.object3D.getWorldPosition(this.destination);
+      movement.renderedToAuthoredPosition(this.destination, this.destination);
+      if (!this.groundDirty && mode === this.lastGroundMode && this.destination.distanceToSquared(this.lastGroundOrigin) < 1e-8) return;
+      this.groundDirty = false;
+      this.lastGroundMode = mode;
+      this.lastGroundOrigin.copy(this.destination);
+      if (mode === "fly") {
+        window.VRODOSTeleport.setMarkerGroundPosition(this.marker, null);
+        return;
+      }
+      const ground = movement.getTeleportGround(this.destination);
+      this.groundDirty = !ground;
+      const renderedFloor = ground ? movement.authoredToRenderedPosition(ground.point, this.destination) : null;
+      window.VRODOSTeleport.setMarkerGroundPosition(this.marker, renderedFloor);
+    },
     activate: function() {
       const movement = this.getMovement();
       if (!this.el.isConnected || !movement || !movement.canStartTeleport()) return false;
@@ -9191,7 +9314,9 @@
     updateColor: function() {
       const colors = this.rejected ? { accent: "#ef4444", center: "#991b1b" } : this.hovered ? { accent: "#5eead4", center: "#14b8a6" } : { accent: "#14b8a6", center: "#0f766e" };
       this.marker.traverse((mesh) => {
-        if (mesh.isMesh) mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+        if (mesh.isMesh && mesh.userData.teleportColorRole !== "shadow") {
+          mesh.material.color.set(colors[mesh.userData.teleportColorRole]);
+        }
       });
     },
     showRejection: function() {
