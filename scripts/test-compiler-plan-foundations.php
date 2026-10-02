@@ -199,6 +199,7 @@ foreach ( [ 'walkableSurface' => 'walkable-surface', 'collisionProxy' => 'collis
 	vrodos_foundation_assert( $expected === $normalizer->canonical_category( $alias ), 'canonical entity category: ' . $alias );
 }
 vrodos_foundation_assert( 'primitive' === $registry->family_for( 'primitive-plane' ), 'plane uses the primitive renderer family' );
+vrodos_foundation_assert( 'teleport' === $registry->family_for( 'teleport-point' ), 'teleport points have a procedural renderer family' );
 
 vrodos_foundation_assert(
 	'walkable-surface' === $normalizer->effective_category( (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'walkable-surface' ] ),
@@ -229,6 +230,24 @@ if ( class_exists( 'DOMDocument' ) ) {
 		static fn ( $url ) => $url
 	);
 	$renderer->configure( '/plugin/', true );
+	foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $teleport_profile ) {
+		$teleport_dom = new DOMDocument( '1.0', 'UTF-8' );
+		$teleport_scene = $teleport_dom->appendChild( $teleport_dom->createElement( 'a-scene' ) );
+		$teleport_assets = $teleport_scene->appendChild( $teleport_dom->createElement( 'a-assets' ) );
+		$world = $renderer->get_or_create_authored_world_container( $teleport_dom, $teleport_scene );
+		$renderer->render_scene_objects( $teleport_dom, $teleport_scene, $teleport_assets, [ 'destination' => (object) [
+			'category_slug' => 'teleport-point', 'uuid' => 'destination',
+			'position' => [ 8, 3, -4 ], 'rotation' => [ 0, M_PI / 2, 0 ], 'scale' => [ 2, 1, 2 ],
+		] ], 1, 42, [ 'container' => $world, 'scene_settings' => [ 'vrRuntimeProfile' => $teleport_profile ] ] );
+		$teleport = ( new DOMXPath( $teleport_dom ) )->query( '//*[@vrodos-teleport-point]' )->item( 0 );
+		vrodos_foundation_assert( $teleport instanceof DOMElement && $teleport->parentNode === $world, "$teleport_profile teleport belongs to the authored world" );
+		vrodos_foundation_assert( '8 3 -4' === $teleport->getAttribute( 'position' ), 'teleport position is the authored floor destination' );
+		vrodos_foundation_assert( '0 90 0' === $teleport->getAttribute( 'rotation' ) && '2 1 2' === $teleport->getAttribute( 'scale' ), 'teleport appearance preserves authored transforms' );
+		vrodos_foundation_assert( 'raycastable hideable' === $teleport->getAttribute( 'class' ), 'teleport is clickable without navigation collision' );
+		vrodos_foundation_assert( ! $teleport->hasAttribute( 'gltf-model' ) && ! $teleport->hasAttribute( 'vrodos-float' ), 'teleport needs no model and does not float' );
+		vrodos_foundation_assert( 'cast: false; receive: false' === $teleport->getAttribute( 'shadow' ), 'teleport does not cast or receive shadows' );
+		vrodos_foundation_assert( 0 === $teleport_assets->childNodes->length, 'teleport publishes no external media' );
+	}
 	$renderer->render_scene_objects(
 		$dom,
 		$scene,

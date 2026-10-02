@@ -676,6 +676,24 @@ VRODOS.api.createPrimitive = function(type) {
     }, [0, 0, 0], VRODOS.data.pluginPath);
 };
 
+VRODOS.api.createTeleportPoint = function (nameModel, addedAt) {
+    const object = VRODOS.loader.createTeleportPointObject(nameModel);
+    VRODOS.loader.setObjectProperties(object, nameModel, VRODOS.utils.getSceneDataObjectMap());
+    object.addedAt = addedAt;
+    VRODOS.ui.finalizeSceneObjectAdd(object, {
+        registerOptions: addedObjectRegisterOptions('teleport-point-added'),
+        selectOptions: { source: 'teleport-point-added' }
+    });
+    return object;
+};
+
+VRODOS.api.addTeleportPoint = function () {
+    const name = VRODOS.utils.sceneUniqueObjectName('Teleport point', VRODOS.utils.getSceneDataObjectMap());
+    return VRODOS.api.addAssetToCanvas(name, '', 'teleport-point', {
+        asset_name: name, category_slug: 'teleport-point', compiledCollisionEnabled: false
+    }, [0, 0, 0], VRODOS.data.pluginPath);
+};
+
 /**
  * Main function to add objects to the canvas.
  */
@@ -731,6 +749,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
         'video': () => VRODOS.api.createVideoAsset(nameModel, addedAt),
         'primitive-plane': () => VRODOS.api.createPrimitivePlane(nameModel, addedAt),
+        'teleport-point': () => VRODOS.api.createTeleportPoint(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
     const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);

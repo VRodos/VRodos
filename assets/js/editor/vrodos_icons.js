@@ -27,6 +27,7 @@ VRODOS.ui.icons.categoryIcons = {
     'poi-chat':        'message-square',
     'poi-link':        'external-link',
     'assessment':      'clipboard-check',
+    'teleport-point':  'circle-dot',
 
     // ── Lights (category_name, set by JS at runtime) ──────────
     'lightSun':        'sun',

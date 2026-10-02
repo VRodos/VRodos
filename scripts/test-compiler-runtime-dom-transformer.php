@@ -102,6 +102,22 @@ $ascene = $dom->getElementById( 'aframe-scene-container' );
 vrodos_dom_transformer_assert( $ascene instanceof DOMElement, 'fixture scene missing' );
 
 $transformer = new VRodos_Compiler_Target_Renderer();
+foreach ( [ 'vrexpo_games', 'standard' ] as $teleport_project_type ) {
+	foreach ( [ false, true ] as $headset ) {
+		$rig_dom = new DOMDocument( '1.0', 'UTF-8' );
+		$rig_scene = $rig_dom->appendChild( $rig_dom->createElement( 'a-scene' ) );
+		$rig_player = $rig_scene->appendChild( $rig_dom->createElement( 'a-entity' ) );
+		$transformer->apply_player_rig( $rig_dom, $rig_player, $teleport_project_type, [
+			'cam_position' => '0 1.6 0', 'cam_rotation_x' => '0', 'cam_rotation_y' => '45',
+		], false, $headset );
+		$rig_xpath = new DOMXPath( $rig_dom );
+		foreach ( [ 'oculusLeft', 'oculusRight' ] as $controller_id ) {
+			$controllers = $rig_xpath->query( '//*[@id="' . $controller_id . '"]' );
+			vrodos_dom_transformer_assert( 1 === $controllers->length && $controllers->item( 0 )->parentNode === $rig_player, "$teleport_project_type has one tracking-rig controller per hand" );
+			vrodos_dom_transformer_assert( 'objects: .raycastable' === $controllers->item( 0 )->getAttribute( 'raycaster' ), 'controller can target teleport markers' );
+		}
+	}
+}
 $transformer->apply_single_player_mode( $dom, $ascene );
 
 $html = $dom->saveHTML();

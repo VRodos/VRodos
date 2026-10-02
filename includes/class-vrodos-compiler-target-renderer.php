@@ -22,6 +22,8 @@ final class VRodos_Compiler_Target_Renderer {
 
 	public function apply_player_rig( DOMDocument $dom, DOMElement $player, string $project_type, array $camera_pose, bool $networked, bool $lean_headset ): void {
 		$player->setAttribute( 'custom-movement', '' );
+		$player->appendChild( $this->create_controller( $dom, 'oculusRight', 'right' ) );
+		$player->appendChild( $this->create_controller( $dom, 'oculusLeft', 'left' ) );
 		if ( ! $lean_headset ) {
 			$player->setAttribute( 'show-position', '' );
 		}
@@ -109,8 +111,6 @@ final class VRodos_Compiler_Target_Renderer {
 		if ( ! $lean_headset ) $camera->setAttribute( 'entity-movement-emitter', '' );
 		$camera->appendChild( $this->create_cursor( $dom ) );
 		$player->appendChild( $camera );
-		$player->appendChild( $this->create_controller( $dom, 'oculusRight', 'right' ) );
-		$player->appendChild( $this->create_controller( $dom, 'oculusLeft', 'left' ) );
 	}
 
 	private function apply_standard_rig( DOMDocument $dom, DOMElement $player, array $camera_pose, bool $networked ): void {

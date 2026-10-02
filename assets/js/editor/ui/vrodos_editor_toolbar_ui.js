@@ -23,6 +23,7 @@ VRODOS.api = VRODOS.api || {};
         scaleLock: 'scaleLockCheckbox',
         createMenu: 'create-object-menu',
         createPlane: 'create-plane-button',
+        createTeleportPoint: 'create-teleport-point-button',
         loadingNotice: 'result_download'
     };
 
@@ -139,14 +140,15 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindCreateControls() {
-        const planeButton = getElement(TOOLBAR_IDS.createPlane);
-        if (!planeButton) return;
-
-        planeButton.addEventListener('click', () => {
-            if (typeof VRODOS.api.createPrimitive !== 'function') return;
-            VRODOS.api.createPrimitive('plane');
-            const menu = getElement(TOOLBAR_IDS.createMenu);
-            if (menu) menu.open = false;
+        [[TOOLBAR_IDS.createPlane, () => VRODOS.api.createPrimitive('plane')],
+            [TOOLBAR_IDS.createTeleportPoint, () => VRODOS.api.addTeleportPoint()]].forEach(([id, create]) => {
+            const button = getElement(id);
+            if (!button) return;
+            button.addEventListener('click', () => {
+                create();
+                const menu = getElement(TOOLBAR_IDS.createMenu);
+                if (menu) menu.open = false;
+            });
         });
     }
 

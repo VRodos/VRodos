@@ -86,6 +86,14 @@ VRODOS.loader.loadTextAsset = function(name, resource, resources3D) {
     });
 };
 
+VRODOS.loader.loadTeleportPoint = function (name, resource, resources3D) {
+    const object = VRODOS.loader.createTeleportPointObject(name);
+    VRODOS.loader.setObjectProperties(object, name, resources3D);
+    return vrodosLoaderAddGeneratedSceneObject(object, resource, {
+        source: 'teleport-point-loaded', renderReason: 'teleport-point-loaded'
+    });
+};
+
 VRODOS.loader.loadVideoAsset = function(name, resource, resources3D) {
     return new Promise((resolve) => {
         const object = VRODOS.loader.createVideoDisplayObject(name, resource);

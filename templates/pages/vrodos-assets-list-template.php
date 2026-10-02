@@ -27,6 +27,7 @@ function vrodos_get_asset_category_icon($category_slug) {
         'poi-chat'      => 'message-square',
         'poi-link'      => 'external-link',
         'assessment'    => 'clipboard-check',
+        'teleport-point' => 'circle-dot',
     ];
     return $map[$category_slug] ?? 'package';
 }

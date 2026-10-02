@@ -275,6 +275,12 @@ extract( $data );
 								<i data-lucide="grid-3x3" class="tw-w-4 tw-h-4"></i>
 								<span>Plane</span>
 							</button>
+							<button id="create-teleport-point-button" type="button"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-justify-start tw-gap-2 tw-text-white"
+									title="Create a teleport destination at foot level">
+								<i data-lucide="circle-dot" class="tw-w-4 tw-h-4"></i>
+								<span>Teleport point</span>
+							</button>
 						</div>
 					</details>
 

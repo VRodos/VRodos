@@ -134,6 +134,8 @@ AFRAME.registerComponent('custom-movement', {
     },
     init: function () {
         this.cameraRig = this.el;
+        this.teleportTravel = null;
+        this.teleportPaused = false;
         this.sceneEl = this.el.sceneEl;
         this.cameraEl = document.querySelector('#cameraA') || document.querySelector('a-camera');
         this.navMeshEntitySelector = '.vrodos-navmesh';
@@ -637,6 +639,7 @@ AFRAME.registerComponent('custom-movement', {
         return output;
     },
     requestJump: function (source) {
+        if (this.teleportTravel) return false;
         const settings = this.getSceneSettings();
         const movementDisabled = settings && (
             settings.movement_disabled === true ||
@@ -1394,6 +1397,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     handleEnterVr: function () {
         if (this.removed) return;
+        this.cancelTeleport();
         this.immersiveExitPending = false;
         if (this.entryResources) this.entryResources.disposeAll();
         this.entryResources = window.VRODOSMaster.RuntimeResources.createRegistry();
@@ -1431,6 +1435,7 @@ AFRAME.registerComponent('custom-movement', {
         runImmersiveEntry();
     },
     handleExitVr: function () {
+        this.cancelTeleport();
         if (this.entryResources) this.entryResources.disposeAll();
         this.immersiveExitPending = true;
         this.clearImmersivePoseTracking();
@@ -1510,6 +1515,7 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     handleHeightResetButtonDown: function (event) {
+        if (this.teleportTravel) return;
         if (this.resetImmersiveHeight() && event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
@@ -1522,6 +1528,7 @@ AFRAME.registerComponent('custom-movement', {
         if (event.target.classList.contains('vrodos-navmesh')) {
             const hadResolvedGround = this.hasLastGroundHit;
             this.markNavMeshDirty();
+            if (this.teleportTravel) return;
             if (this.positionPrimed && hadResolvedGround) {
                 this.syncHeightOffset();
             } else {
@@ -1622,7 +1629,15 @@ AFRAME.registerComponent('custom-movement', {
             event.keyCode === 32
         ));
     },
+    play: function () {
+        this.teleportPaused = false;
+    },
+    pause: function () {
+        this.teleportPaused = true;
+        this.cancelTeleport();
+    },
     remove: function () {
+        this.cancelTeleport();
         this.removed = true;
         if (this.entryResources) this.entryResources.disposeAll();
         this.clearImmersivePoseTracking();
@@ -3166,6 +3181,181 @@ AFRAME.registerComponent('custom-movement', {
         const currentWorldPosition = this.getNavigationWorldPosition();
         this.movementOffset.copy(targetWorldPosition).sub(currentWorldPosition);
         this.cameraRig.object3D.position.add(this.movementOffset);
+        return true;
+    },
+    canStartTeleport: function () {
+        const loader = this.sceneEl?.components['vrodos-scene-loader'];
+        return !this.removed && !this.teleportPaused && !this.teleportTravel &&
+            Boolean(this.getSceneSettings()) && (!loader || loader.isReady) &&
+            !window.VRODOSRuntimeOverlay?.interactionLocked;
+    },
+    resolveTeleportLanding: function (floorPosition, eyeHeight) {
+        const settings = this.getSceneSettings();
+        const floor = floorPosition.clone();
+        const collisionPolicy = this.getNavigationMode(settings) === 'walkable' && settings.collisionMode !== 'off';
+        if (!collisionPolicy) return { floor, ground: null };
+        if (!this.areCollisionsEnabled(settings)) return null;
+
+        const limits = { maxStepHeight: this.groundSnapDistance, maxDropHeight: this.groundSnapDistance };
+        const ground = this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
+        if (!ground || Math.abs(ground.point.y - floor.y) > this.groundSnapDistance) return null;
+        floor.y = ground.point.y;
+        // Require support across the same footprint used by normal navigation.
+        for (const offset of this.verticalCapsuleOffsets) {
+            const probe = floor.clone().add(new THREE.Vector3(offset.x, 0, offset.y));
+            const support = this.sampleGroundAtSingle(probe, floor.y, this.createGroundHit(), limits);
+            if (!support || Math.abs(support.point.y - floor.y) > this.groundSnapDistance) return null;
+        }
+        if (this.isTeleportLandingBlocked(floor, eyeHeight, ground)) return null;
+        return { floor, ground };
+    },
+    isTeleportLandingBlocked: function (floor, eyeHeight, ground) {
+        this.refreshCollisionWorld();
+        const radius = this.blockerCapsuleRadius;
+        const height = Math.max(this.blockerCapsuleHeight, eyeHeight);
+        const bottom = floor.clone();
+        const top = floor.clone();
+        bottom.y += (radius + this.blockerSkin) / Math.max(0.5, ground.normal.y);
+        top.y += Math.max(height - radius, bottom.y - floor.y);
+        this.authoredToRenderedPosition(bottom, bottom);
+        this.authoredToRenderedPosition(top, top);
+        const inverse = new THREE.Matrix4();
+        const segment = new THREE.Line3();
+        const bounds = new THREE.Box3();
+        const scale = new THREE.Vector3();
+        for (const mesh of this.blockerCollisionTargets) {
+            const tree = mesh.geometry.boundsTree;
+            // Collision-enabled scenes must have their collision BVHs ready.
+            if (!tree) return true;
+            mesh.updateWorldMatrix(true, false);
+            inverse.copy(mesh.matrixWorld).invert();
+            segment.start.copy(bottom).applyMatrix4(inverse);
+            segment.end.copy(top).applyMatrix4(inverse);
+            scale.setFromMatrixScale(mesh.matrixWorld);
+            const localRadius = radius / Math.max(0.000001, Math.min(scale.x, scale.y, scale.z));
+            bounds.makeEmpty().expandByPoint(segment.start).expandByPoint(segment.end).expandByScalar(localRadius);
+            // A capsule entirely inside a decoration box has no surface intersection.
+            if (mesh.geometry.type === 'BoxGeometry') {
+                if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+                if (mesh.geometry.boundingBox.containsPoint(segment.start) ||
+                    mesh.geometry.boundingBox.containsPoint(segment.end)) return true;
+            }
+            if (tree.shapecast({
+                intersectsBounds: box => box.intersectsBox(bounds),
+                intersectsTriangle: triangle => triangle.closestPointToSegment(segment) < localRadius
+            })) return true;
+        }
+        return false;
+    },
+    teleportToPoint: function (authoredFloorPosition, sourceElement) {
+        if (!this.canStartTeleport() || !authoredFloorPosition ||
+            ![authoredFloorPosition.x, authoredFloorPosition.y, authoredFloorPosition.z].every(Number.isFinite)) return false;
+        const immersive = this.isImmersiveXrPresenting();
+        if (immersive && !this.ensureImmersiveSessionAnchor('teleport')) return false;
+        this.ensureNavigationStatePrimed();
+        const start = this.getNavigationWorldPosition().clone();
+        const eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset
+            : immersive ? this.getDesiredImmersiveEyeToGroundOffset() : (this.getTrustedDesktopVisionHeightOffset() ?? 1.6);
+        const roomOffset = new THREE.Vector3();
+        if (immersive) {
+            this.getImmersivePhysicalAnchorPosition(roomOffset);
+            roomOffset.sub(this.immersiveSessionAnchorPosition).applyAxisAngle(this.upVector, -this.immersiveRenderYaw);
+        }
+        const landing = this.resolveTeleportLanding(authoredFloorPosition, eyeHeight + roomOffset.y);
+        if (!landing) return false;
+        const end = landing.floor.clone();
+        end.y += eyeHeight + roomOffset.y;
+        end.sub(roomOffset);
+        if (start.distanceToSquared(end) < 0.0001) return false;
+        const travel = window.VRODOSTeleport.createTravel(start, end);
+        Object.assign(travel, {
+            source: sourceElement, immersive, start, end, landing, eyeHeight,
+            rigStart: this.cameraRig.object3D.position.clone(),
+            startGround: this.hasLastGroundHit ? this.copyGroundHit(this.lastGroundHit, this.createGroundHit()) : null,
+            startVerticalState: this.verticalState, startVerticalVelocity: this.verticalVelocity,
+            controls: []
+        });
+        this.teleportTravel = travel;
+        for (const el of new Set([this.el, this.cameraEl])) {
+            const component = el?.components['wasd-controls'];
+            if (!component) continue;
+            travel.controls.push({ el, component, enabled: component.data.enabled });
+            this.setWASDControlsEnabled(el, false, true);
+        }
+        this.verticalVelocity = 0;
+        this.clearImmersiveEntryPoseSettle();
+        this.clearImmersiveFirstMovementGroundLock();
+        return true;
+    },
+    restoreTeleportControls: function (travel) {
+        if (window.VRODOSRuntimeOverlay?.interactionLocked) return;
+        for (const { el, component, enabled } of travel.controls) {
+            if (el.components['wasd-controls'] === component && component.data.enabled === false) {
+                this.setWASDControlsEnabled(el, enabled, !enabled);
+            }
+        }
+    },
+    cancelTeleport: function () {
+        const travel = this.teleportTravel;
+        if (!travel) return;
+        this.teleportTravel = null;
+        // Restore in the original coordinate space even if XR has just changed mode.
+        if (travel.immersive) {
+            this.immersiveVirtualNavPosition.copy(travel.start);
+            if (this.isImmersiveXrPresenting()) this.applyImmersiveRenderTransform();
+        } else {
+            this.cameraRig.object3D.position.copy(travel.rigStart);
+            this.lastNonImmersiveNavigationPosition.copy(travel.start);
+            this.hasLastNonImmersiveNavigationPosition = true;
+        }
+        this.clearImmersiveGroundCaches();
+        this.lastResolvedPosition.copy(travel.start);
+        if (travel.startGround) {
+            this.setResolvedGroundHit(travel.startGround, travel.start, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+        }
+        this.setVerticalState(travel.startVerticalState, 'teleport-cancel');
+        this.verticalVelocity = travel.startVerticalVelocity;
+        this.restoreTeleportControls(travel);
+        this.requestShadowMapRefresh('teleport-cancel');
+    },
+    tickTeleport: function (timeDelta) {
+        const travel = this.teleportTravel;
+        if (!travel) return false;
+        if (travel.source && !travel.source.isConnected) { this.cancelTeleport(); return true; }
+        travel.elapsed += Math.max(0, Number(timeDelta) || 0);
+        const progress = Math.min(1, travel.elapsed / travel.duration);
+        if (progress === 1) {
+            const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight);
+            if (!landing) {
+                travel.source?.components['vrodos-teleport-point']?.showRejection();
+                this.cancelTeleport();
+                return true;
+            }
+            travel.end.y += landing.floor.y - travel.landing.floor.y;
+            travel.curve.v2.copy(travel.end);
+            travel.landing = landing;
+        }
+        this.setNavigationWorldPosition(window.VRODOSTeleport.sampleTravel(travel, progress));
+        this.lastResolvedPosition.copy(travel.position);
+        if (progress === 1) {
+            this.teleportTravel = null;
+            this.clearImmersiveGroundCaches();
+            this.heightOffset = travel.eyeHeight;
+            this.setVerticalState('grounded', 'teleport-arrival');
+            this.verticalVelocity = 0;
+            if (travel.landing.ground) {
+                this.setResolvedGroundHit(travel.landing.ground, travel.end, this.lastGroundHit);
+                this.hasLastGroundHit = true;
+                this.rememberGroundedPosition(travel.end, this.lastGroundHit);
+            }
+            this.restoreTeleportControls(travel);
+            if (!travel.immersive) {
+                this.rememberNonImmersiveNavigationPosition();
+                this.captureDesktopFullscreenNavigationPose('teleport-arrival');
+            }
+            this.requestShadowMapRefresh('teleport-arrival');
+        }
         return true;
     },
     horizontalDistanceSquared: function (pointA, pointB) {
@@ -4884,6 +5074,8 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
+            if (this.teleportTravel && this.teleportTravel.immersive !== immersivePresenting) this.cancelTeleport();
+
             if (immersivePresenting) {
                 const measuredAt = smoothnessFrame ? this.getRuntimeNow() : 0;
                 try {
@@ -4893,17 +5085,19 @@ AFRAME.registerComponent('custom-movement', {
                     if (!this.immersiveWasPresenting) return;
                     this.observeImmersiveViewerPose();
                     this.ensureImmersiveRuntimeHelpers();
-                    this.settleImmersiveEntryPose();
+                    if (!this.teleportTravel) this.settleImmersiveEntryPose();
                 } finally {
                     if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, 'immersiveStateMs', this.getRuntimeNow() - measuredAt);
                 }
             } else if (this.immersiveWasPresenting) {
                 this.handleExitVr();
-            } else {
+            } else if (!this.teleportTravel) {
                 this.rememberNonImmersiveNavigationPosition();
             }
 
             this.measureImmersiveSmoothness(smoothnessFrame, 'primeNavigationMs', this.ensureNavigationStatePrimed);
+
+            if (this.tickTeleport(timeDelta)) return;
 
             const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {

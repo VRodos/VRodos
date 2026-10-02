@@ -220,6 +220,8 @@ Template rules:
 
 ## Scene Editor Rules
 
+- `teleport-point` is a scene-owned procedural floor marker created from Create > Teleport point. Its origin is the user's foot-level destination. Editor clicks select it; compiled mouse/controller clicks use `custom-movement.teleportToPoint()` and the shared `VRODOSTeleport` marker/travel helpers. Teleporting remains available with `movement_disabled`, preserves viewing direction and XR tracking, and bypasses route collisions while validating walkable landing support and capsule clearance. Recompile affected publications after deploying teleport runtime changes.
+
 - Text assets (`3d-text`) can be edited through the scene object's Text Asset section. Save Text Asset updates the original asset globally; placements reload its metadata and published scenes need recompilation. Manual text metadata takes precedence over any retained uploaded source file during compilation.
 
 - GLB decorations and walkable placements can use `sceneAssetRole: poi-imagetext`. Keep `category_slug` asset-owned and preserve physical rendering/navigation/collision through `scenePoiPhysicalRole`; converted POIs use the normal GLB renderer plus `info-panel`, without POI-button lighting. When scene hover is enabled, converted decorations float only the visual GLB so their collision box stays fixed; converted walkable surfaces do not float. Primitive planes do not support this role.

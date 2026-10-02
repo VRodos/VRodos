@@ -228,6 +228,7 @@
         "aframe-components",
         "scene-settings",
         "navigation",
+        "teleport",
         "avatars"
       ],
       "sourceFiles": [
@@ -241,6 +242,8 @@
         "assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
         "assets/js/runtime/master/components/vrodos_navigation.component.js",
+        "assets/js/runtime/master/vrodos_teleport.js",
+        "assets/js/runtime/master/components/vrodos_teleport_point.component.js",
         "assets/js/runtime/master/components/vrodos_misc.component.js"
       ],
       "generatedBy": "build:runtime"

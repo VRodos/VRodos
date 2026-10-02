@@ -148,7 +148,7 @@ export const runtimeBuildChunks = Object.freeze([
     output: 'vrodos-runtime-aframe-components.bundle.js',
     order: 90,
     dependencies: ['core-runtime'],
-    features: ['aframe-components', 'scene-settings', 'navigation', 'avatars'],
+    features: ['aframe-components', 'scene-settings', 'navigation', 'teleport', 'avatars'],
     sourceFiles: [
       'vrodos_model_origin.js',
       'vrodos_glb_lighting.js',
@@ -160,6 +160,8 @@ export const runtimeBuildChunks = Object.freeze([
       'components/vrodos_runtime_pipeline.component.js',
       'components/vrodos_scene_settings.component.js',
       'components/vrodos_navigation.component.js',
+      'vrodos_teleport.js',
+      'components/vrodos_teleport_point.component.js',
       'components/vrodos_misc.component.js'
     ].map(masterSource)
   }

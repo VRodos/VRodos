@@ -1,0 +1,222 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import vm from 'node:vm';
+import * as THREE from 'three';
+import * as BVH from 'three-mesh-bvh';
+
+const root = resolve(import.meta.dirname, '..');
+const definitions = {};
+const noop = () => {};
+const events = { addEventListener: noop, removeEventListener: noop };
+const timers = new Map();
+let timerId = 0;
+const context = {
+    THREE, console, performance: { now: () => 0 }, document: { ...events },
+    window: { ...events, setTimeout: callback => { timers.set(++timerId, callback); return timerId; },
+        clearTimeout: id => timers.delete(id), VRODOSMaster: { clamp: THREE.MathUtils.clamp }, VRODOS_COLLISION_BVH: BVH },
+    AFRAME: { registerComponent: (name, definition) => { definitions[name] = definition; } }
+};
+vm.createContext(context);
+for (const file of ['vrodos_runtime_resources.js', 'vrodos_teleport.js', 'components/vrodos_navigation.component.js']) {
+    vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master', file), 'utf8'), context, { filename: file });
+}
+const Teleport = context.window.VRODOSTeleport;
+const point = (x, y, z) => new THREE.Vector3(x, y, z);
+const near = (actual, expected, message) => assert(actual.distanceTo(expected) < 1e-6, message);
+
+for (const end of [point(10, 1.6, 0), point(10, 9, 0), point(10, -6, 0)]) {
+    const start = point(0, 1.6, 0);
+    const travel = Teleport.createTravel(start, end);
+    near(Teleport.sampleTravel(travel, 0), start, 'arc starts exactly at the current view');
+    near(Teleport.sampleTravel(travel, 1), end, 'arc ends exactly at the destination');
+    assert(travel.curve.v1.y > Math.max(start.y, end.y), 'arc rises and then descends across different elevations');
+    assert(Teleport.sampleTravel(travel, 0.1).x < 1, 'initial motion eases in');
+    assert(10 - Teleport.sampleTravel(travel, 0.9).x < 1, 'final motion eases out');
+}
+assert.equal(Teleport.createTravel(point(0, 0, 0), point(12, 0, 0)).duration, 1800);
+assert.equal(Teleport.createTravel(point(0, 0, 0), point(100, 0, 0)).duration, 2500);
+assert.equal(Teleport.createTravel(point(0, 0, 0), point(0, 0, 0)).duration, 800);
+assert.equal(Teleport.createTravel(point(0, 0, 0), point(1, 0, 0)).curve.v1.y, 1.5);
+assert.equal(Teleport.createTravel(point(0, 0, 0), point(100, 0, 0)).curve.v1.y, 4);
+assert.equal(Teleport.sampleTravel(Teleport.createTravel(point(0, 0, 0), point(10, 0, 0)), 0.25).x, 1.5625);
+
+function fixture({ standard = false, mode = 'walk', collisions = false, disabled = true } = {}) {
+    const sceneObject = new THREE.Group();
+    const rig = new THREE.Group();
+    const cameraGroup = new THREE.Group();
+    const camera = new THREE.PerspectiveCamera();
+    const world = { ...events, id: 'vrodos-authored-world', object3D: new THREE.Group(), components: {} };
+    sceneObject.add(rig, world.object3D);
+    rig.add(cameraGroup);
+    cameraGroup.add(camera);
+    const controllers = [-1, 1].map(side => {
+        const controller = new THREE.Group();
+        controller.position.set(side * 0.3, 1.2, -0.4);
+        controller.rotation.set(0.1, side * 0.2, 0.3);
+        rig.add(controller);
+        return controller;
+    });
+    (standard ? rig : cameraGroup).position.set(0, 1.6, 0);
+    cameraGroup.rotation.y = 0.4;
+    const settings = { cam_position: '0 1.6 0', cam_rotation_y: '0', navigationMode: mode,
+        collisionMode: collisions ? 'auto' : 'off', movement_disabled: disabled };
+    const meshes = [];
+    let viewerPose = null;
+    const scene = { ...events, object3D: sceneObject, components: {}, camera, is: () => false,
+        getAttribute: () => settings, querySelector: () => world,
+        querySelectorAll: selector => meshes.filter(mesh => mesh.classList.contains(selector.slice(1))),
+        renderer: { xr: { isPresenting: false, getFrame: () => ({ getViewerPose: () => viewerPose }),
+            getReferenceSpace: () => events } } };
+    const cameraEl = { ...events, components: { camera: { camera } }, object3D: cameraGroup, sceneEl: scene };
+    const player = { ...events, object3D: rig, sceneEl: scene, components: {}, setAttribute: noop };
+    context.document.querySelector = selector => selector === '#cameraA' ? cameraEl : null;
+    const nav = Object.create(definitions['custom-movement']);
+    nav.el = player;
+    nav.init();
+    nav.data = { movementSpeed: 2, thumbstickDeadzone: 0.08, maxStepHeight: 0.6, maxDropHeight: 1, maxSlope: 45 };
+    Object.assign(nav, { hasAuthoredNavigationMode: () => true, requestShadowMapRefresh: noop,
+        beginImmersiveSmoothnessFrame: () => null, getActiveImmersiveSmoothnessFrame: () => null,
+        finishImmersiveSmoothnessFrame: noop, beginImmersiveEntryPoseSettle: noop });
+    player.components['custom-movement'] = nav;
+    function addMesh(geometry, position, navmesh = false) {
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+        mesh.position.copy(position);
+        world.object3D.add(mesh);
+        meshes.push({ object3D: mesh, getObject3D: () => mesh, getAttribute: () => null,
+            classList: { contains: name => name === 'vrodos-collider' || (navmesh && name === 'vrodos-navmesh') } });
+        nav.markNavMeshDirty();
+        nav.markCollisionWorldDirty();
+        return mesh;
+    }
+    function enterVr() {
+        scene.renderer.xr.isPresenting = true;
+        const physical = point(0.2, 1.6, 0.1);
+        cameraGroup.position.copy(physical);
+        viewerPose = { transform: { position: physical } };
+        nav.getImmersivePhysicalAnchorPosition = target => target.copy(physical);
+        nav.getImmersivePhysicalForwardDirection = target => target.set(0, 0, -1);
+        nav.handleEnterVr();
+        assert(nav.resetImmersiveWorldLocomotion());
+        return physical;
+    }
+    return { nav, rig, cameraGroup, scene, settings, camera, world, player, controllers, addMesh, enterVr };
+}
+
+for (const standard of [false, true]) {
+    for (const mode of ['walk', 'walkable', 'fly']) {
+        const f = fixture({ standard, mode });
+        const orientation = f.cameraGroup.quaternion.clone();
+        const wasdEnabled = true;
+        f.player.components['wasd-controls'] = { data: { enabled: true }, pause: noop, play: noop,
+            velocity: point(5, 0, 0), keys: { KeyW: true } };
+        const source = { isConnected: true };
+        assert(f.nav.teleportToPoint(point(12, 3, -4), source), 'movement-disabled scenes can teleport');
+        assert.equal(f.player.components['wasd-controls'].data.enabled, false, 'WASD is suspended');
+        assert.equal(f.nav.teleportToPoint(point(15, 0, 0), source), false, 'repeated clicks do not interrupt travel');
+        f.nav.leftThumbInput.y = -1;
+        f.nav.rightThumbInput.x = 1;
+        const duration = f.nav.teleportTravel.duration;
+        f.nav.tick(0, duration / 2);
+        assert(f.nav.getNavigationWorldPosition().y > 4.6, 'mid-travel view follows the upward arc');
+        f.nav.tick(duration, duration / 2);
+        near(f.nav.getNavigationWorldPosition(), point(12, 4.6, -4), 'arrival preserves eye height');
+        assert(f.cameraGroup.quaternion.equals(orientation), 'travel preserves viewing direction');
+        assert.equal(f.player.components['wasd-controls'].data.enabled, wasdEnabled, 'WASD ownership is restored');
+        f.nav.tick(duration + 16, 16);
+        near(f.nav.getNavigationWorldPosition(), point(12, 4.6, -4), 'movement lock retains the arrival');
+    }
+}
+
+for (const interruption of ['pause', 'source-removal', 'XR-entry', 'XR-exit', 'remove']) {
+    const f = fixture();
+    if (interruption === 'XR-exit') f.enterVr();
+    const start = f.nav.getNavigationWorldPosition().clone();
+    const source = { isConnected: true };
+    assert(f.nav.teleportToPoint(point(8, 0, 0), source));
+    f.nav.tickTeleport(f.nav.teleportTravel.duration / 2);
+    if (interruption === 'pause') f.nav.pause();
+    if (interruption === 'remove') f.nav.remove();
+    if (interruption === 'source-removal') { source.isConnected = false; f.nav.tickTeleport(16); }
+    if (interruption === 'XR-entry') { f.scene.renderer.xr.isPresenting = true; f.nav.handleEnterVr(); }
+    if (interruption === 'XR-exit') { f.scene.renderer.xr.isPresenting = false; f.nav.handleExitVr(); }
+    assert.equal(f.nav.teleportTravel, null, 'interrupted travel stops');
+    near(f.nav.lastResolvedPosition, start, 'interruption restores the starting navigation position');
+}
+
+const xr = fixture();
+const physical = xr.enterVr();
+physical.x += 0.4; // Room-scale movement since session entry.
+xr.cameraGroup.position.copy(physical);
+const headPosition = xr.cameraGroup.position.clone();
+const headOrientation = xr.cameraGroup.quaternion.clone();
+const rigPosition = xr.rig.position.clone();
+const controllerPoses = xr.controllers.map(controller => ({
+    position: controller.position.clone(), orientation: controller.quaternion.clone()
+}));
+assert(xr.nav.teleportToPoint(point(8, 0, 2), { isConnected: true }));
+xr.nav.tickTeleport(xr.nav.teleportTravel.duration);
+const authoredHead = xr.nav.renderedToAuthoredPosition(physical, new THREE.Vector3());
+near(authoredHead, point(8, 1.6, 2), 'room-scale offset is accounted for at arrival');
+near(xr.cameraGroup.position, headPosition, 'XR tracked head position stays untouched');
+assert(xr.cameraGroup.quaternion.equals(headOrientation), 'XR tracked head orientation stays untouched');
+near(xr.rig.position, rigPosition, 'XR tracking rig remains untouched');
+xr.controllers.forEach((controller, index) => {
+    near(controller.position, controllerPoses[index].position, 'controller tracking position stays untouched');
+    assert(controller.quaternion.equals(controllerPoses[index].orientation), 'controller tracking orientation stays untouched');
+});
+const virtualArrival = xr.nav.immersiveVirtualNavPosition.clone();
+xr.scene.renderer.xr.isPresenting = false;
+xr.cameraGroup.position.set(0, 1.6, 0); // A-Frame restores the desktop camera on exit.
+xr.nav.handleExitVr();
+near(xr.nav.getNavigationWorldPosition(), virtualArrival, 'XR exit keeps the completed virtual travel destination');
+xr.nav.tick(16, 16);
+xr.enterVr();
+near(xr.nav.immersiveVirtualNavPosition, virtualArrival, 'XR re-entry retains the completed travel destination');
+
+const collision = fixture({ mode: 'walkable', collisions: true });
+const floorGeometry = new THREE.PlaneGeometry(30, 30);
+floorGeometry.rotateX(-Math.PI / 2);
+collision.addMesh(floorGeometry, point(0, 0, 0), true);
+collision.addMesh(new THREE.BoxGeometry(0.2, 3, 3), point(3, 1.5, 0));
+assert(collision.nav.teleportToPoint(point(8, 0, 0), { isConnected: true }), 'route obstacles are bypassed');
+collision.nav.tickTeleport(collision.nav.teleportTravel.duration);
+near(collision.nav.getNavigationWorldPosition(), point(8, 1.6, 0), 'walkable arrival reaches the marker');
+const arrival = collision.nav.getNavigationWorldPosition().clone();
+for (const invalid of [point(3, 0, 0), point(2.7, 0, 0), point(16, 0, 0), point(8, 1, 0)]) {
+    assert.equal(collision.nav.teleportToPoint(invalid), false, 'invalid or blocked landing is rejected');
+    near(collision.nav.getNavigationWorldPosition(), arrival, 'rejection does not move the user');
+}
+collision.addMesh(new THREE.BoxGeometry(2, 0.2, 2), point(10, 1.2, 0));
+assert.equal(collision.nav.teleportToPoint(point(10, 0, 0)), false, 'low ceilings reject landing');
+assert(collision.nav.teleportToPoint(point(-8, 0, 0)));
+collision.nav.tickTeleport(collision.nav.teleportTravel.duration / 2);
+collision.addMesh(new THREE.BoxGeometry(2, 3, 2), point(-8, 1.5, 0));
+collision.nav.tickTeleport(collision.nav.teleportTravel.duration);
+assert.equal(collision.nav.teleportTravel, null, 'a newly blocked landing cancels travel');
+near(collision.nav.getNavigationWorldPosition(), arrival, 'a newly blocked landing restores the starting position');
+
+const slope = fixture({ mode: 'walkable', collisions: true });
+const steep = slope.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+steep.rotation.z = Math.PI / 3;
+assert.equal(slope.nav.teleportToPoint(point(2, Math.sqrt(3) * 2, 0)), false, 'slopes beyond the walking limit reject landing');
+const edge = fixture({ mode: 'walkable', collisions: true });
+const smallPlatform = new THREE.PlaneGeometry(0.3, 0.3);
+smallPlatform.rotateX(-Math.PI / 2);
+edge.addMesh(smallPlatform, point(3, 0, 0), true);
+assert.equal(edge.nav.teleportToPoint(point(3, 0, 0)), false, 'unsupported player footprint rejects landing');
+const snap = fixture({ mode: 'walkable', collisions: true });
+snap.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+assert(snap.nav.teleportToPoint(point(3, 0.2, 0)), 'nearby ground within the snap tolerance is accepted');
+snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
+near(snap.nav.getNavigationWorldPosition(), point(3, 1.6, 0), 'accepted landing snaps to its supported floor');
+
+const loading = fixture();
+loading.scene.components['vrodos-scene-loader'] = { isReady: false };
+assert.equal(loading.nav.teleportToPoint(point(3, 0, 0)), false);
+loading.scene.components['vrodos-scene-loader'].isReady = true;
+context.window.VRODOSRuntimeOverlay = { interactionLocked: true };
+assert.equal(loading.nav.teleportToPoint(point(3, 0, 0)), false, 'modal interactions block teleporting');
+context.window.VRODOSRuntimeOverlay = null;
+
+console.log('Teleport navigation acceptance tests passed.');

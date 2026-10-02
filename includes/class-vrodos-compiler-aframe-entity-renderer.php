@@ -67,6 +67,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 						'primitive' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
 							$this->render_primitive_plane_entity( $context->dom, $context->scene, $context->assets, $context->entity );
 						},
+						'teleport' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_teleport_point_entity( $context->dom, $context->scene, $context->entity );
+						},
 					]
 				),
 				new VRodos_Compiler_Media_Audio_Text_POI_Renderer(
@@ -1227,6 +1230,16 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$a_light->setAttribute( 'light', $light_attr );
 		$ascene->appendChild( $a_light );
+	}
+
+	private function render_teleport_point_entity( DOMDocument $dom, DOMElement $ascene, object $obj ): void {
+		$entity = $dom->createElement( 'a-entity' );
+		$entity->setAttribute( 'id', 'teleport_' . sanitize_key( (string) $obj->uuid ) );
+		$entity->setAttribute( 'class', 'raycastable hideable' );
+		$entity->setAttribute( 'vrodos-teleport-point', '' );
+		$entity->setAttribute( 'shadow', 'cast: false; receive: false' );
+		VRodos_Compiler_AFrame_DOM_Helper::apply_transform( $entity, $obj, true );
+		$ascene->appendChild( $entity );
 	}
 
 	private function render_primitive_plane_entity( DOMDocument $dom, DOMElement $ascene, DOMElement $assets, object $obj ): void {

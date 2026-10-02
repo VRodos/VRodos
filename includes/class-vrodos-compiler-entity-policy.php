@@ -32,6 +32,7 @@ final class VRodos_Compiler_Entity_Policy {
 		'decoration' => 'gltf', 'walkable-surface' => 'gltf', 'collision-proxy' => 'gltf', 'door' => 'gltf', 'poi-link' => 'gltf',
 		'chat' => 'gltf', 'poi-chat' => 'gltf', 'audio' => 'audio', 'image' => 'media', 'video' => 'media', '3d-text' => 'text',
 		'poi-imagetext' => 'poi-imagetext', 'pawn' => 'pawn', 'assessment' => 'assessment', 'primitive-plane' => 'primitive',
+		'teleport-point' => 'teleport',
 	];
 
 	public function normalize( object $source, int $scene_id, string $object_key ): object {

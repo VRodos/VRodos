@@ -7,6 +7,15 @@ VRODOS.utils = VRODOS.utils || {};
 
 const VRODOS_LOADER_TEXTURE_MAP_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap'];
 
+VRODOS.loader.createTeleportPointObject = function (name) {
+    const object = window.VRODOSTeleport.createMarker();
+    object.name = name;
+    object.category_name = 'teleport-point';
+    object.category_slug = 'teleport-point';
+    object.compiledCollisionEnabled = false;
+    return object;
+};
+
 VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
     const queue = Array.isArray(tasks) ? tasks : [];
     const safeLimit = Math.max(1, Number(limit) || 1);
