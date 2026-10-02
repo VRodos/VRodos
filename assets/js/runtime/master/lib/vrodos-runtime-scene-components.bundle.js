@@ -1464,9 +1464,8 @@
 .vrodos-view-mode { position:fixed; left:max(16px,env(safe-area-inset-left)); bottom:max(16px,env(safe-area-inset-bottom)); z-index:10000; font-family:"Segoe UI",sans-serif; color:#fff; }
 .vrodos-view-mode[hidden], .vrodos-view-mode__panel[hidden] { display:none; }
 .vrodos-view-mode__toggle, .vrodos-view-mode__panel { box-sizing:border-box; border:1px solid rgb(255 255 255 / 20%); border-radius:12px; background:rgb(18 24 32 / 65%); box-shadow:0 10px 28px rgb(0 0 0 / 16%); backdrop-filter:blur(10px) saturate(1.2); }
-.vrodos-view-mode__toggle { min-height:44px; padding:12px 16px; display:flex; align-items:center; gap:14px; color:inherit; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
-.vrodos-view-mode__toggle::after { content:""; width:6px; height:6px; border-top:2px solid currentColor; border-left:2px solid currentColor; transform:rotate(45deg); }
-.vrodos-view-mode__toggle[aria-expanded="true"]::after { transform:rotate(225deg); }
+.vrodos-view-mode__toggle { width:48px; height:48px; padding:12px; display:flex; align-items:center; justify-content:center; color:inherit; cursor:pointer; }
+.vrodos-view-mode__toggle svg { display:block; width:24px; height:24px; }
 .vrodos-view-mode__panel { position:absolute; left:0; bottom:calc(100% + 8px); display:flex; flex-direction:column; gap:4px; padding:6px; width:min(220px,calc(100vw - 32px)); max-height:60vh; overflow:auto; }
 .vrodos-view-mode__option { min-height:44px; box-sizing:border-box; display:flex; align-items:center; padding:10px 12px; border-radius:8px; color:inherit; font-size:13px; font-weight:650; text-decoration:none; }
 .vrodos-view-mode__option:hover { background:rgb(255 255 255 / 12%); }
@@ -1491,7 +1490,9 @@
           this.viewToggle = document.createElement("button");
           this.viewToggle.type = "button";
           this.viewToggle.className = "vrodos-view-mode__toggle";
-          this.viewToggle.textContent = "View mode";
+          this.viewToggle.innerHTML = svg('<path fill-rule="evenodd" d="M10 8h44a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H34v6h12v4H18v-4h12v-6H10a6 6 0 0 1-6-6V14a6 6 0 0 1 6-6Zm0 4a2 2 0 0 0-2 2v28a2 2 0 0 0 2 2h44a2 2 0 0 0 2-2V14a2 2 0 0 0-2-2Z"/>');
+          this.viewToggle.setAttribute("aria-label", "View mode");
+          this.viewToggle.setAttribute("title", "View mode");
           this.viewToggle.setAttribute("aria-controls", "vrodos-view-mode-options");
           this.viewPanel = document.createElement("div");
           this.viewPanel.id = "vrodos-view-mode-options";

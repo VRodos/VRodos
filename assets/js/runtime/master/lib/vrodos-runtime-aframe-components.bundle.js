@@ -9323,12 +9323,12 @@
 .vrodos-destinations { position:fixed; top:max(16px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); max-width:calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)); z-index:10000; color:#fff; font-family:"Segoe UI",sans-serif; pointer-events:none; }
 .vrodos-destinations[hidden], .vrodos-destinations__label[hidden] { display:none; }
 .vrodos-destinations__list { display:flex; gap:8px; overflow-x:auto; padding:4px; scrollbar-width:thin; pointer-events:auto; }
-.vrodos-destinations__button { flex:0 0 48px; width:48px; height:48px; border-radius:50%; border:1px solid rgb(255 255 255 / 30%); background:rgb(18 24 32 / 65%); backdrop-filter:blur(10px); color:#fff; font:650 16px "Segoe UI",sans-serif; cursor:pointer; }
+.vrodos-destinations__button { flex:0 0 48px; width:48px; height:48px; border-radius:50%; border:0; background:rgb(18 24 32 / 65%); backdrop-filter:blur(10px); color:#fff; font:650 16px "Segoe UI",sans-serif; cursor:pointer; }
 .vrodos-destinations__button:hover { background:rgb(15 118 110 / 85%); }
 .vrodos-destinations__button:focus-visible { outline:2px solid #5eead4; outline-offset:2px; }
 .vrodos-destinations__button:disabled { opacity:.5; cursor:default; }
-.vrodos-destinations__button[data-rejected="true"] { background:#991b1b; border-color:#ef4444; }
-.vrodos-destinations__label { position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); box-sizing:border-box; padding:8px 12px; width:max-content; max-width:min(320px,calc(100vw - 32px)); border:1px solid rgb(255 255 255 / 20%); border-radius:10px; background:rgb(18 24 32 / 85%); color:#fff; font-size:13px; text-align:center; overflow-wrap:anywhere; }
+.vrodos-destinations__button[data-rejected="true"] { background:#991b1b; }
+.vrodos-destinations__label { position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); box-sizing:border-box; padding:8px 12px; width:max-content; max-width:min(320px,calc(100vw - 32px)); border:0; border-radius:10px; background:rgb(18 24 32 / 85%); color:#fff; font-size:13px; text-align:center; overflow-wrap:anywhere; }
 `;
         document.head.append(this.style);
         this.desktop = document.createElement("nav");
@@ -9398,8 +9398,7 @@
           centerAtEyeLevel: true,
           anchorRefreshFrames: 0,
           background: "#18202b",
-          borderWidth: 1,
-          borderColor: "#475569",
+          borderWidth: 0,
           render: (api) => this.renderPanel(api),
           cleanup: () => {
             this.panel = null;

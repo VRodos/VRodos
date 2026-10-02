@@ -2,6 +2,8 @@
     "use strict";
 
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
+    // Filled paths share the same clipboard/check icon with the spatial SVG renderer.
+    const progressIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M9 2h6a2 2 0 0 1 2 2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2-2Zm0 2v2h6V4ZM5 6v14h14V6h-2v2H7V6Z"/><path d="m7 13 1.4-1.4 2.6 2.6 4.6-4.6L17 11l-6 6Z"/></svg>';
 
     function getAssessmentProgressRuntime() {
         if (window.__vrodosAssessmentProgressRuntime) return window.__vrodosAssessmentProgressRuntime;
@@ -16,13 +18,18 @@
             if (runtime.label) return runtime.label;
             const label = document.createElement("div");
             label.id = "vrodos-assessment-progress";
+            label.setAttribute("role", "status");
             label.setAttribute("aria-live", "polite");
+            label.innerHTML = progressIcon;
+            Object.assign(label.firstElementChild.style, { width: "18px", height: "18px", flexShrink: "0" });
+            runtime.count = document.createElement("span");
+            label.appendChild(runtime.count);
             Object.assign(label.style, {
                 position: "fixed", top: "16px", right: "16px", zIndex: "1000",
                 padding: "7px 11px", borderRadius: "999px", pointerEvents: "none",
                 background: "rgba(15,23,42,0.58)", color: "#fff",
                 font: "500 12px/1.3 system-ui, sans-serif", letterSpacing: "0.01em",
-                display: "none"
+                display: "none", alignItems: "center", gap: "7px"
             });
             document.body.appendChild(label);
             runtime.label = label;
@@ -37,15 +44,18 @@
         runtime.update = function () {
             const { completed, total, level } = runtime.progress;
             const visible = Boolean(level && total > 0 && !runtime.modalOpen);
-            const text = "Assessments " + completed + " / " + total;
+            const text = `${completed}/${total}`;
+            const accessibleText = `Assessments ${completed} of ${total}`;
             const label = runtime.ensureLabel();
-            label.textContent = text;
+            runtime.count.textContent = text;
+            label.setAttribute("aria-label", accessibleText);
+            label.title = accessibleText;
             const dialogOpen = Boolean(document.querySelector("dialog[open]"));
-            label.style.display = visible && !dialogOpen && !runtime.isImmersive() ? "block" : "none";
+            label.style.display = visible && !dialogOpen && !runtime.isImmersive() ? "flex" : "none";
 
             const spatial = window.VRODOSSpatialUI;
             if (spatial && typeof spatial.setAssessmentProgress === "function") {
-                spatial.setAssessmentProgress(visible && runtime.isImmersive() ? text : "");
+                spatial.setAssessmentProgress(visible && runtime.isImmersive() ? text : "", progressIcon);
             } else if (visible && runtime.isImmersive()) {
                 const overlay = window.VRODOSRuntimeOverlay;
                 const load = overlay && (overlay.prewarmSpatialUiRuntime || overlay.ensureSpatialUiRuntime);
@@ -72,6 +82,7 @@
             }
             if (runtime.label) runtime.label.remove();
             runtime.label = null;
+            runtime.count = null;
         };
 
         session.subscribeProgress((progress) => {

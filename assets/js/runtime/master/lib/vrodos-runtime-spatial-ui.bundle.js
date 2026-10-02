@@ -16043,6 +16043,7 @@
     let controlsHint = null;
     let assessmentProgress = null;
     let assessmentProgressText = "";
+    let assessmentProgressIcon = "";
     let hostComponentRegistered = false;
     let hostComponentScene = null;
     let hostComponentAttachAttempts = 0;
@@ -18729,8 +18730,9 @@
       disposeComponentTree(progress.root);
       disposeObject3D(progress.group);
     }
-    function setAssessmentProgress(text) {
+    function setAssessmentProgress(text, iconContent = assessmentProgressIcon) {
       assessmentProgressText = String(text || "");
+      assessmentProgressIcon = iconContent;
       if (!assessmentProgressText || activePanel || getPresentationMode() !== "immersive-xr" || !isAvailable()) {
         hideAssessmentProgress();
         return;
@@ -18741,7 +18743,7 @@
         if (!assessmentProgress) {
           assessmentProgress = createPanelState({
             id: "assessment-progress",
-            width: 0.95,
+            width: 0.36,
             height: 0.18,
             designWidthPx: 760,
             distance: 1.95,
@@ -18757,14 +18759,24 @@
             lockInteraction: false
           });
           assessmentProgress.root.setProperties(baseContainerProps({
+            flexDirection: "row",
+            gap: 28,
+            borderRadius: 90,
             alignItems: "center",
             justifyContent: "center",
             pointerEvents: "none",
             panelMaterialClass: getThreeRuntime().MeshBasicMaterial
           }));
+          append(assessmentProgress.root, new Svg(baseContainerProps({
+            content: assessmentProgressIcon,
+            width: 80,
+            height: 80,
+            color: "#ffffff",
+            pointerEvents: "none"
+          })));
           assessmentProgress.text = createPanelApi(assessmentProgress).text(assessmentProgress.root, {
             text: assessmentProgressText,
-            fontSize: 26,
+            fontSize: 64,
             color: "#ffffff",
             fontWeight: 500,
             pointerEvents: "none"
@@ -18945,6 +18957,7 @@
       if (hostComponentAttachTimer !== null) window.clearTimeout(hostComponentAttachTimer);
       hostComponentAttachTimer = null;
       assessmentProgressText = "";
+      assessmentProgressIcon = "";
       hideControlsHint();
       hideAssessmentProgress();
       closePanel("spatial-ui-dispose");

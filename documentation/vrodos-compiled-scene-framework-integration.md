@@ -211,6 +211,8 @@ The immersive VR surfaces expected to use `window.VRODOSSpatialUI` are:
 
 Desktop and inline browser modes keep the existing DOM dialogs. The DOM assessment and image/text POI dialogs remain the source of truth outside immersive XR.
 
+Published navigation overlays use borderless numbered teleport buttons, with destination names shown below on hover or keyboard focus. The bottom-left View mode toggle uses a monitor icon with an accessible name; its variant menu retains the device labels. Assessment progress uses a shared clipboard/check icon beside the completed/total count in desktop and spatial UI, with a descriptive desktop accessibility label. Recompile published scenes after deploying the rebuilt runtime bundles to refresh their cache-busting script URLs. Browser fixtures cover desktop/narrow layouts and simulated immersive rendering; physical-headset visual acceptance remains unverified.
+
 VR video objects are intentionally not in the modal surface list. Controller trigger clicks should directly toggle playback on the video asset. If a video click opens a spatial UI dialog, that is a regression in the video component click path.
 
 ### Text And Font Coverage
