@@ -10,11 +10,7 @@
 	height: 75vh !important;
 	left: 0;
 	top: 44px;
-	background-color: rgba(15, 23, 42, 0.25) !important;
-	backdrop-filter: blur(8px);
-	-webkit-backdrop-filter: blur(8px);
 	border-right: 1px solid rgba(255, 255, 255, 0.1);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	border-bottom-right-radius: 12px;
 	box-shadow: 10px 10px 20px -5px rgba(0, 0, 0, 0.2);
 	display: flex !important; /* Ensure visibility for nested toggle */
