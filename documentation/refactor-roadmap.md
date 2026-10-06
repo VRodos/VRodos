@@ -61,7 +61,7 @@ The static screenshots preserve architecture, lighting, shadows, media, and scen
 - [ ] Validate Greek spatial interaction in browser/headset.
 
 ## E. Optimizer
-- [x] Extract source metadata, GLB analysis, and dashboard aggregation/sorting classes; route manager domain APIs through a service.
+- [x] Extract source metadata and GLB analysis classes; route manager domain APIs through a service. Dashboard aggregation/sorting was extracted and subsequently retired with Actionable Assets.
 - [x] Move worker/source-change hooks from admin controller to the domain service; orchestration still composes existing traits.
 - [x] Separate read-only lookup from explicit normalization/snapshot updates.
 - [x] Bulk-load dashboard metadata, preserve global sorting, avoid page-render writes/hashing.
@@ -184,7 +184,7 @@ All **53 tests pass** in the writable fixture environment. Browser-source ESLint
 
 Shared helpers cover live debug/query flags, required atmosphere contracts, PHP/editor CEFR normalization, and ZIP/Blender temporary files. Removed the unused editor button shim and its dependencies. Seven assessment builders and grading are shared across DOM/spatial renderers; existing 15-case assessment harness passes. Added fixtures cover CEFR, Greek question responses, debug flag changes, and duplicate resource disposal.
 
-Optimizer domain callers now use `VRodos_Asset_Optimization_Service`. Independent classes own source snapshots, GLB analysis, and dashboard aggregation/sorting. `inspect_source_glb` is read-only; `prepare_source_glb` explicitly normalizes and refreshes identity at existing processing boundaries. Dashboard scans, row inspection, and metabox inspection use the read-only path. Metadata is primed in batches of 200. Tests verify no scan writes, missing/stale source identity, global priority tie-breaking, title sorting, and pagination. Existing stat/hash cache and immutable queue behavior remain.
+Optimizer domain callers now use `VRodos_Asset_Optimization_Service`. Independent classes own source snapshots and GLB analysis. `inspect_source_glb` is read-only; `prepare_source_glb` explicitly normalizes and refreshes identity at existing processing boundaries. Settings diagnostics scans and metabox inspection use the read-only path. Metadata is primed in batches of 200. Tests verify no scan writes and missing/stale source identity. Existing stat/hash cache and immutable queue behavior remain. The Actionable Assets dashboard and unused bulk admin actions have been retired; manual analysis refresh and Web High regeneration live in the asset-edit metabox.
 
 Staged-session reads are centralized, including ownership checks shared by inspect/prepare/status/consume. Tests cover missing/invalid manifests, owner mismatch, invalid project, and revoked edit permission. Property presentation/category scripts have ordered enqueue dependencies; common changes stay in the original controller. Primitive-plane refresh behavior is shared with undo. Import execution now has its own service; broader change-side-effect consolidation remains unfinished.
 
@@ -263,9 +263,9 @@ Undo/redo popup preference: keep a closed panel closed; explicitly synchronize G
 
 ### Targeted optimizer row refresh (2026-09-11)
 
-Single-row dashboard refresh previously scanned every GLB and merged buckets only to obtain the requested asset title. It now reads that title directly and retains its existing per-asset source/analysis/derivative reads. Full-list global sorting and pagination are unchanged. No new cache, invalidation layer, or persistent storage was added.
+Before the Actionable Assets dashboard was retired, single-row refresh was changed to read the requested asset directly instead of scanning every GLB. Dashboard refresh, aggregation, sorting, and pagination have since been removed. Manual analysis refresh now lives in the asset-edit metabox and uses the shared analysis service without queueing derivatives.
 
-A row assembly fixture rejects collection scans and verifies 20 repeated requests each read only the requested asset, preserving payload keys and reacting to renamed titles, stale analysis, replaced sources, and missing sources. Real temporary-file source fixtures also verify repeated read-only inspection, content-generation advancement, same-content attachment replacement, and deleted files. Existing lifecycle tests cover cancellation and derivative cleanup. These are isolated regressions, not live WordPress replacement/deletion acceptance.
+The former row assembly fixture was retired with the dashboard. Real temporary-file source fixtures retain coverage for repeated read-only inspection, content-generation advancement, same-content attachment replacement, and deleted files. Existing lifecycle tests cover cancellation and derivative cleanup, and asset-edit analysis tests cover authorization, nonce validation, saved errors, and refresh without derivative scheduling. These are isolated regressions, not live WordPress replacement/deletion acceptance.
 
 ### Shared assessment interaction lifecycle (2026-09-11)
 

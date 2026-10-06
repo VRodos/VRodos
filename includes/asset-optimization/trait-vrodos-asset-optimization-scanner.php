@@ -5,32 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 trait VRodos_Asset_Optimization_Scanner {
-	protected static function collect_analysis_candidates( string $target ): array {
-		$asset_ids = self::collect_glb_asset_ids();
-
-		$candidates = [];
-		foreach ( $asset_ids as $asset_id ) {
-			$asset_id = (int) $asset_id;
-			$source   = self::inspect_source_glb( $asset_id );
-			if ( is_wp_error( $source ) ) {
-				continue;
-			}
-
-			$analysis = self::get_analysis_meta( $asset_id );
-			if ( 'all' !== $target && ! self::analysis_needs_refresh( $analysis, $source ) ) {
-				continue;
-			}
-
-			$title = get_the_title( $asset_id );
-			$candidates[] = [
-				'assetId' => $asset_id,
-				'title'   => $title ? $title : 'Asset #' . $asset_id,
-			];
-		}
-
-		return $candidates;
-	}
-
 	protected static function scan_glb_derivatives( string $profile ): array {
 		$asset_ids = self::collect_glb_asset_ids();
 

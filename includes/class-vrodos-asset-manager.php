@@ -46,16 +46,6 @@ class VRodos_Asset_Manager {
 
 		wp_enqueue_style( 'vrodos_modern_compiled' );
 		wp_enqueue_script( 'lucide-icons' );
-		wp_enqueue_script( 'vrodos_dashboard_assets' );
-		wp_localize_script(
-			'vrodos_dashboard_assets',
-			'vrodosDashboardAssets',
-			[
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'vrodos_dashboard_asset_actions' ),
-			]
-		);
-
 		// Initialize Lucide icons
 		wp_add_inline_script( 'lucide-icons', 'window.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });' );
 	}
@@ -435,7 +425,6 @@ class VRodos_Asset_Manager {
       ['vrodos_compile_dialogue', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_dialogue.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared', 'vrodos_CompileUI_General', 'vrodos_CompileUI_PostFX', 'vrodos_CompileUI_Atmosphere'], $compile_dialogue_version],
       ['vrodos_CompileUI_Profiles', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_profiles.js' ), ['vrodos_namespace', 'vrodos_compile_dialogue', 'vrodos_runtime_settings_contract'], $compile_profiles_version],
       ['vrodos_project_manager', VRodos_Path_Manager::editor_js_url( 'vrodos_project_manager.js' ), ['vrodos_namespace', 'ajax-script_create_game', 'ajax-script_rename_game'], $project_manager_version],
-      ['vrodos_dashboard_assets', VRodos_Path_Manager::editor_js_url( 'vrodos_dashboard_assets.js' ), ['lucide-icons']],
       ['vrodos_EditorInitializer', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_initializer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_editor_diagnostics', 'vrodos_editor_services', 'vrodos_editor_render_loop', 'vrodos_scripts', 'vrodos_scene_settings_sync', 'ajax-script_savescene', 'vrodos_loader_scene_lifecycle', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_scene_editor_ui_controller']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' . $three_vendor_bundle )],

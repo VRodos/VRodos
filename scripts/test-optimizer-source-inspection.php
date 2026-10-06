@@ -28,7 +28,6 @@ class VRodos_Storage_Manager {
 	public static function normalize_glb_attachment( ...$args ): string { $GLOBALS['normalizations']++; return $GLOBALS['source_path']; }
 }
 require_once __DIR__ . '/../includes/asset-optimization/class-vrodos-asset-optimization-source.php';
-require_once __DIR__ . '/../includes/asset-optimization/class-vrodos-asset-optimization-dashboard-read-model.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
 class SourcePathFixture {
@@ -65,18 +64,7 @@ try {
 	$scan = ScannerFixture::scan();
 	verify( 1 === $scan['totalAssets'] && count( $scan['analysisMissing'] ) === 1, 'Scan must filter non-GLB media and preserve missing-analysis rows.' );
 	verify( $primed === [ [ 1, 2 ] ], 'Scanner must prime metadata in batches.' );
-	verify( 1 === $writes && 1 === $normalizations, 'Dashboard scanning must remain read-only.' );
-	$rows = VRodos_Asset_Optimization_Dashboard_Read_Model::collect( $scan );
-	verify( count( $rows ) === 1 && ! empty( $rows[0]['dashboardFlags']['analysis-missing'] ), 'Dashboard rows preserve missing-analysis priority flags.' );
-	$rows = [
-		[ 'assetId' => 1, 'recommendationScore' => 100, 'title' => 'Beta' ],
-		[ 'assetId' => 2, 'recommendationScore' => 200, 'title' => 'Alpha' ],
-		[ 'assetId' => 3, 'recommendationScore' => 200, 'title' => 'Gamma' ],
-	];
-	$ordered = VRodos_Asset_Optimization_Dashboard_Read_Model::sort( $rows, 'priority', 'desc' );
-	verify( array_column( $ordered, 'assetId' ) === [ 3, 2, 1 ], 'Global priority sorting retains the ID tie-break before pagination.' );
-	verify( array_column( array_slice( $ordered, 1, 1 ), 'assetId' ) === [ 2 ], 'Pagination selects from globally sorted rows.' );
-	verify( array_column( VRodos_Asset_Optimization_Dashboard_Read_Model::sort( $rows, 'title', 'asc' ), 'assetId' ) === [ 2, 1, 3 ], 'Title ordering is preserved.' );
+	verify( 1 === $writes && 1 === $normalizations, 'Diagnostics scanning must remain read-only.' );
 	file_put_contents( $source_path, 'glTFchanged fixture' );
 	clearstatcache( true, $source_path );
 	$stale = VRodos_Asset_Optimization_Source::inspect( 1, $resolve );
@@ -99,4 +87,4 @@ try {
 } finally {
 	if ( is_file( $source_path ) ) unlink( $source_path );
 }
-echo "Read-only optimizer source and dashboard scan tests passed.\n";
+echo "Read-only optimizer source and diagnostics scan tests passed.\n";

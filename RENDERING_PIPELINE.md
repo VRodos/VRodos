@@ -239,21 +239,16 @@ Future admin-panel optimization should be derivative-based: keep the original up
 
 ### Admin Derivative Storage
 
-`VRodos_Asset_Optimization_Manager` provides the first admin-side derivative workflow for `vrodos_asset3d`:
+Asset optimization uses one shared service and immutable Web derivative queue:
 
-- The asset edit screen has a `GLB Optimization` metabox.
-- Settings > Assets shows library-level GLB analysis and safe Draco derivative status for GLB-referenced assets only as a diagnostics/reporting view.
-- `Generate safe Draco derivative` runs the same glTF Transform `prune -> dedup -> draco` flow used by the prototype script.
-- New or updated `vrodos_asset3d_glb` metadata triggers read-only GLB benefit analysis and stores `_vrodos_asset3d_glb_analysis`.
-- The top-level VRodos dashboard has an `Actionable Assets` tab for the highest-priority GLB optimization items, single-asset refresh/generate derivative actions, and a Compile Use toggle for ready derivatives.
-- Dashboard analysis refresh and Compile Use toggles use `admin-ajax.php` and update the affected row in place. Safe Draco generation still uses the signed admin action path because it writes derivative files.
-- Derivatives are stored in uploads under `vrodos-optimized-assets/asset-{asset_id}/`.
-- Metadata lives in `_vrodos_asset3d_glb_derivatives`.
-- Permanent deletion of a `vrodos_asset3d` post removes its derivative cache directory and optimization metadata. Project deletion paths that delete associated assets inherit this cleanup.
-- Compilation uses a derivative only when the asset's `Use active derivative in compiled scenes` checkbox or dashboard Compile Use toggle is enabled.
-- If the derivative file is missing or the stored source URL no longer matches the current GLB URL, compilation falls back to the original GLB.
-
-`VRodos_Compiler_AFrame_Entity_Renderer` is the URL selection point. It keeps scene JSON untouched, resolves the active derivative during compilation by `asset_id`, and adds a compile diagnostic note when a derivative is used.
+- The asset edit screen's `GLB Optimization` metabox provides `Refresh GLB analysis` and `Regenerate Web High derivative`. Both use signed asset-specific admin actions. Analysis refresh updates saved diagnostics without scheduling derivative generation.
+- Settings > Assets provides library-level GLB analysis and Web High derivative diagnostics for GLB-referenced assets. Background Jobs shows import/preview/Web preparation progress and failures. The dashboard shows Active Projects without scanning GLBs.
+- New or updated `vrodos_asset3d_glb` metadata triggers GLB benefit analysis and stores `_vrodos_asset3d_glb_analysis`. Qualifying sources begin the ordered Web High -> Medium -> Low background family.
+- Manual regeneration and compiler preparation use the same `ensure_derivative()` queue. Web recipes apply KTX2, safe Draco, texture caps, and the shared guarded geometry policy; uploaded sources stay unchanged.
+- Derivatives live in the asset-owned private `assets/{asset_id}/derivatives/{profile}/` directories documented in `documentation/storage-architecture.md`. Metadata lives in `_vrodos_asset3d_glb_derivatives`.
+- Permanent asset deletion removes its derivative cache and optimization metadata. Project deletion inherits this cleanup by deleting associated asset posts.
+- Compilation prepares and selects validated Web derivatives automatically for the target/profile through the shared asset policy and resource publisher. No manual compile-use switch is required. Required assets are copied into the project's public publication directory.
+- Compiler validation owns source/job identity, pipeline version, recipe, texture cap, geometry protection, and file readiness. Existing failure/publication policy remains on the compiler path; the metabox is an inspection and recovery surface.
 
 LOD should follow the same derivative contract: generated alternatives are stored beside the source asset, compile-time scene output chooses them only after explicit opt-in, and runtime switching should be validated with Spector/CDP because LOD targets submitted geometry and repeated pass cost rather than transfer size alone.
 

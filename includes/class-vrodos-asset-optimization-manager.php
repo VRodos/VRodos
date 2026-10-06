@@ -15,11 +15,7 @@ class VRodos_Asset_Optimization_Manager {
 
 		add_action( 'add_meta_boxes', [ $this->controller, 'add_meta_boxes' ] );
 		add_action( 'admin_post_vrodos_optimize_asset_glb', [ $this->controller, 'handle_optimize_asset_glb' ] );
-		add_action( 'admin_post_vrodos_optimize_missing_glbs', [ $this->controller, 'handle_optimize_missing_glbs' ] );
-		add_action( 'admin_post_vrodos_refresh_asset_glb_analysis', [ $this->controller, 'handle_refresh_asset_glb_analysis' ] );
-		add_action( 'admin_post_vrodos_dashboard_refresh_asset_glb_analysis', [ $this->controller, 'handle_dashboard_refresh_asset_glb_analysis' ] );
-		add_action( 'admin_post_vrodos_dashboard_optimize_asset_glb', [ $this->controller, 'handle_dashboard_optimize_asset_glb' ] );
-		add_action( 'wp_ajax_vrodos_dashboard_refresh_asset_glb_analysis', [ $this->controller, 'ajax_dashboard_refresh_asset_glb_analysis' ] );
+		add_action( 'admin_post_vrodos_refresh_asset_analysis', [ $this->controller, 'handle_refresh_asset_analysis' ] );
 		add_action( 'added_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
 		add_action( 'updated_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
 		add_action( 'deleted_post_meta', [ $service, 'handle_asset_glb_meta_delete' ], 10, 4 );
@@ -28,14 +24,6 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( VRodos_Asset_Optimization_Service::DESKTOP_PROFILE_CRON_HOOK, [ $service, 'process_desktop_profile_job' ], 10, 6 );
 		add_filter( 'vrodos_settings_tabs', [ $this->controller, 'register_settings_tab' ] );
 		add_action( 'vrodos_render_settings_tab_' . VRodos_Asset_Optimization_Admin_Controller::SETTINGS_TAB_KEY, [ $this->controller, 'render_asset_optimization_settings' ] );
-	}
-
-	public static function dashboard_actionable_assets( int $limit = 10 ): array {
-		return VRodos_Asset_Optimization_Service::dashboard_actionable_assets( $limit );
-	}
-
-	public static function render_dashboard_actionable_assets_table( int $limit = 10 ): void {
-		VRodos_Asset_Optimization_Admin_Controller::render_dashboard_actionable_assets_table( $limit );
 	}
 
 	public static function get_editor_preview_asset_state( int $asset_id ): array {
