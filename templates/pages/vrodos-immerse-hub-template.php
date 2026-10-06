@@ -1,8 +1,6 @@
 <?php
 $groups = VRodos_Immerse_Hub::catalog();
-$profile_labels = [ 'desktop' => 'Desktop', 'headset' => 'VR headset', 'pc-rendered-vr' => 'PC-rendered VR' ];
-$profile_icons = [ 'desktop' => 'monitor', 'headset' => 'glasses', 'pc-rendered-vr' => 'computer' ];
-$mode_labels = [ 'single-player' => 'Single-player', 'networked' => 'Networked' ];
+$mode_labels = [ 'single-player' => 'Single-player', 'networked' => 'Multiplayer' ];
 $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 ?>
 <!DOCTYPE html>
@@ -38,7 +36,7 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 						<?php foreach ( $group['scenes'] as $scene ) : ?>
 							<?php $available = '' !== $scene['url']; ?>
 							<?php if ( $available ) : ?>
-								<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $profile_labels[ $scene['profile'] ] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?> in a new tab">
+								<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?> in a new tab">
 							<?php else : ?>
 								<div class="immerse-hub-card is-unavailable">
 							<?php endif; ?>
@@ -49,7 +47,6 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 										<div class="immerse-hub-placeholder"><i data-lucide="cuboid" aria-hidden="true"></i></div>
 									<?php endif; ?>
 									<div class="immerse-hub-badges">
-										<span title="Build device: <?php echo esc_attr( $profile_labels[ $scene['profile'] ] ); ?>"><i data-lucide="<?php echo esc_attr( $profile_icons[ $scene['profile'] ] ); ?>" aria-hidden="true"></i><?php echo esc_html( $profile_labels[ $scene['profile'] ] ); ?></span>
 										<span title="Build mode: <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?>"><i data-lucide="<?php echo esc_attr( $mode_icons[ $scene['mode'] ] ); ?>" aria-hidden="true"></i><?php echo esc_html( $mode_labels[ $scene['mode'] ] ); ?></span>
 									</div>
 								</div>
