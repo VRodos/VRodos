@@ -148,6 +148,56 @@
 	color: #38bdf8 !important;
 }
 
+/* Keep the numeric field and both shortcuts on one row in the 280px panel. */
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut-row .lil-widget {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	min-width: 0;
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut-row input {
+	flex: 1 1 0;
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 24px;
+	width: 24px;
+	min-width: 24px;
+	height: 28px;
+	min-height: 28px;
+	margin: 0;
+	padding: 0;
+	border: 1px solid rgba(148, 163, 184, 0.18);
+	border-radius: 6px;
+	background: rgba(15, 23, 42, 0.74);
+	color: #38bdf8;
+	cursor: pointer;
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut svg {
+	width: 14px;
+	height: 14px;
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut:hover:not(:disabled) {
+	background: rgba(30, 41, 59, 0.86);
+	border-color: rgba(56, 189, 248, 0.58);
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: 1px;
+}
+
+#vrodos-scene-editor #numerical_gui-container .vrodos-transform-shortcut:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
 #vrodos-scene-editor #object-controls-panel #numerical_gui-container .lil-gui input:not([type="checkbox"]),
 #vrodos-scene-editor #object-controls-panel #numerical_gui-container .lil-gui select,
 #vrodos-scene-editor #object-controls-panel #numerical_gui-container .lil-gui textarea {

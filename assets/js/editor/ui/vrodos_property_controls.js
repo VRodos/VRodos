@@ -1007,9 +1007,89 @@ Object.keys(gui_controls_funs).forEach((key) => {
 
     // Add drag-to-scrub on the input: click+drag horizontally to change value
     _addDragScrub(dg_controller[i]);
+    _addTransformShortcuts(dg_controller[i]);
 
     i++;
 });
+
+VRODOS.ui.refreshLucideIcons({ root: controlInterface.domElement });
+
+function applyGuiTransformValue(target, controller, value) {
+    if (!target || VRODOS.editor.transforms.isLockedObject(target)) return false;
+    const property = { t: 'position', r: 'rotation', s: 'scale' }[controller.property[3]];
+    const axis = ['x', 'y', 'z'][Number(controller.property[4]) - 1];
+    const numericValue = parseFloat(value) || 0;
+    const objectValue = property === 'rotation' ? numericValue / 180 * Math.PI : numericValue;
+    let changed = target[property][axis] !== objectValue;
+    target[property][axis] = objectValue;
+    gui_controls_funs[controller.property] = numericValue;
+    if (property === 'scale' && VRODOS.editor.envir.scene.keepScaleAspectRatio) {
+        changed = changed || target.scale.x !== objectValue || target.scale.y !== objectValue || target.scale.z !== objectValue;
+        target.scale.setScalar(objectValue);
+        ['dg_s1', 'dg_s2', 'dg_s3'].forEach((key) => { gui_controls_funs[key] = numericValue; });
+    }
+    return changed;
+}
+
+function _addTransformShortcuts(controller) {
+    const isRotation = controller.property.startsWith('dg_r');
+    if (!isRotation && !controller.property.startsWith('dg_s')) return;
+    const axis = ['X', 'Y', 'Z'][Number(controller.property[4]) - 1];
+    const actions = isRotation
+        ? [['rotate-ccw', 15, `Rotate ${axis} counterclockwise (+15°)`], ['rotate-cw', -15, `Rotate ${axis} clockwise (−15°)`]]
+        : [['minus', -0.5, `Decrease scale ${axis} by 0.5`], ['plus', 0.5, `Increase scale ${axis} by 0.5`]];
+    controller.domElement.classList.add('vrodos-transform-shortcut-row');
+    controller._transformShortcuts = actions.map(([icon, delta, label]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'vrodos-transform-shortcut';
+        button.disabled = true;
+        button.title = isRotation ? `${label}; viewed from the positive ${axis} axis toward the origin` : label;
+        button.setAttribute('aria-label', label);
+        button.innerHTML = `<i data-lucide="${icon}" aria-hidden="true"></i>`;
+        button.addEventListener('click', () => commitTransformShortcut(controller, delta));
+        controller.$widget.appendChild(button);
+        return { button, delta };
+    });
+}
+
+function refreshTransformShortcuts(target = getSelectedTransformObject()) {
+    const unavailable = !target || VRODOS.editor.transforms.isLockedObject(target);
+    dg_controller.forEach((controller) => {
+        const axis = ['x', 'y', 'z'][Number(controller.property[4]) - 1];
+        (controller._transformShortcuts || []).forEach(({ button, delta }) => {
+            const disabled = unavailable || controller._disabled ||
+                (controller.property.startsWith('dg_s') && delta < 0 && target.scale[axis] <= 0.5);
+            if (button.disabled !== Boolean(disabled)) button.disabled = Boolean(disabled);
+        });
+    });
+}
+
+function commitTransformShortcut(controller, delta) {
+    // Blur first: capture-phase input commit and its undo must finish before this step.
+    const focusedInput = dg_controller.find(({ $input }) => $input === document.activeElement);
+    if (focusedInput) focusedInput.$input.blur();
+    const target = getSelectedTransformObject();
+    if (!target || VRODOS.editor.transforms.isLockedObject(target) || controller._disabled) return;
+    const isRotation = controller.property.startsWith('dg_r');
+    const axis = ['x', 'y', 'z'][Number(controller.property[4]) - 1];
+    const currentValue = isRotation ? target.rotation[axis] * 180 / Math.PI : target.scale[axis];
+    if (!isRotation && delta < 0 && currentValue <= 0.5) return;
+    const undoState = { _oldTRS: captureGuiTransformState(target) };
+    applyGuiTransformValue(target, controller, currentValue + delta);
+    commitUndoTransformFromInput(undoState);
+    VRODOS.editor.transforms.finishObjectChange(target, { commit: true, reason: 'transform-shortcut' });
+    VRODOS.editor.transforms.syncGui(target);
+}
+
+function captureGuiTransformState(target) {
+    return {
+        pos: target.position.clone(),
+        // TransformCommand serializes snapshots; Euler's private fields are not its x/y/z contract.
+        rot: { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z, order: target.rotation.order },
+        scale: target.scale.clone()
+    };
+}
 
 // Global flag: true while a drag-scrub is active on any lil-gui input.
 // Used by onChange handlers to distinguish drag (apply live) vs keyboard (skip until commit).
@@ -1054,11 +1134,7 @@ function _addDragScrub(controller) {
     function captureTransformStart() {
         const target = getSelectedTransformObject();
         if (target && !input._oldTRS) {
-            input._oldTRS = {
-                pos: target.position.clone(),
-                rot: target.rotation.clone(),
-                scale: target.scale.clone()
-            };
+            input._oldTRS = captureGuiTransformState(target);
         }
     }
 
@@ -1162,11 +1238,7 @@ function commitUndoTransformFromInput(input) {
     const target = getSelectedTransformObject();
     if (!target) return;
 
-    const newTRS = {
-        pos: target.position.clone(),
-        rot: target.rotation.clone(),
-        scale: target.scale.clone()
-    };
+    const newTRS = captureGuiTransformState(target);
 
     const moved = target.position.distanceToSquared(input._oldTRS.pos) > 0.000001 ||
                   target.scale.distanceToSquared(input._oldTRS.scale) > 0.000001 ||
@@ -1188,36 +1260,17 @@ function controllerDatGuiOnChange() {
 
 
     // Keyboard edits commit on finish; scrubbing applies the same transform live.
-    const groups = [
-        { property: 'position', guiPrefix: 'dg_t' },
-        { property: 'rotation', guiPrefix: 'dg_r' },
-        { property: 'scale', guiPrefix: 'dg_s' }
-    ];
-    groups.forEach(({ property, guiPrefix }, groupIndex) => {
-        ['x', 'y', 'z'].forEach((axis, axisIndex) => {
-            const controller = dg_controller[groupIndex * 3 + axisIndex];
-            const apply = (target, value) => {
-                target[property][axis] = property === 'rotation' ? value / 180 * Math.PI : value;
-                if (property === 'scale' && VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                    target.scale.set(value, value, value);
-                }
-            };
-            controller.onChange((value) => {
-                if (!_isDragScrubbing) return;
-                const target = getSelectedTransformObject();
-                if (!target) return;
-                apply(target, parseFloat(value) || 0);
-                syncLiveGuiTransformChange(target);
-            });
-            controller.onFinishChange((value) => {
-                value = parseFloat(value) || 0;
-                gui_controls_funs[guiPrefix + (axisIndex + 1)] = value;
-                const target = getSelectedTransformObject();
-                if (target) {
-                    apply(target, value);
-                    VRODOS.editor.transforms.finishObjectChange(target, { commit: true });
-                }
-            });
+    dg_controller.forEach((controller) => {
+        controller.onChange((value) => {
+            if (!_isDragScrubbing) return;
+            const target = getSelectedTransformObject();
+            if (applyGuiTransformValue(target, controller, value)) syncLiveGuiTransformChange(target);
+        });
+        controller.onFinishChange((value) => {
+            const target = getSelectedTransformObject();
+            if (applyGuiTransformValue(target, controller, value)) {
+                VRODOS.editor.transforms.finishObjectChange(target, { commit: true });
+            }
         });
     });
 
@@ -1237,98 +1290,29 @@ function controllerDatGuiOnChange() {
  * @param controller - the lil-gui controller (has _opCode custom property)
  */
 function setEventListenerKeyPressControllerConstrained(element, controller) {
-    let skipNextFocusoutCommit = false;
-
-    function syncAttachedProxy(target) {
-        VRODOS.editor.transforms.syncProxyToObject(target);
-    }
+    let skipNextBlurCommit = false;
 
     function commitInputValue() {
         const target = getSelectedTransformObject();
-        if (!target) return;
-
         const parsed = parseFloat(element.value);
         const safeValue = Number.isFinite(parsed) ? parsed : 0;
-
-        switch (controller._opCode) {
-            case 'Tx':
-                gui_controls_funs.dg_t1 = safeValue;
-                target.position.x = safeValue;
-                break;
-            case 'Ty':
-                gui_controls_funs.dg_t2 = safeValue;
-                target.position.y = safeValue;
-                break;
-            case 'Tz':
-                gui_controls_funs.dg_t3 = safeValue;
-                target.position.z = safeValue;
-                break;
-            case 'Rx':
-                gui_controls_funs.dg_r1 = safeValue;
-                target.rotation.x = safeValue / 180 * Math.PI;
-                break;
-            case 'Ry':
-                gui_controls_funs.dg_r2 = safeValue;
-                target.rotation.y = safeValue / 180 * Math.PI;
-                break;
-            case 'Rz':
-                gui_controls_funs.dg_r3 = safeValue;
-                target.rotation.z = safeValue / 180 * Math.PI;
-                break;
-            case 'Sx':
-                gui_controls_funs.dg_s1 = safeValue;
-                target.scale.x = safeValue;
-                if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s2 = safeValue;
-                    target.scale.y = safeValue;
-                    gui_controls_funs.dg_s3 = safeValue;
-                    target.scale.z = safeValue;
-                }
-                break;
-            case 'Sy':
-                gui_controls_funs.dg_s2 = safeValue;
-                target.scale.y = safeValue;
-                if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s1 = safeValue;
-                    target.scale.x = safeValue;
-                    gui_controls_funs.dg_s3 = safeValue;
-                    target.scale.z = safeValue;
-                }
-                break;
-            case 'Sz':
-                gui_controls_funs.dg_s3 = safeValue;
-                target.scale.z = safeValue;
-                if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s1 = safeValue;
-                    target.scale.x = safeValue;
-                    gui_controls_funs.dg_s2 = safeValue;
-                    target.scale.y = safeValue;
-                }
-                break;
-            default:
-                return;
+        if (applyGuiTransformValue(target, controller, safeValue)) {
+            VRODOS.editor.transforms.finishObjectChange(target, { commit: true });
+            VRODOS.editor.transforms.syncGui(target);
         }
-
-        target.updateMatrix();
-        target.updateMatrixWorld(true);
-        syncAttachedProxy(target);
-
-        VRODOS.editor.transforms.setVisible(true);
-
-        controller.updateDisplay();
         VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
     }
 
-    element.addEventListener("focusout", () => {
-        if (!skipNextFocusoutCommit) {
+    // Read typed text before lil-gui's blur listener replaces it with its stored value.
+    // The scrub listener then captures undo after this change has been applied.
+    element.addEventListener('blur', () => {
+        if (!skipNextBlurCommit) {
             commitInputValue();
         } else {
-            skipNextFocusoutCommit = false;
+            skipNextBlurCommit = false;
         }
         VRODOS.editor.animate();
-        VRODOS.api.triggerAutoSave();
-    });
+    }, true);
 
     // onclick inside stop animating
     element.addEventListener("click", () => {
@@ -1345,7 +1329,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
     // a safe, explicit commit when the user finishes typing.
     element.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === 'NumpadEnter') {
-            skipNextFocusoutCommit = true;
+            skipNextBlurCommit = true;
             e.preventDefault();
             e.stopImmediatePropagation();
             commitInputValue();
@@ -1354,7 +1338,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         }
 
         if (e.key === 'Escape') {
-            skipNextFocusoutCommit = true;
+            skipNextBlurCommit = true;
             e.preventDefault();
             e.stopImmediatePropagation();
             controller.updateDisplay();
@@ -1651,6 +1635,7 @@ function getSelectedTransformObject() {
 
 function syncTransformGuiFromObject(object) {
     const target = object || getSelectedTransformObject();
+    refreshTransformShortcuts(target);
     if (!target) return;
 
     syncAttachedProxyToObject(target);

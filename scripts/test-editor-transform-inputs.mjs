@@ -7,7 +7,10 @@ const { Object3D } = THREE;
 
 // Execute actual input functions with controller/DOM boundaries replaced by small fakes.
 const source = readFileSync(new URL('../assets/js/editor/ui/vrodos_property_controls.js', import.meta.url), 'utf8');
-const names = new Set(['controllerDatGuiOnChange', '_addDragScrub', 'commitUndoTransformFromInput', 'syncLiveGuiTransformChange']);
+const names = new Set(['controllerDatGuiOnChange', '_addDragScrub', 'commitUndoTransformFromInput',
+    'syncLiveGuiTransformChange', 'applyGuiTransformValue', '_addTransformShortcuts',
+    'refreshTransformShortcuts', 'commitTransformShortcut', 'setEventListenerKeyPressControllerConstrained',
+    'syncTransformGuiFromObject', 'vrodosFiniteNumber', 'captureGuiTransformState']);
 const functions = parse(source, { ecmaVersion: 'latest' }).body
     .filter(node => node.type === 'FunctionDeclaration' && names.has(node.id.name));
 assert.equal(functions.length, names.size);
@@ -17,15 +20,40 @@ let liveSyncs = 0;
 let invalidations = 0;
 let lightSyncs = 0;
 const commands = [];
-const controllers = Array.from({ length: 9 }, () => ({
-    $input: {}, onChange(callback) { this.change = callback; }, onFinishChange(callback) { this.finish = callback; }
+const document = { activeElement: null, createElement: () => new Element() };
+class Element {
+    constructor() {
+        this.style = {};
+        this.dataset = {};
+        this.children = [];
+        this.listeners = [];
+        this.attributes = {};
+        this.classList = { add() {} };
+    }
+    appendChild(child) { this.children.push(child); }
+    setAttribute(name, value) { this.attributes[name] = value; }
+    addEventListener(type, fn, capture = false) { this.listeners.push({ type, fn, capture }); }
+    dispatch(type, event = {}) {
+        for (const capture of [true, false]) {
+            this.listeners.filter(listener => listener.type === type && listener.capture === capture)
+                .forEach(({ fn }) => fn(event));
+        }
+    }
+    focus() { document.activeElement = this; this.dispatch('focus'); }
+    blur() { document.activeElement = null; this.dispatch('blur'); }
+}
+const controllers = Array.from({ length: 9 }, (_, index) => ({
+    property: `dg_${['t', 'r', 's'][Math.floor(index / 3)]}${index % 3 + 1}`,
+    $input: new Element(), $widget: new Element(), domElement: new Element(),
+    onChange(callback) { this.change = callback; }, onFinishChange(callback) { this.finish = callback; },
+    updateDisplay() { this.$input.value = context.gui_controls_funs[this.property]; }
 }));
 const context = vm.createContext({
-    THREE,
+    THREE, document,
     _isDragScrubbing: false, dg_controller: controllers, gui_controls_funs: {},
     getSelectedTransformObject: () => target,
     syncAttachedProxyToObject() {},
-    setEventListenerKeyPressControllerConstrained() {},
+    ensureTransformControlsVisible() {},
     VRODOS: { editor: { envir: { scene: { keepScaleAspectRatio: false } }, animate() {},
         requestRender() { liveSyncs++; },
         sceneRegistry: { invalidateBounds() { invalidations++; } },
@@ -101,6 +129,126 @@ for (const [index, property, amount] of [[0, 'dg_t1', 0.4], [3, 'dg_r1', 0.4], [
     assert.equal(context.vrodosGuiKeyboardEditing, 0);
     assert.equal(context._isDragScrubbing, false);
 }
+
+// Use the actual command implementation for shortcut undo/redo coverage.
+const undoSource = readFileSync(new URL('../assets/js/editor/scene/vrodos_undo_engine.js', import.meta.url), 'utf8');
+const commandNode = parse(undoSource, { ecmaVersion: 'latest' }).body.find(node =>
+    node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression' &&
+    node.expression.left.property?.name === 'TransformCommand');
+vm.runInContext(undoSource.slice(commandNode.start, commandNode.end), context);
+const objects = new Map();
+context.vrodosUndoGetObjectByUuid = uuid => objects.get(uuid);
+context.vrodosUndoReconcileLockState = () => false;
+context.VRODOS.editor.selection = { select(object) { target = object; context.syncTransformGuiFromObject(object); } };
+context.VRODOS.editor.transforms.syncGui = context.syncTransformGuiFromObject;
+for (const controller of controllers) context._addTransformShortcuts(controller);
+assert.equal(controllers.slice(0, 3).filter(controller => controller._transformShortcuts).length, 0);
+assert.equal(controllers.slice(3).flatMap(controller => controller._transformShortcuts).length, 12);
+for (const controller of controllers.slice(3)) {
+    for (const { button } of controller._transformShortcuts) {
+        assert.equal(button.type, 'button');
+        assert(button.attributes['aria-label']);
+        assert(button.title);
+    }
+}
+const select = object => {
+    target = object;
+    if (object) objects.set(object.uuid, object);
+    context.syncTransformGuiFromObject(object);
+};
+const click = (index, buttonIndex) => controllers[index]._transformShortcuts[buttonIndex].button.dispatch('click');
+context.VRODOS.editor.envir.scene.keepScaleAspectRatio = false;
+context._isDragScrubbing = false;
+for (let axisIndex = 0; axisIndex < 3; axisIndex++) {
+    const axis = ['x', 'y', 'z'][axisIndex];
+    select(new Object3D());
+    const beforeCommands = commands.length;
+    const beforeSaves = saves;
+    click(3 + axisIndex, 0);
+    assert(Math.abs(target.rotation[axis] - Math.PI / 12) < 1e-12);
+    assert.equal(commands.length, beforeCommands + 1);
+    assert.equal(saves, beforeSaves + 1);
+    assert(Math.abs(context.gui_controls_funs[`dg_r${axisIndex + 1}`] - 15) < 1e-12);
+    commands.at(-1).undo();
+    assert.equal(target.rotation[axis], 0);
+    commands.at(-1).redo();
+    assert(Math.abs(target.rotation[axis] - Math.PI / 12) < 1e-12);
+    click(3 + axisIndex, 1);
+    assert(Math.abs(target.rotation[axis]) < 1e-12, 'Opposite rotation buttons cancel.');
+    target.scale.set(1.25, 2.25, 3.25);
+    context.syncTransformGuiFromObject(target);
+    const beforeScale = target.scale.clone();
+    click(6 + axisIndex, 1);
+    assert.equal(target.scale[axis], beforeScale[axis] + 0.5);
+    for (const otherAxis of ['x', 'y', 'z'].filter(value => value !== axis)) {
+        assert.equal(target.scale[otherAxis], beforeScale[otherAxis]);
+    }
+    commands.at(-1).undo();
+    assert.deepEqual(target.scale.toArray(), beforeScale.toArray());
+    commands.at(-1).redo();
+    assert.equal(target.scale[axis], beforeScale[axis] + 0.5);
+}
+select(new Object3D());
+target.position.set(4, 5, 6);
+target.rotation.set(0.1, 0.2, 0.3);
+target.scale.set(1, 2, 3);
+context.VRODOS.editor.envir.scene.keepScaleAspectRatio = true;
+const beforeUniform = { pos: target.position.clone(), rot: target.rotation.clone(), scale: target.scale.clone() };
+click(7, 1);
+assert.deepEqual(target.scale.toArray(), [2.5, 2.5, 2.5]);
+commands.at(-1).undo();
+assert.deepEqual(target.position.toArray(), beforeUniform.pos.toArray());
+assert.deepEqual(target.rotation.toArray(), beforeUniform.rot.toArray());
+assert.deepEqual(target.scale.toArray(), beforeUniform.scale.toArray());
+commands.at(-1).redo();
+assert.deepEqual(target.scale.toArray(), [2.5, 2.5, 2.5]);
+context.VRODOS.editor.envir.scene.keepScaleAspectRatio = false;
+for (const scale of [0.5, 0.1, 0.000001]) {
+    target.scale.setScalar(scale);
+    context.syncTransformGuiFromObject(target);
+    const beforeCommands = commands.length;
+    const beforeSaves = saves;
+    assert(controllers[6]._transformShortcuts[0].button.disabled);
+    assert(!controllers[6]._transformShortcuts[1].button.disabled);
+    click(6, 0);
+    assert.equal(target.scale.x, scale);
+    assert.equal(commands.length, beforeCommands);
+    assert.equal(saves, beforeSaves);
+}
+target.scale.setScalar(0.6);
+context.syncTransformGuiFromObject(target);
+assert(!controllers[6]._transformShortcuts[0].button.disabled);
+click(6, 0);
+assert(Math.abs(target.scale.x - 0.1) < 1e-12);
+assert(controllers[6]._transformShortcuts[0].button.disabled);
+for (const object of [null, Object.assign(new Object3D(), { locked: true })]) {
+    select(object);
+    const beforeCommands = commands.length;
+    const beforeSaves = saves;
+    assert(controllers.slice(3).every(controller => controller._transformShortcuts.every(({ button }) => button.disabled)));
+    click(3, 0);
+    click(8, 1);
+    assert.equal(commands.length, beforeCommands);
+    assert.equal(saves, beforeSaves);
+}
+
+// A typed value must commit before the shortcut snapshot, with a separate undo.
+select(new Object3D());
+const typedController = controllers[4];
+context._addDragScrub(typedController);
+typedController.$input.focus();
+typedController.$input.value = '30';
+const beforeTypedCommands = commands.length;
+const beforeTypedSaves = saves;
+click(4, 0);
+assert(Math.abs(target.rotation.y - Math.PI / 4) < 1e-12);
+assert.equal(commands.length, beforeTypedCommands + 2);
+assert.equal(saves, beforeTypedSaves + 2);
+commands.at(-1).undo();
+assert(Math.abs(target.rotation.y - Math.PI / 6) < 1e-12);
+commands.at(-2).undo();
+assert.equal(target.rotation.y, 0);
+assert.equal(context.vrodosGuiKeyboardEditing, 0);
 
 const transforms = context.VRODOS.editor.transforms;
 const environment = new THREE.Group();

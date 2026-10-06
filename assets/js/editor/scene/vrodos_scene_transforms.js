@@ -307,6 +307,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         if (VRODOS.editor.transform_controls) {
             VRODOS.editor.transform_controls.detach();
         }
+        transforms.syncGui();
         forceControlsVisible();
         render.request('gizmo-cleared');
     };
