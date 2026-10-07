@@ -78,7 +78,7 @@ const automatic = fixture({ hasLoaded: false, variants: { desktop: 'Master_Clien
 assert.equal(automatic.document.body.children.length, 0, 'Device controls wait for scene readiness');
 automatic.scene.hasLoaded = true;
 automatic.scene.emit('loaded');
-assert.deepEqual(automatic.component.viewPanel.children.map(link => link.textContent), ['PC', 'Standalone VR', 'PCVR']);
+assert.deepEqual(automatic.component.viewPanel.children.map(link => link.textContent), ['PC', 'VR', 'PCVR']);
 assert.equal(automatic.component.viewPanel.children[1].href, 'https://scene.test/clients/Master_Client_101_headset.html?learner=QA&vrodos_target=headset#arrival');
 assert.equal(automatic.component.viewPanel.children[0].getAttribute('aria-current'), 'page');
 assert.equal(automatic.component.viewPanel.hidden, true, 'View choices start collapsed');

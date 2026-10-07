@@ -22,21 +22,6 @@ final class VRodos_Immerse_Hub {
 		return home_url( '/immerse/' );
 	}
 
-	public static function robots( array $robots ): array {
-		if ( is_page( 'immerse' ) ) {
-			unset( $robots['index'] );
-			$robots['noindex'] = true;
-		}
-		return $robots;
-	}
-
-	public static function send_page_headers(): void {
-		if ( is_page( 'immerse' ) ) {
-			header( 'X-Robots-Tag: noindex', true );
-			nocache_headers();
-		}
-	}
-
 	/** @return array<int, array{title:string, id:int, publishedAt:string, scenes:array}> */
 	public static function catalog(): array {
 		$projects = get_posts( [

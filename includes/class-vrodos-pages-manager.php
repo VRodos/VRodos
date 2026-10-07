@@ -37,6 +37,9 @@ class VRodos_Pages_Manager {
 			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-immerse-hub-template.php' ) => 'Immerse Scene Hub Template',
 		];
 		add_action( 'admin_init', [ self::class, 'ensure_immerse_hub_page' ] );
+		add_filter( 'wp_robots', $this->robots(...), 100 );
+		add_filter( 'wp_sitemaps_posts_query_args', $this->sitemap_query_args(...), 10, 2 );
+		add_action( 'template_redirect', $this->send_page_headers(...), 0 );
 
 		if ( ! class_exists( 'VRodos_Legacy_Metadata_Migration' ) || ! VRodos_Legacy_Metadata_Migration::is_complete() ) {
 			$this->legacy_template_aliases = [
@@ -56,6 +59,49 @@ class VRodos_Pages_Manager {
 
 	private function get_supported_templates(): array {
 		return array_merge( $this->templates, $this->legacy_template_aliases );
+	}
+
+	private function is_plugin_page(): bool {
+		global $post;
+		return is_page( 'immerse' ) || (
+			$post instanceof WP_Post && 'page' === $post->post_type
+			&& isset( $this->get_supported_templates()[ get_post_meta( $post->ID, '_wp_page_template', true ) ] )
+		);
+	}
+
+	public function robots( array $robots ): array {
+		if ( $this->is_plugin_page() ) {
+			unset( $robots['index'], $robots['follow'] );
+			$robots['noindex'] = true;
+			$robots['nofollow'] = true;
+		}
+		return $robots;
+	}
+
+	public function send_page_headers(): void {
+		if ( $this->is_plugin_page() ) {
+			header( 'X-Robots-Tag: noindex, nofollow', true );
+			nocache_headers();
+		}
+	}
+
+	/** Exclude every page using a VRodos template from WordPress's page sitemap. */
+	public function sitemap_query_args( array $args, string $post_type ): array {
+		if ( 'page' !== $post_type ) {
+			return $args;
+		}
+		$excluded = get_posts( [
+			'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids',
+			'meta_query' => [ [ 'key' => '_wp_page_template', 'value' => array_keys( $this->get_supported_templates() ), 'compare' => 'IN' ] ],
+		] );
+		$hub = get_page_by_path( 'immerse', OBJECT, 'page' );
+		if ( $hub instanceof WP_Post ) {
+			$excluded[] = $hub->ID;
+		}
+		if ( $excluded ) {
+			$args['post__not_in'] = array_values( array_unique( array_merge( (array) ( $args['post__not_in'] ?? [] ), $excluded ) ) );
+		}
+		return $args;
 	}
 
 	public function register_project_templates( $atts ) {

@@ -1,14 +1,131 @@
 <!doctype html>
-<html lang="en" data-theme="emerald">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
     <title>VRODOS_DEVICE_TITLE_PLACEHOLDER</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            color: #f1f5f9;
+            background: #080e1a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100svh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background:
+                radial-gradient(ellipse at 50% 25%, rgba(16, 185, 129, .12), transparent 55%),
+                radial-gradient(ellipse at 90% 90%, rgba(56, 189, 248, .06), transparent 45%),
+                #080e1a;
+        }
+        .device-card {
+            width: 100%;
+            max-width: 460px;
+            padding: clamp(28px, 6vw, 44px);
+            border: 1px solid rgba(148, 163, 184, .16);
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(24, 39, 48, .94), rgba(15, 23, 42, .96));
+            box-shadow: 0 24px 80px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 255, 255, .04);
+            text-align: center;
+        }
+        .device-icon {
+            display: grid;
+            place-items: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            border: 1px solid rgba(52, 211, 153, .2);
+            border-radius: 20px;
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, .1);
+        }
+        .device-icon svg { width: 30px; height: 30px; }
+        .device-label {
+            margin: 0 0 12px;
+            color: #6ee7b7;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(24px, 5vw, 32px);
+            font-weight: 600;
+            line-height: 1.25;
+            letter-spacing: -.025em;
+            overflow-wrap: anywhere;
+        }
+        .device-description {
+            margin: 14px 0 28px;
+            color: #a9b8c9;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .device-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 0;
+            padding-top: 24px;
+            border-top: 1px solid rgba(148, 163, 184, .12);
+            color: #d5e1ec;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .device-spinner {
+            flex: 0 0 18px;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(110, 231, 183, .18);
+            border-top-color: #6ee7b7;
+            border-radius: 50%;
+            animation: device-spin 1s linear infinite;
+        }
+        .device-noscript {
+            margin: 24px 0 0;
+            color: #d5e1ec;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        @keyframes device-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            .device-spinner { animation: none; }
+        }
+    </style>
     <script src="VRODOS_DEVICE_BOOTSTRAP_PLACEHOLDER"></script>
 </head>
-<body class="vrodos-manager-wrapper">
-    <p role="status">Opening the experience for your device…</p>
-    <noscript>JavaScript is required to open this experience.</noscript>
+<body>
+    <main class="device-card" aria-labelledby="device-scene-title">
+        <div class="device-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                <rect x="3" y="4" width="18" height="13" rx="2" />
+                <path d="M8 21h8M12 17v4" />
+                <path d="m9 10 2 2 4-4" />
+            </svg>
+        </div>
+        <p class="device-label">VRodos Experience</p>
+        <h1 id="device-scene-title">VRODOS_DEVICE_TITLE_PLACEHOLDER</h1>
+        <div class="device-opening">
+            <p class="device-description">Preparing the right view for your device.</p>
+            <p class="device-status" role="status">
+                <span class="device-spinner" aria-hidden="true"></span>
+                <span>Opening the experience for your device…</span>
+            </p>
+        </div>
+        <noscript>
+            <style>.device-opening { display: none; }</style>
+            <p class="device-noscript">JavaScript is required to open this experience. Please enable it in your browser and reload this page.</p>
+        </noscript>
+    </main>
     <script>window.VRODOSDeviceEntry.bootstrap(VRODOS_DEVICE_VARIANTS_PLACEHOLDER);</script>
 </body>
 </html>

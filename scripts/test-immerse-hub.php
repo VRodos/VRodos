@@ -21,6 +21,7 @@ $test_scenes = [
 $test_terms = [ 21 => [ (object) [ 'slug' => 'immerse-a' ] ], 22 => [ (object) [ 'slug' => 'immerse-a' ] ], 23 => [ (object) [ 'slug' => 'other-project' ] ] ];
 $test_options = [ 'vrodos_general_settings' => [ 'vrodos_runtime_public_base_url' => '', 'vrodos_immerse_hub_enabled' => '0' ] ];
 $test_hub_page = new WP_Post( 99, 'page', 'publish', 'immerse', 'Conflicting page' );
+$test_current_page = 'immerse';
 $test_page_template = '';
 $test_menu_hook_removed = false;
 $test_inventory = [ 11 => [ 'schemaVersion' => 1, 'projectId' => 11, 'publishedAt' => '2026-01-01', 'clients' => [ 'Master_Client_21.html', 'Master_Client_22.html', 'Master_Client_23.html' ], 'media' => [] ] ];
@@ -38,13 +39,13 @@ function wp_unslash( string $value ): string { return $value; }
 function get_site_url(): string { return 'https://wp.test'; }
 function home_url( string $path = '' ): string { return 'https://wp.test' . $path; }
 function get_option( string $key, $default = false ) { global $test_options; return $test_options[ $key ] ?? $default; }
-function get_posts( array $args ): array { global $test_projects; return $test_projects; }
+function get_posts( array $args ): array { global $test_projects, $test_frontend_templates; return 'page' === $args['post_type'] ? array_keys( $test_frontend_templates ?? [] ) : $test_projects; }
 function get_post( int $id ): ?WP_Post { global $test_projects, $test_scenes, $test_hub_page; if ( 99 === $id ) { return $test_hub_page; } foreach ( $test_projects as $project ) { if ( $project->ID === $id ) { return $project; } } return $test_scenes[ $id ] ?? null; }
 function get_post_field( string $field, int $id ): string { return get_post( $id )->post_name; }
 function get_the_title( int $id ): string { return get_post( $id )->post_title; }
 function wp_get_post_terms( int $id, string $taxonomy ): array { global $test_terms; return $test_terms[ $id ] ?? []; }
-function get_post_meta( int $id, string $key, bool $single = false ) { global $test_inventory, $test_page_template; if ( '_wp_page_template' === $key && 99 === $id ) { return $test_page_template; } return '_vrodos_published_inventory' === $key ? ( $test_inventory[ $id ] ?? '' ) : ''; }
-function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory, $test_page_template; if ( '_wp_page_template' === $key && 99 === $id ) { $test_page_template = $value; } else { $test_inventory[ $id ] = $value; } return true; }
+function get_post_meta( int $id, string $key, bool $single = false ) { global $test_inventory, $test_page_template, $test_frontend_templates; if ( isset( $test_frontend_templates[$id] ) && '_wp_page_template' === $key ) { return $test_frontend_templates[$id]; } if ( '_wp_page_template' === $key && 99 === $id ) { return $test_page_template; } return '_vrodos_published_inventory' === $key ? ( $test_inventory[ $id ] ?? '' ) : ''; }
+function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory, $test_page_template, $test_frontend_templates; if ( isset( $test_frontend_templates[$id] ) && '_wp_page_template' === $key ) { return $test_frontend_templates[$id]; } if ( '_wp_page_template' === $key && 99 === $id ) { $test_page_template = $value; } else { $test_inventory[ $id ] = $value; } return true; }
 function wp_upload_dir( $time = null, bool $create = false ): array { global $test_root; return [ 'basedir' => $test_root, 'baseurl' => 'https://wp.test/uploads', 'error' => '' ]; }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function get_post_thumbnail_id( int $id ): int { global $test_thumbnail_id; return 21 === $id ? $test_thumbnail_id : 0; }
@@ -52,7 +53,7 @@ function wp_attachment_is_image( int $id ): bool { return in_array( $id, [ 101, 
 function get_attached_file( int $id, bool $unfiltered = false ): string { global $test_preview, $test_new_preview; return 102 === $id ? $test_new_preview : $test_preview; }
 function wp_generate_password( int $length, bool $special = true, bool $extra = false ): string { return str_repeat( 'x', $length ); }
 function wp_delete_file( string $path ): void { if ( is_file( $path ) ) { unlink( $path ); } }
-function is_page( string $slug ): bool { return 'immerse' === $slug; }
+function is_page( string $slug ): bool { global $test_current_page; return $test_current_page === $slug; }
 function is_admin(): bool { return false; }
 function get_bloginfo( string $key ): string { return '6.8'; }
 function add_filter( string $hook, $callback ): void {}
@@ -132,7 +133,36 @@ check( '' === $groups[0]['scenes'][0]['url'], 'Networked scene exposed a local r
 $test_options['vrodos_general_settings']['vrodos_runtime_public_base_url'] = 'https://runtime.test/';
 $groups = VRodos_Immerse_Hub::catalog();
 check( 'https://runtime.test/vrodos-published/projects/11/clients/index_21.html' === $groups[0]['scenes'][0]['url'], 'Networked scene did not use the public runtime URL.' );
-check( true === ( VRodos_Immerse_Hub::robots( [] )['noindex'] ?? false ), 'Hub page must be noindex.' );
+$pages_manager = new VRodos_Pages_Manager();
+$post = $test_hub_page;
+$robots = $pages_manager->robots( [ 'index' => true, 'follow' => true, 'max-image-preview' => 'large' ] );
+check( true === ( $robots['noindex'] ?? false ) && true === ( $robots['nofollow'] ?? false ), 'Hub page must prohibit indexing and following links.' );
+check( ! isset( $robots['index'] ) && ! isset( $robots['follow'] ) && 'large' === $robots['max-image-preview'], 'Hub robots directives conflict or discard unrelated settings.' );
+$test_current_page = 'about';
+$post = new WP_Post( 500, 'page', 'publish', 'about', 'About' );
+$ordinary_robots = [ 'index' => true, 'follow' => true ];
+check( $ordinary_robots === $pages_manager->robots( $ordinary_robots ), 'Other pages must retain their robots directives.' );
+$test_current_page = 'immerse';
+$sitemap_args = [ 'post__not_in' => [ 7 ], 'post_status' => 'publish' ];
+$hub_sitemap_args = $pages_manager->sitemap_query_args( $sitemap_args, 'page' );
+check( [ 7, 99 ] === $hub_sitemap_args['post__not_in'] && 'publish' === $hub_sitemap_args['post_status'], 'Page sitemap must exclude only the hub while preserving existing exclusions.' );
+check( $hub_sitemap_args === $pages_manager->sitemap_query_args( $hub_sitemap_args, 'page' ), 'Sitemap hub exclusion must not be duplicated.' );
+check( $sitemap_args === $pages_manager->sitemap_query_args( $sitemap_args, 'post' ), 'Other post types must retain their sitemap query.' );
+
+$test_frontend_templates = [];
+foreach ( [ 'vrodos-project-manager-template.php', 'vrodos-assets-list-template.php', 'vrodos-edit-3D-scene-template.php', 'vrodos-asset-editor-template.php', 'vrodos-immerse-hub-template.php' ] as $offset => $template ) {
+	$id = 200 + $offset;
+	$test_frontend_templates[$id] = VRodos_Path_Manager::canonical_page_template_meta( $template );
+	$post = new WP_Post( $id, 'page', 'publish', 'renamed-plugin-page-' . $id, 'Plugin page' );
+	$test_current_page = $post->post_name;
+	$robots = $pages_manager->robots( [ 'index' => true, 'follow' => true ] );
+	check( true === ( $robots['noindex'] ?? false ) && true === ( $robots['nofollow'] ?? false ) && ! isset( $robots['index'] ) && ! isset( $robots['follow'] ), 'VRodos template must prohibit indexing even at a renamed URL: ' . $template );
+}
+$all_page_exclusions = $pages_manager->sitemap_query_args( $sitemap_args, 'page' )['post__not_in'];
+check( [ 7, 200, 201, 202, 203, 204, 99 ] === $all_page_exclusions, 'All VRodos template pages must be excluded from the sitemap.' );
+$test_frontend_templates = [];
+$post = $test_hub_page;
+$test_current_page = 'immerse';
 
 $settings_manager = new VRodos_Settings_Manager();
 $switch_result = $settings_manager->sanitize_general_settings( [ VRodos_Immerse_Hub::SETTING => '1' ] );
@@ -141,6 +171,7 @@ $test_page_template = VRodos_Path_Manager::canonical_page_template_meta( 'vrodos
 $switch_result = $settings_manager->sanitize_general_settings( [ VRodos_Immerse_Hub::SETTING => '1' ] );
 check( '1' === $switch_result[ VRodos_Immerse_Hub::SETTING ], 'Hub switch did not enable for its own page.' );
 $test_hub_page = null;
+check( $sitemap_args === $pages_manager->sitemap_query_args( $sitemap_args, 'page' ), 'A missing hub must not alter the sitemap query.' );
 $test_page_template = '';
 VRodos_Pages_Manager::ensure_immerse_hub_page();
 check( null === $test_hub_page, 'Disabled hub created a public page.' );
@@ -151,7 +182,6 @@ VRodos_Pages_Manager::ensure_immerse_hub_page();
 check( 'draft' === $test_hub_page->post_status, 'Disabled hub republished its page.' );
 VRodos_Pages_Manager::ensure_immerse_hub_page( true );
 check( 'publish' === $test_hub_page->post_status && ! $test_menu_hook_removed, 'Hub page republication did not restore the menu hook afterward.' );
-$pages_manager = new VRodos_Pages_Manager();
 $post = $test_hub_page;
 $wp_query = new class { public bool $is_404 = false; public function set_404(): void { $this->is_404 = true; } };
 check( 'theme-404.php' === $pages_manager->view_project_template( 'theme-page.php' ) && $wp_query->is_404, 'Disabled hub did not return a 404.' );

@@ -1507,7 +1507,7 @@
             url.searchParams.set("vrodos_target", profile);
             url.hash = window.location.hash;
             link.href = url.href;
-            link.textContent = { desktop: "PC", headset: "Standalone VR", "pc-rendered-vr": "PCVR" }[profile];
+            link.textContent = { desktop: "PC", headset: "VR", "pc-rendered-vr": "PCVR" }[profile];
             link.className = "vrodos-view-mode__option";
             if (profile === currentProfile) link.setAttribute("aria-current", "page");
             this.viewPanel.append(link);
