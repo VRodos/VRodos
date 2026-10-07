@@ -1464,9 +1464,9 @@
 .vrodos-view-mode { position:fixed; left:max(16px,env(safe-area-inset-left)); bottom:max(16px,env(safe-area-inset-bottom)); z-index:10000; font-family:"Segoe UI",sans-serif; color:#fff; }
 .vrodos-view-mode[hidden], .vrodos-view-mode__panel[hidden] { display:none; }
 .vrodos-view-mode__toggle, .vrodos-view-mode__panel { box-sizing:border-box; border:1px solid rgb(255 255 255 / 20%); border-radius:12px; background:rgb(18 24 32 / 65%); box-shadow:0 10px 28px rgb(0 0 0 / 16%); backdrop-filter:blur(10px) saturate(1.2); }
-.vrodos-view-mode__toggle { width:48px; height:48px; padding:12px; display:flex; align-items:center; justify-content:center; color:inherit; cursor:pointer; }
+.vrodos-view-mode__toggle { width:48px; height:48px; padding:12px; display:flex; align-items:center; justify-content:center; background:rgb(226 232 240 / 18%); box-shadow:0 4px 14px rgb(0 0 0 / 12%); color:inherit; cursor:pointer; }
 .vrodos-view-mode__toggle svg { display:block; width:24px; height:24px; }
-.vrodos-view-mode__panel { position:absolute; left:0; bottom:calc(100% + 8px); display:flex; flex-direction:column; gap:4px; padding:6px; width:min(220px,calc(100vw - 32px)); max-height:60vh; overflow:auto; }
+.vrodos-view-mode__panel { position:absolute; left:0; bottom:calc(100% + 8px); display:flex; flex-direction:column; gap:4px; padding:6px; width:min(160px,calc(100vw - 32px)); max-height:60vh; overflow:auto; }
 .vrodos-view-mode__option { min-height:44px; box-sizing:border-box; display:flex; align-items:center; padding:10px 12px; border-radius:8px; color:inherit; font-size:13px; font-weight:650; text-decoration:none; }
 .vrodos-view-mode__option:hover { background:rgb(255 255 255 / 12%); }
 .vrodos-view-mode__option[aria-current="page"] { background:rgb(20 184 166 / 25%); }
