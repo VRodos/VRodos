@@ -6,6 +6,28 @@ Current scope (2026-09-22): prioritize runtime ownership and integration accepta
 
 Initialization follow-up (2026-09-22): `scene-settings` explicitly depends on `vrodos-render-profile`, so the lighting/clock owner exists before the initial day/night sky configuration. The schema also accepts the compiled `vrHeadsetAssetQuality` field. Local compiled scene 8980 passed first-load and resize checks with day/night enabled after bypassing cached bundles; atmosphere and clock initialized without runtime errors. The remaining duplicate Three warning was traced to the Immersive Web Emulator extension's older Three import before A-Frame; VRodos and A-Frame share their r185 instance. Recompile published scenes to refresh bundle cache keys when deploying this fix.
 
+## Connector results counting and export follow-up (2026-10-08)
+
+- [x] Share requirement identity/CEFR filtering and the list/detail/export/count-refresh calculation path.
+- [x] Resolve live requirements once per project/scene/CEFR combination per operation; calculate counts once per session, including repeated export rows.
+- [x] Batch completion lookups in groups of at most 500 unique sessions, selecting only session and assessment identities. Join through the canonical attempt UUID to retain database collation and current-scene restrictions; export assessment filters do not narrow completion input.
+- [x] Add one repository behavior/query-budget regression and include all ten connector regressions in the standard PowerShell syntax/check command.
+- [ ] Live authenticated WordPress results list/detail and CSV/JSON acceptance, including production MySQL timing/query-plan validation.
+
+Both selected working trees were clean before this package. Inspection found duplicated CEFR/identity filtering, two scene requirement resolutions per list row, a completion query per session, and repetition of both operations for every exported retry. Operation-local caches now share that work without persisting stale data across submissions, scene edits, or deletions. Public signatures, database schema, REST payloads, filters, ordering, pagination, permissions, grading, and export fields are unchanged. Runtime-snapshot totals intentionally retain eligible-entry counting (including duplicate/keyless entries); live-scene totals retain distinct-identity counting. Existing empty-scene and unavailable-context precedence is preserved without adding compatibility paths.
+
+The new repository fixture executes SQL through a controlled database adapter backed by isolated in-memory PDO SQLite; it never connects to WordPress. The same behavioral assertions passed against original Git source and updated source, including retries, repeated placements, ungraded submissions, canonical session IDs, different projects/scenes/CEFR levels, filtered exports, missing identifiers, empty results, failures, and subsequent reads after changes. Original source fails the new query-budget assertion as expected. Partial batch failure and the 500-session bound also pass with the new implementation.
+
+| Fixture | Completion queries before / after | Scene requirement resolutions before / after |
+| --- | ---: | ---: |
+| Five-session list, four project/scene/CEFR combinations | 5 / 1 | 10 / 4 |
+| Filtered export, three submissions from two sessions | 3 / 1 | 6 / 2 |
+| Export, 501 sessions and 1,002 submissions sharing requirements | 1,002 / 2 | 2,004 / 1 |
+
+These are measured fixture query counts, not a production latency or FPS claim. All ten connector regression scripts, connector PHP/JS syntax checks, the VRodos assessment-runtime harness (28 cases), compiler plan foundations, compiler runtime-script planner, and diff checks passed using installed PHP 8.3.30. The standard connector command now discovers all PHP and Node regression scripts rather than maintaining an incomplete list; the new SQL fixture requires PDO SQLite.
+
+Rendering, navigation, browser assessment UI, runtime bundles, and published scenes were not changed or rebuilt. Browser session discovery failed twice because its trusted Node process exited, so authenticated WordPress list/detail/CSV/JSON acceptance remains open; neither browser rendering nor physical Quest acceptance is claimed. No development server was started, no persistent database was modified by tests, and no commit or push was performed.
+
 ## A. Verification baseline
 
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
