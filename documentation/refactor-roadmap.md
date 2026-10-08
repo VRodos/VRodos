@@ -52,6 +52,22 @@ Query figures are controlled cache-model counts, excluding the project selection
 
 No live thumbnail generation, persistent database changes, rendering/runtime bundle changes, development servers, commits or pushes were performed. Thumbnail visual acceptance and live backfill remain open; the existing thumbnail framing regression passes.
 
+## Image transport source correction (2026-10-08)
+
+- [x] Convert raster image transports to self-contained GLB planes before storage and model activation.
+- [x] Retry invalid/missing model sources during reimport, including unchanged source URLs.
+- [x] Reject non-GLB thumbnail sources before browser/Blender execution.
+- [x] Add one isolated connector regression for conversion, source validation, scene placement preservation and failure cleanup; all twelve connector regressions and PHP/JS syntax checks pass.
+- [ ] Deploy and reimport the affected lesson; compare the image, transparency, thumbnail and door navigation in the editor and compiled desktop/VR clients.
+
+The reported PNG asset was classified as a door because of Immerse transport behavior, then downloaded unchanged into vrodos_asset3d_glb. The editor correctly rejected its PNG bytes. Thumbnail generation checked ownership and file existence but could capture the preview background after loader failure and report success. This is separate from the missing barcelona environment mapping; the initial not-yet-imported door destination warning was followed by a successful final connection sync.
+
+Image transports now use a centred, vertical 2×2 metre, double-sided plane matching native image geometry, with upright UVs and an unlit image material. PNG/JPEG texture bytes are embedded without recompression; other GD-decodable raster formats become PNG. Conversion uses no browser/Blender process, adds just two triangles and one embedded texture, and reuses the current normalizer, private storage, model activation, derivative and door paths. Ordinary images, direct FBX conversion, transport category and destination handling remain unchanged. No runtime code, bundle, shader, navigation component or database schema changed. Reimport validates actual model headers instead of considering a positive attachment ID sufficient; Sync Content does not update image/model sources.
+
+The fixture runs the real converter, downloader, VRodos GLB header validator and normalizer, media predicate, scene injector and thumbnail source guard with isolated WordPress/storage doubles. It covers PNG/JPEG byte preservation, transparency, geometry/UV orientation, GIF-to-PNG conversion, ordinary image imports, retry eligibility for unchanged URLs, missing models, invalid images, storage failures and temporary cleanup. Scene refresh retains the existing name, Greek title, transforms, visibility, creation time, destination identifiers and unrelated objects. The glTF validator reports zero errors and zero warnings for the generated transparent PNG model (one informational non-power-of-two texture notice). VRodos editor-load resolver, model-origin contract, compiler foundations/runtime-context checks and all 28 assessment-runtime cases pass.
+
+A read-only local WordPress lookup found none of the reported project/scene IDs (6139/6140/6143), so the affected import was not modified or accepted live. Deploy the connector and reimport the lesson to repair its invalid source; map a usable GLB to barcelona under Immerse VR Environments and run Sync Environments independently. Integrated browser and physical Quest acceptance remain open. No development server was started and no commit or push was performed.
+
 ## A. Verification baseline
 
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
