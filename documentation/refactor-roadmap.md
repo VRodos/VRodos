@@ -28,6 +28,30 @@ These are measured fixture query counts, not a production latency or FPS claim. 
 
 Rendering, navigation, browser assessment UI, runtime bundles, and published scenes were not changed or rebuilt. Browser session discovery failed twice because its trusted Node process exited, so authenticated WordPress list/detail/CSV/JSON acceptance remains open; neither browser rendering nor physical Quest acceptance is claimed. No development server was started, no persistent database was modified by tests, and no commit or push was performed.
 
+## Thumbnail candidate selection follow-up (2026-10-08)
+
+- [x] Apply normalized attempted-asset exclusions in the WordPress query before fetching IDs.
+- [x] Prime metadata in batches of 200 assets and deduplicated attachment post/metadata caches in batches of at most 400 references.
+- [x] Share GLB/video status selection through the existing generator APIs; skip screenshot validation when force, pending, or failed status already determines eligibility.
+- [x] Add candidate-response parity and cache-work regression coverage; all eleven connector regressions and PHP/JS syntax checks pass.
+- [ ] Live authenticated import/backfill acceptance and production database query/timing measurements.
+
+This bounded package changes only candidate discovery in the connector importer. Existing source resolvers retain GLB precedence, numeric video attachment URL resolution, status normalization and screenshot MIME/URL validation. Thumbnail rendering, file storage, generation/failure handling, direct-asset validation, browser queue callers, response fields, title ordering and exact progress counts are unchanged. No persistent candidate snapshot or queue schema was introduced: every claim still evaluates the remaining project assets so edits, invalidated screenshots and newly added assets remain visible. This reduces discovery cost rather than eliminating every repeated scan.
+
+The same fixture passed all behavioral assertions against original Git source and updated source. It executes the actual importer and thumbnail resolver classes with isolated WordPress query/cache doubles. Coverage includes GLB/video status and screenshot combinations, retries, force mode, normalized exclusions, project/source/post-status filtering, direct-asset requests, empty queues, read-only discovery, changed sources and new assets. Original source fails the added performance-budget assertions as expected.
+
+| Cold-cache fixture work | Before | After |
+| --- | ---: | ---: |
+| Forced backfill: IDs returned with 900 of 1,000 assets excluded | 1,000 | 100 |
+| Same forced claim: modeled metadata/post queries | 100 / 100 | 1 / 0 |
+| Same forced claim: screenshot MIME checks | 100 | 0 |
+| 1,000 ready GLB assets: modeled metadata/post queries | 1,000 / 1,000 | 10 / 5 |
+| Same ready library: screenshot MIME checks | 1,000 | 1,000 |
+
+Query figures are controlled cache-model counts, excluding the project selection query; they are not live WordPress measurements or timing claims. Screenshot validity here is metadata/MIME/URL-based, not file-content inspection. The installed WordPress cache helper was inspected to confirm its post and metadata priming contract. Persistent object caching and database query plans affect actual gains.
+
+No live thumbnail generation, persistent database changes, rendering/runtime bundle changes, development servers, commits or pushes were performed. Thumbnail visual acceptance and live backfill remain open; the existing thumbnail framing regression passes.
+
 ## A. Verification baseline
 
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.
