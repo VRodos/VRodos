@@ -26,6 +26,7 @@ class VRodos_Asset_CPT_Manager {
 	private function define_asset_fields(): void {
 		$table_of_asset_fields = [
       // Short , full, id, type, default, single, show_in_rest
+      ['Door image', 'Picture used by this image-based door', 'vrodos_asset3d_door_image', 'integer', 0, true, false],
       ['GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string', '', true, true],
       ['Audio File', 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true],
       ['Audio Playback Mode', 'Audio playback mode', 'vrodos_asset3d_audio_playback_mode', 'string', 'interact', true, true],

@@ -110,6 +110,17 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$has_new_model_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
 			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) )
 			|| ( isset( $_POST['assetImportUploadToken'] ) && ! empty( $_POST['assetImportUploadToken'] ) );
+		$door_image_file = (array) ( $_FILES['doorImageFileInput'] ?? [] );
+		$has_door_image_upload = (int) ( $door_image_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE;
+		if ( $has_door_image_upload ) {
+			if ( $has_new_model_upload ) {
+				self::redirect_with_frontend_notice( $redirect_url, 'door-image-conflict', $submission_buffer_level );
+			}
+			if ( ( $assetCatTerm->slug ?? '' ) !== 'door' || ! VRodos_Image_Door::is_image_door( (int) $editing_asset_id ) ) {
+				self::redirect_with_frontend_notice( $redirect_url, 'door-image-failed', $submission_buffer_level );
+			}
+		}
+
 		self::update_frontend_asset_save_progress(
 			'record',
 			$asset_id ? 'Updating asset record…' : 'Creating asset record…',
@@ -134,6 +145,14 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				'Core asset details are stored. Media and preview data are next.',
 				45
 			);
+
+			if ( $has_door_image_upload ) {
+				self::update_frontend_asset_save_progress( 'media', 'Updating the door image…', 'Saving the picture and preparing the door preview.', 55 );
+				$door_result = VRodos_Image_Door::replace_upload( (int) $asset_id, $door_image_file );
+				if ( is_wp_error( $door_result ) ) {
+					self::redirect_with_frontend_notice( $redirect_url, 'door-image-failed', $submission_buffer_level );
+				}
+			}
 
 			// NoCloning: Upload files from POST but check first
 			// if any 3D files have been selected for upload or glb blob is present
@@ -431,6 +450,11 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['goBackToLink'] = $scene_id && $edit_scene_page_id
 			? get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $return_project_id . '&scene_type=' . ( $_GET['scene_type'] ?? '' )
 			: home_url( '/vrodos-assets-list-page/?' ) . ( ! isset( $_GET['singleproject'] ) ? 'vrodos_game=' : 'vrodos_project_id=' ) . $data['project_id'];
+
+		$data['door_image_id'] = VRodos_Image_Door::is_image_door( (int) $data['asset_id'] )
+			? (int) get_post_meta( (int) $data['asset_id'], VRodos_Image_Door::IMAGE_META, true ) : 0;
+		$data['door_image_url'] = $data['door_image_id'] > 0
+			? VRodos_Storage_Manager::authoring_url_for_attachment( $data['door_image_id'] ) : '';
 
 		// Prepare taxonomy and meta data for the template
 		self::prepare_taxonomy_data( $data );

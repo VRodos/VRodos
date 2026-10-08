@@ -295,6 +295,10 @@ trait VRodos_Asset_CPT_Shared {
 			case 'glb-upload-failed':
 			case 'model-upload-failed':
 				return 'The model upload failed before the asset could be saved. Please try again, or reduce the file size if this package is especially large.';
+			case 'door-image-failed':
+				return 'The door image could not be updated. Choose a valid PNG, JPEG, WebP or GIF within the upload limit. The previous picture and model are unchanged.';
+			case 'door-image-conflict':
+				return 'Choose either a door image or a replacement model for this save, then try again.';
 			case 'assessment-create-disabled':
 				return 'Assessment assets are created by the assessment import flow. Existing assessment assets can be edited, but new ones cannot be created manually.';
 			default:

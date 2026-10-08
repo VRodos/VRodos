@@ -257,6 +257,29 @@ try {
 	$result = VRodos_Storage_Manager::replace_attachment_references( 42, 'asset', [ 'source', 'preview' ], 201 );
 	vrodos_storage_assert( is_wp_error( $result ) && $test_meta[42]['source'] === 103 && $test_meta[42]['preview'] === 104, 'database failure rolls references back' );
 	vrodos_storage_assert( $test_deleted_attachments === [ 201 ], 'failed replacement deletes only the uncommitted copy' );
+	$test_failed_meta_key = '';
+	$test_deleted_attachments = [];
+	foreach ( [ 301, 302, 303, 304 ] as $attachment_id ) {
+		$test_meta[ $attachment_id ] = [ '_vrodos_private_storage' => '1', '_vrodos_storage_owner_type' => 'asset', '_vrodos_storage_owner_id' => 42 ];
+	}
+	$test_meta[42] = [ 'vrodos_asset3d_door_image' => 301, 'vrodos_asset3d_glb' => 302 ];
+	$test_failed_meta_key = 'vrodos_asset3d_glb';
+	$result = VRodos_Storage_Manager::replace_attachment_reference_map( 42, 'asset', [ 'vrodos_asset3d_door_image' => 303, 'vrodos_asset3d_glb' => 304 ] );
+	vrodos_storage_assert( is_wp_error( $result ) && $test_meta[42]['vrodos_asset3d_door_image'] === 301 && $test_meta[42]['vrodos_asset3d_glb'] === 302, 'failed multi-file replacement restores both prior IDs' );
+	vrodos_storage_assert( $test_deleted_attachments === [ 303, 304 ], 'failed pair deletes both staged files and keeps both previous files' );
+	$test_failed_meta_key = '';
+	$test_deleted_attachments = [];
+	$result = VRodos_Storage_Manager::replace_attachment_reference_map( 42, 'asset', [ 'vrodos_asset3d_door_image' => 303, 'vrodos_asset3d_glb' => 304 ] );
+	vrodos_storage_assert( $result === true && $test_meta[42]['vrodos_asset3d_door_image'] === 303 && $test_meta[42]['vrodos_asset3d_glb'] === 304, 'successful pair switches to distinct image and model IDs' );
+	vrodos_storage_assert( $test_deleted_attachments === [ 301, 302 ], 'successful pair retires both previous files' );
+	$test_deleted_attachments = [];
+	$result = VRodos_Storage_Manager::replace_attachment_references( 42, 'asset', [ 'vrodos_asset3d_screenimage' ], 303 );
+	vrodos_storage_assert( $result === true && ! in_array( 303, $test_deleted_attachments, true ), 'source image remains protected when also used as screenshot' );
+	$test_meta[305] = [ '_vrodos_private_storage' => '1', '_vrodos_storage_owner_type' => 'asset', '_vrodos_storage_owner_id' => 99 ];
+	$before_pair = $test_meta[42];
+	$result = VRodos_Storage_Manager::replace_attachment_reference_map( 42, 'asset', [ 'vrodos_asset3d_door_image' => 303, 'vrodos_asset3d_glb' => 305 ] );
+	vrodos_storage_assert( is_wp_error( $result ) && $before_pair === $test_meta[42], 'foreign attachment rejects the whole pair before any metadata write' );
+
 	require_once dirname( __DIR__ ) . '/includes/class-vrodos-scene-poi-images.php';
 	$test_meta[502] = [ '_vrodos_private_storage' => '1', '_vrodos_storage_owner_type' => 'scene', '_vrodos_storage_owner_id' => 42, '_vrodos_storage_role' => 'poi-images' ];
 	$poi_scene = (object) [ 'objects' => (object) [

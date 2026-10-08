@@ -641,6 +641,16 @@ else { ?>
                             </div>
                         </div>
 
+                        <?php if ( $door_image_id > 0 ) : ?>
+                        <div id="door_image_section" class="tw-space-y-6" style="display: <?php echo $initial_cat_slug === 'door' ? 'block' : 'none'; ?>;">
+                            <label for="doorImageFileInput" class="vrodos-label">Door image</label>
+                            <img src="<?php echo esc_url( $door_image_url ); ?>" alt="Current door image" class="tw-w-full tw-rounded-2xl tw-object-contain tw-bg-slate-100" style="max-height:240px" />
+                            <input type="file" id="doorImageFileInput" name="doorImageFileInput" accept="image/png,image/jpeg,image/webp,image/gif" class="vrodos-input" <?php disabled( ! $isEditable ); ?> />
+                            <p class="tw-text-xs tw-text-slate-500">Replace the picture, then save. The door keeps its position and destination. Published scenes need recompilation.</p>
+                            <p class="tw-text-xs tw-text-slate-500">Uploading a replacement model switches this to a model-based door. Choose one replacement per save.</p>
+                        </div>
+                        <?php endif; ?>
+
                         <!-- Video Source Section -->
                         <div id="video_section" class="tw-space-y-6" style="display: none;">
                             <label class="vrodos-label">
@@ -1316,11 +1326,15 @@ else { ?>
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
 					document.getElementById('image_flat_file_section').style.display = "none";
+					if (document.getElementById('door_image_section')) document.getElementById('door_image_section').style.display = "none";
 					document.getElementById('image_preview_card').style.display = "none";
 				};
 
 				let loadLayout = (slug) => {
 					switch (slug) {
+						case "door":
+							if (document.getElementById('door_image_section')) document.getElementById('door_image_section').style.display = "block";
+							break;
 						case "chat":
 							document.getElementById('ipr_section').style.display = "block";
 							document.getElementById('poi_chat_section').style.display = "block";

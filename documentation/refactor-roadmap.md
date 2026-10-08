@@ -68,6 +68,26 @@ The fixture runs the real converter, downloader, VRodos GLB header validator and
 
 A read-only local WordPress lookup found none of the reported project/scene IDs (6139/6140/6143), so the affected import was not modified or accepted live. Deploy the connector and reimport the lesson to repair its invalid source; map a usable GLB to barcelona under Immerse VR Environments and run Sync Environments independently. Integrated browser and physical Quest acceptance remain open. No development server was started and no commit or push was performed.
 
+## Editable image-based doors (2026-10-08)
+
+- [x] Retain the original transport image as an asset-owned private attachment alongside its generated GLB.
+- [x] Add a Door image replacement field to the VRodos asset editor and WordPress Asset Data metabox for image-based doors.
+- [x] Share conversion, normalization, staging and activation between connector import and both edit forms.
+- [x] Replace the image/model reference pair together; restore previous references on failure and retire only unreferenced owned attachments.
+- [x] Reject competing image/model replacements in one save. Explicit GLB replacement switches to model mode and remains authoritative on unchanged-URL reimport.
+- [x] Validate upload authorization, replacement failures, storage ownership, existing model-door behavior, conversion geometry and rendered field behavior.
+- [ ] Deploy both plugins together, reimport the affected lesson, then accept image editing and door navigation in authenticated WordPress and compiled clients.
+
+The original correction embedded the picture in a GLB but discarded its editable raster source. The existing door form consequently exposed only the generated model and screenshot. The connector converter now lives in VRodos as VRodos_Image_Door, so imported and edited doors use the same implementation without a compatibility converter. The connector requires that current core helper. Existing imports without a retained source are refreshed on the next reimport; Sync Content does not replace media.
+
+Replacing Door image changes only the asset-owned source/model pair and normalizer metadata. The asset ID, scene placements, transforms and destination references are retained. Ordinary saves do not regenerate the model. Explicit model replacements release image mode; released source files remain intact if still referenced as screenshots. Screenshot capture/regeneration remains a separate existing action. Published scenes require recompilation after source changes.
+
+One core edit regression exercises the real converter, normalizer and frontend/admin controllers with controlled storage and WordPress doubles. The existing storage fixture separately exercises real paired reference changes, rollback, foreign ownership rejection and screenshot retention. The connector conversion fixture uses real private storage and validates original PNG/JPEG bytes, generated geometry, source retention, ordinary media imports, failures and temporary cleanup.
+
+All 108 VRodos regressions (43 compiler and 65 runtime, including the 28 assessment-runtime cases) pass; all twelve connector regressions and syntax checks pass. Final changes were rechecked through the compiler group and focused storage/conversion fixtures. PHP syntax, catalog, build configuration, runtime syntax and diff checks pass. JavaScript lint has zero errors and 249 existing warnings. The unchanged admin screenshot selector and its inline script parse correctly.
+
+Headless Edge field fixtures rendered the actual frontend PHP field and category-switching script with existing compiled CSS at 1100x800 and 390x844. They verify multipart file data, category visibility, read-only disabling, absence on model-based doors and no horizontal overflow or console errors. Screenshots were visually inspected. These isolated field checks do not validate a full authenticated WordPress save, compiled rendering or physical Quest navigation; those acceptance checks remain open. The reported live IDs are unavailable locally. No runtime/CSS bundles were rebuilt, no persistent WordPress data was changed by tests, no development server was started, and no commit or push was performed.
+
 ## A. Verification baseline
 
 - [x] Central test catalog and runtime/compiler runner; every test must be catalogued.

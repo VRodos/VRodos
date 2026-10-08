@@ -31,6 +31,7 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 
 		$hidden_asset_meta_keys = [
 			'vrodos_asset3d_screenimage',
+			VRodos_Image_Door::IMAGE_META,
 			'vrodos_asset3d_glb',
 		];
 
@@ -74,6 +75,7 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 		$hideshow               = $post->post_status == 'publish' ? 'none' : 'block';
 		$saved_asset_type_terms = wp_get_post_terms( $post->ID, 'vrodos_asset3d_cat' );
 		$is_audio_asset         = ! is_wp_error( $saved_asset_type_terms ) && ! empty( $saved_asset_type_terms ) && ( $saved_asset_type_terms[0]->slug ?? '' ) === 'audio';
+		$is_image_door = VRodos_Image_Door::is_image_door( (int) $post->ID );
 		$audio_field_ids        = [
 			'vrodos_asset3d_audio',
 			'vrodos_asset3d_audio_playback_mode',
@@ -87,6 +89,14 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 		<div id="vrodos_assets_box_wrapper" style="display:<?php echo $hideshow; ?>;">
 			<span class="dashicons dashicons-lock">You must publish the Asset first, in order to fill its data</span>
 		</div>
+		<?php
+		$door_error_key = 'vrodos_door_image_error_' . get_current_user_id() . '_' . $post->ID;
+		$door_error = get_transient( $door_error_key );
+		if ( is_string( $door_error ) && $door_error !== '' ) {
+			echo '<div class="notice notice-error"><p>' . esc_html( $door_error ) . '</p></div>';
+			delete_transient( $door_error_key );
+		}
+		?>
 		<input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce( self::NONCE_BASENAME ); ?>" />
 		<table class="form-table" id="vrodos-custom-fields-table">
 			<tbody>
@@ -97,6 +107,9 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 				$attacmentSizeMessage = $valMaxUpload < 100 ? 'Files bigger than ' . $valMaxUpload . ' MB can not be uploaded <br/> Add to .htaccess the following two lines <br/> php_value upload_max_filesize 256M<br>php_value post_max_size 512M' : '';
 				$extension            = substr( (string) $field['id'], strrpos( (string) $field['id'], '_' ) + 1 );
 				$showSection          = 'table-row';
+				if ( $field['id'] === VRodos_Image_Door::IMAGE_META ) {
+					$showSection = $is_image_door ? 'table-row' : 'none';
+				}
 				$is_audio_field       = in_array( $field['id'], $audio_field_ids, true );
 				switch ( $extension ) {
 					case 'audio':
@@ -183,6 +196,14 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 								<label for="<?php echo $preview_id; ?>">Preview <?php echo $extension; ?>: </label>
 								<textarea id="<?php echo $preview_id; ?>" readonly
 											style=" width:100%; height:200px;"><?php echo $preview_content; ?></textarea>
+								<?php
+								break;
+							case 'image':
+								?>
+								<img src="<?php echo esc_url( $attachment_url ); ?>" alt="Current door image" style="max-width:100%;max-height:240px" />
+								<p><input type="file" name="doorImageFileInput" id="vrodos_asset3d_door_image" accept="image/png,image/jpeg,image/webp,image/gif" /></p>
+								<p>Replace the picture, then update. The door keeps its placement and destination. Published scenes need recompilation.</p>
+								<p>A replacement GLB switches this to a model-based door. Choose one replacement per update.</p>
 								<?php
 								break;
 							case 'screenimage':
@@ -470,7 +491,19 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
+		$door_file = (array) ( $_FILES['doorImageFileInput'] ?? [] );
+		$has_door_upload = (int) ( $door_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE;
+		if ( $has_door_upload && (
+			! VRodos_Image_Door::is_image_door( (int) $post_id )
+			|| ( isset( $_POST['vrodos_asset3d_glb'] ) && (int) $_POST['vrodos_asset3d_glb'] !== (int) get_post_meta( $post_id, 'vrodos_asset3d_glb', true ) )
+		) ) {
+			set_transient( 'vrodos_door_image_error_' . get_current_user_id() . '_' . $post_id, 'Choose either a door image or a replacement GLB for an image-based door.', MINUTE_IN_SECONDS );
+			return;
+		}
 		foreach ( $this->vrodos_databox1['fields'] as $field ) {
+			if ( $field['id'] === VRodos_Image_Door::IMAGE_META ) {
+				continue;
+			}
 			if ( isset( $_POST[ $field['id'] ] ) ) {
 				$new = wp_unslash( $_POST[ $field['id'] ] );
 				switch ( $field['id'] ) {
@@ -504,6 +537,12 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 				} elseif ( '' == $new && $old ) {
 					delete_post_meta( $post_id, $field['id'], $old );
 				}
+			}
+		}
+		if ( $has_door_upload ) {
+			$result = VRodos_Image_Door::replace_upload( (int) $post_id, $door_file );
+			if ( is_wp_error( $result ) ) {
+				set_transient( 'vrodos_door_image_error_' . get_current_user_id() . '_' . $post_id, $result->get_error_message() . ' The previous door image and model are unchanged.', MINUTE_IN_SECONDS );
 			}
 		}
 	}

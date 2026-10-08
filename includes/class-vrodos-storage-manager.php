@@ -886,18 +886,23 @@ final class VRodos_Storage_Manager {
 	/** Atomically switch one or more owner metadata references, then retire only marked old files. */
 	public static function replace_attachment_references( int $owner_id, string $owner_type, array $meta_keys, int $new_attachment_id ) {
 		$meta_keys = array_values( array_unique( array_filter( array_map( 'sanitize_key', $meta_keys ) ) ) );
-		if (
-			$owner_id < 1
-			|| ! in_array( $owner_type, [ 'asset', 'scene' ], true )
-			|| empty( $meta_keys )
-			|| ! self::attachment_is_owned_by( $new_attachment_id, $owner_type, $owner_id )
-		) {
+		return self::replace_attachment_reference_map( $owner_id, $owner_type, array_fill_keys( $meta_keys, $new_attachment_id ) );
+	}
+
+	/** Switch a set of owned files together, restoring all prior references on failure. */
+	public static function replace_attachment_reference_map( int $owner_id, string $owner_type, array $references ) {
+		if ( $owner_id < 1 || ! in_array( $owner_type, [ 'asset', 'scene' ], true ) || empty( $references ) ) {
 			return new WP_Error( 'vrodos_invalid_attachment_replacement', 'The replacement attachment is not owned by this entity.' );
 		}
-
+		foreach ( $references as $key => $id ) {
+			if ( ! is_string( $key ) || '' === $key || sanitize_key( $key ) !== $key || ! self::attachment_is_owned_by( (int) $id, $owner_type, $owner_id ) ) {
+				return new WP_Error( 'vrodos_invalid_attachment_replacement', 'The replacement attachment is not owned by this entity.' );
+			}
+		}
 		$previous = [];
-		$changed  = [];
-		foreach ( $meta_keys as $meta_key ) {
+		$changed = [];
+		foreach ( $references as $meta_key => $new_attachment_id ) {
+			$new_attachment_id = (int) $new_attachment_id;
 			$previous[ $meta_key ] = get_post_meta( $owner_id, $meta_key, true );
 			$updated = update_post_meta( $owner_id, $meta_key, $new_attachment_id );
 			if ( false === $updated && absint( get_post_meta( $owner_id, $meta_key, true ) ) !== $new_attachment_id ) {
@@ -908,18 +913,25 @@ final class VRodos_Storage_Manager {
 						update_post_meta( $owner_id, $changed_key, $previous[ $changed_key ] );
 					}
 				}
-				self::delete_attachment_if_owned_by( $new_attachment_id, $owner_type, $owner_id );
+				foreach ( array_unique( array_values( $references ) ) as $id ) {
+					self::delete_unreferenced_attachment_if_owned_by( (int) $id, $owner_type, $owner_id );
+				}
 				return new WP_Error( 'vrodos_attachment_switch_failed', 'WordPress rejected the replacement attachment reference.' );
 			}
 			$changed[] = $meta_key;
 		}
-
 		foreach ( array_unique( array_map( 'absint', $previous ) ) as $old_attachment_id ) {
-			if ( $old_attachment_id > 0 && $old_attachment_id !== $new_attachment_id && ! self::owner_references_attachment( $owner_id, $owner_type, $old_attachment_id ) ) {
-				self::delete_attachment_if_owned_by( $old_attachment_id, $owner_type, $owner_id );
+			if ( $old_attachment_id > 0 ) {
+				self::delete_unreferenced_attachment_if_owned_by( $old_attachment_id, $owner_type, $owner_id );
 			}
 		}
 		return true;
+	}
+
+	/** Retire a released source without deleting media still used by its owner. */
+	public static function delete_unreferenced_attachment_if_owned_by( int $attachment_id, string $owner_type, int $owner_id ): bool {
+		return ! self::owner_references_attachment( $owner_id, $owner_type, $attachment_id )
+			&& self::delete_attachment_if_owned_by( $attachment_id, $owner_type, $owner_id );
 	}
 
 	private static function owner_references_attachment( int $owner_id, string $owner_type, int $attachment_id ): bool {
@@ -931,6 +943,7 @@ final class VRodos_Storage_Manager {
 				'vrodos_asset3d_audio',
 				'vrodos_asset3d_video',
 				'vrodos_asset3d_image',
+				'vrodos_asset3d_door_image',
 				'vrodos_asset3d_poi_imgtxt_image',
 				'vrodos_asset3d_text_file',
 				'vrodos_asset3d_screenimage',
