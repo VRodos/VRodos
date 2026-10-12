@@ -506,6 +506,12 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 			}
 			if ( isset( $_POST[ $field['id'] ] ) ) {
 				$new = wp_unslash( $_POST[ $field['id'] ] );
+				if ( VRodos_Shared_Repository_Manager::SHARED_META === $field['id'] ) {
+					if ( rest_sanitize_boolean( $new ) ) {
+						VRodos_Shared_Repository_Manager::make_shared( (int) $post_id );
+					}
+					continue;
+				}
 				switch ( $field['id'] ) {
 					case 'vrodos_asset3d_audio_playback_mode':
 						$new = sanitize_key( (string) $new );

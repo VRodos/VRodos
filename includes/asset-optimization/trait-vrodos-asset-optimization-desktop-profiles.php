@@ -274,6 +274,17 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	public static function maybe_queue_web_high( int $asset_id, array $source, array $analysis, string $queue_priority = 'normal' ) {
+		if ( ! self::automatic_web_optimization_eligible( $source, $analysis ) ) {
+			return false;
+		}
+		$options = self::web_family_profile_options( $asset_id, 'web-high', $source );
+		if ( 'build' === self::normalize_optimizer_queue_priority( $queue_priority ) ) {
+			$options['queuePriority'] = 'build';
+		}
+		return self::ensure_derivative( $asset_id, 'web-high', $source, $options );
+	}
+
+	protected static function automatic_web_optimization_eligible( array $source, array $analysis ): bool {
 		$source_bytes = (int) ( $source['sizeBytes'] ?? 0 );
 		$image_bytes = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$has_uncompressed_textures = $image_bytes > 0 && (int) ( $analysis['counts']['images'] ?? 0 ) > 0;
@@ -281,19 +292,21 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( ! $geometry_candidate && $source_bytes < 20 * 1024 * 1024 && ( ! $has_uncompressed_textures || $image_bytes < 8 * 1024 * 1024 ) ) {
 			return false;
 		}
+		return true;
+	}
 
+	protected static function web_family_profile_options( int $asset_id, string $profile, array $source ): array {
 		$options = [
 			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
-			'textureMaxSize'  => 4096,
+			'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
-			'recipe'          => 'web-high',
+			'recipe'          => $profile,
 			'familySequence'  => true,
-			'writePreparedBaseline' => $source_bytes >= self::LARGE_SOURCE_PUBLISH_GATE_BYTES,
 		];
-		if ( 'build' === self::normalize_optimizer_queue_priority( $queue_priority ) ) {
-			$options['queuePriority'] = 'build';
+		if ( 'web-high' === $profile ) {
+			$options['writePreparedBaseline'] = (int) ( $source['sizeBytes'] ?? 0 ) >= self::LARGE_SOURCE_PUBLISH_GATE_BYTES;
 		}
-		return self::ensure_derivative( $asset_id, 'web-high', $source, $options );
+		return $options;
 	}
 
 	public static function get_web_optimization_state( int $asset_id ): array {
@@ -950,13 +963,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( '' === $next_profile ) {
 			return;
 		}
-		$next_options = [
-			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
-			'textureMaxSize'  => self::runtime_derivative_texture_cap( $next_profile ),
-			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
-			'recipe'          => $next_profile,
-			'familySequence'  => true,
-		];
+		$next_options = self::web_family_profile_options( $asset_id, $next_profile, $source );
 		if ( 'build' === self::normalize_optimizer_queue_priority( (string) ( $options['queuePriority'] ?? '' ) ) ) {
 			$next_options['queuePriority'] = 'build';
 		}
@@ -976,13 +983,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		) {
 			return;
 		}
-		$next_options = [
-			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
-			'textureMaxSize'  => self::runtime_derivative_texture_cap( 'web-medium' ),
-			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
-			'recipe'          => 'web-medium',
-			'familySequence'  => true,
-		];
+		$next_options = self::web_family_profile_options( $asset_id, 'web-medium', $source );
 		if ( 'build' === self::normalize_optimizer_queue_priority( (string) ( $high_options['queuePriority'] ?? '' ) ) ) {
 			$next_options['queuePriority'] = 'build';
 		}

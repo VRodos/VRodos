@@ -122,6 +122,7 @@ class VRodos_Project_AJAX {
 		$scenePGame = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
 		$asset_ids = $assetPGame ? get_posts( [ 'post_type' => 'vrodos_asset3d', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'tax_query' => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGame->term_id ] ] ] ) : [];
 		$scene_ids = $scenePGame ? get_posts( [ 'post_type' => 'vrodos_scene', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'tax_query' => [ [ 'taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGame->term_id ] ] ] ) : [];
+		$asset_ids = array_values( array_filter( $asset_ids, static fn( $id ) => ! VRodos_Shared_Repository_Manager::is_shared_asset( (int) $id ) ) );
 		foreach ( array_merge( $asset_ids, $scene_ids ) as $child_id ) {
 			if ( ! current_user_can( 'delete_post', (int) $child_id ) ) {
 				wp_send_json_error( 'You are not allowed to delete every asset and scene in this project.', 403 );

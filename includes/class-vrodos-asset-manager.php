@@ -67,6 +67,18 @@ class VRodos_Asset_Manager {
 		}
 	}
 
+	private function enqueue_asset_sharing(): void {
+		wp_enqueue_script(
+			'vrodos_asset_sharing', VRodos_Path_Manager::editor_ajax_js_url( 'share_asset.js' ), [],
+			(string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/ajax/share_asset.js' ) ), true
+		);
+		wp_localize_script( 'vrodos_asset_sharing', 'vrodosAssetSharing', [
+			'url' => admin_url( 'admin-ajax.php' ),
+			'nonce' => wp_create_nonce( 'post_nonce' ),
+			'sharedListUrl' => home_url( '/vrodos-assets-list-page/' ),
+		] );
+	}
+
 	public function enqueue_assets_list_scripts() {
 		if ( ! $this->is_matching_page_template( 'vrodos-assets-list-template.php' ) &&
              ! is_page( VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' )[0]->ID ?? -1 ) ) {
@@ -84,6 +96,7 @@ class VRodos_Asset_Manager {
 		wp_add_inline_script( 'vrodos_namespace', 'var isAdmin="' . $isAdmin . '";', 'before' );
 
 		wp_enqueue_script( 'ajax-script_deleteasset' );
+		$this->enqueue_asset_sharing();
 		wp_localize_script(
 			'vrodos_namespace',
 			'vrodos_api_config',
@@ -316,6 +329,7 @@ class VRodos_Asset_Manager {
 
 		// Load scripts for asset editor
 		wp_enqueue_script( 'vrodos_asset_editor_scripts' );
+		$this->enqueue_asset_sharing();
 	}
 
 	public function register_scripts() {

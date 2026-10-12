@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait VRodos_Asset_Optimization_Admin_Actions {
 	public function register_settings_tab( array $tabs ): array {
-		$tabs[ self::SETTINGS_TAB_KEY ] = __( 'Assets' );
+		$tabs[ self::SETTINGS_TAB_KEY ] = __( 'Asset Readiness', 'vrodos' );
 		return $tabs;
 	}
 
@@ -146,6 +146,54 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			$this->store_derivative_record( $asset_id, $result );
 		}
 		$this->redirect_to_asset( $asset_id, str_starts_with( $profile, 'web-' ) ? 'queued' : 'optimized' );
+	}
+
+	public function handle_prepare_assets(): void {
+		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to prepare assets.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+		check_admin_referer( 'vrodos_prepare_assets' );
+		$operation = isset( $_POST['operation'] ) && is_string( $_POST['operation'] ) ? sanitize_key( wp_unslash( $_POST['operation'] ) ) : '';
+		$asset_ids = isset( $_POST['asset_ids'] ) && is_array( $_POST['asset_ids'] ) ? array_filter( $_POST['asset_ids'], 'is_scalar' ) : [];
+		foreach ( [ 'prepare_asset_id' => 'prepare', 'retry_asset_id' => 'retry' ] as $key => $row_operation ) {
+			if ( isset( $_POST[ $key ] ) && is_scalar( $_POST[ $key ] ) ) {
+				$asset_ids = [ $_POST[ $key ] ];
+				$operation = $row_operation;
+				break;
+			}
+		}
+		$asset_ids = array_values( array_unique( array_filter( array_map( 'absint', $asset_ids ) ) ) );
+		if ( ! in_array( $operation, [ 'prepare', 'retry' ], true ) || count( $asset_ids ) > 25 ) {
+			wp_die( esc_html__( 'Select a valid action for up to 25 assets.', 'vrodos' ), '', [ 'response' => 400 ] );
+		}
+		$notice = [ 'submitted' => 0, 'skipped' => 0, 'errors' => [] ];
+		foreach ( $asset_ids as $asset_id ) {
+			if ( 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! current_user_can( 'edit_post', $asset_id ) ) {
+				$notice['errors'][] = sprintf( __( 'Asset #%d is unavailable or cannot be edited.', 'vrodos' ), $asset_id );
+				continue;
+			}
+			$result = self::prepare_asset_web_family( $asset_id, 'retry' === $operation );
+			if ( is_wp_error( $result ) ) {
+				$this->record_error( $asset_id, $result->get_error_message() );
+				$notice['errors'][] = sprintf( 'Asset #%d: %s', $asset_id, $result->get_error_message() );
+			} elseif ( true === $result ) {
+				++$notice['submitted'];
+			} else {
+				++$notice['skipped'];
+			}
+		}
+		if ( ! $asset_ids ) {
+			$notice['errors'][] = __( 'Select at least one asset.', 'vrodos' );
+		}
+		set_transient( 'vrodos_asset_readiness_notice_' . get_current_user_id(), $notice, MINUTE_IN_SECONDS );
+		$filters = [];
+		foreach ( [ 'asset_status', 'asset_search', 'asset_project', 'asset_page' ] as $key ) {
+			if ( isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ) {
+				$filters[ $key ] = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+			}
+		}
+		wp_safe_redirect( self::readiness_settings_url( $filters ) );
+		exit;
 	}
 
 	public function handle_refresh_asset_analysis(): void {

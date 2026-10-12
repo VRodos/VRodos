@@ -107,6 +107,12 @@ extract($data);
                         <?php endif; ?>
                     </span>
                 </div>
+                <?php if ( $asset_id && $isEditable && ! $isShared ) : ?>
+                <div>
+                    <button type="button" data-vrodos-share-asset="<?php echo (int) $asset_id; ?>" class="tw-btn tw-btn-outline tw-btn-sm">Make Shared</button>
+                    <p data-vrodos-share-error role="alert" class="tw-text-xs tw-text-red-700 tw-mt-2"></p>
+                </div>
+                <?php endif; ?>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                 <a href="<?php echo $goBackToLink; ?>" class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-black tw-text-slate-400 hover:tw-text-primary tw-uppercase tw-tracking-wider tw-transition-all">
                     <i data-lucide="arrow-left" class="tw-w-4 tw-h-4"></i>

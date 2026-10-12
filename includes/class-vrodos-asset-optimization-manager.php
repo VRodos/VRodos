@@ -16,6 +16,7 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'add_meta_boxes', [ $this->controller, 'add_meta_boxes' ] );
 		add_action( 'admin_post_vrodos_optimize_asset_glb', [ $this->controller, 'handle_optimize_asset_glb' ] );
 		add_action( 'admin_post_vrodos_refresh_asset_analysis', [ $this->controller, 'handle_refresh_asset_analysis' ] );
+		add_action( 'admin_post_vrodos_prepare_assets', [ $this->controller, 'handle_prepare_assets' ] );
 		add_action( 'added_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
 		add_action( 'updated_post_meta', [ $service, 'handle_asset_glb_meta_change' ], 10, 4 );
 		add_action( 'deleted_post_meta', [ $service, 'handle_asset_glb_meta_delete' ], 10, 4 );

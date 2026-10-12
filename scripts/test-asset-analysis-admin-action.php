@@ -1,6 +1,7 @@
 <?php
 
 define( 'ABSPATH', __DIR__ );
+define( 'MINUTE_IN_SECONDS', 60 );
 
 class WP_Error {
 	public function __construct( private string $code, private string $message ) {}
@@ -24,14 +25,17 @@ function wp_strip_all_tags( string $value ): string { return strip_tags( $value 
 function wp_unslash( $value ) { return $value; }
 function wp_parse_args( array $args, array $defaults ): array { return array_merge( $defaults, $args ); }
 function sanitize_key( string $value ): string { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ); }
+function sanitize_text_field( string $value ): string { return trim( strip_tags( $value ) ); }
 function wp_normalize_path( string $value ): string { return str_replace( '\\', '/', $value ); }
 function wp_parse_url( string $value, int $component = -1 ) { return parse_url( $value, $component ); }
 function current_time( string $type, bool $gmt = false ): string { return '2026-10-06 00:00:00'; }
 function size_format( int $bytes, int $decimals = 0 ): string { return $bytes . ' B'; }
 function get_post_type( int $id ) { return [ 42 => 'vrodos_asset3d', 43 => 'vrodos_asset3d', 44 => 'post' ][ $id ] ?? false; }
-function current_user_can( string $capability, int $id ): bool {
-	return 'edit_post' === $capability && in_array( $id, $GLOBALS['editable_assets'], true );
+function current_user_can( string $capability, int $id = 0 ): bool {
+	return 'manage_options' === $capability ? ( $GLOBALS['can_manage_assets'] ?? true ) : ( 'edit_post' === $capability && in_array( $id, $GLOBALS['editable_assets'], true ) );
 }
+function get_current_user_id(): int { return 7; }
+function set_transient( string $key, $value, int $expiration ): void { $GLOBALS['notices'][ $key ] = $value; }
 function get_post_meta( int $id, string $key, bool $single = true ) { return $GLOBALS['metadata'][ $id ][ $key ] ?? ''; }
 function update_post_meta( int $id, string $key, $value ): void {
 	$GLOBALS['writes'][] = [ $id, $key ];
@@ -41,7 +45,8 @@ function wp_die( string $message, string $title, array $args ): never {
 	throw new AdminActionDenied( $message, $args['response'] );
 }
 function check_admin_referer( string $action ): void {
-	if ( ( $_GET['_wpnonce'] ?? '' ) !== 'nonce-' . $action ) {
+	$nonce = 'vrodos_prepare_assets' === $action ? ( $_POST['_wpnonce'] ?? '' ) : ( $_GET['_wpnonce'] ?? '' );
+	if ( $nonce !== 'nonce-' . $action ) {
 		throw new AdminActionDenied( 'Bad nonce', 403 );
 	}
 }
@@ -64,14 +69,17 @@ function wp_schedule_single_event( ...$args ): never { throw new RuntimeExceptio
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-admin-actions.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-analysis.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
+require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-settings.php';
 
 class AnalysisAdminFixture {
 	use VRodos_Asset_Optimization_Admin_Actions;
 	use VRodos_Asset_Optimization_Analysis_Service;
 	use VRodos_Asset_Optimization_Derivative_Service;
+	use VRodos_Asset_Optimization_Settings_View;
 
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
+	public const SETTINGS_TAB_KEY = 'vrodos_asset_optimization_settings';
 	public static array|WP_Error $source;
 	public static int $prepared = 0;
 
@@ -83,6 +91,10 @@ class AnalysisAdminFixture {
 	protected static function automatic_profile_protects_geometry( int $id ): bool { return false; }
 	public static function ensure_derivative( ...$args ): never { throw new RuntimeException( 'Analysis refresh must not ensure derivatives.' ); }
 	public static function maybe_queue_web_high( ...$args ): never { throw new RuntimeException( 'Analysis refresh must not start a family.' ); }
+	protected static function prepare_asset_web_family( int $id, bool $retry ) {
+		$GLOBALS['preparation_requests'][] = [ $id, $retry ];
+		return $GLOBALS['preparation_results'][ $id ] ?? true;
+	}
 }
 function verify_analysis( bool $ok, string $message ): void {
 	if ( ! $ok ) {
@@ -176,3 +188,60 @@ try {
 	unlink( $source_path );
 }
 echo "Asset analysis admin action tests passed.\n";
+
+$editable_assets = [ 42 ];
+$preparation_requests = [];
+$preparation_results = [];
+$notices = [];
+function preparation_request( AnalysisAdminFixture $controller, array $post ): array {
+	$_POST = $post;
+	try {
+		$controller->handle_prepare_assets();
+		throw new RuntimeException( 'Preparation must redirect.' );
+	} catch ( AdminActionRedirect $redirect ) {
+		parse_str( parse_url( $redirect->getMessage(), PHP_URL_QUERY ), $query );
+		verify_analysis( 'vrodos_options' === $query['page'] && AnalysisAdminFixture::SETTINGS_TAB_KEY === $query['tab'], 'Preparation must redirect to Asset Readiness.' );
+		return $query;
+	}
+}
+$post = [ '_wpnonce' => 'nonce-vrodos_prepare_assets', 'operation' => 'prepare', 'asset_ids' => [ '42', '42', '43', '44' ], 'asset_search' => 'Test', 'asset_page' => '2' ];
+foreach ( [ [ 'GET', true, $post ], [ 'POST', false, $post ], [ 'POST', true, array_merge( $post, [ '_wpnonce' => 'bad' ] ) ] ] as [ $method, $can_manage, $request ] ) {
+	$_SERVER['REQUEST_METHOD'] = $method;
+	$can_manage_assets = $can_manage;
+	$_POST = $request;
+	try {
+		$controller->handle_prepare_assets();
+		throw new RuntimeException( 'Unsigned or unauthorized preparation must be rejected.' );
+	} catch ( AdminActionDenied $denied ) {
+		verify_analysis( 403 === $denied->getCode(), 'Preparation requires POST, admin permission, and a valid nonce.' );
+	}
+}
+verify_analysis( [] === $preparation_requests, 'Rejected requests must not start preparation.' );
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$can_manage_assets = true;
+$query = preparation_request( $controller, $post );
+verify_analysis( [ [ 42, false ] ] === $preparation_requests, 'Bulk preparation must deduplicate IDs and check each asset type and edit permission.' );
+verify_analysis( 'Test' === $query['asset_search'] && '2' === $query['asset_page'], 'Preparation must retain the table filters and page.' );
+$notice = $notices['vrodos_asset_readiness_notice_7'];
+verify_analysis( 1 === $notice['submitted'] && 2 === count( $notice['errors'] ), 'Bulk results must report submitted and inaccessible assets.' );
+$preparation_requests = [];
+preparation_request( $controller, array_merge( $post, [ 'retry_asset_id' => '42' ] ) );
+verify_analysis( [ [ 42, true ] ] === $preparation_requests, 'A row Retry button must act on that asset alone, regardless of bulk selections.' );
+$preparation_results[42] = false;
+preparation_request( $controller, $post );
+verify_analysis( 1 === $notices['vrodos_asset_readiness_notice_7']['skipped'], 'Ready, processing, or ineligible assets must report skipped work.' );
+$preparation_results[42] = new WP_Error( 'optimizer', 'Actual optimizer error' );
+preparation_request( $controller, $post );
+verify_analysis( str_contains( $notices['vrodos_asset_readiness_notice_7']['errors'][0], 'Actual optimizer error' ), 'Actual preparation failures must be shown to the user.' );
+$before = $preparation_requests;
+foreach ( [ array_merge( $post, [ 'operation' => 'delete' ] ), array_merge( $post, [ 'asset_ids' => range( 1, 26 ) ] ) ] as $request ) {
+	$_POST = $request;
+	try {
+		$controller->handle_prepare_assets();
+		throw new RuntimeException( 'Invalid or oversized preparation must be rejected.' );
+	} catch ( AdminActionDenied $denied ) {
+		verify_analysis( 400 === $denied->getCode(), 'Invalid actions and batches over 25 must be rejected.' );
+	}
+}
+verify_analysis( $before === $preparation_requests, 'Invalid batches must not queue partial work.' );
+echo "Asset readiness admin action tests passed.\n";

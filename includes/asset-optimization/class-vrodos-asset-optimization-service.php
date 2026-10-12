@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/trait-vrodos-asset-optimization-lifecycle.php';
-require_once __DIR__ . '/trait-vrodos-asset-optimization-scanner.php';
+require_once __DIR__ . '/trait-vrodos-asset-optimization-readiness.php';
 require_once __DIR__ . '/trait-vrodos-asset-optimization-analysis.php';
 require_once __DIR__ . '/trait-vrodos-asset-optimization-derivatives.php';
 require_once __DIR__ . '/trait-vrodos-asset-optimization-queue.php';
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VRodos_Asset_Optimization_Service {
 	use VRodos_Asset_Optimization_Lifecycle;
 
-	use VRodos_Asset_Optimization_Scanner;
+	use VRodos_Asset_Optimization_Readiness;
 	use VRodos_Asset_Optimization_Analysis_Service;
 	use VRodos_Asset_Optimization_Derivative_Service;
 	use VRodos_Asset_Optimization_Queue;

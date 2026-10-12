@@ -145,10 +145,12 @@ function wp_get_post_terms( int $post_id, string $taxonomy, array $args = [] ): 
 
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-queue.php';
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
+require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-readiness.php';
 
 final class VRodos_Desktop_Profile_Test_Harness {
 	use VRodos_Asset_Optimization_Queue;
 	use VRodos_Asset_Optimization_Desktop_Profiles;
+	use VRodos_Asset_Optimization_Readiness;
 
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
 	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
@@ -181,6 +183,14 @@ final class VRodos_Desktop_Profile_Test_Harness {
 		return $GLOBALS['vrodos_desktop_test_source'];
 	}
 
+	private static function inspect_source_glb( int $asset_id ) {
+		return $GLOBALS['vrodos_desktop_test_source'];
+	}
+
+	private static function source_fingerprint( array $source ): string {
+		return (string) ( $source['sha256'] ?? '' );
+	}
+
 	protected static function local_path_from_url( string $url ): string {
 		return str_starts_with( $url, 'https://example.test/wp-content/uploads/' ) ? '/local-upload.glb' : '';
 	}
@@ -190,7 +200,7 @@ final class VRodos_Desktop_Profile_Test_Harness {
 	}
 
 	private static function get_analysis_meta( int $asset_id ): array {
-		return [ 'payload' => [ 'estimatedImageBytes' => 64 * 1024 * 1024 ] ];
+		return $GLOBALS['vrodos_desktop_readiness_analysis'] ?? [ 'status' => 'analyzed', 'payload' => [ 'estimatedImageBytes' => 64 * 1024 * 1024 ] ];
 	}
 
 	private static function analysis_needs_refresh( $analysis, array $source ): bool {
@@ -632,6 +642,57 @@ foreach ( [ 3460, 'https://example.test/wp-content/uploads/missing.glb' ] as $lo
 	$local_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $external_plan );
 	vrodos_desktop_assert( 'failed' === $local_state['status'], 'missing local GLB sources must still fail preflight' );
 }
+
+// Library reads must use current compiler identities without repairing metadata or scheduling work.
+$GLOBALS['vrodos_desktop_test_source'] = $source;
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$readiness_asset = 201;
+$GLOBALS['vrodos_desktop_test_terms'][ $readiness_asset ] = [ 'decoration' ];
+$family_meta = [ 'schemaVersion' => 2, 'derivatives' => [], 'webVariants' => [], 'webProfileDefaults' => [] ];
+foreach ( [ 'web-high', 'web-medium', 'web-low' ] as $family_profile ) {
+	$family_options = invoke_desktop_profile_method( 'web_family_profile_options', [ $readiness_asset, $family_profile, $source ] );
+	seed_desktop_profile_record( $readiness_asset, $family_profile, 'ready', $source, $family_options, gmdate( 'Y-m-d H:i:s' ) );
+	$seeded = $GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ];
+	foreach ( [ 'derivatives', 'webVariants', 'webProfileDefaults' ] as $key ) {
+		$family_meta[ $key ] += $seeded[ $key ];
+	}
+}
+$GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = $family_meta;
+$readiness = static fn() => invoke_desktop_profile_method( 'asset_readiness', [ $readiness_asset ] );
+$before = serialize( [ $GLOBALS['vrodos_desktop_test_meta'], $GLOBALS['vrodos_desktop_test_events'] ] );
+vrodos_desktop_assert( 'ready' === $readiness()['status'], 'library readiness must validate all three current profiles' );
+vrodos_desktop_assert( false === invoke_desktop_profile_method( 'prepare_asset_web_family', [ $readiness_asset, false ] ), 'ready families must not be regenerated' );
+vrodos_desktop_assert( $before === serialize( [ $GLOBALS['vrodos_desktop_test_meta'], $GLOBALS['vrodos_desktop_test_events'] ] ), 'readiness reads and skipped preparation must not write or enqueue' );
+$medium_key = $family_meta['webProfileDefaults']['web-medium'];
+$family_meta['webVariants'][ $medium_key ]['status'] = 'failed';
+$family_meta['webVariants'][ $medium_key ]['message'] = 'Actual optimizer failure';
+$GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = $family_meta;
+vrodos_desktop_assert( 'failed' === $readiness()['status'] && str_contains( $readiness()['reason'], 'Actual optimizer failure' ), 'failed stages must expose their actual error' );
+vrodos_desktop_assert( true === invoke_desktop_profile_method( 'prepare_asset_web_family', [ $readiness_asset, true ] ), 'retry must submit the failed stage through ensure_derivative' );
+$retried = $GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ];
+vrodos_desktop_assert( 'queued' === $retried['webVariants'][ $medium_key ]['status'] && 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'retry must queue only the failed stage' );
+foreach ( [ 'web-high', 'web-low' ] as $kept_profile ) {
+	$key = $family_meta['webProfileDefaults'][ $kept_profile ];
+	vrodos_desktop_assert( $family_meta['webVariants'][ $key ] === $retried['webVariants'][ $key ], 'retry must preserve ready neighboring profiles' );
+}
+$before = serialize( [ $GLOBALS['vrodos_desktop_test_meta'], $GLOBALS['vrodos_desktop_test_events'] ] );
+vrodos_desktop_assert( 'processing' === $readiness()['status'], 'queued jobs must be processing rather than missing' );
+vrodos_desktop_assert( false === invoke_desktop_profile_method( 'prepare_asset_web_family', [ $readiness_asset, true ] ), 'repeat retry must not restart queued work' );
+vrodos_desktop_assert( $before === serialize( [ $GLOBALS['vrodos_desktop_test_meta'], $GLOBALS['vrodos_desktop_test_events'] ] ), 'repeat retry must not duplicate or alter queued work' );
+$GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = $family_meta;
+$GLOBALS['vrodos_desktop_test_source'] = array_diff_key( $source, [ 'sha256' => true ] );
+vrodos_desktop_assert( 'outdated' === $readiness()['status'], 'a stale source snapshot must never advertise ready or processing profiles' );
+$GLOBALS['vrodos_desktop_test_source'] = $source;
+$GLOBALS['vrodos_desktop_test_terms'][ $readiness_asset ] = [ 'walkable-surface' ];
+vrodos_desktop_assert( 'outdated' === $readiness()['status'], 'changed geometry protection must invalidate library readiness' );
+$GLOBALS['vrodos_desktop_test_meta'][ $readiness_asset ] = [];
+$GLOBALS['vrodos_desktop_test_source'] = array_merge( $source, [ 'sizeBytes' => 1024 ] );
+$GLOBALS['vrodos_desktop_readiness_analysis'] = [ 'status' => 'analyzed', 'counts' => [ 'images' => 0 ] ];
+vrodos_desktop_assert( 'source-ready' === $readiness()['status'], 'small source-only assets must not be reported as missing optimization work' );
+vrodos_desktop_assert( false === invoke_desktop_profile_method( 'prepare_asset_web_family', [ $readiness_asset, false ] ), 'below-threshold sources must not queue unnecessary optimization' );
+$GLOBALS['vrodos_desktop_test_source'] = new WP_Error( 'missing', 'Source file missing' );
+vrodos_desktop_assert( 'unsupported' === $readiness()['status'] && 'Source file missing' === $readiness()['reason'], 'missing source files must expose the source error' );
 
 wp_delete_file( $source_path );
 wp_delete_file( $log_path );

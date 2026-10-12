@@ -35,9 +35,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		);
 
 		$asset_id       = isset( $_GET['vrodos_asset'] ) ? absint( $_GET['vrodos_asset'] ) : null;
-		$project_id     = isset( $_GET['vrodos_game'] ) ? absint( $_GET['vrodos_game'] ) : null;
-		$game_post      = get_post( $project_id );
-		if ( ! $game_post instanceof WP_Post || 'vrodos_game' !== $game_post->post_type || ! current_user_can( 'edit_post', $project_id ) ) {
+		$project_id     = isset( $_GET['vrodos_game'] ) ? absint( $_GET['vrodos_game'] ) : 0;
+		$is_existing_shared = $editing_asset_id > 0 && VRodos_Shared_Repository_Manager::is_shared_asset( $editing_asset_id );
+		$game_post      = $project_id > 0 ? get_post( $project_id ) : null;
+		if ( ! ( $is_existing_shared && 0 === $project_id ) && ( ! $game_post instanceof WP_Post || 'vrodos_game' !== $game_post->post_type || ! current_user_can( 'edit_post', $project_id ) ) ) {
 			self::update_frontend_asset_save_progress( 'error', 'Asset could not be saved', 'The selected project is unavailable or cannot be edited.', 100, 'failed' );
 			self::cleanup_frontend_submission_buffer( $submission_buffer_level );
 			return;
@@ -49,7 +50,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$assetPGame     = self::ensure_asset_project_term( $game_post );
 		$assetPGameID   = $assetPGame ? $assetPGame->term_id : null;
 		$assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
-		$is_shared      = in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
+		$is_shared      = $is_existing_shared || in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
 
 		$assetTitle   = self::sanitize_asset_title( $_POST['assetTitle'] ?? '' );
 		$assetCatID   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0; // Legacy hidden input.
@@ -100,7 +101,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		// If the frontend bridge inputs fail to sync, abort safely instead of hard-failing the request.
-		if ( ! $project_id || ! $assetPGameID || ! $assetCatID || ! $assetCatIPRID || ! $assetTitle ) {
+		if ( ( ! $is_existing_shared && ( ! $project_id || ! $assetPGameID ) ) || ! $assetCatID || ! $assetCatIPRID || ! $assetTitle ) {
 			self::update_frontend_asset_save_progress( 'error', 'Asset details are incomplete', 'Check the asset name, category, and project, then try again.', 100, 'failed' );
 			self::cleanup_frontend_submission_buffer( $submission_buffer_level );
 			return;
@@ -180,7 +181,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				);
 			}
 
-			update_post_meta( $asset_id, '_vrodos_asset_is_shared', $is_shared ? '1' : '0' );
+			if ( $is_shared ) {
+				VRodos_Shared_Repository_Manager::make_shared( (int) $asset_id );
+			}
 			if ( VRodos_Immerse_Access_Manager::is_immerse_project( (int) $project_id ) ) {
 				update_post_meta( $asset_id, '_immerse_source', 'immerse' );
 			}
@@ -348,6 +351,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 	public static function update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
 		$asset_taxonomies = ['vrodos_asset3d_pgame'   => [$asset_pgame_id], 'vrodos_asset3d_cat'     => [$asset_cat_id], 'vrodos_asset3d_ipr_cat' => [$asset_cat_ipr_id]];
+		if ( ! $asset_pgame_id ) {
+			unset( $asset_taxonomies['vrodos_asset3d_pgame'] );
+		}
 
 		$data = ['ID'           => $asset_id, 'post_title'   => $asset_title, 'post_content' => $asset_description, 'tax_input'    => $asset_taxonomies];
 
@@ -427,14 +433,16 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['asset_notice_message'] = self::map_frontend_notice_message( $data['asset_notice_code'], $data['max_upload_label'] );
 		$data['asset_import_status'] = [];
 
-		$game_post            = get_post( $data['project_id'] );
+		$game_post            = (int) $data['project_id'] > 0 ? get_post( $data['project_id'] ) : null;
 		$data['game_post']    = $game_post;
 		$gameSlug             = $game_post ? $game_post->post_name : '';
 		$assetPGame           = self::ensure_asset_project_term( $game_post );
 		$data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
 
 		$assetPGameSlug   = $assetPGame ? $assetPGame->slug : '';
-		$data['isShared'] = in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
+		$data['isShared'] = $data['asset_id']
+			? VRodos_Shared_Repository_Manager::is_shared_asset( (int) $data['asset_id'] )
+			: in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
 
 		$all_game_category     = get_the_terms( $data['project_id'], 'vrodos_game_type' );
 		$data['game_category'] = ( ! is_wp_error( $all_game_category ) && ! empty( $all_game_category ) ) ? $all_game_category[0]->slug : null;

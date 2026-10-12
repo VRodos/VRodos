@@ -97,18 +97,4 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		return false;
 	}
 
-	protected static function analysis_reason_labels( array $analysis ): array {
-		$reasons = $analysis['reasons'] ?? [];
-		return is_array( $reasons ) ? array_map( 'strval', $reasons ) : [];
-	}
-
-	protected static function analysis_priority_score( array $analysis ): int {
-		$size_bytes = (int) ( $analysis['sourceSizeBytes'] ?? 0 );
-		$triangles  = (int) ( $analysis['geometry']['placedTriangles'] ?? 0 );
-		$primitives = (int) ( $analysis['counts']['placedPrimitives'] ?? 0 );
-		$materials  = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
-		$image_bytes = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
-
-		return $size_bytes + ( $triangles * 100 ) + ( $primitives * 100000 ) + ( $materials * 500000 ) + $image_bytes;
-	}
 }

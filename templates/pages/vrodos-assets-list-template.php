@@ -182,7 +182,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
                      data-category="<?php echo esc_attr($asset['category_slug']); ?>"
-                     data-visibility="<?php echo ($asset['is_shared'] == 'true') ? 'shared' : 'private'; ?>"
+                     data-visibility="<?php echo ! empty( $asset['is_shared'] ) ? 'shared' : 'private'; ?>"
                      data-source="<?php echo (! empty($asset['is_immerse']) && $asset['is_immerse'] === 'true') ? 'immerse' : 'native'; ?>">
 
                     <!-- Clickable Area for Edit -->
@@ -223,7 +223,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             </span>
 
                             <!-- Visibility Badge -->
-                            <?php if ( $asset['is_shared'] == 'true' ) : ?>
+                            <?php if ( ! empty( $asset['is_shared'] ) ) : ?>
                                 <span class="tw-w-fit tw-px-2.5 tw-py-1 tw-bg-emerald-500 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
                                     Shared
                                 </span>
@@ -243,12 +243,12 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             <a href="<?php echo $edit_link; ?>"
                                class="tw-block hover:tw-text-primary tw-transition-colors tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
-                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_shared'] === 'true') ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ! empty( $asset['is_shared'] ) ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
                             </a>
                             <?php else : ?>
                             <div class="tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
-                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_shared'] === 'true') ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ! empty( $asset['is_shared'] ) ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
                             </div>
                             <?php endif; ?>
 
@@ -262,6 +262,12 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             <?php endif; ?>
                         </div>
 
+                        <?php if ( $can_edit_asset && empty( $asset['is_shared'] ) ) : ?>
+                        <div class="tw-mb-3">
+                            <button type="button" data-vrodos-share-asset="<?php echo (int) $asset['asset_id']; ?>" class="tw-btn tw-btn-outline tw-btn-sm">Make Shared</button>
+                            <p data-vrodos-share-error role="alert" class="tw-text-xs tw-text-red-700 tw-mt-2"></p>
+                        </div>
+                        <?php endif; ?>
                         <div class="tw-mt-auto tw-flex tw-items-center tw-justify-between tw-pt-4 tw-border-t tw-border-slate-50">
                             <div class="tw-flex tw-items-center tw-gap-2">
                                 <img src="<?php echo esc_url( get_avatar_url( $asset['author_id'] ) ); ?>" alt="Avatar" loading="lazy" decoding="async" class="tw-w-5 tw-h-5 tw-rounded-full shadow-sm">

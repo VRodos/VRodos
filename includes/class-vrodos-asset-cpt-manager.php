@@ -18,6 +18,7 @@ class VRodos_Asset_CPT_Manager {
 	private VRodos_Asset_CPT_Admin_Controller $controller;
 
 	public function __construct() {
+		VRodos_Shared_Repository_Manager::register_hooks();
 		$this->define_asset_fields();
 		$this->controller = new VRodos_Asset_CPT_Admin_Controller( $this->vrodos_databox1 );
 		$this->register_hooks();

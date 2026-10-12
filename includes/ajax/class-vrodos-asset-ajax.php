@@ -9,6 +9,7 @@ require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 class VRodos_Asset_AJAX {
 
 	public function __construct() {
+		add_action( 'wp_ajax_vrodos_make_asset_shared_action', [ $this, 'make_asset_shared' ] );
 		add_action( 'wp_ajax_vrodos_update_text_asset_action', [ $this, 'update_text_asset' ] );
 		add_action( 'wp_ajax_vrodos_delete_asset_action', [ $this, 'delete_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', [ $this, 'fetch_asset3d_meta_backend_callback' ] );
@@ -16,6 +17,27 @@ class VRodos_Asset_AJAX {
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_vrodos_retry_editor_preview_action', [ $this, 'vrodos_retry_editor_preview_callback' ] );
 		add_action( 'wp_ajax_vrodos_asset_readiness_action', [ $this, 'vrodos_asset_readiness_callback' ] );
+	}
+
+	public function make_asset_shared(): void {
+		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+			wp_send_json_error( 'Use POST to share an asset.', 405 );
+		}
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		$asset_id = absint( $_POST['asset_id'] ?? 0 );
+		if ( 'vrodos_asset3d' !== get_post_type( $asset_id ) ) {
+			wp_send_json_error( 'Asset not found.', 404 );
+		}
+		if ( ! is_user_logged_in() || ! VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ) ) {
+			wp_send_json_error( 'You are not allowed to share this asset.', 403 );
+		}
+		$result = VRodos_Shared_Repository_Manager::make_shared( $asset_id );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message(), 500 );
+		}
+		wp_send_json_success( [ 'asset_id' => $asset_id, 'is_shared' => true ] );
 	}
 
 	public function update_text_asset(): void {

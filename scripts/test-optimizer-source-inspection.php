@@ -28,18 +28,24 @@ class VRodos_Storage_Manager {
 	public static function normalize_glb_attachment( ...$args ): string { $GLOBALS['normalizations']++; return $GLOBALS['source_path']; }
 }
 require_once __DIR__ . '/../includes/asset-optimization/class-vrodos-asset-optimization-source.php';
-require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
+require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-readiness.php';
 require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
 class SourcePathFixture {
 	use VRodos_Asset_Optimization_Derivative_Service;
 	public static function path( string $url ): string { return self::local_path_from_url( $url ); }
 }
 class ScannerFixture {
-	use VRodos_Asset_Optimization_Scanner;
-	public static function scan(): array { return self::scan_glb_derivatives( 'web-high' ); }
+	use VRodos_Asset_Optimization_Readiness;
+	protected const WEB_FAMILY_PROFILES = [ 'web-high', 'web-medium', 'web-low' ];
+	public static function scan(): array { return self::scan_asset_readiness(); }
 	protected static function inspect_source_glb( int $id ) { return VRodos_Asset_Optimization_Source::inspect( $id, static fn() => $GLOBALS['source_path'] ); }
 	protected static function get_derivative_meta( int $id ): array { return []; }
 	protected static function get_analysis_meta( int $id ): array { return []; }
+	protected static function analysis_needs_refresh( array $analysis, array $source ): bool { return true; }
+	protected static function web_family_profile_options( ...$args ): array { return []; }
+	protected static function desktop_profile_record( ...$args ): array { return []; }
+	protected static function desktop_profile_record_matches_request( ...$args ): bool { return false; }
+	protected static function get_editor_preview_record( int $id ): array { return []; }
 	protected static function strip_url_query_fragment( string $url ): string { return preg_split( '/[?#]/', $url )[0]; }
 }
 function verify( bool $condition, string $message ): void { if ( ! $condition ) throw new RuntimeException( $message ); }
@@ -62,7 +68,7 @@ try {
 	$prepared = VRodos_Asset_Optimization_Source::prepare( 1, $resolve );
 	verify( 1 === $writes && 1 === $normalizations && isset( $prepared['sha256'] ), 'Preparation explicitly creates source identity.' );
 	$scan = ScannerFixture::scan();
-	verify( 1 === $scan['totalAssets'] && count( $scan['analysisMissing'] ) === 1, 'Scan must filter non-GLB media and preserve missing-analysis rows.' );
+	verify( 1 === count( $scan ) && 'missing' === $scan[0]['status'], 'Readiness must filter non-GLB media and flag assets needing preparation.' );
 	verify( $primed === [ [ 1, 2 ] ], 'Scanner must prime metadata in batches.' );
 	verify( 1 === $writes && 1 === $normalizations, 'Diagnostics scanning must remain read-only.' );
 	file_put_contents( $source_path, 'glTFchanged fixture' );
