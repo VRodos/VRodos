@@ -4964,6 +4964,8 @@
       this.desktopVisionHeightCapturedAt = 0;
       this.desktopVisionMinEyeToGroundOffset = 0.8;
       this.desktopVisionMaxEyeToGroundOffset = 2.8;
+      this.desktopWalkingMinEyeToGroundOffset = 1.8;
+      this.desktopWalkingHeightLift = 0;
       this.immersiveLastStepDeltaY = 0;
       this.immersiveLastRenderAppliedAt = 0;
       this.immersiveMinEyeToGroundOffset = 1.2;
@@ -5673,6 +5675,11 @@
       diagnostics.status = applied ? "applied" : "apply-failed";
       diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(this.getNavigationWorldPosition());
       if (applied) {
+        this.desktopWalkingHeightLift = 0;
+        this.hasLastGroundHit = false;
+        this.syncInitialHeightOffset();
+        targetPosition.copy(this.getNavigationWorldPosition());
+        diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(targetPosition);
         if (this.lastResolvedPosition && typeof this.lastResolvedPosition.copy === "function") {
           this.lastResolvedPosition.copy(targetPosition);
         }
@@ -5685,7 +5692,6 @@
         this.pendingImmersiveExitNavigationReason = "";
         this.pendingImmersiveExitNavigationCapturedAt = 0;
         this.positionPrimed = true;
-        this.hasLastGroundHit = false;
         this.clearImmersiveExitNavigationHandoffTimers();
       }
       this.lastImmersiveExitHandoffDiagnostics = diagnostics;
@@ -6478,7 +6484,7 @@
       }
       const navigationY = Number(navigationPosition.y);
       const groundY = Number(groundHit.point.y);
-      const rawHeightOffset = navigationY - groundY;
+      const rawHeightOffset = navigationY - groundY - this.desktopWalkingHeightLift;
       if (!Number.isFinite(navigationY) || !Number.isFinite(groundY) || !Number.isFinite(rawHeightOffset)) {
         return false;
       }
@@ -6541,15 +6547,22 @@
       this.immersiveHeightSource = "default";
       return this.immersiveDefaultEyeToGroundOffset;
     },
+    shouldRaiseDesktopWalkingHeight: function() {
+      return !this.isImmersiveXrPresenting() && this.areCollisionsEnabled() && !this.isHeadsetRuntimeProfile(this.getSceneSettings());
+    },
     resolveNavigationHeightOffset: function(rawHeightOffset) {
       if (this.isImmersiveXrPresenting()) {
         return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
       }
-      return VRODOSMaster.clamp(
+      const raiseDesktopHeight = this.shouldRaiseDesktopWalkingHeight();
+      const desktopHeight = VRODOSMaster.clamp(
         rawHeightOffset,
-        this.desktopVisionMinEyeToGroundOffset,
+        raiseDesktopHeight ? this.desktopWalkingMinEyeToGroundOffset : this.desktopVisionMinEyeToGroundOffset,
         this.desktopVisionMaxEyeToGroundOffset
       );
+      const referenceHeight = this.getTrustedDesktopVisionHeightOffset();
+      this.desktopWalkingHeightLift = raiseDesktopHeight && referenceHeight !== null ? Math.max(0, desktopHeight - referenceHeight) : 0;
+      return desktopHeight;
     },
     resetImmersiveHeight: function() {
       if (!this.isImmersiveXrPresenting() || !this.ensureImmersiveSessionAnchor("height-reset")) {
@@ -6640,7 +6653,9 @@
     getImmersiveAuthoredStartPosition: function(target) {
       target = target || this.immersiveVirtualNavPosition;
       if (this.hasLastNonImmersiveNavigationPosition) {
-        return target.copy(this.lastNonImmersiveNavigationPosition);
+        target.copy(this.lastNonImmersiveNavigationPosition);
+        if (this.desktopWalkingHeightLift > 0) target.y -= this.desktopWalkingHeightLift;
+        return target;
       }
       return target.fromArray(this.getSceneSettings().cam_position.trim().split(/\s+/).map(Number));
     },
@@ -7477,13 +7492,17 @@
       return false;
     },
     teleportToPoint: function(authoredFloorPosition, sourceElement) {
-      var _a;
+      var _a, _b;
       if (!this.canStartTeleport() || !authoredFloorPosition || ![authoredFloorPosition.x, authoredFloorPosition.y, authoredFloorPosition.z].every(Number.isFinite)) return false;
       const immersive = this.isImmersiveXrPresenting();
       if (immersive && !this.ensureImmersiveSessionAnchor("teleport")) return false;
       this.ensureNavigationStatePrimed();
       const start = this.getNavigationWorldPosition().clone();
-      const eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset : immersive ? this.getDesiredImmersiveEyeToGroundOffset() : (_a = this.getTrustedDesktopVisionHeightOffset()) != null ? _a : 1.6;
+      let eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset : immersive ? this.getDesiredImmersiveEyeToGroundOffset() : (_a = this.getTrustedDesktopVisionHeightOffset()) != null ? _a : 1.6;
+      const referenceEyeHeight = (_b = this.getTrustedDesktopVisionHeightOffset()) != null ? _b : eyeHeight;
+      if (this.shouldRaiseDesktopWalkingHeight()) {
+        eyeHeight = VRODOSMaster.clamp(eyeHeight, this.desktopWalkingMinEyeToGroundOffset, this.desktopVisionMaxEyeToGroundOffset);
+      }
       const roomOffset = new THREE.Vector3();
       if (immersive) {
         this.getImmersivePhysicalAnchorPosition(roomOffset);
@@ -7503,6 +7522,7 @@
         end,
         landing,
         eyeHeight,
+        referenceEyeHeight,
         rigStart: this.cameraRig.object3D.position.clone(),
         startGround: this.hasLastGroundHit ? this.copyGroundHit(this.lastGroundHit, this.createGroundHit()) : null,
         startVerticalState: this.verticalState,
@@ -7580,6 +7600,10 @@
         this.teleportTravel = null;
         this.clearImmersiveGroundCaches();
         this.heightOffset = travel.eyeHeight;
+        if (!travel.immersive && this.shouldRaiseDesktopWalkingHeight()) {
+          this.desktopVisionHeightOffset = travel.referenceEyeHeight;
+          this.heightOffset = this.resolveNavigationHeightOffset(travel.eyeHeight);
+        }
         this.setVerticalState("grounded", "teleport-arrival");
         this.verticalVelocity = 0;
         if (travel.landing.ground) {
@@ -8835,6 +8859,10 @@
       this.hasLastGroundHit = true;
       this.setVerticalState("grounded", "ground-snap");
       this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
+      if (!this.isImmersiveXrPresenting()) {
+        this.lastNonImmersiveNavigationPosition.copy(this.lastResolvedPosition);
+        this.hasLastNonImmersiveNavigationPosition = true;
+      }
       return true;
     },
     syncHeightOffset: function() {

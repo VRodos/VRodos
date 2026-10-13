@@ -410,6 +410,8 @@ AFRAME.registerComponent('custom-movement', {
         this.desktopVisionHeightCapturedAt = 0;
         this.desktopVisionMinEyeToGroundOffset = 0.8;
         this.desktopVisionMaxEyeToGroundOffset = 2.8;
+        this.desktopWalkingMinEyeToGroundOffset = 1.8;
+        this.desktopWalkingHeightLift = 0;
         this.immersiveLastStepDeltaY = 0;
         this.immersiveLastRenderAppliedAt = 0;
         this.immersiveMinEyeToGroundOffset = 1.2;
@@ -1204,6 +1206,13 @@ AFRAME.registerComponent('custom-movement', {
         diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(this.getNavigationWorldPosition());
 
         if (applied) {
+            // The handoff is in XR eye-height coordinates. Reapply the desktop
+            // ground policy before remembering the restored desktop position.
+            this.desktopWalkingHeightLift = 0;
+            this.hasLastGroundHit = false;
+            this.syncInitialHeightOffset();
+            targetPosition.copy(this.getNavigationWorldPosition());
+            diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(targetPosition);
             if (this.lastResolvedPosition && typeof this.lastResolvedPosition.copy === 'function') {
                 this.lastResolvedPosition.copy(targetPosition);
             }
@@ -1216,7 +1225,6 @@ AFRAME.registerComponent('custom-movement', {
             this.pendingImmersiveExitNavigationReason = '';
             this.pendingImmersiveExitNavigationCapturedAt = 0;
             this.positionPrimed = true;
-            this.hasLastGroundHit = false;
             this.clearImmersiveExitNavigationHandoffTimers();
         }
 
@@ -2100,7 +2108,9 @@ AFRAME.registerComponent('custom-movement', {
 
         const navigationY = Number(navigationPosition.y);
         const groundY = Number(groundHit.point.y);
-        const rawHeightOffset = navigationY - groundY;
+        // Keep the pre-lift height for XR; repeated samples must not capture the
+        // desktop-only increase as a new authored eye height.
+        const rawHeightOffset = navigationY - groundY - this.desktopWalkingHeightLift;
         if (!Number.isFinite(navigationY) || !Number.isFinite(groundY) || !Number.isFinite(rawHeightOffset)) {
             return false;
         }
@@ -2178,16 +2188,25 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveHeightSource = 'default';
         return this.immersiveDefaultEyeToGroundOffset;
     },
+    shouldRaiseDesktopWalkingHeight: function () {
+        return !this.isImmersiveXrPresenting() && this.areCollisionsEnabled() &&
+            !this.isHeadsetRuntimeProfile(this.getSceneSettings());
+    },
     resolveNavigationHeightOffset: function (rawHeightOffset) {
         if (this.isImmersiveXrPresenting()) {
             return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
         }
 
-        return VRODOSMaster.clamp(
+        const raiseDesktopHeight = this.shouldRaiseDesktopWalkingHeight();
+        const desktopHeight = VRODOSMaster.clamp(
             rawHeightOffset,
-            this.desktopVisionMinEyeToGroundOffset,
+            raiseDesktopHeight ? this.desktopWalkingMinEyeToGroundOffset : this.desktopVisionMinEyeToGroundOffset,
             this.desktopVisionMaxEyeToGroundOffset
         );
+        const referenceHeight = this.getTrustedDesktopVisionHeightOffset();
+        this.desktopWalkingHeightLift = raiseDesktopHeight && referenceHeight !== null
+            ? Math.max(0, desktopHeight - referenceHeight) : 0;
+        return desktopHeight;
     },
     resetImmersiveHeight: function () {
         if (!this.isImmersiveXrPresenting() || !this.ensureImmersiveSessionAnchor('height-reset')) {
@@ -2299,7 +2318,9 @@ AFRAME.registerComponent('custom-movement', {
     getImmersiveAuthoredStartPosition: function (target) {
         target = target || this.immersiveVirtualNavPosition;
         if (this.hasLastNonImmersiveNavigationPosition) {
-            return target.copy(this.lastNonImmersiveNavigationPosition);
+            target.copy(this.lastNonImmersiveNavigationPosition);
+            if (this.desktopWalkingHeightLift > 0) target.y -= this.desktopWalkingHeightLift;
+            return target;
         }
 
         // The XR camera may already contain a physical tracking pose on direct entry.
@@ -3274,8 +3295,12 @@ AFRAME.registerComponent('custom-movement', {
         if (immersive && !this.ensureImmersiveSessionAnchor('teleport')) return false;
         this.ensureNavigationStatePrimed();
         const start = this.getNavigationWorldPosition().clone();
-        const eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset
+        let eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset
             : immersive ? this.getDesiredImmersiveEyeToGroundOffset() : (this.getTrustedDesktopVisionHeightOffset() ?? 1.6);
+        const referenceEyeHeight = this.getTrustedDesktopVisionHeightOffset() ?? eyeHeight;
+        if (this.shouldRaiseDesktopWalkingHeight()) {
+            eyeHeight = VRODOSMaster.clamp(eyeHeight, this.desktopWalkingMinEyeToGroundOffset, this.desktopVisionMaxEyeToGroundOffset);
+        }
         const roomOffset = new THREE.Vector3();
         if (immersive) {
             this.getImmersivePhysicalAnchorPosition(roomOffset);
@@ -3289,7 +3314,7 @@ AFRAME.registerComponent('custom-movement', {
         if (start.distanceToSquared(end) < 0.0001) return false;
         const travel = window.VRODOSTeleport.createTravel(start, end);
         Object.assign(travel, {
-            source: sourceElement, immersive, start, end, landing, eyeHeight,
+            source: sourceElement, immersive, start, end, landing, eyeHeight, referenceEyeHeight,
             rigStart: this.cameraRig.object3D.position.clone(),
             startGround: this.hasLastGroundHit ? this.copyGroundHit(this.lastGroundHit, this.createGroundHit()) : null,
             startVerticalState: this.verticalState, startVerticalVelocity: this.verticalVelocity,
@@ -3362,6 +3387,10 @@ AFRAME.registerComponent('custom-movement', {
             this.teleportTravel = null;
             this.clearImmersiveGroundCaches();
             this.heightOffset = travel.eyeHeight;
+            if (!travel.immersive && this.shouldRaiseDesktopWalkingHeight()) {
+                this.desktopVisionHeightOffset = travel.referenceEyeHeight;
+                this.heightOffset = this.resolveNavigationHeightOffset(travel.eyeHeight);
+            }
             this.setVerticalState('grounded', 'teleport-arrival');
             this.verticalVelocity = 0;
             if (travel.landing.ground) {
@@ -4929,6 +4958,10 @@ AFRAME.registerComponent('custom-movement', {
         this.hasLastGroundHit = true;
         this.setVerticalState('grounded', 'ground-snap');
         this.rememberGroundedPosition(this.lastResolvedPosition, this.lastGroundHit);
+        if (!this.isImmersiveXrPresenting()) {
+            this.lastNonImmersiveNavigationPosition.copy(this.lastResolvedPosition);
+            this.hasLastNonImmersiveNavigationPosition = true;
+        }
         return true;
     },
     syncHeightOffset: function () {

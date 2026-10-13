@@ -178,11 +178,62 @@ near(xr.nav.immersiveVirtualNavPosition, virtualArrival, 'XR re-entry retains th
 const collision = fixture({ mode: 'walkable', collisions: true });
 const floorGeometry = new THREE.PlaneGeometry(30, 30);
 floorGeometry.rotateX(-Math.PI / 2);
+
+// Exercise production ground synchronization and XR handoffs at different
+// authored eye heights and floor elevations, for both generated rig layouts.
+for (const standard of [false, true]) {
+    for (const authoredHeight of [0.2, 1.6, 2.2, 3]) {
+        const f = fixture({ standard, mode: 'walkable', collisions: true });
+        const floorY = 3;
+        f.addMesh(floorGeometry.clone(), point(0, floorY, 0), true);
+        f.nav.setNavigationWorldPosition(point(0, floorY + authoredHeight, 0));
+        f.nav.rememberNonImmersiveNavigationPosition(true);
+        f.nav.ensureNavigationStatePrimed();
+        const desktopHeight = THREE.MathUtils.clamp(authoredHeight, 1.8, 2.8);
+        const vrHeight = THREE.MathUtils.clamp(authoredHeight, 0.8, 2.8);
+        f.enterVr();
+        near(f.nav.immersiveVirtualNavPosition, point(0, floorY + vrHeight, 0), 'immediate VR entry uses the snapped desktop position without another desktop tick');
+        f.cameraGroup.position.set(0, 1.6, 0);
+        f.scene.renderer.xr.isPresenting = false;
+        f.nav.handleExitVr();
+        for (let session = 0; session < 3; session++) {
+            f.nav.syncHeightOffset();
+            f.nav.syncInitialHeightOffset();
+            f.nav.rememberNonImmersiveNavigationPosition(true);
+            near(f.nav.getNavigationWorldPosition(), point(0, floorY + desktopHeight, 0), 'desktop resampling preserves height on raised ground');
+            assert(Math.abs(f.nav.getTrustedDesktopVisionHeightOffset() - vrHeight) < 1e-6, 'desktop lift never overwrites the VR reference');
+            f.enterVr();
+            near(f.nav.immersiveVirtualNavPosition, point(0, floorY + vrHeight, 0), 'VR entry preserves its prior floor-relative eye height');
+            f.cameraGroup.position.set(0, 1.6, 0); // A-Frame restores the inline camera before exit.
+            f.scene.renderer.xr.isPresenting = false;
+            f.nav.handleExitVr();
+            near(f.nav.getNavigationWorldPosition(), point(0, floorY + desktopHeight, 0), 'VR exit restores the desktop minimum without floor or horizontal drift');
+        }
+    }
+}
+
+const stairs = fixture({ mode: 'walkable', collisions: true, disabled: false });
+stairs.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+const stepGeometry = new THREE.PlaneGeometry(3, 5);
+stepGeometry.rotateX(-Math.PI / 2);
+stairs.addMesh(stepGeometry, point(3, 0.4, 0), true);
+stairs.nav.ensureNavigationStatePrimed();
+assert(stairs.nav.applyConstrainedMovement(3, 0), 'desktop walking accepts a supported stair');
+near(stairs.nav.getNavigationWorldPosition(), point(3, 2.2, 0), 'stair ascent retains 1.8m above the step');
+stairs.nav.syncHeightOffset();
+assert(Math.abs(stairs.nav.getTrustedDesktopVisionHeightOffset() - 1.6) < 1e-6, 'stair synchronization preserves the original VR eye height');
+
+const headset = fixture({ mode: 'walkable', collisions: true });
+headset.settings.vrRuntimeProfile = 'headset';
+headset.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+headset.nav.ensureNavigationStatePrimed();
+near(headset.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'standalone headset inline viewing keeps its original height');
+
 collision.addMesh(floorGeometry, point(0, 0, 0), true);
 collision.addMesh(new THREE.BoxGeometry(0.2, 3, 3), point(3, 1.5, 0));
 assert(collision.nav.teleportToPoint(point(8, 0, 0), { isConnected: true }), 'route obstacles are bypassed');
 collision.nav.tickTeleport(collision.nav.teleportTravel.duration);
-near(collision.nav.getNavigationWorldPosition(), point(8, 1.6, 0), 'walkable arrival reaches the marker');
+near(collision.nav.getNavigationWorldPosition(), point(8, 1.8, 0), 'walkable arrival uses the desktop standing minimum');
 const arrival = collision.nav.getNavigationWorldPosition().clone();
 for (const invalid of [point(3, 0, 0), point(2.7, 0, 0), point(16, 0, 0)]) {
     assert.equal(collision.nav.teleportToPoint(invalid), false, 'invalid or blocked landing is rejected');
@@ -210,10 +261,10 @@ const snap = fixture({ mode: 'walkable', collisions: true });
 snap.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
 assert(snap.nav.teleportToPoint(point(3, 0.2, 0)), 'nearby ground within the snap tolerance is accepted');
 snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
-near(snap.nav.getNavigationWorldPosition(), point(3, 1.6, 0), 'accepted landing snaps to its supported floor');
+near(snap.nav.getNavigationWorldPosition(), point(3, 1.8, 0), 'accepted landing snaps to its supported floor');
 assert(snap.nav.teleportToPoint(point(7, 25, 0)), 'a raised walking destination projects to ground below');
 snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
-near(snap.nav.getNavigationWorldPosition(), point(7, 1.6, 0), 'raised marker preserves eye height at its ground projection');
+near(snap.nav.getNavigationWorldPosition(), point(7, 1.8, 0), 'raised marker preserves eye height at its ground projection');
 
 const stacked = fixture({ mode: 'walkable', collisions: true });
 stacked.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
@@ -222,7 +273,23 @@ upperPlatform.rotateX(-Math.PI / 2);
 stacked.addMesh(upperPlatform, point(8, 4, 0), true);
 assert(stacked.nav.teleportToPoint(point(8, 10, 0)), 'nearest walkable floor below is selected');
 stacked.nav.tickTeleport(stacked.nav.teleportTravel.duration);
-near(stacked.nav.getNavigationWorldPosition(), point(8, 5.6, 0), 'upper walkable floor wins over terrain below');
+near(stacked.nav.getNavigationWorldPosition(), point(8, 5.8, 0), 'upper walkable floor wins over terrain below');
+stacked.nav.rememberNonImmersiveNavigationPosition(true);
+stacked.enterVr();
+near(stacked.nav.immersiveVirtualNavPosition, point(8, 5.6, 0), 'VR entry retains the raised floor with the original eye height');
+assert(stacked.nav.teleportToPoint(point(-4, 0, -3)), 'VR can move to a different floor and horizontal position');
+stacked.nav.tickTeleport(stacked.nav.teleportTravel.duration);
+stacked.cameraGroup.position.set(0, 1.6, 0);
+stacked.scene.renderer.xr.isPresenting = false;
+stacked.nav.handleExitVr();
+near(stacked.nav.getNavigationWorldPosition(), point(-4, 1.8, -3), 'VR exit restores desktop height at the latest floor and position');
+
+const unsupportedStart = fixture({ mode: 'walkable', collisions: true });
+unsupportedStart.addMesh(upperPlatform.clone(), point(8, 0, 0), true);
+assert(unsupportedStart.nav.teleportToPoint(point(8, 0, 0)), 'a supported destination accepts a start without ground');
+unsupportedStart.nav.tickTeleport(unsupportedStart.nav.teleportTravel.duration);
+near(unsupportedStart.nav.getNavigationWorldPosition(), point(8, 1.8, 0), 'the desktop minimum also applies without a sampled starting floor');
+assert.equal(unsupportedStart.nav.getTrustedDesktopVisionHeightOffset(), 1.6, 'first supported arrival retains the previous default VR height');
 
 const fly = fixture({ mode: 'fly', collisions: true });
 fly.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
@@ -241,7 +308,7 @@ const hiddenGround = fixture({ mode: 'walkable', collisions: true });
 hiddenGround.addMesh(floorGeometry.clone(), point(0, 0, 0), true).visible = false;
 assert(hiddenGround.nav.teleportToPoint(point(4, 10, 0)), 'runtime ground projection includes hidden navigation geometry');
 hiddenGround.nav.tickTeleport(hiddenGround.nav.teleportTravel.duration);
-near(hiddenGround.nav.getNavigationWorldPosition(), point(4, 1.6, 0), 'hidden collider ground supports a safe landing');
+near(hiddenGround.nav.getNavigationWorldPosition(), point(4, 1.8, 0), 'hidden collider ground supports a safe landing');
 
 const changedFloor = fixture({ mode: 'walkable', collisions: true });
 const movingFloor = changedFloor.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
@@ -249,7 +316,7 @@ assert(changedFloor.nav.teleportToPoint(point(4, 5, 0)));
 movingFloor.position.y = -5;
 movingFloor.updateMatrixWorld(true);
 changedFloor.nav.tickTeleport(changedFloor.nav.teleportTravel.duration);
-near(changedFloor.nav.getNavigationWorldPosition(), point(0, 1.6, 0), 'arrival cannot resnap far below a disappeared landing');
+near(changedFloor.nav.getNavigationWorldPosition(), point(0, 1.8, 0), 'arrival cannot resnap far below a disappeared landing');
 
 const groundedXr = fixture({ mode: 'walkable', collisions: true });
 groundedXr.addMesh(floorGeometry.clone(), point(0, 0, 0), true);

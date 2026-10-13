@@ -64,15 +64,30 @@ assert(movementDefinition, "custom-movement component was not registered");
     const nav = Object.create(movementDefinition);
     nav.desktopVisionMinEyeToGroundOffset = 0.8;
     nav.desktopVisionMaxEyeToGroundOffset = 2.8;
+    nav.desktopWalkingMinEyeToGroundOffset = 1.8;
+    nav.desktopWalkingHeightLift = 0;
     nav.isImmersiveXrPresenting = () => false;
+    nav.areCollisionsEnabled = () => true;
+    nav.isHeadsetRuntimeProfile = () => false;
 
-    assertNear(nav.resolveNavigationHeightOffset(0.2), 0.8, "desktop eye height should match the VR minimum above walkable ground");
-    assertNear(nav.resolveNavigationHeightOffset(1.6), 1.6, "authored standing eye height should be preserved");
-    assertNear(nav.resolveNavigationHeightOffset(3), 2.8, "desktop and VR should share the upper eye-height limit");
+    assertNear(nav.resolveNavigationHeightOffset(0.2), 1.8, "low desktop viewpoints should use the standing minimum");
+    assertNear(nav.resolveNavigationHeightOffset(1.6), 1.8, "desktop standing eye height should rise to 1.8m");
+    assertNear(nav.resolveNavigationHeightOffset(2.2), 2.2, "higher authored viewpoints should be preserved");
+    assertNear(nav.resolveNavigationHeightOffset(3), 2.8, "desktop retains the existing upper eye-height limit");
 
     nav.getRuntimeNow = () => 0;
     nav.recordDesktopVisionHeightOffset(new THREE.Vector3(0, 0.2, 0), createGroundHit(), "desktop-start");
-    assertNear(nav.getDesiredImmersiveEyeToGroundOffset(), nav.resolveNavigationHeightOffset(0.2), "VR entry should retain the desktop eye height");
+    nav.resolveNavigationHeightOffset(0.2);
+    for (let sample = 0; sample < 3; sample++) {
+        nav.recordDesktopVisionHeightOffset(new THREE.Vector3(0, 1.8, 0), createGroundHit(), "desktop-resample");
+        assertNear(nav.resolveNavigationHeightOffset(1.8), 1.8, "desktop resampling must not drift upward");
+        assertNear(nav.getDesiredImmersiveEyeToGroundOffset(), 0.8, "VR entry retains its previous low-height reference");
+    }
+    nav.areCollisionsEnabled = () => false;
+    assertNear(nav.resolveNavigationHeightOffset(1.6), 1.6, "collision-disabled viewing retains its authored height");
+    nav.areCollisionsEnabled = () => true;
+    nav.isHeadsetRuntimeProfile = () => true;
+    assertNear(nav.resolveNavigationHeightOffset(0.2), 0.8, "headset viewing retains its previous minimum");
 }
 
 function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
@@ -553,8 +568,11 @@ function createVerticalRayHarness() {
     assertNear(footprintGround.rawPoint.x, 0.32, "footprint landing should retain the actual supporting hit point");
 }
 
-{
+for (const eyeHeight of [1.6, 1.8]) {
     const { nav, position } = createVerticalControllerHarness();
+    position.y = nav.heightOffset = eyeHeight;
+    nav.lastResolvedPosition.copy(position);
+    nav.lastGroundedPosition.copy(position);
     assert(nav.requestJump("keyboard"), "support-loss fixture should start from a valid grounded jump");
     position.y = 2;
     nav.lastResolvedPosition.copy(position);
@@ -565,7 +583,7 @@ function createVerticalRayHarness() {
     };
     nav.updateVerticalMotion(1000 / 60, nav.getSceneSettings(), true);
     assert(nav.verticalState === "grounded", "lost airborne support should fail closed to the last grounded state");
-    assertNear(position.y, 1.6, "lost airborne support should restore the last grounded position instead of falling forever");
+    assertNear(position.y, eyeHeight, "lost airborne support should restore the last grounded position instead of falling forever");
     assert(nav.lastVerticalTransitionReason === "airborne-support-lost", "support-loss recovery should be diagnosed");
 }
 
@@ -651,8 +669,11 @@ function createVerticalControllerHarness() {
     return { nav, position };
 }
 
-{
+for (const eyeHeight of [1.6, 1.8]) {
     const { nav, position } = createVerticalControllerHarness();
+    position.y = nav.heightOffset = eyeHeight;
+    nav.lastResolvedPosition.copy(position);
+    nav.lastGroundedPosition.copy(position);
     assert(nav.requestJump("keyboard"), "vertical controller fixture should start a jump");
     nav.updateVerticalMotion(0, nav.getSceneSettings(), true);
     assert(nav.isAirborne(), "a zero-delta frame immediately after jump input should not trigger landing");
@@ -663,7 +684,7 @@ function createVerticalControllerHarness() {
     }
     assertNear(peakFootY, 0.8, "integrated controller jump should reach the configured apex", 0.01);
     assert(nav.verticalState === "grounded", "descending jump should land and return to grounded state");
-    assertNear(position.y, 1.6, "landing should restore eye height above walkable ground");
+    assertNear(position.y, eyeHeight, "landing should restore eye height above walkable ground");
     assertNear(nav.lastLandingGroundY, 0, "landing diagnostics should record ground height");
 }
 
