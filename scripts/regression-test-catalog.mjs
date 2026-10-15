@@ -55,6 +55,7 @@ export const testGroups = Object.freeze({
     "scripts/test-compiled-glb-animation.mjs",
     "scripts/test-editor-scene-loader.mjs",
     "scripts/test-editor-oversized-glb.mjs",
+    "scripts/test-editor-scene-autosave.mjs",
     "scripts/test-scene-asset-role.mjs",
     "scripts/test-asset-editor-save-progress.mjs",
     "scripts/test-asset-upload-cancel.mjs",

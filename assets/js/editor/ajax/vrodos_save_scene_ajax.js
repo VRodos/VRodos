@@ -278,16 +278,6 @@ VRODOS.api.saveSceneSettings = function() {
 	return VRODOS.api.sceneSettingsSavePromise;
 }
 
-VRODOS.api.clickSceneSaveButton = function() {
-	const saveButton = document.getElementById( 'save-scene-button' );
-	if (saveButton && typeof saveButton.click === 'function') {
-		saveButton.click();
-		return;
-	}
-
-	VRODOS.api.saveChanges({ force: true });
-}
-
 VRODOS.api.saveSceneEventHandler = function(e) {
 	if (!e || !e.type) {
 		return;
@@ -308,7 +298,7 @@ VRODOS.api.saveSceneEventHandler = function(e) {
 		VRODOS.ui.mapActions[e.type] = true;
 
 		if (VRODOS.ui.mapActions.mouseup && VRODOS.ui.mapActions.modificationPendingSave) {
-			VRODOS.api.clickSceneSaveButton();
+			VRODOS.api.saveChanges({ force: true });
 			VRODOS.ui.mapActions = {};
 		}
 	}
@@ -322,7 +312,7 @@ VRODOS.api.commitPendingSceneSave = function() {
 	VRODOS.ui = VRODOS.ui || {};
 	VRODOS.ui.mapActions = VRODOS.ui.mapActions || {};
 	VRODOS.ui.mapActions.modificationPendingSave = true;
-	VRODOS.api.clickSceneSaveButton();
+	VRODOS.api.saveChanges({ force: true });
 	VRODOS.ui.mapActions = {};
 }
 

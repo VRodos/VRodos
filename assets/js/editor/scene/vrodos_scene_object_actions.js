@@ -532,6 +532,8 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
                 return;
             }
             applyAddedObjectTRS(insertedObject, nameModel);
+            // Fit only the initial placement, before the author can edit it.
+            VRODOS.loader.fitOversizedGlbPlacement(insertedObject, sceneRecord);
 
             VRODOS.loader.prepareLoadedGlbRootMaterial(insertedObject);
 

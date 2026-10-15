@@ -287,8 +287,4 @@ VRODOS.api.finalizeSceneLoad = function() {
     }
 
     VRODOS.editor.requestRender('scene-load-finalized');
-    if (VRODOS.editor.envir.oversizedGlbPlacementAdjusted) {
-        VRODOS.editor.envir.oversizedGlbPlacementAdjusted = false;
-        VRODOS.api.triggerAutoSave();
-    }
 };

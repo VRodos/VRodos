@@ -138,9 +138,6 @@ VRODOS.loader.fitOversizedGlbPlacement = function(object, resource) {
     resource.trs = resource.trs || {};
     resource.trs.scale = object.scale.toArray();
     VRODOS.editor.sceneRegistry.invalidateBounds(object);
-    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
-        VRODOS.editor.envir.oversizedGlbPlacementAdjusted = true;
-    }
     console.warn('VRodos: oversized GLB placement was fitted to the editor scene.', {
         asset_id: resource.asset_id || '',
         previousSize: largestDimension,
@@ -169,7 +166,6 @@ function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
         VRODOS.editor.sceneRegistry.invalidateBounds(finalObject);
     }
     finalObject.isSelectableMesh = true;
-    VRODOS.loader.fitOversizedGlbPlacement(finalObject, resource);
     if (replacingPlaceholder) {
         if (typeof VRODOS.loader.prepareLoadedGlbRootMaterial === 'function') VRODOS.loader.prepareLoadedGlbRootMaterial(finalObject);
         if (VRODOS.editor.selection.get() === finalObject && typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(finalObject);

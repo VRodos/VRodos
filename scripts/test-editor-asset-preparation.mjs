@@ -151,7 +151,7 @@ assert.equal(progressWrapper.style.visibility, 'hidden', 'pending preparation mu
 assert.equal(actions.children.length, 1, 'hiding the loading indicator preserves the independent preparation message');
 tree.position.set(8, 9, 10);
 tree.rotation.set(0.1, 0.2, 0.3);
-tree.scale.set(2, 3, 4);
+tree.scale.set(200, 300, 400);
 tree.locked = true;
 const id = tree.uuid;
 let disposals = 0;
@@ -176,7 +176,7 @@ assert.equal(selected, tree);
 assert.equal(selections, 1, 'automatic replacement must not select or finalize again');
 assert.equal(syncedProxy, tree, 'replacement resynchronizes the selected root with its transform proxy');
 assert.deepEqual(tree.position.toArray(), [8, 9, 10]);
-assert.deepEqual(tree.scale.toArray(), [2, 3, 4]);
+assert.deepEqual(tree.scale.toArray(), [200, 300, 400], 'large authored placeholder transforms survive model replacement');
 assert.equal(tree.rotation.y, 0.2);
 assert.equal(tree.locked, true);
 assert.equal(tree.userData.vrodosEditorPlaceholder, undefined);
@@ -260,7 +260,7 @@ records.restored.vrodosCollisionBounds = { min: [2, 0, 4], max: [6, 8, 10], cent
 const restored = await VRODOS.loader.loadGlbAsset(null, loader, 'restored', records.restored, records);
 assert.equal(restored.userData.vrodosEditorPlaceholder, true, 'reopening a saved pending placement recreates its temporary box');
 assert.deepEqual(restored.position.toArray(), [8, 9, 10]);
-assert.deepEqual(restored.scale.toArray(), [2, 3, 4]);
+assert.deepEqual(restored.scale.toArray(), [200, 300, 400], 'saved large placeholder transforms survive reopening');
 assert.equal(restored.locked, true);
 assert.deepEqual(restored.children[0].position.toArray(), [4, 4, 7], 'authored origins keep the source-bound center offset');
 
@@ -284,4 +284,36 @@ assert.equal(missingModel, null, 'an imported asset without a GLB cannot be plac
 assert.equal(records['invalid-import'], undefined, 'the invalid placement must not enter scene data');
 assert.match(addNotice.textContent, /no prepared 3D model/, 'the editor must explain why the asset was rejected');
 assert.equal(progressWrapper.style.visibility, 'hidden', 'an invalid model must not leave the editor loading overlay visible');
+// The UI insertion path fits oversized models once, including pending boxes.
+VRODOS.loader.LoaderMulti = class {
+    load(manager, resources) {
+        const [name, record] = Object.entries(resources)[0];
+        VRODOS.loader.loadGlbAsset(manager, loader, name, record, records);
+    }
+};
+VRODOS.loader.applyTRSToSceneObject = (object, trs) => VRODOS.utils.applyTRSToObject(object, trs);
+VRODOS.loader.prepareLoadedGlbRootMaterial = () => {};
+VRODOS.api.setSceneLoadingProgressText = () => {};
+records.inserted = asset(19);
+records.inserted.vrodosCollisionBounds = { min: [-500, -50, -200], max: [500, 50, 200], center: [0, 0, 0] };
+VRODOS.api.createGlbAsset('inserted');
+await flush();
+const inserted = VRODOS.editor.sceneRegistry.get('inserted');
+assert.ok(inserted.userData.vrodosEditorAddFinalized, 'pending placement goes through the initial insertion path');
+assert.equal(new THREE.Box3().setFromObject(inserted).getSize(new THREE.Vector3()).x, 25, 'new oversized pending placements fit before selection');
+assert.deepEqual(inserted.position.toArray(), [1, 2, 3], 'initial fitting keeps the drop position');
+assert.deepEqual(records.inserted.trs.scale, inserted.scale.toArray(), 'initial fitting updates the placement before saving');
+VRODOS.loader.cancelPendingEditorGlbLoads();
+
+records.insertedReady = asset(20, 'ready');
+records.insertedReady.editorLoad.loadUrl = records.insertedReady.editorLoad.canonicalUrl;
+records.insertedReady.editorLoad.loadVariant = 'source';
+records.insertedReady.trs.scale = [200, 200, 200];
+VRODOS.api.createGlbAsset('insertedReady');
+await flush();
+resolveDownload();
+await flush();
+const insertedReady = VRODOS.editor.sceneRegistry.get('insertedReady');
+assert.equal(new THREE.Box3().setFromObject(insertedReady).getSize(new THREE.Vector3()).x, 25, 'new ready oversized models fit before selection');
+assert.deepEqual(insertedReady.position.toArray(), [1, 2, 3]);
 console.log('Editor asset preparation lifecycle tests passed.');

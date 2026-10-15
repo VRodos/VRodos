@@ -35,16 +35,44 @@ const fittedSize = new THREE.Box3().setFromObject(mountain).getSize(new THREE.Ve
 assert.ok(Math.abs(fittedSize.x - 25) < 0.0001, 'a kilometer-scale import should fit within 25 scene units');
 assert.ok(mountain.scale.x > 0 && mountain.scale.y > 0 && mountain.scale.z > 0, 'three negative axes should become a positive uniform scale');
 assert.deepEqual(mountainRecord.trs.scale, mountain.scale.toArray(), 'the saved placement should use the fitted scale');
-assert.equal(envir.oversizedGlbPlacementAdjusted, true, 'scene loading should request a save for repaired placements');
 assert.equal(invalidations, 1);
 assert.equal(warnings.length, 1);
 
-envir.oversizedGlbPlacementAdjusted = false;
 const ordinary = placement(20, 10, 15, 1);
 const ordinaryRecord = { trs: { scale: [1, 1, 1] } };
 assert.equal(context.VRODOS.loader.fitOversizedGlbPlacement(ordinary, ordinaryRecord), false);
 assert.deepEqual(ordinary.scale.toArray(), [1, 1, 1], 'ordinary assets keep their authored scale');
 assert.deepEqual(ordinaryRecord.trs.scale, [1, 1, 1], 'ordinary placement records stay unchanged');
-assert.equal(envir.oversizedGlbPlacementAdjusted, false);
 
+// Reopening a saved, deliberately enlarged terrain must never fit it again.
+const authored = placement(123.2, 16.3, 86.34, 4.058442);
+authored.position.set(-30, 70.35950369675757, 0);
+authored.rotation.set(0.1, 0.2, 0.3);
+const savedRecord = {
+    asset_id: 6279,
+    trs: {
+        translation: authored.position.toArray(),
+        rotation: [authored.rotation.x, authored.rotation.y, authored.rotation.z],
+        scale: authored.scale.toArray()
+    }
+};
+context.VRODOS.editor.sceneRegistry.get = () => null;
+context.VRODOS.editor.objectFactory = { addSceneObject() {} };
+context.VRODOS.loader.setObjectProperties = (object, _name, resources) => {
+    const trs = resources.terrain.trs;
+    object.position.fromArray(trs.translation);
+    object.rotation.set(...trs.rotation);
+    object.scale.fromArray(trs.scale);
+    return object;
+};
+context.VRODOS.loader.applyTextureAnisotropy = () => {};
+context.VRODOS.loader.getEditorTextureAnisotropy = () => 1;
+const restored = context.vrodosLoaderAddGlbSceneObject(
+    { scene: placement(123.2, 16.3, 86.34, 1) }, 'terrain', { terrain: savedRecord },
+    { canonicalUrl: '/terrain.glb', loadUrl: '/terrain.glb' }
+);
+assert.deepEqual(restored.scale.toArray(), authored.scale.toArray(), 'reopening preserves an authored terrain larger than 250 units');
+assert.deepEqual(restored.position.toArray(), authored.position.toArray(), 'reopening preserves the authored terrain position');
+assert.deepEqual([restored.rotation.x, restored.rotation.y, restored.rotation.z], savedRecord.trs.rotation);
+assert.deepEqual(savedRecord.trs.scale, authored.scale.toArray(), 'loading never rewrites the saved scale');
 console.log('Editor oversized GLB tests passed.');
