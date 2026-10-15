@@ -365,6 +365,7 @@
           id: word && word.id ? String(word.id) : uniqueId("word", index),
           text,
           hint,
+          isCorrect: (word == null ? void 0 : word.isCorrect) === true,
           normalized: normalizeWordSearchText(text)
         };
       }).filter((word) => word.text && word.normalized);
@@ -487,19 +488,55 @@
       });
     }
     namespace.buildPairMatches = buildPairMatches;
-    function buildBingoPrompts(state) {
-      return state.promptOrder.map((entryId, index) => {
-        const entry = state.entriesById[entryId];
-        return {
-          promptIndex: index,
-          wordId: entry.id,
-          word: entry.text,
-          hint: entry.hint,
-          wasMarked: state.markedIds.has(entry.id)
-        };
-      });
+    function createBingoState(entries) {
+      return {
+        mode: "bingo",
+        entries,
+        entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
+        boardOrder: shuffleArray(entries.map((entry) => entry.id)),
+        selectedIds: /* @__PURE__ */ new Set(),
+        feedback: ""
+      };
     }
-    namespace.buildBingoPrompts = buildBingoPrompts;
+    function getBingoProgress(state) {
+      const required = state.entries.filter((entry) => entry.isCorrect);
+      const correct = required.filter((entry) => state.selectedIds.has(entry.id)).length;
+      const incorrect = state.selectedIds.size - correct;
+      return {
+        correct,
+        incorrect,
+        total: required.length,
+        complete: required.length > 0 && correct === required.length,
+        percentage: required.length ? Math.round(100 * correct / required.length) : 0,
+        score: state.selectedIds.size ? Math.round(100 * correct / state.selectedIds.size) : 0
+      };
+    }
+    function selectBingoWord(state, entryId) {
+      const entry = state.entriesById[entryId];
+      if (!entry || state.selectedIds.has(entryId) || getBingoProgress(state).complete) {
+        return;
+      }
+      state.selectedIds.add(entryId);
+      state.feedback = entry.isCorrect ? "" : "That word is not a correct answer. Keep looking.";
+    }
+    function buildBingoResult(state) {
+      const progress = getBingoProgress(state);
+      const selections = state.entries.filter((entry) => entry.isCorrect || state.selectedIds.has(entry.id)).map((entry) => ({
+        wordId: entry.id,
+        text: entry.text,
+        selected: state.selectedIds.has(entry.id),
+        expectedSelected: entry.isCorrect,
+        isCorrect: entry.isCorrect && state.selectedIds.has(entry.id)
+      }));
+      return {
+        response: { selections, variant: "vocabulary-bingo" },
+        extra: { isCorrect: progress.complete && progress.incorrect === 0, score: progress.score }
+      };
+    }
+    namespace.createBingoState = createBingoState;
+    namespace.getBingoProgress = getBingoProgress;
+    namespace.selectBingoWord = selectBingoWord;
+    namespace.buildBingoResult = buildBingoResult;
     function buildWordSearchAnswers(state) {
       return state.puzzle.entries.map((entry) => ({
         wordId: entry.id,
@@ -2807,17 +2844,7 @@
           const entries = normalizeGridEntries(payload);
           const mode = normalizeComparableText(payload && payload.type) === "vocabulary bingo" ? "bingo" : "wordsearch";
           if (mode === "bingo") {
-            const promptOrder = shuffleArray(entries.map((entry) => entry.id));
-            return {
-              mode,
-              entries,
-              entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
-              boardOrder: shuffleArray(entries.map((entry) => entry.id)),
-              promptOrder,
-              currentPromptIndex: 0,
-              markedIds: /* @__PURE__ */ new Set(),
-              feedback: ""
-            };
+            return namespace.createBingoState(entries);
           }
           const puzzle = buildWordSearchPuzzle(entries);
           const state = {
@@ -2854,14 +2881,11 @@
         onPrimaryAction(runtime) {
           const state = runtime.state;
           if (state.mode === "bingo") {
-            if (state.markedIds.size !== state.entries.length) {
+            if (!namespace.getBingoProgress(state).complete) {
               return;
             }
-            const prompts = namespace.buildBingoPrompts(state);
-            runtime.finish(
-              { prompts, variant: "vocabulary-bingo" },
-              { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
-            );
+            const result = namespace.buildBingoResult(state);
+            runtime.finish(result.response, result.extra);
             return;
           }
           if (!state.puzzle || state.foundIds.size !== state.puzzle.entries.length) {
@@ -2930,23 +2954,30 @@
     }
     function renderVocabularyBingo(runtime) {
       const state = runtime.state;
+      const progress = namespace.getBingoProgress(state);
+      if (!progress.total) {
+        renderEmptyState(runtime, "No correct answers configured.", "Mark at least one bingo word as correct in Immerse, then sync and compile again.");
+        return;
+      }
       const total = state.entries.length;
       const boardSize = Math.ceil(Math.sqrt(total));
       const boardSlots = state.boardOrder.concat(Array.from({ length: boardSize * boardSize - total }, () => ""));
-      const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
-      const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
       runtime.body.innerHTML = assessmentShell("vocabulary-bingo", [
-        currentPrompt ? `<div style="padding:14px 16px;border-radius:18px;background:rgba(59,130,246,0.08);border:1px solid rgba(147,197,253,0.5);"><div style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;margin-bottom:6px;">Current prompt</div><div style="font-size:18px;line-height:1.2;font-weight:800;color:#0f172a;margin-bottom:4px;overflow-wrap:anywhere;">${escapeHtml(currentPrompt.hint || currentPrompt.text)}</div><div style="font-size:12px;color:#64748b;">Mark the matching word on the board.</div></div>` : '<div style="padding:14px 16px;border-radius:18px;background:rgba(92,200,135,0.12);border:1px solid rgba(92,200,135,0.45);font-size:14px;font-weight:700;color:#166534;">All prompts completed. Review the board and finish.</div>',
+        renderInfoCallout(progress.complete ? "All correct answers found. Finish to see your score." : "Select every correct word on the board. Incorrect selections lower your accuracy."),
         state.feedback ? `<div style="font-size:13px;font-weight:700;color:#dc2626;">${escapeHtml(state.feedback)}</div>` : "",
         '<div style="min-height:0;display:grid;place-items:center;">',
-        `<div style="height:100%;max-height:100%;max-width:100%;aspect-ratio:1 / 1;display:grid;grid-template-columns:repeat(${boardSize}, minmax(0, 1fr));gap:8px;">`,
+        `<div style="height:100%;min-height:0;max-width:100%;aspect-ratio:1 / 1;display:grid;grid-template-columns:repeat(${boardSize}, minmax(0, 1fr));grid-template-rows:repeat(${boardSize}, minmax(0, 1fr));gap:8px;">`,
         boardSlots.map((entryId) => {
           if (!entryId) {
-            return '<div style="aspect-ratio:1 / 1;border-radius:16px;background:rgba(226,232,240,0.55);border:1px dashed rgba(203,213,225,0.95);"></div>';
+            return '<div style="min-height:0;border-radius:16px;background:rgba(226,232,240,0.55);border:1px dashed rgba(203,213,225,0.95);"></div>';
           }
           const entry = state.entriesById[entryId];
-          const marked = state.markedIds.has(entryId);
-          return `<button type="button" data-bingo-word-id="${escapeHtml(entryId)}" style="aspect-ratio:1 / 1;border-radius:16px;border:1px solid ${marked ? "rgba(92,200,135,0.95)" : "rgba(203,213,225,0.95)"};background:${marked ? "rgba(92,200,135,0.16)" : "#ffffff"};padding:10px;font-size:13px;line-height:1.15;font-weight:700;color:${marked ? "#166534" : "#0f172a"};cursor:${marked ? "default" : "pointer"};overflow-wrap:anywhere;">${escapeHtml(entry.text)}</button>`;
+          const selected = state.selectedIds.has(entryId);
+          const disabled = selected || progress.complete;
+          const color = selected ? entry.isCorrect ? "#166534" : "#b91c1c" : "#0f172a";
+          const background = selected ? entry.isCorrect ? "#dcfce7" : "#fee2e2" : "#ffffff";
+          const label = selected ? (entry.isCorrect ? "Correct: " : "Incorrect: ") + entry.text : entry.text;
+          return `<button type="button" data-bingo-word-id="${escapeHtml(entryId)}" aria-label="${escapeHtml(label)}" ${disabled ? "disabled" : ""} style="min-width:0;min-height:0;border-radius:16px;border:1px solid ${selected ? color : "rgba(203,213,225,0.95)"};background:${background};padding:10px;font-size:13px;line-height:1.15;font-weight:700;color:${color};cursor:${disabled ? "default" : "pointer"};white-space:normal;overflow-wrap:anywhere;">${selected ? entry.isCorrect ? "\u2713 " : "\u2717 " : ""}${escapeHtml(entry.text)}</button>`;
         }).join(""),
         "</div>",
         "</div>"
@@ -2954,26 +2985,15 @@
       runtime.body.querySelectorAll("[data-bingo-word-id]").forEach((button) => {
         button.addEventListener("click", () => {
           const wordId = button.getAttribute("data-bingo-word-id") || "";
-          if (!wordId || state.markedIds.has(wordId) || !currentPrompt) {
-            return;
-          }
-          if (wordId === currentPrompt.id) {
-            state.markedIds.add(wordId);
-            state.feedback = "";
-            if (state.currentPromptIndex < state.promptOrder.length) {
-              state.currentPromptIndex += 1;
-            }
-          } else {
-            state.feedback = "That does not match the current prompt. Try again.";
-          }
+          namespace.selectBingoWord(state, wordId);
           runtime.rerender();
         });
       });
-      runtime.setStatus(`Completed ${state.markedIds.size} of ${state.entries.length} prompts`);
+      runtime.setStatus(`Found ${progress.correct} of ${progress.total} correct answers (${progress.percentage}%) \xB7 Accuracy ${progress.score}%`);
       runtime.configurePrimaryAction({
         visible: true,
         label: "Finish",
-        disabled: state.markedIds.size !== state.entries.length
+        disabled: !progress.complete
       });
     }
     function buildTextSegments(text, annotations) {
@@ -3285,7 +3305,7 @@
     const QUESTION_ANSWER_TEXT_SIZE = 30;
     const TRUE_FALSE_ANSWER_TEXT_SIZE = 30;
     const INFO_TEXT_FONT_SIZE = 26;
-    const BINGO_PROMPT_FONT_SIZE = 28;
+    const BINGO_INSTRUCTION_FONT_SIZE = 28;
     const UNSUPPORTED_MESSAGE_FONT_SIZE = 30;
     const FILL_GAP_WORDS_PER_PAGE = 9;
     function value(value2, fallback) {
@@ -3982,17 +4002,7 @@
           const entries = normalizeGridEntries(payload);
           const mode = normalizeComparableText(payload && payload.type) === "vocabulary bingo" ? "bingo" : "wordsearch";
           if (mode === "bingo") {
-            const promptOrder = shuffleArray(entries.map((entry) => entry.id));
-            return {
-              mode,
-              entries,
-              entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
-              boardOrder: shuffleArray(entries.map((entry) => entry.id)),
-              promptOrder,
-              currentPromptIndex: 0,
-              markedIds: /* @__PURE__ */ new Set(),
-              feedback: ""
-            };
+            return namespace.createBingoState(entries);
           }
           return {
             mode,
@@ -4180,23 +4190,24 @@
     }
     function renderBingo(runtime) {
       const state = runtime.state;
-      const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
-      const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
-      const frame = createFrame(runtime, "Completed " + state.markedIds.size + " of " + state.entries.length + " prompts", {
+      const progress = namespace.getBingoProgress(state);
+      if (!progress.total) {
+        renderUnsupported(runtime, "No correct answers configured. Mark at least one bingo word as correct in Immerse, then sync and compile again.");
+        return;
+      }
+      const frame = createFrame(runtime, `Found ${progress.correct} of ${progress.total} correct answers (${progress.percentage}%) \xB7 Accuracy ${progress.score}%`, {
         label: "Finish",
-        disabled: state.markedIds.size !== state.entries.length,
+        disabled: !progress.complete,
         onClick: function() {
-          const prompts = namespace.buildBingoPrompts(state);
-          runtime.finish(
-            { prompts, variant: "vocabulary-bingo" },
-            { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
-          );
+          if (!namespace.getBingoProgress(state).complete) return;
+          const result = namespace.buildBingoResult(state);
+          runtime.finish(result.response, result.extra);
         }
       });
       runtime.api.text(frame.content, {
-        text: currentPrompt ? "Prompt: " + (currentPrompt.hint || currentPrompt.text) : "All prompts completed.",
-        color: currentPrompt ? "#1d4ed8" : "#166534",
-        fontSize: BINGO_PROMPT_FONT_SIZE,
+        text: progress.complete ? "All correct answers found. Finish to see your score." : "Select every correct word. Incorrect selections lower your accuracy.",
+        color: progress.complete ? "#166534" : "#1d4ed8",
+        fontSize: BINGO_INSTRUCTION_FONT_SIZE,
         fontWeight: 600,
         lineHeight: "120%"
       });
@@ -4233,10 +4244,11 @@
             continue;
           }
           const entry = state.entriesById[entryId];
-          const marked = state.markedIds.has(entryId);
+          const selected = state.selectedIds.has(entryId);
           runtime.api.button(rowContainer, {
-            label: entry.text,
-            variant: marked ? "positive" : "secondary",
+            label: (selected ? entry.isCorrect ? "\u2713 " : "\u2717 " : "") + entry.text,
+            variant: selected ? entry.isCorrect ? "positive" : "negative" : "secondary",
+            disabled: selected || progress.complete,
             width: cellSize,
             height: cellSize,
             minWidth: cellSize,
@@ -4244,16 +4256,7 @@
             textSize: boardSize > 3 ? 18 : 22,
             flexShrink: 0,
             onClick: function() {
-              if (!currentPrompt || marked) {
-                return;
-              }
-              if (entryId === currentPrompt.id) {
-                state.markedIds.add(entryId);
-                state.feedback = "";
-                state.currentPromptIndex += 1;
-              } else {
-                state.feedback = "That tile does not match the current prompt.";
-              }
+              namespace.selectBingoWord(state, entryId);
               runtime.rerender();
             }
           });
@@ -4671,7 +4674,7 @@
                 }
               });
               api.text(frame.content, {
-                text: summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : ""),
+                text: summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : "") + (typeof runtime.lastResult.score === "number" ? " \xB7 Accuracy " + runtime.lastResult.score + "%" : ""),
                 fontSize: 36,
                 lineHeight: "130%",
                 color: "#1e293b"
@@ -5039,7 +5042,7 @@
         message.style.textAlign = "center";
         message.style.fontSize = "20px";
         message.style.lineHeight = "1.7";
-        message.textContent = summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : "");
+        message.textContent = summary.correct + " correct \xB7 " + summary.incorrect + " incorrect" + (summary.ungraded ? " \xB7 " + summary.ungraded + " ungraded" : "") + (typeof runtime.lastResult.score === "number" ? " \xB7 Accuracy " + runtime.lastResult.score + "%" : "");
         runtime.body.appendChild(message);
         runtime.setStatus("You can close this result and retake the assessment.");
         runtime.configurePrimaryAction({ visible: true, label: "Close" });

@@ -109,6 +109,7 @@ VR spatial UI current state:
 - `vrodos-selection-bvh` accelerates precise selection on static selectable GLB meshes with at least 2,000 triangles, independently of their navigation colliders. Prepare trees on model load, preserve index order with `indirect: true`, and skip skinned, morphed, and instanced geometry. Keep the BVH vendor available for interactive scenes even when walking collision is off; preserve CEFR-gated selectable models. Do not replace visible-mesh selection with collision boxes.
 - PMNDRS can clear its pointer intersection during a click that closes/rerenders a panel; treat that stale `pointer.up()` intersection error as benign cleanup, not as a failed click or a reason to add fallback hit geometry.
 - Desktop and inline assessment, image/text POI, and video dialogs remain DOM-based.
+- Vocabulary bingo preserves `content.words[].isCorrect` from Immerse and uses one board requiring every correct word. Desktop and VR share bingo state, selection, completion, and result helpers. Each tile counts once; selected distractors lower accuracy (`correct selections / all selections * 100`), and untouched distractors earn no points. Results use `response.selections` with `expectedSelected` plus a numeric percentage `score`; connector reports must preserve those semantics. Bingo without any configured correct words cannot complete.
 - Recompile generated scenes after runtime changes so spatial UI scripts receive the planner's cache-busting `?ver=` query.
 
 WebXR entry current state:

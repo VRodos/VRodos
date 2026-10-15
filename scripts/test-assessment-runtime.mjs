@@ -291,8 +291,13 @@ const fixtures = [
     {
         name: "vocabulary bingo",
         expected: "Grid",
-        payload: makePayload("Bingo", "Vocabulary Bingo", "Bingo", {
-            words: ["ALPHA", "BETA", "GAMMA", "DELTA"]
+        payload: makePayload("Bingo", "Grid", "Vocabulary bingo", {
+            words: [
+                { id: "barcelona", text: "Barcelona", isCorrect: true },
+                { id: "montserrat", text: "Montserrat", isCorrect: false },
+                { id: "serrada", text: "muntanya serrada", isCorrect: true },
+                { id: "roques", text: "roques", isCorrect: false }
+            ]
         })
     },
     {
@@ -849,9 +854,10 @@ async function runAssessmentFreeSceneHarness() {
     assert(contextText.includes("Place [1: ____] here."), "Fill gaps: missing masked passage context");
     assert(!contextText.includes("temple"), "Fill gaps: authored answer leaked in passage");
     assert(button("Submit").disabled, "Fill gaps: incomplete submission enabled");
+    while (!button(answers[0])) click("More words");
     const answerFrame = activePanel.api.frames.at(-1);
     const answerRenderCount = runtime.renderCount;
-    choose(answers[0]);
+    click(answers[0]);
     assert(activePanel.api.frames.at(-1) === answerFrame && runtime.renderCount === answerRenderCount, "Fill gaps: selecting a word rebuilt the panel");
     assert(answerFrame.statusText.options.text === "Filled 1 of 10 blanks", "Fill gaps: status did not update in place");
     click("Clear");
@@ -863,6 +869,7 @@ async function runAssessmentFreeSceneHarness() {
     assert(runtime.state.values["gap-0"] === answers[0], "Fill gaps: replacement failed");
     for (let index = 1; index < answers.length; index += 1) {
         click("Next");
+        while (!button(answers[0])) click("More words");
         assert(button(answers[0])?.disabled, "Fill gaps: assigned word must stay visible and disabled");
         choose(answers[index]);
     }
@@ -962,6 +969,87 @@ async function runAssessmentFreeSceneHarness() {
     assert(namespace.normalizeAssessmentLineBreaks(ordinaryText) === ordinaryText, "Fill gaps: list repair changed legitimate leading t characters");
 }
 
+// Bingo uses the authored correctness flags, with one board shared by desktop
+// and VR. Wrong selections count once; unselected distractors earn no points.
+{
+    const payload = clone(fixtures.find((fixture) => fixture.name === "vocabulary bingo").payload);
+    const renderer = namespace.resolveRenderer(payload);
+    const desktop = {
+        payload,
+        state: renderer.createState(payload),
+        body: {
+            innerHTML: "",
+            querySelectorAll() {
+                desktop.buttons = new Map();
+                for (const match of this.innerHTML.matchAll(/data-bingo-word-id="([^"]+)"/g)) {
+                    const button = {
+                        getAttribute: () => match[1],
+                        addEventListener(type, handler) { this[type] = handler; }
+                    };
+                    desktop.buttons.set(match[1], button);
+                }
+                return [...desktop.buttons.values()];
+            }
+        },
+        setStatus(status) { this.status = status; },
+        configurePrimaryAction(options) { this.primary = options; },
+        rerender() { renderer.render(this); },
+        finish(response, extra) { this.lastResult = namespace.buildAssessmentResult(payload, response, extra); }
+    };
+    desktop.rerender();
+    assert(desktop.primary.disabled, "Desktop bingo: Finish must wait for every correct answer");
+    renderer.onPrimaryAction(desktop);
+    assert(!desktop.lastResult, "Desktop bingo: premature completion was accepted");
+    desktop.buttons.get("barcelona").click();
+    assert(desktop.primary.disabled && desktop.status.includes("(50%)"), "Desktop bingo: one answer completed a multi-answer board");
+    desktop.buttons.get("montserrat").click();
+    desktop.buttons.get("montserrat").click();
+    desktop.buttons.get("barcelona").click();
+    assert(desktop.state.selectedIds.size === 2, "Desktop bingo: repeat clicks changed scoring");
+    desktop.buttons.get("serrada").click();
+    assert(!desktop.primary.disabled && desktop.status.includes("Accuracy 67%"), "Desktop bingo: completion/accuracy is incorrect");
+    desktop.buttons.get("roques").click();
+    renderer.onPrimaryAction(desktop);
+    assert(desktop.lastResult.score === 67 && desktop.lastResult.isCorrect === false, "Desktop bingo: wrong selections were lost from final score");
+    assert(desktop.lastResult.response.selections.length === 3, "Bingo: unselected distractors must not inflate the grade");
+    const wrong = desktop.lastResult.response.selections.find((entry) => entry.wordId === "montserrat");
+    assert(wrong.selected && !wrong.expectedSelected && !wrong.isCorrect, "Bingo: incorrect selection result is ambiguous");
+
+    runtime.open(clone(payload));
+    function vrButton(label) { return activePanel.api.buttons.findLast((button) => button.label === label); }
+    const previousResult = runtime.lastResult;
+    const finishEarly = vrButton("Finish").onClick;
+    finishEarly();
+    assert(runtime.lastResult === previousResult, "VR bingo: premature completion was accepted");
+    vrButton("Barcelona").onClick();
+    assert(vrButton("Finish").disabled, "VR bingo: Finish enabled before all answers were found");
+    vrButton("Montserrat").onClick();
+    vrButton("✗ Montserrat").onClick();
+    vrButton("muntanya serrada").onClick();
+    assert(!vrButton("Finish").disabled, "VR bingo: completed board cannot finish");
+    vrButton("Finish").onClick();
+    assert(JSON.stringify(runtime.lastResult.response) === JSON.stringify(desktop.lastResult.response), "Bingo: desktop and VR responses disagree");
+    assert(runtime.lastResult.score === 67 && runtime.lastResult.isCorrect === false, "VR bingo: incorrect score");
+    assert(activePanel.api.texts.some((entry) => entry.text.includes("Accuracy 67%")), "VR bingo: final percentage was not shown");
+    const summary = namespace.summarizeAssessmentResult(runtime.lastResult);
+    assert(summary.correct === 2 && summary.incorrect === 1 && summary.ungraded === 0, "Bingo: correctness summary disagrees with accuracy");
+    runtime.close("test");
+
+    runtime.open(clone(payload));
+    vrButton("muntanya serrada").onClick();
+    vrButton("Barcelona").onClick();
+    vrButton("Finish").onClick();
+    assert(runtime.lastResult.score === 100 && runtime.lastResult.isCorrect === true, "Bingo: perfect selection did not score 100%");
+    runtime.close("test");
+
+    for (const words of [[], [{ id: "none", text: "No correct answer", isCorrect: false }]]) {
+        const invalid = makePayload("Unconfigured bingo", "Grid", "Vocabulary bingo", { words });
+        const invalidState = renderer.createState(invalid);
+        assert(!namespace.getBingoProgress(invalidState).complete, "Bingo: empty/unconfigured board must never complete");
+        assert(Number.isFinite(namespace.getBingoProgress(invalidState).score), "Bingo: empty board produced an invalid percentage");
+    }
+}
+
 runCefrIdentityHarness();
 await runAssessmentFreeSceneHarness();
 await runSessionRuntimeHarness();
@@ -1048,4 +1136,4 @@ await runSessionIdentityChangeHarness();
         "Progress with results delivery disabled did not survive reload");
 }
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 18} cases.`);
+console.log(`Assessment runtime harness passed ${fixtures.length + 19} cases.`);

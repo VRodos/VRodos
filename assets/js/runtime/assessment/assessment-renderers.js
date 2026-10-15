@@ -741,17 +741,7 @@
                 const mode = normalizeComparableText(payload && payload.type) === "vocabulary bingo" ? "bingo" : "wordsearch";
 
                 if (mode === "bingo") {
-                    const promptOrder = shuffleArray(entries.map((entry) => entry.id));
-                    return {
-                        mode,
-                        entries,
-                        entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
-                        boardOrder: shuffleArray(entries.map((entry) => entry.id)),
-                        promptOrder,
-                        currentPromptIndex: 0,
-                        markedIds: new Set(),
-                        feedback: ""
-                    };
+                    return namespace.createBingoState(entries);
                 }
 
                 const puzzle = buildWordSearchPuzzle(entries);
@@ -793,16 +783,11 @@
             onPrimaryAction(runtime) {
                 const state = runtime.state;
                 if (state.mode === "bingo") {
-                    if (state.markedIds.size !== state.entries.length) {
+                    if (!namespace.getBingoProgress(state).complete) {
                         return;
                     }
-
-                    const prompts = namespace.buildBingoPrompts(state);
-
-                    runtime.finish(
-                        { prompts, variant: "vocabulary-bingo" },
-                        { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
-                    );
+                    const result = namespace.buildBingoResult(state);
+                    runtime.finish(result.response, result.extra);
                     return;
                 }
 
@@ -880,29 +865,34 @@
 
     function renderVocabularyBingo(runtime) {
         const state = runtime.state;
+        const progress = namespace.getBingoProgress(state);
+        if (!progress.total) {
+            renderEmptyState(runtime, "No correct answers configured.", "Mark at least one bingo word as correct in Immerse, then sync and compile again.");
+            return;
+        }
         const total = state.entries.length;
         const boardSize = Math.ceil(Math.sqrt(total));
         const boardSlots = state.boardOrder.concat(Array.from({ length: boardSize * boardSize - total }, () => ""));
-        const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
-        const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
 
         runtime.body.innerHTML = assessmentShell("vocabulary-bingo", [
-            currentPrompt
-                ? `<div style="padding:14px 16px;border-radius:18px;background:rgba(59,130,246,0.08);border:1px solid rgba(147,197,253,0.5);"><div style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;margin-bottom:6px;">Current prompt</div><div style="font-size:18px;line-height:1.2;font-weight:800;color:#0f172a;margin-bottom:4px;overflow-wrap:anywhere;">${escapeHtml(currentPrompt.hint || currentPrompt.text)}</div><div style="font-size:12px;color:#64748b;">Mark the matching word on the board.</div></div>`
-                : '<div style="padding:14px 16px;border-radius:18px;background:rgba(92,200,135,0.12);border:1px solid rgba(92,200,135,0.45);font-size:14px;font-weight:700;color:#166534;">All prompts completed. Review the board and finish.</div>',
+            renderInfoCallout(progress.complete ? "All correct answers found. Finish to see your score." : "Select every correct word on the board. Incorrect selections lower your accuracy."),
             state.feedback
                 ? `<div style="font-size:13px;font-weight:700;color:#dc2626;">${escapeHtml(state.feedback)}</div>`
                 : "",
             '<div style="min-height:0;display:grid;place-items:center;">',
-            `<div style="height:100%;max-height:100%;max-width:100%;aspect-ratio:1 / 1;display:grid;grid-template-columns:repeat(${boardSize}, minmax(0, 1fr));gap:8px;">`,
+            `<div style="height:100%;min-height:0;max-width:100%;aspect-ratio:1 / 1;display:grid;grid-template-columns:repeat(${boardSize}, minmax(0, 1fr));grid-template-rows:repeat(${boardSize}, minmax(0, 1fr));gap:8px;">`,
             boardSlots.map((entryId) => {
                 if (!entryId) {
-                    return '<div style="aspect-ratio:1 / 1;border-radius:16px;background:rgba(226,232,240,0.55);border:1px dashed rgba(203,213,225,0.95);"></div>';
+                    return '<div style="min-height:0;border-radius:16px;background:rgba(226,232,240,0.55);border:1px dashed rgba(203,213,225,0.95);"></div>';
                 }
 
                 const entry = state.entriesById[entryId];
-                const marked = state.markedIds.has(entryId);
-                return `<button type="button" data-bingo-word-id="${escapeHtml(entryId)}" style="aspect-ratio:1 / 1;border-radius:16px;border:1px solid ${marked ? "rgba(92,200,135,0.95)" : "rgba(203,213,225,0.95)"};background:${marked ? "rgba(92,200,135,0.16)" : "#ffffff"};padding:10px;font-size:13px;line-height:1.15;font-weight:700;color:${marked ? "#166534" : "#0f172a"};cursor:${marked ? "default" : "pointer"};overflow-wrap:anywhere;">${escapeHtml(entry.text)}</button>`;
+                const selected = state.selectedIds.has(entryId);
+                const disabled = selected || progress.complete;
+                const color = selected ? (entry.isCorrect ? "#166534" : "#b91c1c") : "#0f172a";
+                const background = selected ? (entry.isCorrect ? "#dcfce7" : "#fee2e2") : "#ffffff";
+                const label = selected ? (entry.isCorrect ? "Correct: " : "Incorrect: ") + entry.text : entry.text;
+                return `<button type="button" data-bingo-word-id="${escapeHtml(entryId)}" aria-label="${escapeHtml(label)}" ${disabled ? "disabled" : ""} style="min-width:0;min-height:0;border-radius:16px;border:1px solid ${selected ? color : "rgba(203,213,225,0.95)"};background:${background};padding:10px;font-size:13px;line-height:1.15;font-weight:700;color:${color};cursor:${disabled ? "default" : "pointer"};white-space:normal;overflow-wrap:anywhere;">${selected ? (entry.isCorrect ? "✓ " : "✗ ") : ""}${escapeHtml(entry.text)}</button>`;
             }).join(""),
             "</div>",
             "</div>"
@@ -911,29 +901,16 @@
         runtime.body.querySelectorAll("[data-bingo-word-id]").forEach((button) => {
             button.addEventListener("click", () => {
                 const wordId = button.getAttribute("data-bingo-word-id") || "";
-                if (!wordId || state.markedIds.has(wordId) || !currentPrompt) {
-                    return;
-                }
-
-                if (wordId === currentPrompt.id) {
-                    state.markedIds.add(wordId);
-                    state.feedback = "";
-                    if (state.currentPromptIndex < state.promptOrder.length) {
-                        state.currentPromptIndex += 1;
-                    }
-                } else {
-                    state.feedback = "That does not match the current prompt. Try again.";
-                }
-
+                namespace.selectBingoWord(state, wordId);
                 runtime.rerender();
             });
         });
 
-        runtime.setStatus(`Completed ${state.markedIds.size} of ${state.entries.length} prompts`);
+        runtime.setStatus(`Found ${progress.correct} of ${progress.total} correct answers (${progress.percentage}%) · Accuracy ${progress.score}%`);
         runtime.configurePrimaryAction({
             visible: true,
             label: "Finish",
-            disabled: state.markedIds.size !== state.entries.length
+            disabled: !progress.complete
         });
     }
 

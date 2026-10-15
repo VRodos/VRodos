@@ -501,6 +501,7 @@
                     id: word && word.id ? String(word.id) : uniqueId("word", index),
                     text,
                     hint,
+                    isCorrect: word?.isCorrect === true,
                     normalized: normalizeWordSearchText(text)
                 };
             })
@@ -649,19 +650,60 @@
     }
     namespace.buildPairMatches = buildPairMatches;
 
-    function buildBingoPrompts(state) {
-        return state.promptOrder.map((entryId, index) => {
-            const entry = state.entriesById[entryId];
-            return {
-                promptIndex: index,
-                wordId: entry.id,
-                word: entry.text,
-                hint: entry.hint,
-                wasMarked: state.markedIds.has(entry.id)
-            };
-        });
+    function createBingoState(entries) {
+        return {
+            mode: "bingo",
+            entries,
+            entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
+            boardOrder: shuffleArray(entries.map((entry) => entry.id)),
+            selectedIds: new Set(),
+            feedback: ""
+        };
     }
-    namespace.buildBingoPrompts = buildBingoPrompts;
+
+    function getBingoProgress(state) {
+        const required = state.entries.filter((entry) => entry.isCorrect);
+        const correct = required.filter((entry) => state.selectedIds.has(entry.id)).length;
+        const incorrect = state.selectedIds.size - correct;
+        return {
+            correct,
+            incorrect,
+            total: required.length,
+            complete: required.length > 0 && correct === required.length,
+            percentage: required.length ? Math.round(100 * correct / required.length) : 0,
+            score: state.selectedIds.size ? Math.round(100 * correct / state.selectedIds.size) : 0
+        };
+    }
+
+    function selectBingoWord(state, entryId) {
+        const entry = state.entriesById[entryId];
+        if (!entry || state.selectedIds.has(entryId) || getBingoProgress(state).complete) {
+            return;
+        }
+        state.selectedIds.add(entryId);
+        state.feedback = entry.isCorrect ? "" : "That word is not a correct answer. Keep looking.";
+    }
+
+    function buildBingoResult(state) {
+        const progress = getBingoProgress(state);
+        const selections = state.entries
+            .filter((entry) => entry.isCorrect || state.selectedIds.has(entry.id))
+            .map((entry) => ({
+                wordId: entry.id,
+                text: entry.text,
+                selected: state.selectedIds.has(entry.id),
+                expectedSelected: entry.isCorrect,
+                isCorrect: entry.isCorrect && state.selectedIds.has(entry.id)
+            }));
+        return {
+            response: { selections, variant: "vocabulary-bingo" },
+            extra: { isCorrect: progress.complete && progress.incorrect === 0, score: progress.score }
+        };
+    }
+    namespace.createBingoState = createBingoState;
+    namespace.getBingoProgress = getBingoProgress;
+    namespace.selectBingoWord = selectBingoWord;
+    namespace.buildBingoResult = buildBingoResult;
 
     function buildWordSearchAnswers(state) {
         return state.puzzle.entries.map((entry) => ({

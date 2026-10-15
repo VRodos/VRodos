@@ -28,7 +28,7 @@
     const QUESTION_ANSWER_TEXT_SIZE = 30;
     const TRUE_FALSE_ANSWER_TEXT_SIZE = 30;
     const INFO_TEXT_FONT_SIZE = 26;
-    const BINGO_PROMPT_FONT_SIZE = 28;
+    const BINGO_INSTRUCTION_FONT_SIZE = 28;
     const UNSUPPORTED_MESSAGE_FONT_SIZE = 30;
     const FILL_GAP_WORDS_PER_PAGE = 9;
 
@@ -807,17 +807,7 @@
                 const entries = normalizeGridEntries(payload);
                 const mode = normalizeComparableText(payload && payload.type) === "vocabulary bingo" ? "bingo" : "wordsearch";
                 if (mode === "bingo") {
-                    const promptOrder = shuffleArray(entries.map((entry) => entry.id));
-                    return {
-                        mode,
-                        entries,
-                        entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
-                        boardOrder: shuffleArray(entries.map((entry) => entry.id)),
-                        promptOrder,
-                        currentPromptIndex: 0,
-                        markedIds: new Set(),
-                        feedback: ""
-                    };
+                    return namespace.createBingoState(entries);
                 }
 
                 return {
@@ -1022,24 +1012,25 @@
 
     function renderBingo(runtime) {
         const state = runtime.state;
-        const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
-        const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
-        const frame = createFrame(runtime, "Completed " + state.markedIds.size + " of " + state.entries.length + " prompts", {
+        const progress = namespace.getBingoProgress(state);
+        if (!progress.total) {
+            renderUnsupported(runtime, "No correct answers configured. Mark at least one bingo word as correct in Immerse, then sync and compile again.");
+            return;
+        }
+        const frame = createFrame(runtime, `Found ${progress.correct} of ${progress.total} correct answers (${progress.percentage}%) · Accuracy ${progress.score}%`, {
             label: "Finish",
-            disabled: state.markedIds.size !== state.entries.length,
+            disabled: !progress.complete,
             onClick: function () {
-                const prompts = namespace.buildBingoPrompts(state);
-                runtime.finish(
-                    { prompts, variant: "vocabulary-bingo" },
-                    { isCorrect: namespace.gradeResponses(prompts, "wasMarked") }
-                );
+                if (!namespace.getBingoProgress(state).complete) return;
+                const result = namespace.buildBingoResult(state);
+                runtime.finish(result.response, result.extra);
             }
         });
 
         runtime.api.text(frame.content, {
-            text: currentPrompt ? "Prompt: " + (currentPrompt.hint || currentPrompt.text) : "All prompts completed.",
-            color: currentPrompt ? "#1d4ed8" : "#166534",
-            fontSize: BINGO_PROMPT_FONT_SIZE,
+            text: progress.complete ? "All correct answers found. Finish to see your score." : "Select every correct word. Incorrect selections lower your accuracy.",
+            color: progress.complete ? "#166534" : "#1d4ed8",
+            fontSize: BINGO_INSTRUCTION_FONT_SIZE,
             fontWeight: 600,
             lineHeight: "120%"
         });
@@ -1077,10 +1068,11 @@
                     continue;
                 }
                 const entry = state.entriesById[entryId];
-                const marked = state.markedIds.has(entryId);
+                const selected = state.selectedIds.has(entryId);
                 runtime.api.button(rowContainer, {
-                    label: entry.text,
-                    variant: marked ? "positive" : "secondary",
+                    label: (selected ? (entry.isCorrect ? "✓ " : "✗ ") : "") + entry.text,
+                    variant: selected ? (entry.isCorrect ? "positive" : "negative") : "secondary",
+                    disabled: selected || progress.complete,
                     width: cellSize,
                     height: cellSize,
                     minWidth: cellSize,
@@ -1088,16 +1080,7 @@
                     textSize: boardSize > 3 ? 18 : 22,
                     flexShrink: 0,
                     onClick: function () {
-                        if (!currentPrompt || marked) {
-                            return;
-                        }
-                        if (entryId === currentPrompt.id) {
-                            state.markedIds.add(entryId);
-                            state.feedback = "";
-                            state.currentPromptIndex += 1;
-                        } else {
-                            state.feedback = "That tile does not match the current prompt.";
-                        }
+                        namespace.selectBingoWord(state, entryId);
                         runtime.rerender();
                     }
                 });
@@ -1483,7 +1466,8 @@
                         });
                         api.text(frame.content, {
                             text: summary.correct + " correct · " + summary.incorrect + " incorrect" +
-                                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : ""),
+                                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : "") +
+                                (typeof runtime.lastResult.score === "number" ? " · Accuracy " + runtime.lastResult.score + "%" : ""),
                             fontSize: 36,
                             lineHeight: "130%",
                             color: "#1e293b"

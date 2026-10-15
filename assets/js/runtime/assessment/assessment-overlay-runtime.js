@@ -256,7 +256,8 @@
             message.style.fontSize = "20px";
             message.style.lineHeight = "1.7";
             message.textContent = summary.correct + " correct · " + summary.incorrect + " incorrect" +
-                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : "");
+                (summary.ungraded ? " · " + summary.ungraded + " ungraded" : "") +
+                (typeof runtime.lastResult.score === "number" ? " · Accuracy " + runtime.lastResult.score + "%" : "");
             runtime.body.appendChild(message);
             runtime.setStatus("You can close this result and retake the assessment.");
             runtime.configurePrimaryAction({ visible: true, label: "Close" });
