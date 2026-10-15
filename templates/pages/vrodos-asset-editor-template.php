@@ -47,6 +47,7 @@ extract($data);
         <?php if ( $initial_cat_slug === 'image' ) : ?>
         #image_preview_card    { display: flex  !important; }
         #image_flat_file_section { display: block !important; }
+        #poi_image_text_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'video' ) : ?>
         #video_section,
         #video_options_section,
@@ -775,18 +776,21 @@ else { ?>
 
                         <!-- POI Details (Image/Text) -->
                         <div id="poi_image_text_section" class="tw-space-y-6" style="display: none;">
-                            <label class="vrodos-label">
-                                Information Overlay
+                            <label id="poi_text_section_label" class="vrodos-label">
+                                <?php echo $initial_cat_slug === 'image' ? 'Optional text dialog' : 'Information Overlay'; ?>
                             </label>
+                            <p id="image_dialog_hint" class="tw-text-sm tw-text-slate-500" style="display: <?php echo $initial_cat_slug === 'image' ? 'block' : 'none'; ?>;">Add a dialog title or description to make this image clickable. Both empty keeps it as an ordinary image. Each scene placement can have its own text.</p>
                             <div class="tw-space-y-4">
+                                <label for="poiImgTitle" class="vrodos-label">Dialog title</label>
                                 <input id="poiImgTitle" type="text" 
                                        class="vrodos-input" 
                                        name="poiImgTitle" 
                                        placeholder="Title of information popup"
-                                       minlength="3" maxlength="50" 
+                                       maxlength="100"
                                        value="<?php echo esc_attr($poi_img_title); ?>">
                                 
-                                <textarea id="poiImgDescription" name="poiImgDescription" 
+                                <label for="poiImgDescription" class="vrodos-label">Dialog description</label>
+                                <textarea id="poiImgDescription" name="poiImgDescription" maxlength="2000"
                                           class="vrodos-input !tw-h-auto tw-min-h-[160px] !tw-font-medium" 
                                           placeholder="Write the content here..."><?php echo esc_textarea($poi_img_content); ?></textarea>
                             </div>
@@ -1331,6 +1335,8 @@ else { ?>
 					document.getElementById('text_asset_file_section').style.display = "none";
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
+					document.getElementById('image_dialog_hint').style.display = "none";
+					document.getElementById('poi_text_section_label').textContent = "Information Overlay";
 					document.getElementById('image_flat_file_section').style.display = "none";
 					if (document.getElementById('door_image_section')) document.getElementById('door_image_section').style.display = "none";
 					document.getElementById('image_preview_card').style.display = "none";
@@ -1350,6 +1356,9 @@ else { ?>
 							document.getElementById('poi_image_file_section').style.display = "block";
 							break;
 						case "image":
+							document.getElementById('poi_image_text_section').style.display = "block";
+							document.getElementById('poi_text_section_label').textContent = "Optional text dialog";
+							document.getElementById('image_dialog_hint').style.display = "block";
 							document.getElementById('glb_file_section').style.display = "none";
 							document.getElementById('vrodos_3d_preview_card').style.display = "none";
 							document.getElementById('image_preview_card').style.display = "flex";

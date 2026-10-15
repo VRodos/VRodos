@@ -335,6 +335,7 @@ function displaySharedPropertySections(event, object) {
             VRODOS.ui.displayTextAssetProperties(object);
             hasProperties = true;
             break;
+        case 'image':
         case 'poi-imagetext':
             VRODOS.ui.displayPoiImageTextProperties(event, name);
             hasProperties = true;

@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-image-dialog.php';
+
 /** Canonicalizes objects from the compile plan's already-isolated scene copy. */
 final class VRodos_Compiler_Entity_Policy {
 	public const INTERACTIVE_GLTF_CATEGORIES = [ 'door', 'poi-link', 'chat', 'poi-chat', 'audio', 'poi-imagetext', 'assessment' ];
@@ -38,6 +40,11 @@ final class VRodos_Compiler_Entity_Policy {
 	public function normalize( object $source, int $scene_id, string $object_key ): object {
 		unset( $source->follow_camera, $source->follow_camera_x, $source->follow_camera_z );
 		$source_category = $this->canonical_category( (string) ( $source->category_slug ?? $source->category_name ?? '' ) );
+		if ( 'image' === $source_category ) {
+			foreach ( VRodos_Image_Dialog::resolve_text( get_object_vars( $source ) ) as $field => $value ) {
+				$source->{$field} = $value;
+			}
+		}
 		$collision_value_missing = ! property_exists( $source, 'compiledCollisionEnabled' ) ||
 			null === $source->compiledCollisionEnabled ||
 			( ! is_bool( $source->compiledCollisionEnabled ) && '' === trim( (string) $source->compiledCollisionEnabled ) );

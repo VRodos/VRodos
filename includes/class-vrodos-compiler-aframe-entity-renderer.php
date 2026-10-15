@@ -1653,6 +1653,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$plane->setAttribute( 'position', '0 0 0' );
 			$plane->setAttribute( 'material', $this->media_material( "#image_$uuid", 'double', $is_transparent_bool ) );
 			$this->set_world_lighting_attributes( $plane, $this->flat_media_shadow_role() );
+			if ( VRodos_Image_Dialog::has_content( $obj ) ) {
+				$plane->setAttribute( 'id', 'image-trigger_' . $uuid );
+				$plane->setAttribute( 'class', 'clickable raycastable' );
+				$plane->setAttribute( 'highlight', 'image-trigger_' . $uuid );
+				$this->apply_poi_interaction_attributes( $plane, $obj, false );
+			}
 
 			$parent->appendChild( $plane );
 			$ascene->appendChild( $parent );
@@ -1725,12 +1731,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 	}
 
-	private function apply_poi_interaction_attributes( DOMElement $entity, object $obj ): void {
-		$image_url = $this->normalize_url( $obj->poi_img_path ?? '' );
+	private function apply_poi_interaction_attributes( DOMElement $entity, object $obj, bool $include_image = true ): void {
+		$image_url = $include_image ? $this->normalize_url( $obj->poi_img_path ?? '' ) : '';
 		$this->track_runtime_asset( 'poi-image', $image_url, 'poi-imagetext:' . $obj->uuid );
 		$entity->setAttribute( 'info-panel', (string) $obj->uuid );
-		$entity->setAttribute( 'data-vrodos-poi-title', $this->sanitize_text_attr( $obj->poi_img_title ?? '' ) );
-		$entity->setAttribute( 'data-vrodos-poi-description', $this->sanitize_multiline_text_attr( $obj->poi_img_content ?? '' ) );
+		// Image dialog text travels in DOM attributes and is rendered as textContent, not A-Frame syntax.
+		$entity->setAttribute( 'data-vrodos-poi-title', $include_image ? $this->sanitize_text_attr( $obj->poi_img_title ?? '' ) : mb_substr( trim( (string) ( $obj->poi_img_title ?? '' ) ), 0, 100 ) );
+		$entity->setAttribute( 'data-vrodos-poi-description', $include_image ? $this->sanitize_multiline_text_attr( $obj->poi_img_content ?? '' ) : mb_substr( trim( (string) ( $obj->poi_img_content ?? '' ) ), 0, 2000 ) );
 		$entity->setAttribute( 'data-vrodos-poi-image-src', $image_url );
 	}
 

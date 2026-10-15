@@ -34,7 +34,7 @@ vm.runInContext(read('scene/vrodos_undo_engine.js'), context);
 const source = read('ui/vrodos_property_controls.js');
 const names = new Set(['initPersistentPropertyListeners', 'bindPoiImageControls', '_getEditorInput', '_bindEditorInputChange',
     '_bindTrackedEditorInputChange', '_getLightShadowRadius', '_getFirstChildMaterialColorHex',
-    '_getObjectColorHex', 'sanitizeInputValue']);
+    '_getObjectColorHex', 'sanitizeInputValue', 'displaySharedPropertySections']);
 for (const node of parse(source, { ecmaVersion: 'latest' }).body) {
     if (node.type === 'FunctionDeclaration' && names.has(node.id.name)) {
         vm.runInContext(source.slice(node.start, node.end), context);
@@ -103,6 +103,48 @@ manager.redo();
 assert.equal(other.poi_img_content, 'Πρώτη γραμμή\nΔεύτερη γραμμή', 'POI text redo restores content.');
 inputs.get('teleport_point_name').fire('change', 'Είσοδος ναού');
 assert.equal(other.asset_name, 'Είσοδος ναού', 'Destination names use the placement display name consumed by compilation.');
+
+// Image placements expose the existing text bindings without exposing a dialog photo.
+vm.runInContext(read('core/vrodos_editor_core_utils.js'), context);
+const categories = read('ui/vrodos_property_categories.js');
+const panelAssignment = parse(categories, { ecmaVersion: 'latest' }).body.find(node =>
+    node.type === 'ExpressionStatement' && node.expression.left?.property?.name === 'displayPoiImageTextProperties');
+vm.runInContext(categories.slice(panelAssignment.start, panelAssignment.end), context);
+for (const id of ['poi_text_properties_heading', 'poi_photo_properties', 'image_dialog_properties_hint']) {
+    inputs.set(id, { textContent: '', hidden: false });
+}
+const panel = { style: {} };
+context._getPropertyPanelState = () => ({ panel, sceneObj: selected });
+context._setEditorInputValue = (id, value) => { inputs.get(id).value = value; };
+context._showEditorPanel = target => { target.style.display = ''; };
+context.VRODOS.ui.refreshPoiImageControls = () => {};
+context.vrodosGetEffectiveObjectCategory = object => object.category_slug;
+other.category_slug = 'image';
+other.poi_img_title = 'Default';
+other.poi_img_content = 'Default description';
+const secondImage = new THREE.Object3D();
+secondImage.category_slug = 'image';
+secondImage.poi_img_title = 'Default';
+secondImage.poi_img_content = 'Default description';
+scene.add(secondImage);
+assert.equal(context.displaySharedPropertySections({}, other), true);
+assert.equal(inputs.get('poi_text_properties_heading').textContent, 'Optional text dialog');
+assert.equal(inputs.get('poi_photo_properties').hidden, true);
+assert.equal(inputs.get('poi_image_title_text').value, 'Default');
+inputs.get('poi_image_title_text').fire('change', 'My placement');
+assert.equal(secondImage.poi_img_title, 'Default', 'Editing one Image must not change another placement.');
+inputs.get('poi_image_title_text').fire('change', '');
+inputs.get('poi_image_desc_text').fire('change', '');
+assert.equal(other.poi_img_title, '');
+assert.equal(other.poi_img_content, '');
+manager.undo();
+assert.equal(other.poi_img_content, 'Default description');
+manager.redo();
+assert.equal(other.poi_img_content, '', 'Redo must retain an explicitly cleared Image description.');
+other.category_slug = 'poi-imagetext';
+context.displaySharedPropertySections({}, other);
+assert.equal(inputs.get('poi_photo_properties').hidden, false, 'Selecting a normal POI restores photo controls.');
+assert.equal(inputs.get('image_dialog_properties_hint').hidden, true);
 selected = null;
 power.fire('focus');
 power.fire('change', '1');

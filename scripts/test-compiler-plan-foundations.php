@@ -102,6 +102,9 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 }
 if ( ! function_exists( 'get_post_meta' ) ) {
 	function get_post_meta( int $post_id, string $key, bool $single = false ) {
+		if ( isset( $GLOBALS['image_dialog_meta'][ $post_id ][ $key ] ) ) {
+			return $GLOBALS['image_dialog_meta'][ $post_id ][ $key ];
+		}
 		if ( 'vrodos_asset3d_glb' === $key && $post_id > 0 ) {
 			return '/uploads/source-' . $post_id . '.glb';
 		}
@@ -345,6 +348,35 @@ if ( class_exists( 'DOMDocument' ) ) {
 		42,
 		[ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $scene ]
 	);
+	// Image dialogs keep the normal image renderer and only add interaction for nonblank text.
+	foreach ( [
+		'title' => [ 'Έκθεμα; "τίτλος"', '' ],
+		'description' => [ '', "Πρώτη γραμμή;\n<b>Literal text</b> & \"quotes\"" ],
+		'both' => [ 'Title', 'Description' ],
+		'blank' => [ " \t", "\n " ],
+		'empty' => [ '', '' ],
+	] as $case => [ $title, $description ] ) {
+		$image_dom = new DOMDocument( '1.0', 'UTF-8' );
+		$image_scene = $image_dom->appendChild( $image_dom->createElement( 'a-scene' ) );
+		$image_assets = $image_scene->appendChild( $image_dom->createElement( 'a-assets' ) );
+		$renderer->render_scene_objects( $image_dom, $image_scene, $image_assets, [ 'picture' => (object) [
+			'uuid' => 'picture', 'category_slug' => 'image', 'image_path' => '/picture.png',
+			'poi_img_title' => $title, 'poi_img_content' => $description, 'poi_img_path' => '/must-not-appear.jpg',
+			'position' => [ 2, 3, 4 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 2, 1, 1 ],
+		] ], 1, 42 );
+		$xpath = new DOMXPath( $image_dom );
+		$parent = $xpath->query( '//*[@id="image-display_picture"]' )->item( 0 );
+		$plane = $xpath->query( './a-plane', $parent )->item( 0 );
+		$interactive = '' !== trim( $title ) || '' !== trim( $description );
+		vrodos_foundation_assert( $interactive === $plane->hasAttribute( 'info-panel' ), "$case image interaction" );
+		vrodos_foundation_assert( $interactive === str_contains( $plane->getAttribute( 'class' ), 'raycastable' ), "$case image raycast target" );
+		vrodos_foundation_assert( '2 3 4' === $parent->getAttribute( 'position' ) && '2 1 1' === $parent->getAttribute( 'scale' ), 'image keeps transforms on its parent' );
+		vrodos_foundation_assert( str_contains( $plane->getAttribute( 'material' ), 'side: double' ), 'image remains visible and selectable from both faces' );
+		if ( $interactive ) {
+			vrodos_foundation_assert( trim( $title ) === $plane->getAttribute( 'data-vrodos-poi-title' ) && trim( $description ) === $plane->getAttribute( 'data-vrodos-poi-description' ), 'image text preserves Unicode, punctuation and literal markup safely in attributes' );
+			vrodos_foundation_assert( '' === $plane->getAttribute( 'data-vrodos-poi-image-src' ) && ! str_contains( $image_dom->saveHTML(), 'must-not-appear' ), 'image is a trigger, not a dialog photo' );
+		}
+	}
 	$poi_dom = new DOMDocument( '1.0', 'UTF-8' );
 	foreach ( [ 'terrain', 'building', 'invalid' ] as $surface_type ) {
 		foreach ( [ 'auto', 'receiver', 'none' ] as $shadow_override ) {
@@ -1203,4 +1235,25 @@ foreach ( [ 'automatic', 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
 	}
 }
 unset( $GLOBALS['fixture_result_delivery'] );
+
+// Defaults must resolve before capabilities for every Automatic variant and adaptive tier.
+$GLOBALS['image_dialog_meta'][800] = [ 'vrodos_asset3d_poi_imgtxt_title' => 'Default title', 'vrodos_asset3d_poi_imgtxt_content' => "Κείμενο\nΔεύτερη γραμμή" ];
+foreach ( [ [], [ 'poi_img_title' => '', 'poi_img_content' => '' ], [ 'poi_img_title' => 'Own title', 'poi_img_content' => '' ] ] as $text ) {
+	$image = (object) ( [ 'category_slug' => 'image', 'asset_id' => 800 ] + $text );
+	$scene = (object) [ 'metadata' => (object) [ 'desktopPerformanceProfiles' => (object) [ 'schemaVersion' => 2, 'buildMode' => 'adaptive' ] ], 'objects' => (object) [ 'image' => $image ] ];
+	$project = $capability_resolver->resolve( new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'automatic', false ), [
+		'valid_scene_ids' => [ 101 ], 'scene_json' => [ $scene ], 'scene_title' => [ 'Image fixture' ], 'project_type_slug' => 'vrexpo_games',
+	] );
+	$expected = ! $text || '' !== $text['poi_img_title'];
+	foreach ( $project->scenes as $plan ) {
+		vrodos_foundation_assert( $expected === in_array( 'spatial-ui', $plan->chunk_ids, true ), 'image defaults select spatial UI before publication' );
+		vrodos_foundation_assert( ( $text['poi_img_content'] ?? "Κείμενο\nΔεύτερη γραμμή" ) === $plan->scene_json->objects->image->poi_img_content, 'explicit empty placement text wins over asset defaults' );
+		if ( 'desktop' === $plan->settings['vrRuntimeProfile'] ) {
+			foreach ( [ 'low', 'medium', 'high' ] as $tier ) {
+				vrodos_foundation_assert( $expected === in_array( 'spatial-ui', $plan->desktop_profiles['profiles'][$tier]['chunkIds'], true ), 'image capability is consistent across adaptive tiers' );
+			}
+		}
+	}
+	vrodos_foundation_assert( property_exists( $image, 'poi_img_content' ) === array_key_exists( 'poi_img_content', $text ), 'compilation does not mutate the source scene' );
+}
 echo "Compiler plan foundation tests passed.\n";

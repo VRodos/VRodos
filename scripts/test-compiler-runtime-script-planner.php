@@ -548,6 +548,14 @@ vrodos_assert_same(
 );
 
 $selection_planner = new VRodos_Compiler_Runtime_Script_Planner( $actual_manifest );
+foreach ( [
+	[ '', '', false ], [ 'Title', '', true ], [ '', 'Description', true ], [ " \t", "\n ", false ],
+] as [ $title, $description, $expected ] ) {
+	$scene = vrodos_test_scene( [ 'aframeCollisionMode' => 'off' ], [ (object) [ 'category_slug' => 'image', 'poi_img_title' => $title, 'poi_img_content' => $description ] ] );
+	$ids = $selection_planner->script_ids_for_scene( $scene, 'single-player' );
+	vrodos_assert_true( $expected === in_array( 'spatial-ui', $ids, true ), 'only Images with text select spatial UI' );
+	vrodos_assert_false( in_array( 'assessment-runtime', $ids, true ), 'Image dialog does not require assessment runtime' );
+}
 foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
 	foreach ( [ 'single-player', 'networked' ] as $mode ) {
 		foreach ( [

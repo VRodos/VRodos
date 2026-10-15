@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/class-vrodos-scene-poi-images.php';
+require_once __DIR__ . '/class-vrodos-image-dialog.php';
 
 require_once __DIR__ . '/class-vrodos-url-normalizer.php';
 
@@ -354,6 +355,9 @@ class VRodos_Scene_CPT_Manager {
 				unset( $object_data['glb_path'], $object_data['path'], $object_data['glb_id'] );
 				$object_data['asset_missing'] = true;
 				return $object_data;
+			}
+			if ( 'image' === ( $asset_metadata['category_slug'] ?? '' ) ) {
+				$object_data = array_replace( $object_data, VRodos_Image_Dialog::resolve_text( $object_data ) );
 			}
 
 			foreach ( $asset_metadata as $key => $value ) {

@@ -244,6 +244,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				break;
 
 			case 'image':
+				update_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', wp_slash( mb_substr( sanitize_text_field( wp_unslash( $_POST['poiImgTitle'] ?? '' ) ), 0, 100 ) ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', wp_slash( mb_substr( sanitize_textarea_field( wp_unslash( $_POST['poiImgDescription'] ?? '' ) ), 0, 2000 ) ) );
 				$image_file = $_FILES['imageFlatFileInput'] ?? [];
 				$old_image_value   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
 				$old_preview_value = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );

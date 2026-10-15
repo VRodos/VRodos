@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/class-vrodos-cefr-levels.php';
+require_once __DIR__ . '/class-vrodos-image-dialog.php';
 
 require_once __DIR__ . '/admin/class-vrodos-admin-dashboard-page.php';
 
@@ -606,6 +607,7 @@ class VRodos_Core_Manager {
 							$data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
 							break;*/
 					case 'image':
+						$data_arr += VRodos_Image_Dialog::asset_defaults( (int) $asset_id );
 						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
 						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
 						break;
@@ -868,6 +870,7 @@ class VRodos_Core_Manager {
 						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
 						break;
 					case 'image':
+						$data_arr += VRodos_Image_Dialog::asset_defaults( (int) $asset_id );
 						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
 						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
 						break;

@@ -103,6 +103,9 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		if ( in_array( $category, [ 'assessment', 'poi-imagetext', 'poi-image-text' ], true ) ) {
 			return true;
 		}
+		if ( 'image' === $category && VRodos_Image_Dialog::has_content( $object ) ) {
+			return true;
+		}
 
 		if ( '' !== $this->first_non_empty_string( $object, [ 'assessment_group', 'assessment_type', 'assessment_content' ] ) ) {
 			return true;

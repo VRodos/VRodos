@@ -87,6 +87,7 @@ export const testGroups = Object.freeze({
     "scripts/test-legacy-metadata-migration.php",
     "scripts/test-storage-business-rules.php",
     "scripts/test-image-door-edit.php",
+    "scripts/test-image-dialog.php",
     "scripts/test-deployment-health.php",
     "scripts/test-frontend-access.php",
     "scripts/test-private-media-cache-logic.php",

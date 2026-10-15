@@ -202,6 +202,10 @@ VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     const panelState = _getPropertyPanelState("popUpPoiImageTextPropertiesDiv", name);
     if (!panelState) return;
     const sceneObj = panelState.sceneObj;
+    const isImage = VRODOS.utils.getSceneAssetSourceCategory(sceneObj) === 'image';
+    document.getElementById('poi_text_properties_heading').textContent = isImage ? 'Optional text dialog' : 'POI Image/Text';
+    document.getElementById('poi_photo_properties').hidden = isImage;
+    document.getElementById('image_dialog_properties_hint').hidden = !isImage;
     _setEditorInputValue('poi_image_desc_text', sceneObj.poi_img_content || '');
     _setEditorInputValue('poi_image_title_text', sceneObj.poi_img_title || '');
     VRODOS.ui.refreshPoiImageControls(sceneObj);

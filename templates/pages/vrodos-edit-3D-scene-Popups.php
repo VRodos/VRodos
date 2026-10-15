@@ -278,7 +278,8 @@
 
 <!-- POI Image/Text Properties -->
 <div id="popUpPoiImageTextPropertiesDiv" class="object-property-section" style="display:none;">
-	<div class="prop-section-title">POI Image/Text</div>
+	<div id="poi_text_properties_heading" class="prop-section-title">POI Image/Text</div>
+	<p id="image_dialog_properties_hint" class="tw-text-xs tw-text-slate-400" hidden>Optional: add a title or description to open a text dialog when this image is clicked. Clear both to disable it. Changes apply to this placement.</p>
 
 	<div class="prop-row">
 		<label for="poi_image_title_text" class="prop-label">Title</label>
@@ -286,15 +287,17 @@
 				class="prop-input tw-flex-1" maxlength="100" value="" />
 	</div>
 
-	<div class="prop-row">
-		<label for="poi_image_upload" class="prop-label">Photo</label>
-		<input id="poi_image_upload" type="file"
-				accept="image/jpeg,image/png,image/webp"
-				class="tw-text-[10px] tw-text-slate-400" />
+	<div id="poi_photo_properties">
+		<div class="prop-row">
+			<label for="poi_image_upload" class="prop-label">Photo</label>
+			<input id="poi_image_upload" type="file"
+					accept="image/jpeg,image/png,image/webp"
+					class="tw-text-[10px] tw-text-slate-400" />
+		</div>
+		<div class="prop-row"><img id="poi_image_preview" alt="POI photo" hidden style="max-width:100%;max-height:120px;object-fit:contain" /></div>
+		<div class="prop-row"><button type="button" id="poi_image_remove" class="tw-btn tw-btn-xs">Remove photo</button></div>
+		<div class="prop-row"><span id="poi_image_status" role="status" class="tw-text-[10px] tw-text-slate-400"></span></div>
 	</div>
-	<div class="prop-row"><img id="poi_image_preview" alt="POI photo" hidden style="max-width:100%;max-height:120px;object-fit:contain" /></div>
-	<div class="prop-row"><button type="button" id="poi_image_remove" class="tw-btn tw-btn-xs">Remove photo</button></div>
-	<div class="prop-row"><span id="poi_image_status" role="status" class="tw-text-[10px] tw-text-slate-400"></span></div>
 
 	<div class="prop-row">
 		<label for="poi_image_desc_text" class="prop-label">Text</label>

@@ -77,6 +77,10 @@ function assert_saved_text( string $description, string $assessment ): void {
 	if ( $scene->objects->assessment->assessment_content !== $assessment ) {
 		throw new RuntimeException( 'Assessment line breaks changed during save.' );
 	}
+	if ( $scene->objects->image->poi_img_title !== 'Έκθεμα; "εικόνα"' || $scene->objects->image->poi_img_content !== "Πρώτη γραμμή\nΔεύτερη γραμμή" ||
+		$scene->objects->empty_image->poi_img_title !== '' || $scene->objects->empty_image->poi_img_content !== '' ) {
+		throw new RuntimeException( 'Image placement text or explicit empty values changed during save.' );
+	}
 }
 
 $description = 'Asegúrate de que encaja con la sartén. ¿Puedes continuar?';
@@ -85,6 +89,8 @@ $scene = (object) [
 	'metadata' => (object) [],
 	'objects' => (object) [
 		'poi' => (object) [ 'category_slug' => 'poi-imagetext', 'poi_img_content' => $description ],
+		'image' => (object) [ 'category_slug' => 'image', 'asset_id' => 81, 'poi_img_title' => 'Έκθεμα; "εικόνα"', 'poi_img_content' => "Πρώτη γραμμή\nΔεύτερη γραμμή" ],
+		'empty_image' => (object) [ 'category_slug' => 'image', 'asset_id' => 81, 'poi_img_title' => '', 'poi_img_content' => '' ],
 		'assessment' => (object) [
 			'category_slug' => 'assessment',
 			'assessment_type' => 'quiz',

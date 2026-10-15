@@ -12,15 +12,17 @@ const context = vm.createContext({
 });
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/components/poi-image_component.js', import.meta.url), 'utf8'), context);
 
-function fixture({ title = '', description = '', image = '', vr = false }) {
+function fixture({ title = '', description = '', image = '', vr = false, imageTrigger = false, spatialAvailable = true }) {
     const attributes = {
         'data-vrodos-poi-title': title,
         'data-vrodos-poi-description': description,
         'data-vrodos-poi-image-src': image
     };
+    const listeners = new Map();
     const button = {
         getAttribute: (name) => attributes[name] || '',
-        addEventListener() {}, removeEventListener() {}
+        addEventListener(name, handler) { listeners.set(name, handler); },
+        removeEventListener(name) { listeners.delete(name); }
     };
     const scene = { addEventListener() {}, removeEventListener() {} };
     const makeElement = () => ({ style: {}, textContent: '', src: '', removeAttribute(name) { delete this[name]; } });
@@ -33,7 +35,7 @@ function fixture({ title = '', description = '', image = '', vr = false }) {
         'poi-img-dialog-box': makeElement()
     };
     const dialog = { showModal() { opened.desktop++; } };
-    const opened = { desktop: 0, vr: 0, frame: null, config: null, images: 0, texts: 0 };
+    const opened = { desktop: 0, vr: 0, closed: 0, frame: null, config: null, images: 0, texts: 0 };
     const api = {
         frame(options) { opened.frame = options; return { content: {} }; },
         image() { opened.images++; },
@@ -42,23 +44,23 @@ function fixture({ title = '', description = '', image = '', vr = false }) {
         button() {}
     };
     context.document.querySelector = (selector) => ({
-        '#button_poi_sample': button,
+        '#button_poi_sample': imageTrigger ? null : button,
         '#aframe-scene-container': scene,
         '#poi-img-dialog': dialog
     })[selector] || null;
     context.document.getElementById = (id) => elements[id] || null;
     context.window.VRODOSRuntimeOverlay = { shouldUseVrPanel: () => vr };
     context.window.VRODOSSpatialUI = {
-        isAvailable: () => true,
+        isAvailable: () => spatialAvailable,
         openPanel(config) { opened.vr++; opened.config = config; config.render(api); return api; },
-        closePanel() {}
+        closePanel() { opened.closed++; }
     };
     const component = Object.create(definition);
     component.el = button;
     component.data = 'sample';
     component.init();
     component.onMenuButtonClick({ detail: {} });
-    return { opened, elements, component, attributes };
+    return { opened, elements, component, attributes, listeners };
 }
 
 for (const vr of [false, true]) {
@@ -111,5 +113,31 @@ assert.equal(reused.elements['poi-img-dialog-image-area'].style.display, 'none')
 assert.equal(reused.elements['poi-img-dialog-title'].style.display, 'none');
 assert.equal(reused.elements['poi-img-dialog-content-area'].style.padding, '');
 reused.component.remove();
+
+for (const vr of [false, true]) {
+    const title = 'Έκθεμα; "εικόνα"';
+    const description = 'Πρώτη γραμμή\n<b>Literal text</b>; & "quotes"';
+    const trigger = fixture({ title, description, vr, imageTrigger: true });
+    assert.equal(trigger.opened[vr ? 'vr' : 'desktop'], 1, 'Image plane itself owns the POI click handler.');
+    assert.equal(trigger.opened.images, 0, 'Text dialogs do not repeat the scene image.');
+    if (vr) {
+        trigger.component.onVrExit();
+        assert.equal(trigger.opened.closed, 1, 'XR exit closes the Image dialog.');
+        trigger.listeners.get('click')({ detail: {} });
+        assert.equal(trigger.opened.vr, 2, 'Image dialog can reopen after closing.');
+    } else {
+        assert.equal(trigger.elements['poi-img-dialog-title'].textContent, title);
+        assert.equal(trigger.elements['poi-img-dialog-description'].textContent, description, 'Markup-like text remains literal text.');
+    }
+    trigger.component.remove();
+    assert.equal(trigger.listeners.size, 0, 'Removing an Image releases the click handler.');
+}
+const longImage = fixture({ title: 'Long text', description: 'Ελληνικό κείμενο '.repeat(100), vr: true, imageTrigger: true });
+assert(longImage.component.spatialPoiDescriptionPages.length > 1, 'Long Image descriptions use existing VR pagination.');
+longImage.component.remove();
+const unavailable = fixture({ title: 'Image', vr: true, imageTrigger: true, spatialAvailable: false });
+assert.equal(unavailable.opened.vr, 0);
+assert.equal(unavailable.opened.desktop, 0, 'Unavailable spatial UI fails closed in XR.');
+unavailable.component.remove();
 
 console.log('POI content-specific desktop and VR dialog checks passed.');

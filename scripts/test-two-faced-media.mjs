@@ -60,6 +60,13 @@ vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_runtime
 vm.runInContext(readFileSync(new URL('../assets/js/runtime/components/video_component.js', import.meta.url), 'utf8'), context);
 
 const geometryOwner = {};
+const imagePlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+imagePlane.updateMatrixWorld();
+for (const z of [5, -5]) {
+    assert.equal(new THREE.Raycaster(new THREE.Vector3(0, 0, z), new THREE.Vector3(0, 0, -Math.sign(z))).intersectObject(imagePlane).length > 0, true, 'The existing double-sided Image plane accepts clicks from either face.');
+}
+imagePlane.geometry.dispose();
+imagePlane.material.dispose();
 geometries['vrodos-two-sided-plane'].init.call(geometryOwner, { width: 4, height: 3 });
 const material = new THREE.MeshBasicMaterial({ side: THREE.FrontSide });
 const mesh = new THREE.Mesh(geometryOwner.geometry, material);
