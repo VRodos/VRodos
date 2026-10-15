@@ -1151,6 +1151,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$label = $dom->createElement( 'a-text' );
 		$label->setAttribute( 'value', $text );
+		$label->setAttribute( 'font', VRodos_Path_Manager::vendor_url( 'fonts/noto-sans/NotoSans-Regular-msdf.json' ) );
+		$label->setAttribute( 'font-image', VRodos_Path_Manager::vendor_url( 'fonts/noto-sans/NotoSans-Regular-msdf.png' ) );
+		$label->setAttribute( 'shader', 'msdf' );
+		$label->setAttribute( 'negate', 'false' );
 		$label->setAttribute( 'color', '#111827' );
 		$label->setAttribute( 'align', 'left' );
 		$label->setAttribute( 'anchor', 'left' );

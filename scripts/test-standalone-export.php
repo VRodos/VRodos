@@ -73,6 +73,8 @@ standalone_assert( ! isset( $files['wp-content/plugins/VRodos/assets/js/runtime/
 $assessment_files = $collector->invoke( new VRodos_Scene_Standalone_Exporter(), '<script src="/wp-content/plugins/VRodos/assets/js/runtime/master/lib/vrodos-runtime-assessment.bundle.js?ver=test"></script>' );
 standalone_assert( isset( $assessment_files['wp-content/plugins/VRodos/assets/js/runtime/master/lib/vrodos-runtime-assessment.bundle.js'] ), 'Assessment exports must include the selected assessment bundle.' );
 foreach ( [
+	'fonts/noto-sans/NotoSans-Regular-msdf.json',
+	'fonts/noto-sans/NotoSans-Regular-msdf.png',
 	'fonts/noto-sans/NotoSans-Regular.ttf',
 	'fonts/noto-sans/NotoSans-Bold.ttf',
 	'zappar-msdf-generator/worker.js',

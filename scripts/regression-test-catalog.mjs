@@ -100,6 +100,7 @@ export const testGroups = Object.freeze({
     "scripts/test-scene-text-save.php",
     "scripts/test-desktop-profile-pipeline.php",
     "scripts/test-text-asset-compilation.php",
+    "scripts/test-compiled-text-font.mjs",
     "scripts/test-text-asset-encoding.php",
     "scripts/test-asset-optimization-lifecycle.php",
     "scripts/test-glb-placement-analysis.php",

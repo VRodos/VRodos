@@ -14,6 +14,7 @@ function apply_filters( string $name, $value, ...$args ) {
 
 if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
 	class VRodos_Path_Manager {
+		public static function vendor_url( string $relative = '' ): string { return '/plugin/assets/vendor/' . $relative; }
 		public static function plugin_path( string $relative = '' ): string {
 			return dirname( __DIR__ ) . '/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
 		}
@@ -468,7 +469,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 			'position' => [ -2.5, 0, 2 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
 		],
 		'text' => (object) [
-			'uuid' => 'two-faced-text', 'category_slug' => '3d-text', 'text_content' => "Readable text\nSecond line",
+			'uuid' => 'two-faced-text', 'category_slug' => '3d-text', 'text_content' => "¿Puedes identificar los ingredientes? ÁÉÍÓÚÜÑ àèòçï · Ελληνικά άέήίόύώ\nSecond line",
 			'position' => [ 1, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
 		],
 	], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $media_scene ] );
@@ -491,7 +492,11 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( '0 180 0' === $text_faces->item( 1 )->getAttribute( 'rotation' ), 'rear text face rotates as a whole to retain left alignment' );
 	foreach ( $text_faces as $text_face ) {
 		$face_label = $media_xpath->query( './a-text', $text_face )->item( 0 );
-		vrodos_foundation_assert( "Readable text\nSecond line" === $face_label->getAttribute( 'value' ), 'both text faces preserve multiline content' );
+		vrodos_foundation_assert( '/plugin/assets/vendor/fonts/noto-sans/NotoSans-Regular-msdf.json' === $face_label->getAttribute( 'font' ), 'both text faces use the bundled multilingual font' );
+		vrodos_foundation_assert( '/plugin/assets/vendor/fonts/noto-sans/NotoSans-Regular-msdf.png' === $face_label->getAttribute( 'font-image' ), 'both text faces use the local font atlas image' );
+		vrodos_foundation_assert( 'msdf' === $face_label->getAttribute( 'shader' ), 'both text faces use the MSDF shader' );
+		vrodos_foundation_assert( 'false' === $face_label->getAttribute( 'negate' ), 'generated positive-inside MSDF glyphs render ink rather than their bounding rectangles' );
+		vrodos_foundation_assert( "¿Puedes identificar los ingredientes? ÁÉÍÓÚÜÑ àèòçï · Ελληνικά άέήίόύώ\nSecond line" === $face_label->getAttribute( 'value' ), 'both text faces preserve multiline content' );
 		vrodos_foundation_assert( 'left' === $face_label->getAttribute( 'align' ) && 'side: front; transparent: true' === $face_label->getAttribute( 'material' ), 'text faces retain readable orientation and alignment' );
 		vrodos_foundation_assert( 4 === $media_xpath->query( './a-box', $text_face )->length, 'both text faces have identical borders' );
 	}
