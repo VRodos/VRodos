@@ -2870,6 +2870,31 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         normalPass._vrodosVisibilityFilterInstalled = true;
     }
 
+    function installPmndrsNormalGeometryPreparation(normalPass, self, scene) {
+        // Unlit glTF meshes may omit NORMAL. MeshNormalMaterial still requires
+        // that attribute, otherwise AO receives invalid black normal pixels.
+        const prepare = root => {
+            root.traverse(node => {
+                const geometry = node.isMesh && node.geometry;
+                if (geometry && geometry.hasAttribute('position') && !geometry.hasAttribute('normal')) {
+                    geometry.computeVertexNormals();
+                }
+            });
+        };
+        prepare(scene);
+        const resources = VRODOSMaster.RuntimeResources.createRegistry();
+        const onObjectLoaded = event => prepare(event.detail?.model || event.detail?.object || event.target.object3D);
+        resources.listen(self.el, 'model-loaded', onObjectLoaded, true);
+        resources.listen(self.el, 'object3dset', onObjectLoaded, true);
+        const dispose = normalPass.dispose.bind(normalPass);
+        normalPass.dispose = () => {
+            resources.disposeAll();
+            dispose();
+        };
+        // Generated attributes belong to the existing geometry and are released
+        // by its owner. Do not dispose or remove shared mesh data here.
+    }
+
     function ensurePmndrsSharedNormalPass(self, composer, scene, camera, PP, resolutionScale, reason) {
         if (!self || !composer || !scene || !camera || !PP || !PP.NormalPass) {
             return null;
@@ -2890,6 +2915,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 resolutionScale: normalPassResolutionScale
             });
             installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
+            installPmndrsNormalGeometryPreparation(self.pmndrsNativeNormalPass, self, scene);
             composer.addPass(self.pmndrsNativeNormalPass);
             self._pmndrsNativeNormalPassResolutionScale = normalPassResolutionScale;
             self._pmndrsNativeNormalPassReason = reason || 'unknown';

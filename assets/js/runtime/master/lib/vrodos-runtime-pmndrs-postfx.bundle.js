@@ -2416,6 +2416,29 @@ ${uniform}`
       };
       normalPass._vrodosVisibilityFilterInstalled = true;
     }
+    function installPmndrsNormalGeometryPreparation(normalPass, self, scene) {
+      const prepare = (root) => {
+        root.traverse((node) => {
+          const geometry = node.isMesh && node.geometry;
+          if (geometry && geometry.hasAttribute("position") && !geometry.hasAttribute("normal")) {
+            geometry.computeVertexNormals();
+          }
+        });
+      };
+      prepare(scene);
+      const resources = VRODOSMaster.RuntimeResources.createRegistry();
+      const onObjectLoaded = (event) => {
+        var _a, _b;
+        return prepare(((_a = event.detail) == null ? void 0 : _a.model) || ((_b = event.detail) == null ? void 0 : _b.object) || event.target.object3D);
+      };
+      resources.listen(self.el, "model-loaded", onObjectLoaded, true);
+      resources.listen(self.el, "object3dset", onObjectLoaded, true);
+      const dispose = normalPass.dispose.bind(normalPass);
+      normalPass.dispose = () => {
+        resources.disposeAll();
+        dispose();
+      };
+    }
     function ensurePmndrsSharedNormalPass(self, composer, scene, camera, PP, resolutionScale, reason) {
       if (!self || !composer || !scene || !camera || !PP || !PP.NormalPass) {
         return null;
@@ -2433,6 +2456,7 @@ ${uniform}`
           resolutionScale: normalPassResolutionScale
         });
         installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass, self);
+        installPmndrsNormalGeometryPreparation(self.pmndrsNativeNormalPass, self, scene);
         composer.addPass(self.pmndrsNativeNormalPass);
         self._pmndrsNativeNormalPassResolutionScale = normalPassResolutionScale;
         self._pmndrsNativeNormalPassReason = reason || "unknown";

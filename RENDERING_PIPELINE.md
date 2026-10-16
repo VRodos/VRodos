@@ -482,6 +482,7 @@ Composer multisampling stays enabled with AO when PMNDRS AA mode is `msaa`, WebG
 Desktop AO uses the locked Three.js `GTAOPass` through `vrodos_gtao_pass.js`, exported as `window.VRODOSAmbientOcclusion` by the existing PMNDRS vendor bundle. It replaces the former native SSAO backend; there is no author-facing algorithm selector or additional package dependency.
 
 - Reuse the cloud-owned `NormalPass` at full resolution and attach one owned float depth texture to that target. GTAO consumes matching depth and normals, independently of resolved MSAA beauty depth, without another scene prepass.
+- Unlit glTF may legally omit vertex normals. When the shared normal pass is created, prepare missing geometry normals once; prepare subsequently attached models through owned `model-loaded`/`object3dset` listeners. Keep authored normals, materials, positions, and index order intact. Do not traverse the scene for geometry preparation every frame; normal-pass teardown releases listeners and leaves geometry disposal to its owner.
 - The shared pass excludes registered Takram sky/background helper meshes. AO composition leaves the sky untouched, uses depth/normal-aware upsampling, and suppresses AO across silhouette depth breaks to preserve mixed MSAA coverage.
 - Keep beauty output full resolution and HDR. GTAO runs before atmosphere, tone mapping, color grading, and the independently selected final SMAA pass.
 - `soft`: half-resolution AO, 8 AO/8 denoise samples, intensity 0.65.

@@ -34,6 +34,18 @@ Integrated QA exercised projects 13774/13775 and 12596/12597: all AO presets, MS
 
 Raw JSON, screenshots, and temporary candidate harnesses were captured outside the repository under the task's `vrodos-ao-lab` output directory. Production profiling can be repeated with `scripts/profile-master-client.mjs --url URL --viewport 1920x1080 --dpr 1 --disable-fps-meter --output PATH --screenshot PATH`; inspect the reported actual drawing buffer rather than assuming viewport size equals render resolution.
 
+## Photogrammetry regression: scene 1879
+
+The public [project 1878 / scene 1879](https://vrodos.iti.gr/wp-content/uploads/vrodos/published/projects/1878/clients/Master_Client_1879.html) exposed a missing case in the original acceptance fixtures: all seven photogrammetry meshes use `MeshBasicMaterial` and have no `NORMAL` attribute. That is valid for an unlit glTF, but PMNDRS `NormalPass` uses `MeshNormalMaterial` and requires geometry normals. Its output for these meshes was black, which GTAO decoded as invalid directions, producing broad black surfaces and bright edge outlines. Disabling only the AO pass removed the corruption while retaining MSAA; generating the missing normals restored normal and AO output without changing pass order.
+
+The shared normal-pass lifecycle now computes missing vertex normals for existing meshes at construction and for later `model-loaded`/`object3dset` attachments. It preserves authored normals, unlit beauty materials, positions, indices, and shared geometry ownership. Preparation does not traverse the scene every frame; owned event listeners are released with the normal pass. The generated attribute is released with its geometry by the geometry owner.
+
+Documentation/source review confirms scene rendering and geometry inputs precede AO, with AO before tone mapping/output: [Three r185 GTAO example](https://raw.githubusercontent.com/mrdoob/three.js/r185/examples/webgl_postprocessing_gtao.html), [PMNDRS effect ordering](https://github.com/pmndrs/postprocessing/wiki/Effect-Merging), [PMNDRS NormalPass source](https://github.com/pmndrs/postprocessing/blob/main/src/passes/NormalPass.js), and [Three geometry normal generation](https://threejs.org/docs/pages/BufferGeometry.html#computeVertexNormals). Our GTAO pass is separate from merged effects; no pass-order change was required for this regression.
+
+Validation used Edge headless with Playwright against that exact URL, overriding only the PMNDRS runtime bundle in the test browser with the rebuilt local artifact. Browser plugin not available. No remote publication or settings were changed. Off/Soft/Balanced/Strong/Off/Balanced transitions retained 8x MSAA with SMAA inactive; texture counts returned to 74 off / 79 on. Viewports 1600x900 and 1920x1080 rendered at actual 2000x1125 and 2400x1350; resized geometry/AO buffers were 2400x1350 / 1200x675. A newly attached normal-free mesh was prepared through the real A-Frame event path. Camera yaw movement rendered correctly. Captured page/console errors: zero; WebGL error: zero. All 67 runtime regressions and generated-build validation passed. Screenshot and JSON evidence is under `D:/AITEMP/vrodos-ao-normal-fix-2026-10-16/`.
+
+The original fixture did not establish support for normal-free unlit assets. This regression extends that coverage; broad laptop frame-budget and physical headset acceptance remain unvalidated. Deploy the rebuilt `vrodos-runtime-pmndrs-postfx.bundle.js` with its source, then recompile publications for refreshed cache-busting URLs.
+
 ## Standalone headset assessment
 
 | Method | Current standalone recommendation |

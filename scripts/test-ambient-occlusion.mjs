@@ -76,7 +76,7 @@ for (const preset of ['soft', 'balanced', 'strong']) {
 
 // Run the actual AA selection helpers: enabling any AO preset must retain MSAA.
 const source = readFileSync(new URL('../assets/js/runtime/master/vrodos_postprocessing_pmndrs.js', import.meta.url), 'utf8');
-const names = new Set(['hasPmndrsDebugFlag', 'getPmndrsAAMode', 'getPmndrsAAPreset', 'isPmndrsAAEnabled', 'isPmndrsAmbientOcclusionEnabled', 'getPmndrsRequestedMultisampling', 'getPmndrsSmaaPreset']);
+const names = new Set(['hasPmndrsDebugFlag', 'getPmndrsAAMode', 'getPmndrsAAPreset', 'isPmndrsAAEnabled', 'isPmndrsAmbientOcclusionEnabled', 'getPmndrsRequestedMultisampling', 'getPmndrsSmaaPreset', 'installPmndrsNormalGeometryPreparation']);
 const context = vm.createContext({ window: { VRODOSMaster: { RuntimeSettings: { debugFlag: () => false } } } });
 function visit(node) {
     if (!node || typeof node !== 'object') return;
@@ -84,6 +84,53 @@ function visit(node) {
     for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(visit); else if (value && typeof value === 'object') visit(value);
 }
 visit(parse(source, { ecmaVersion: 'latest', range: true }));
+// Unlit optimized glTF legitimately omits NORMAL. The shared prepass must
+// prepare those geometries before AO consumes them, including late models.
+context.VRODOSMaster = context.window.VRODOSMaster;
+vm.runInContext(readFileSync(new URL('../assets/js/runtime/master/vrodos_runtime_resources.js', import.meta.url), 'utf8'), context);
+{
+    const scene = new THREE.Scene(), el = new THREE.EventDispatcher();
+    el.object3D = scene;
+    const geometry = new THREE.PlaneGeometry(); geometry.deleteAttribute('normal');
+    const positions = geometry.getAttribute('position'), indices = geometry.index;
+    let preparations = 0;
+    const compute = geometry.computeVertexNormals.bind(geometry);
+    geometry.computeVertexNormals = () => { preparations++; compute(); };
+    const material = new THREE.MeshBasicMaterial();
+    scene.add(new THREE.Mesh(geometry, material), new THREE.Mesh(geometry, material));
+    const authored = new THREE.SphereGeometry();
+    const authoredNormal = authored.getAttribute('normal');
+    scene.add(new THREE.Mesh(authored, new THREE.MeshStandardMaterial()));
+    const normalPass = new NormalPass(scene, new THREE.PerspectiveCamera());
+    context.installPmndrsNormalGeometryPreparation(normalPass, { el }, scene);
+    assert.equal(preparations, 1, 'shared geometry is prepared once');
+    assert.equal(geometry.getAttribute('normal').count, positions.count);
+    assert.equal(geometry.getAttribute('normal').getZ(0), 1, 'generated normals face the plane front');
+    assert.equal(geometry.getAttribute('position'), positions);
+    assert.equal(geometry.index, indices, 'normal preparation preserves collision/BVH index order');
+    assert.equal(authored.getAttribute('normal'), authoredNormal, 'preserve authored smooth normals');
+    const late = new THREE.BoxGeometry(); late.deleteAttribute('normal');
+    const model = new THREE.Mesh(late, material); scene.add(model);
+    el.dispatchEvent({ type: 'model-loaded', detail: { model } });
+    assert(late.hasAttribute('normal'), 'late glTF loads are ready before the next normal prepass');
+    el.dispatchEvent({ type: 'object3dset', detail: { object: scene } });
+    assert.equal(preparations, 1, 'repeated notifications do not recompute valid normals');
+    const primitive = new THREE.PlaneGeometry(); primitive.deleteAttribute('normal');
+    const object = new THREE.Mesh(primitive, material); scene.add(object);
+    el.dispatchEvent({ type: 'object3dset', detail: { object } });
+    assert(primitive.hasAttribute('normal'), 'dynamically attached meshes are prepared');
+    assert.equal(material.type, 'MeshBasicMaterial', 'the beauty material remains unlit');
+    let geometryDisposals = 0;
+    geometry.addEventListener('dispose', () => geometryDisposals++);
+    normalPass.dispose();
+    assert.equal(geometryDisposals, 0, 'normal-pass teardown leaves shared geometry to its owner');
+    primitive.deleteAttribute('normal');
+    el.dispatchEvent({ type: 'model-loaded', detail: { model: object } });
+    el.dispatchEvent({ type: 'object3dset', detail: { object } });
+    assert.equal(primitive.hasAttribute('normal'), false, 'teardown removes both model listeners');
+    geometry.dispose(); authored.dispose(); late.dispose(); primitive.dispose(); material.dispose();
+}
+
 for (const ao of ['off', 'soft', 'balanced', 'strong']) {
     const self = { data: { postFXEngine: 'pmndrs' }, getPmndrsAAMode: () => 'msaa', getPmndrsAAPreset: () => 'ultra', getAmbientOcclusionPreset: () => ao };
     assert.equal(context.getPmndrsRequestedMultisampling(self, { capabilities: { isWebGL2: true, maxSamples: 8 } }), 8);
