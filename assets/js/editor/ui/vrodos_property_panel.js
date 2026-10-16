@@ -1,5 +1,5 @@
 /* global VRODOS_OBJECT_CONTROLS_IDS, displaySharedPropertySections, displayAssessmentProperties, displaySceneAssetRoleProperties, displayWalkableSurfaceProperties, vrodosIsPlayerCollisionEligible, vrodosIsShadowRoleEligible, vrodosIsMaterialRoleEligible, displayCollisionProperties, displayShadowRoleProperties, displayMaterialRoleProperties, displayPrimitivePlaneProperties, displayAudioProperties, displayVideoProperties */
-/* exported isObjectControlsPanelOpen, showObjectControlsPanel, refreshSceneAssetRolePresentation */
+/* exported isObjectControlsPanelOpen, showObjectControlsPanel, hideObjectControlsPanel, refreshSceneAssetRolePresentation */
 
 function getObjectControlsElement(key) {
     return document.getElementById(VRODOS_OBJECT_CONTROLS_IDS[key]);
@@ -234,7 +234,7 @@ function bindObjectControlsPanelEvents() {
 
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            hideObjectControlsPanel();
+            VRODOS.editor.selection.clear({ source: 'properties-panel-close' });
         });
     }
 
