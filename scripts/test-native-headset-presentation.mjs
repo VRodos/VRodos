@@ -17,7 +17,7 @@ const lifecycle = vm.createContext({
     clearPmndrsCloudLightingMaskSelection() {}, syncPmndrsCloudDependentEffects() {},
     restoreAllPmndrsHorizonFoliageMaterials() {}, updatePmndrsAADebugOverlay() {}
 });
-const lifecycleNames = new Set(['disposePmndrsCloudLightingMaskResources', 'disposePmndrsNativeSsaoResources', 'disposePmndrsCloudEffect', 'disposePmndrsComposerResources']);
+const lifecycleNames = new Set(['disposePmndrsCloudLightingMaskResources', 'disposePmndrsAoResources', 'disposePmndrsCloudEffect', 'disposePmndrsComposerResources']);
 const ast = parse(source, { ecmaVersion: 'latest', range: true });
 function loadDisposalFunctions(node) {
     if (!node || typeof node !== 'object') return;
@@ -32,21 +32,22 @@ function loadDisposalFunctions(node) {
 }
 loadDisposalFunctions(ast);
 for (const attached of [true, false]) {
-    const ssao = new OwnedEffect('ssao'), clouds = new OwnedEffect('clouds'), moon = new OwnedEffect('moon');
-    const effectPass = new EffectPass(new THREE.PerspectiveCamera(), ssao, clouds, moon);
+    const ao = { dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); } };
+    const clouds = new OwnedEffect('clouds'), moon = new OwnedEffect('moon');
+    const effectPass = new EffectPass(new THREE.PerspectiveCamera(), clouds, moon);
     const normal = { dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); } };
     const mask = { dispose() { disposalCounts.set(this, (disposalCounts.get(this) || 0) + 1); } };
     let listenerRemovals = 0;
     clouds.events = { removeEventListener() { listenerRemovals++; } };
     const host = {
-        pmndrsNativeSsaoEffect: ssao, pmndrsNativeNormalPass: normal, pmndrsCloudsEffect: clouds,
+        pmndrsAoPass: ao, pmndrsNativeNormalPass: normal, pmndrsCloudsEffect: clouds,
         pmndrsCloudLightingMaskPass: mask, pmndrsMoonCloudShaftsEffect: moon,
         _pmndrsCloudsEffectChangeHandler() {},
-        pmndrsComposer: attached ? { passes: [normal, mask, effectPass], dispose() { this.passes.forEach(pass => pass.dispose()); } } : null
+        pmndrsComposer: attached ? { passes: [normal, mask, ao, effectPass], dispose() { this.passes.forEach(pass => pass.dispose()); } } : null
     };
     lifecycle.disposePmndrsComposerResources(host);
     lifecycle.disposePmndrsComposerResources(host);
-    for (const resource of [ssao, clouds, moon, normal, mask]) assert.equal(disposalCounts.get(resource), 1);
+    for (const resource of [ao, clouds, moon, normal, mask]) assert.equal(disposalCounts.get(resource), 1);
     assert.equal(listenerRemovals, 1);
     assert.equal(host.pmndrsComposer, null);
     if (!attached) { effectPass.effects = []; effectPass.dispose(); }

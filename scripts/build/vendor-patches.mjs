@@ -399,3 +399,19 @@ export async function rewriteTakramCloudBundleAssetDefaults(bundlePath) {
     await writeFile(bundlePath, rewritten, 'utf8');
   }
 }
+
+// Upstream AO shaders contain whitespace-only lines and mixed indentation inside
+// GLSL template strings. Normalize only these two modules for reproducible diffs.
+export function createThreeAoShaderWhitespacePlugin() {
+  return {
+    name: 'vrodos-three-ao-shader-whitespace',
+    setup(context) {
+      context.onLoad({ filter: /[\\/]shaders[\\/](?:GTAO|PoissonDenoise)Shader\.js$/ }, async ({ path: sourcePath }) => ({
+        contents: (await readFile(sourcePath, 'utf8'))
+          .replace(/^[ \t]+$/gm, '')
+          .replace(/^[ \t]+/gm, indent => indent.replace(/\t/g, '  ')),
+        loader: 'js'
+      }));
+    }
+  };
+}

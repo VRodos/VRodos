@@ -8,7 +8,7 @@ VRODOS.ui = VRODOS.ui || {};
     const PROFILE_IDS = ['custom'].concat(TIER_IDS);
     const SETTING_LABELS = {
         shadowQuality: 'Shadows', shadowUpdateMode: 'Shadow updates', flatMediaShadowCasting: 'Media casts shadows',
-        aaQuality: 'Anti-aliasing', ambientOcclusionPreset: 'Ambient occlusion', contactShadowPreset: 'Contact shadows',
+        aaQuality: 'Anti-aliasing', ambientOcclusionPreset: 'Ambient occlusion (GTAO)', contactShadowPreset: 'Contact shadows',
         postFXEnabled: 'Lightweight post-processing', postFXEngine: 'Post-processing engine', postFXBloomEnabled: 'Bloom',
         postFXEdgeAAEnabled: 'Edge AA', postFXTAAEnabled: 'TAA', postFXSSREnabled: 'SSR', postFXSSRStrength: 'SSR quality',
         bloomStrength: 'Bloom quality', reflectionProfile: 'Reflection quality', reflectionSource: 'Reflection source',
@@ -365,6 +365,9 @@ VRODOS.ui = VRODOS.ui || {};
             const title = document.createElement('span');
             title.className = 'tw-text-xs tw-font-semibold tw-leading-snug tw-text-slate-700';
             title.textContent = SETTING_LABELS[settingKey] || settingKey;
+            if (settingKey === 'ambientOcclusionPreset') {
+                title.title = document.getElementById('compileAmbientOcclusionHelp').title;
+            }
             const isBoolean = values.every((value) => typeof value === 'boolean');
 
             if (isBoolean) {

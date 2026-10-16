@@ -1179,28 +1179,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
     }
 
     if (options.renderQuality === 'high') {
-        if (typeof material.aoMapIntensity !== 'undefined' && material.aoMap) {
-            if (typeof material.userData.vrodosBaseAoMapIntensity === 'undefined') {
-                material.userData.vrodosBaseAoMapIntensity = material.aoMapIntensity || 1;
-            }
-            let targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
-            switch (options.ambientOcclusionPreset) {
-                case 'off':
-                    targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
-                    break;
-                case 'soft':
-                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.04);
-                    break;
-                case 'strong':
-                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.22);
-                    break;
-                default:
-                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.12);
-                    break;
-            }
-            material.aoMapIntensity = targetAoIntensity;
-        }
-
+        // Baked AO strength is authored material data, independent of screen-space AO.
         if (typeof material.normalScale !== 'undefined' && material.normalMap && material.normalScale) {
             if (!material.userData.vrodosBaseNormalScale && typeof material.normalScale.clone === 'function') {
                 material.userData.vrodosBaseNormalScale = material.normalScale.clone();
@@ -1226,10 +1205,6 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             }
         }
     } else {
-        if (typeof material.aoMapIntensity !== 'undefined' && typeof material.userData.vrodosBaseAoMapIntensity !== 'undefined') {
-            material.aoMapIntensity = material.userData.vrodosBaseAoMapIntensity;
-        }
-
         if (typeof material.normalScale !== 'undefined' && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
             material.normalScale.copy(material.userData.vrodosBaseNormalScale);
         }

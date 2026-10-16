@@ -274,7 +274,10 @@ function createFeatureStateFixture(options) {
         data: baseData(options.data),
         postProcessingActive: Boolean(options.legacyActive),
         pmndrsActive: Boolean(options.pmndrsActive),
-        pmndrsComposer: options.pmndrsActive ? {} : null,
+        pmndrsComposer: options.pmndrsActive ? { multisampling: options.multisampling || 0 } : null,
+        pmndrsAoPass: options.aoPass || null,
+        _pmndrsAoBudget: options.aoBudget || null,
+        _pmndrsRequestedMultisampling: options.requestedMultisampling || 0,
         pmndrsEffectPass: options.pmndrsActive ? {} : null,
         _vrodosVrRenderBudget: null,
         _currentReflectionSource: "none",
@@ -323,6 +326,15 @@ function createFeatureStateFixture(options) {
 function assertPath(actual, expected, label) {
     assert(actual === expected, `${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
+
+const aoDiagnostics = createFeatureStateFixture({ pmndrsActive: true, aoPass: {}, multisampling: 4, requestedMultisampling: 8,
+    data: { postFXEngine: 'pmndrs', postFXEnabled: '1', pmndrsAAMode: 'msaa', pmndrsAAPreset: 'ultra', ambientOcclusionPreset: 'balanced' } });
+assertPath(aoDiagnostics.postProcessing.antialiasing.appliedSamples, 4, 'AA diagnostics use applied composer samples');
+assertPath(aoDiagnostics.postProcessing.antialiasing.requestedSamples, 8, 'AA diagnostics retain the requested samples');
+assertPath(aoDiagnostics.postProcessing.ambientOcclusion.backend, 'gtao', 'AO diagnostics report the actual backend');
+const xrAoDiagnostics = createFeatureStateFixture({ immersive: true, data: { vrRuntimeProfile: 'headset', ambientOcclusionPreset: 'balanced' } });
+assertPath(xrAoDiagnostics.postProcessing.ambientOcclusion.backend, 'off', 'immersive headset AO stays inactive');
+assertPath(xrAoDiagnostics.postProcessing.ambientOcclusion.immersiveSuppressed, true, 'headset AO suppression is explicit');
 
 // A compiled adaptive profile can request clouds below the legacy High renderer
 // quality. Its compositor must agree with that request, including old builds.
@@ -696,15 +708,12 @@ assert(
     "Takram cloud shadow-length generation should not depend on its Aerial consumer or coverage threshold"
 );
 
-const nativeSsaoSetupStart = pmndrsPostFxSource.indexOf("const aoPreset =");
-const nativeSsaoSetupEnd = pmndrsPostFxSource.indexOf("// Bloom", nativeSsaoSetupStart);
-const nativeSsaoSetupSource = pmndrsPostFxSource.slice(nativeSsaoSetupStart, nativeSsaoSetupEnd);
-assert(
-    nativeSsaoSetupStart !== -1 &&
-        nativeSsaoSetupSource.includes("const existingNormalPass = this.pmndrsNativeNormalPass || null") &&
-        !nativeSsaoSetupSource.includes("this.pmndrsNativeNormalPass = null;"),
-    "SSAO setup must preserve a NormalPass already owned by masked cloud light shafts"
-);
+const gtaoSetupStart = pmndrsPostFxSource.indexOf("const aoPreset =");
+const gtaoSetupEnd = pmndrsPostFxSource.indexOf("// Bloom", gtaoSetupStart);
+const gtaoSetupSource = pmndrsPostFxSource.slice(gtaoSetupStart, gtaoSetupEnd);
+assert(gtaoSetupStart !== -1 && gtaoSetupSource.includes("ensurePmndrsSharedNormalPass") &&
+    !gtaoSetupSource.includes("this.pmndrsNativeNormalPass = null;"),
+    "GTAO must reuse the normal pass already owned by cloud light shafts");
 
 // Normal-pass membership and exception-safe visibility restoration are exercised
 // behaviorally by test-atmosphere-lifecycle.mjs.

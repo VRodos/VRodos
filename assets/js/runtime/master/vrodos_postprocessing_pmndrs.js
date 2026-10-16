@@ -5,7 +5,7 @@
  * scripts/build-runtime-vendors.mjs) to drive an EffectComposer that fuses
  * compatible effects into as few EffectPasses as possible. This module is
  * selected per-scene via the postFXEngine scene-settings
- * field. See POSTPROCESSING_MIGRATION_PLAN.md §11 for the architectural decision.
+ * field. See RENDERING_PIPELINE.md for the current rendering contract.
  *
  * Effects merged into one EffectPass when their flags are set:
  *   - BloomEffect          (bloomStrength > 0)
@@ -18,14 +18,14 @@
  *
  * Effects inserted as standalone pmndrs-compatible passes:
  *   - Clouds/AerialPerspective (shared atmosphere pass, separate texture budget)
- *   - NormalPass           (ambientOcclusionPreset !== 'off', native SSAO support pass)
+ *   - NormalPass/GTAO      (ambientOcclusionPreset !== 'off', before atmosphere)
  *   - LensFlareEffect      (pmndrsLensFlareEnabled; convolution effects cannot be merged)
  *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled; late convolution pass)
  *   - SMAAEffect           (pmndrsAAMode === 'smaa'; final convolution pass)
  *
  * Multisample AA is applied at the composer level when
- * pmndrsAAMode === 'msaa', WebGL2 multisampling is available, and
- * ambient occlusion is not active.
+ * pmndrsAAMode === 'msaa' and WebGL2 multisampling is available.
+ * Ambient occlusion uses its own geometry depth and preserves MSAA.
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
  *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
@@ -48,64 +48,6 @@
                 resource.dispose();
             }
         };
-
-    /**
-     * Convert the shared ambientOcclusionPreset string to native PMNDRS SSAOEffect settings.
-     */
-    function nativeSsaoOptionsForPreset(PP, preset) {
-        const blendFunction = (PP && PP.BlendFunction) ? PP.BlendFunction.MULTIPLY : undefined;
-        const defaults = {
-            blendFunction,
-            distanceScaling: true,
-            depthAwareUpsampling: true,
-            depthAwareUpsamplingThreshold: 0.997,
-            distanceThreshold: 0.02,
-            distanceFalloff: 0.0025,
-            rangeThreshold: 0.0003,
-            rangeFalloff: 0.0001,
-            luminanceInfluence: 0.7,
-            minRadiusScale: 0.33,
-            bias: 0.025,
-            fade: 0.01
-        };
-
-        switch (preset) {
-            case 'soft':
-                return Object.assign({}, defaults, {
-                    samples: 8,
-                    rings: 5,
-                    radius: 0.06,
-                    intensity: 1.33,
-                    resolutionScale: 0.5
-                });
-            case 'strong':
-                return Object.assign({}, defaults, {
-                    samples: 20,
-                    rings: 7,
-                    radius: 0.06,
-                    intensity: 2.01,
-                    resolutionScale: 0.75
-                });
-            case 'balanced':
-            default:
-                return Object.assign({}, defaults, {
-                    samples: 12,
-                    rings: 5,
-                    radius: 0.06,
-                    intensity: 1.67,
-                    resolutionScale: 0.5
-                });
-        }
-    }
-
-    function nativeSsaoNormalPassResolutionScale(options) {
-        const scale = Number(options && options.resolutionScale);
-        if (!Number.isFinite(scale) || scale <= 0) {
-            return 0.5;
-        }
-
-        return Math.max(0.35, Math.min(1.0, scale));
-    }
 
     /**
      * Map the legacy bloomStrength preset to a numeric intensity for pmndrs BloomEffect,
@@ -2884,7 +2826,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function getPmndrsAmbientOcclusionBackend(self) {
-        return isPmndrsAmbientOcclusionEnabled(self) ? 'native-ssao' : 'off';
+        return isPmndrsAmbientOcclusionEnabled(self) ? 'gtao' : 'off';
     }
 
     function isPmndrsNormalPassExcludedObject(node) {
@@ -3016,8 +2958,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (self.pmndrsCloudLightingMaskPass && typeof self.pmndrsCloudLightingMaskPass.mainCamera !== 'undefined') {
             self.pmndrsCloudLightingMaskPass.mainCamera = camera;
         }
-        if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== 'undefined') {
-            self.pmndrsNativeSsaoEffect.mainCamera = camera;
+        if (self.pmndrsAoPass && typeof self.pmndrsAoPass.mainCamera !== 'undefined') {
+            self.pmndrsAoPass.mainCamera = camera;
         }
         if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
             self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
@@ -3167,7 +3109,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         let requestedSamples = 0;
         let maxSamples = 0;
 
-        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || isPmndrsAmbientOcclusionEnabled(self) || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
+        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
             return 0;
         }
         if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true) {
@@ -4046,7 +3988,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             `smaa preset: ${  (self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'}`,
             `composer: ${  self && self.pmndrsComposer ? 'yes' : 'no'}`,
             `effect pass: ${  self && self.pmndrsEffectPass ? 'yes' : 'no'}`,
-            `ao: ${  self && self.pmndrsNativeSsaoEffect ? 'native-ssao' : 'off'}`,
+            `ao: ${  self && self.pmndrsAoPass ? 'gtao' : 'off'}`,
             `bloom: ${  self && self.pmndrsBloomEffect ? 'yes' : 'no'}`,
             `tone: ${  getPmndrsToneMappingMode(self)}`,
             `lens flare: ${  self && self.pmndrsLensFlareEffect ? 'yes' : 'off'}`,
@@ -4100,19 +4042,19 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         return (shouldEnablePmndrsAerialPerspective(self) ? 'atmosphere:world-aerial' : 'atmosphere:world-sky') + altitudeMode;
     }
 
-    function disposePmndrsNativeSsaoResources(self, forceNormalPass, dispose = disposeRuntimeResource) {
+    function disposePmndrsAoResources(self, forceNormalPass, dispose = disposeRuntimeResource) {
         if (!self) {
             return;
         }
 
-        dispose(self.pmndrsNativeSsaoEffect);
+        dispose(self.pmndrsAoPass);
         if (forceNormalPass || !(self._pmndrsNativeNormalPassReason || '').includes('cloud-aerial')) {
             dispose(self.pmndrsNativeNormalPass);
             self.pmndrsNativeNormalPass = null;
             self._pmndrsNativeNormalPassResolutionScale = 0;
             self._pmndrsNativeNormalPassReason = '';
         }
-        self.pmndrsNativeSsaoEffect = null;
+        self.pmndrsAoPass = null;
     }
 
     function disposePmndrsCloudEffect(self, dispose = disposeRuntimeResource) {
@@ -4152,7 +4094,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         [self.pmndrsRenderPass, self.pmndrsEffectPass, self.pmndrsAtmospherePass,
             self.pmndrsChromaticAberrationPass, self.pmndrsSmaaPass, self.pmndrsLensFlarePass,
             self.pmndrsHorizonFoliageOverlayPass].forEach(disposeUnattached);
-        disposePmndrsNativeSsaoResources(self, true, disposeUnattached);
+        disposePmndrsAoResources(self, true, disposeUnattached);
         disposePmndrsCloudEffect(self, disposeUnattached);
         disposePmndrsCloudLightingMaskResources(self, disposeUnattached);
         disposeUnattached(self.pmndrsMoonCloudShaftsEffect);
@@ -4177,9 +4119,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         self.pmndrsSmaaPass = null;
         self.pmndrsLensFlarePass = null;
         self.pmndrsNativeNormalPass = null;
-        self.pmndrsNativeSsaoEffect = null;
+        self.pmndrsAoPass = null;
         self.pmndrsCloudLightingMaskPass = null;
-        self._pmndrsNativeSsaoBudget = null;
+        self._pmndrsAoBudget = null;
         self._pmndrsNativeNormalPassResolutionScale = 0;
         self._pmndrsNativeNormalPassReason = '';
         self.pmndrsBloomEffect = null;
@@ -4584,7 +4526,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
         this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
         this._pmndrsRequestedMultisampling = requestedMultisamplingInitial;
-        this._pmndrsAppliedMultisampling = requestedMultisampling;
+        this._pmndrsAppliedMultisampling = composer.multisampling;
         this._pmndrsAppliedSmaaPreset = null;
         this.pmndrsCloudLightingMaskPass = null;
         this._pmndrsCloudLightingMaskSelectedCount = 0;
@@ -4593,9 +4535,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         this._pmndrsNativeNormalPassReason = '';
         if (!this._pmndrsMsaaFallbackReason) {
             this._pmndrsMsaaFallbackReason = '';
-        }
-        if (getPmndrsAAMode(this) === 'msaa' && isPmndrsAmbientOcclusionEnabled(this)) {
-            this._pmndrsMsaaFallbackReason = 'ao-disables-msaa';
         }
 
         this.pmndrsCloudsEffect = null;
@@ -4843,52 +4782,21 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
         this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
 
-        // SSAO through the shared ambientOcclusionPreset control.
-        // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
+        // GTAO runs before atmospheric composition and tone mapping. Its matched
+        // geometry buffer is independent of the beauty buffer's MSAA resolve.
         const aoPreset = (!xrStereoMode && typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
-        const existingNormalPass = this.pmndrsNativeNormalPass || null;
-        this.pmndrsNativeSsaoEffect = null;
-        if (aoPreset && aoPreset !== 'off') {
-            if (PP.NormalPass && PP.SSAOEffect) {
-                try {
-                    const nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
-                    let normalPassResolutionScale = nativeSsaoNormalPassResolutionScale(nativeSsaoOptions);
-                    this.pmndrsNativeNormalPass = ensurePmndrsSharedNormalPass(
-                        this,
-                        composer,
-                        scene,
-                        camera,
-                        PP,
-                        normalPassResolutionScale,
-                        'ssao'
-                    );
-                    if (existingNormalPass && typeof this._pmndrsNativeNormalPassResolutionScale === 'number') {
-                        normalPassResolutionScale = this._pmndrsNativeNormalPassResolutionScale;
-                    }
-                    if (!this.pmndrsNativeNormalPass) {
-                        throw new Error('NormalPass unavailable.');
-                    }
-                    this.pmndrsNativeSsaoEffect = new PP.SSAOEffect(camera, this.pmndrsNativeNormalPass.texture, nativeSsaoOptions);
-                    this._pmndrsNativeSsaoBudget = {
-                        preset: aoPreset,
-                        samples: nativeSsaoOptions.samples,
-                        rings: nativeSsaoOptions.rings,
-                        resolutionScale: nativeSsaoOptions.resolutionScale,
-                        normalPassResolutionScale
-                    };
-                    if (this.pmndrsNativeSsaoEffect.defines && this.pmndrsNativeSsaoEffect.defines.set) {
-                        this.pmndrsNativeSsaoEffect.defines.set('THRESHOLD', String(nativeSsaoOptions.depthAwareUpsamplingThreshold));
-                    }
-                    effects.push(this.pmndrsNativeSsaoEffect);
-                } catch (err) {
-                    console.warn('[VRodos] pmndrs native SSAOEffect construction failed, skipping AO:', err);
-                    disposePmndrsNativeSsaoResources(this);
-                    this.pmndrsNativeSsaoEffect = null;
-                    this._pmndrsNativeSsaoBudget = null;
-                }
-            } else if (!this._pmndrsNativeSsaoSkipWarned) {
-                console.info(`[VRodos] pmndrs pipeline: AO preset "${  aoPreset  }" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.`);
-                this._pmndrsNativeSsaoSkipWarned = true;
+        this.pmndrsAoPass = null;
+        if (aoPreset !== 'off') {
+            try {
+                const normalPass = ensurePmndrsSharedNormalPass(this, composer, scene, camera, PP, 1, 'gtao');
+                if (!normalPass || !window.VRODOSAmbientOcclusion) throw new Error('GTAO support is unavailable.');
+                this.pmndrsAoPass = new window.VRODOSAmbientOcclusion.Pass(scene, camera, normalPass, aoPreset);
+                this._pmndrsAoBudget = { preset: aoPreset, ...this.pmndrsAoPass.options, normalPassResolutionScale: 1 };
+                composer.addPass(this.pmndrsAoPass);
+            } catch (err) {
+                console.warn('[VRodos] GTAO construction failed, skipping AO:', err);
+                disposePmndrsAoResources(this);
+                this._pmndrsAoBudget = null;
             }
         }
 
@@ -5098,7 +5006,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         }
 
         // Aerial lookup, shadow, mask, and shaft buffers can exceed the WebGL2
-        // 16-texture limit when fused with SSAO, moon shafts, bloom, and LUTs.
+        // 16-texture limit when fused with GTAO, moon shafts, bloom, and LUTs.
         // Keep CloudsEffect before AerialPerspectiveEffect in the same pass so
         // its internal buffers update before aerial composition each frame.
         this.pmndrsAtmospherePass = null;
@@ -5263,8 +5171,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 if (self.pmndrsCloudLightingMaskPass && typeof self.pmndrsCloudLightingMaskPass.mainCamera !== 'undefined') {
                     self.pmndrsCloudLightingMaskPass.mainCamera = camera;
                 }
-                if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== 'undefined') {
-                    self.pmndrsNativeSsaoEffect.mainCamera = camera;
+                if (self.pmndrsAoPass && typeof self.pmndrsAoPass.mainCamera !== 'undefined') {
+                    self.pmndrsAoPass.mainCamera = camera;
                 }
                 if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
                     self.pmndrsAerialPerspectiveEffect.mainCamera = camera;

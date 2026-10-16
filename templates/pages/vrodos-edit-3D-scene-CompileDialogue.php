@@ -282,7 +282,7 @@
 
 							<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
 								<label class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space ambient occlusion darkens crevices and corners dynamically, plus boosts baked AO maps">Ambient Occlusion (SSAO)</span>
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" id="compileAmbientOcclusionHelp" title="GTAO adds contact shading in corners and where objects meet (PMNDRS desktop).&#10;Off: disables screen-space AO.&#10;Soft: subtle shading with the lowest GPU cost.&#10;Balanced: stronger contact shading with moderate GPU cost.&#10;Strong: darkest shading, more samples and higher AO resolution for finer detail, with the highest GPU cost.&#10;MSAA stays enabled when selected. Standalone VR uses authored baked material AO only.">Ambient Occlusion (GTAO)</span>
 									<select id="compileAmbientOcclusionPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 										<option value="off">Off</option>
 										<option value="soft">Soft</option>

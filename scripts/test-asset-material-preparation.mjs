@@ -67,4 +67,21 @@ const plain = ordinary.createPrimitive().setAttribute('TEXCOORD_0', unusedUv).se
 ordinary.createScene().addChild(ordinary.createNode().setMesh(ordinary.createMesh().addPrimitive(plain)));
 await prepareAssetMaterials(ordinary);
 assert.equal(plain.getAttribute('TEXCOORD_0'), null, 'ordinary assets retain existing unused-attribute pruning');
+// Packed ORM uses the AO red channel and may select a different UV set.
+const aoDoc = new Document();
+const aoBuffer = aoDoc.createBuffer();
+const aoPositions = aoDoc.createAccessor().setType('VEC3').setArray(new Float32Array([0,0,0,1,0,0,0,1,0])).setBuffer(aoBuffer);
+const aoUv = aoDoc.createAccessor().setType('VEC2').setArray(new Float32Array([0,0,1,0,0,1])).setBuffer(aoBuffer);
+const orm = aoDoc.createTexture('packed ORM').setMimeType('image/png').setImage(new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII=', 'base64')));
+const aoMaterial = aoDoc.createMaterial('authored occlusion').setOcclusionTexture(orm).setOcclusionStrength(0.35).setMetallicRoughnessTexture(orm);
+aoMaterial.getOcclusionTextureInfo().setTexCoord(1);
+const aoPrimitive = aoDoc.createPrimitive().setAttribute('POSITION', aoPositions).setAttribute('TEXCOORD_0', aoUv).setAttribute('TEXCOORD_1', aoUv.clone()).setMaterial(aoMaterial);
+aoDoc.createScene().addChild(aoDoc.createNode().setMesh(aoDoc.createMesh().addPrimitive(aoPrimitive)));
+await prepareAssetMaterials(aoDoc);
+const aoReloaded = await io.readBinary(await io.writeBinary(aoDoc));
+const aoResult = aoReloaded.getRoot().listMaterials()[0];
+assert.equal(aoResult.getOcclusionStrength(), 0.35, 'GLB round trip preserves authored AO strength');
+assert.equal(aoResult.getOcclusionTextureInfo().getTexCoord(), 1, 'pruning preserves AO UV selection');
+assert.equal(aoResult.getOcclusionTexture(), aoResult.getMetallicRoughnessTexture(), 'packed ORM remains shared');
+assert.ok(aoReloaded.getRoot().listMeshes()[0].listPrimitives()[0].getAttribute('TEXCOORD_1'));
 console.log('Asset material preparation regression tests passed.');

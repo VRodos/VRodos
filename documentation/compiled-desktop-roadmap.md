@@ -44,7 +44,7 @@ The remaining acceptance work is a freshly compiled desktop PMNDRS Horizon scene
 - [ ] Low and Medium report `profile-disabled` without changing the selected cloud quality.
 - [ ] Below-horizon/night scenes report `sun-below-horizon` and retain no stale shaft buffer.
 - [ ] The unchecked control reports `lightShaftsRequested=false`, `lightShafts=false`, and `lightShaftsSkippedReason=author-disabled`.
-- [ ] SSAO off and on both retain correct shared `NormalPass` ownership.
+- [ ] AO off and on both retain correct shared `NormalPass` ownership.
 - [ ] Horizon local-weather UV diagnostics report `cloudWeatherUvMode=local-tangent` and `cloudWeatherUvPatchApplied=true`, without cube-sphere seam blocks.
 - [ ] Coverage remains visibly monotonic across styles, including representative values `0.27`, `0.5`, and `0.7+`.
 - [ ] The regrouped build dialog remains usable at wide and narrow widths.
@@ -54,7 +54,7 @@ The contract, compiler serialization, runtime gates, diagnostics, generated bund
 ### General Rendering
 
 - Keep representative Horizon and non-Horizon PMNDRS browser smoke scenes.
-- Continue validating native PMNDRS SSAO across broader authored scenes.
+- Continue validating desktop GTAO across broader authored scenes.
 - Validate the cloud/sun lighting bridge through a full day-night cycle: direct/indirect light factors, reflections, shadow contrast/softness, native sun visibility, and lens flare must move in the same direction as sampled cloud coverage.
 - Keep `cloudSkySunDiskMode=takram-phase` as the High/Ultra target. The VRodos sun sprite is a Low/Medium or debug fallback, not the target desktop look.
 

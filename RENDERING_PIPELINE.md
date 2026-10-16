@@ -103,7 +103,7 @@ Presentation mode is part of the rendering contract:
 
 | File | Role |
 | --- | --- |
-| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, Takram lens flare, runtime debug overlay |
+| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, GTAO, LUT, Takram lens flare, runtime debug overlay |
 | `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` |
 | `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE`, including Takram atmosphere and geospatial effects |
 | `assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js` | Bundled `window.VRODOS_TAKRAM_CLOUDS`, including Takram CloudsEffect and local binary texture helpers |
@@ -457,13 +457,13 @@ Current PMNDRS ordering:
 
 ```text
 RenderPass
-  -> optional NormalPass for native SSAO
+  -> optional shared full-resolution NormalPass (matching geometry depth/normals)
+  -> optional VRodosGTAO pass (AO, denoise, depth-aware composite)
   -> optional standalone Takram sun LensFlareEffect pass
   -> optional atmosphere EffectPass:
        optional Takram CloudsEffect before AerialPerspectiveEffect
        optional Takram AerialPerspectiveEffect for non-Horizon or Horizon aerial-haze path
   -> primary EffectPass:
-       SSAOEffect
        optional moon cloud light shafts
        BloomEffect
        selectable ToneMappingEffect
@@ -477,27 +477,22 @@ RenderPass
   -> screen
 ```
 
-Composer multisampling is used only when:
+Composer multisampling stays enabled with AO when PMNDRS AA mode is `msaa`, WebGL2 supports it, and debug flags have not disabled it. Report applied samples from the composer, rather than assuming the requested Ultra sample count is supported. SMAA remains a separately selected final pass.
 
-- PMNDRS AA mode is `msaa`.
-- WebGL2 multisampling is available.
-- AO is off.
-- Debug flags have not disabled MSAA.
+Desktop AO uses the locked Three.js `GTAOPass` through `vrodos_gtao_pass.js`, exported as `window.VRODOSAmbientOcclusion` by the existing PMNDRS vendor bundle. It replaces the former native SSAO backend; there is no author-facing algorithm selector or additional package dependency.
 
-When AO is active, PMNDRS disables composer MSAA and recommends SMAA because the AO paths are not stable with hardware multisampling.
+- Reuse the cloud-owned `NormalPass` at full resolution and attach one owned float depth texture to that target. GTAO consumes matching depth and normals, independently of resolved MSAA beauty depth, without another scene prepass.
+- The shared pass excludes registered Takram sky/background helper meshes. AO composition leaves the sky untouched, uses depth/normal-aware upsampling, and suppresses AO across silhouette depth breaks to preserve mixed MSAA coverage.
+- Keep beauty output full resolution and HDR. GTAO runs before atmosphere, tone mapping, color grading, and the independently selected final SMAA pass.
+- `soft`: half-resolution AO, 8 AO/8 denoise samples, intensity 0.65.
+- `balanced`: half-resolution AO, 12 AO/12 denoise samples, intensity 1.
+- `strong`: 0.75-resolution AO, 20 AO/16 denoise samples, intensity 1.35.
+- All presets use a 0.75 m radius. The geometry buffer remains full resolution. AO-off allocates no GTAO resources; clouds may still require their normal pass.
+- Composer teardown owns the AO pass. It releases its own targets, noise, and materials, retaining borrowed normal/depth textures and Three's shared fullscreen geometry for their owners. Camera changes update both geometry and AO cameras.
+- Runtime diagnostics expose `postProcessing.antialiasing` and `postProcessing.ambientOcclusion`; the debug overlay reports `ao: gtao` or `off`.
+- Baked material AO strength and UV selection remain authored across quality tiers, independently of screen-space AO. Standalone immersive rendering keeps native MSAA and no screen-space AO.
 
-PMNDRS AO backends:
-
-- Default: `POSTPROCESSING.NormalPass` plus `POSTPROCESSING.SSAOEffect`, with `SSAOEffect` merged into the fused `EffectPass`.
-- The shared `NormalPass` excludes Takram atmosphere/background helper meshes. Their fullscreen sky materials are replaced by the pass's normal override material, so including those helpers would turn the 2 x 2 sky plane at the world origin into false SSAO geometry.
-- The PMNDRS debug overlay reports `ao: native-ssao` or `ao: off`.
-
-Native SSAO presets are budgeted so the final color buffer stays full-resolution while the AO normal/depth work scales with the AO preset:
-
-- Shared defaults: `distanceThreshold: 0.02`, `distanceFalloff: 0.0025`, `rangeThreshold: 0.0003`, `rangeFalloff: 0.0001`, `luminanceInfluence: 0.7`, `minRadiusScale: 0.33`, `depthAwareUpsamplingThreshold: 0.997`, `bias: 0.025`, `fade: 0.01`.
-- `soft`: `resolutionScale: 0.5`, `samples: 8`, `rings: 5`, `radius: 0.06`, `intensity: 1.33`.
-- `balanced`: `resolutionScale: 0.5`, `samples: 12`, `rings: 5`, `radius: 0.06`, `intensity: 1.67`.
-- `strong`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.06`, `intensity: 2.01`.
+See [AO modernization measurements and standalone assessment](documentation/ambient-occlusion-modernization.md) for comparison methodology, limitations, and device-validation status.
 
 Takram LensFlareEffect is intentionally not merged into the primary `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active. Chromatic aberration also runs as a late standalone convolution pass after Takram/tone/color processing, and SMAA runs as the final standalone pass when enabled.
 
@@ -507,7 +502,7 @@ Composer lifecycle:
 
 - `RenderPass` stays first.
 - Compatible fullscreen effects are merged into the fewest practical `EffectPass` instances; convolution effects stay isolated when PMNDRS cannot merge them safely.
-- Clouds and aerial perspective share a separate atmosphere pass before SSAO, moon shafts, bloom, tone mapping, and color grading. Aerial lookup textures plus cloud shadow, lighting-mask, and light-shaft buffers can otherwise push the fused shader beyond the WebGL2 fragment limit of 16 texture units as those buffers become ready. Keep CloudsEffect and AerialPerspectiveEffect together so cloud buffers update before aerial composition.
+- Clouds and aerial perspective share a separate atmosphere pass before moon shafts, bloom, tone mapping, and color grading. Aerial lookup textures plus cloud shadow, lighting-mask, and light-shaft buffers can otherwise push the fused shader beyond the WebGL2 fragment limit of 16 texture units as those buffers become ready. Keep CloudsEffect and AerialPerspectiveEffect together so cloud buffers update before aerial composition.
 - Lighting-mask and Horizon foliage selections wait for the critical scene-loader batch to finish, then refresh once. Later scene mutations are coalesced for 120 ms before refreshing. Production builds keep selection-count messages silent unless Horizon diagnostics are enabled.
 - Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
 - Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.
@@ -599,7 +594,7 @@ Takram cloud v1 behavior:
 - VRodos Horizon desktop clouds enable `VRODOS_LOCAL_HORIZON_WEATHER_UV` on Takram cloud and shadow materials. The generated cloud bundle patches Takram's `getGlobeUv()` so local Horizon weather samples a tangent-plane projection derived from the synced world-to-ECEF frame, avoiding the cube-sphere local-weather seams that Takram documents for globe-scale UVs. Geospatial scenes retain the native `cube-sphere` mode.
 - Wind animation maps to `CloudsEffect.localWeatherVelocity`. The default enabled state preserves the previous subtle drift; authors can disable it or set speed/direction without touching cloud lighting, shadow routing, or coverage mapping.
 - The Aerial Haze UI toggle controls the authored `AerialPerspectiveEffect` composition path. Clouds still force that composition pass at runtime because their overlay/shadow outputs are routed through it; the Takram cloud shader haze toggle is an internal runtime option and is disabled separately for Horizon.
-- High/ultra desktop profiles generate Takram cloud shadow-length only when `pmndrsCloudsLightShaftsEnabled` is requested, independently of Aerial consumer readiness and authored coverage, matching the upstream demo lifecycle. The resulting output routes through `AerialPerspectiveEffect` when the masked Aerial path is ready, the sun is above the horizon, and the renderer is non-XR desktop. The shared cloud-owned `NormalPass` must survive later SSAO setup and be reused by SSAO when enabled. The paired AerialPerspective cloud `shadow` buffer is cleared whenever `shadowLength` is cleared, so author-disabled and below-horizon/day-night frames cannot carry a stale screen-space cloud-shadow buffer. Horizon keeps direct `SkyMaterial.shadowLength` routing disabled because Takram's screen-space shadow-length texture can reveal a delayed rectangular footprint on the already-rendered Horizon sky during day/night motion. Do not draw the sun or lens flare above clouds as a separate ordering hack.
+- High/ultra desktop profiles generate Takram cloud shadow-length only when `pmndrsCloudsLightShaftsEnabled` is requested, independently of Aerial consumer readiness and authored coverage, matching the upstream demo lifecycle. The resulting output routes through `AerialPerspectiveEffect` when the masked Aerial path is ready, the sun is above the horizon, and the renderer is non-XR desktop. The shared cloud-owned `NormalPass` must survive later GTAO setup and be reused by GTAO when enabled. The paired AerialPerspective cloud `shadow` buffer is cleared whenever `shadowLength` is cleared, so author-disabled and below-horizon/day-night frames cannot carry a stale screen-space cloud-shadow buffer. Horizon keeps direct `SkyMaterial.shadowLength` routing disabled because Takram's screen-space shadow-length texture can reveal a delayed rectangular footprint on the already-rendered Horizon sky during day/night motion. Do not draw the sun or lens flare above clouds as a separate ordering hack.
 - Because VRodos uses Takram's documented light-source path for PBR materials, active daytime clouds also drive a CPU-only sun-occlusion bridge on `SunDirectionalLight`, `SkyLightProbe`, hemisphere fill, ambient bounce, reflection intensity, direct sun shadow opacity/softness, Takram lens flare, and the visible desktop sun disk. The bridge combines authored cloud coverage with a desktop Horizon sample of Takram cloud opacity around the projected visible sun disk, so a cloud crossing the sun can dim the next rendered frames without adding a projected cloud-shadow pass. High and ultra profiles mirror Takram's Basic demo more closely by enabling accurate cloud phase, multi-scattering, long cloud shadow distance, and masked Aerial post-process shafting; diagnostics report `cloudLightShaftsMode=masked-aerial-sky` when that path is active. For very dense sampled disk cover, VRodos hides only the native `SkyMaterial.sun` disk while leaving Takram cloud phase scattering active; diagnostics report `cloudSkySunDiskMode=takram-phase-muted` and `cloudSkySunDiskNativeHidden=true`. The older public-`sun`-flag plus VRodos sprite bridge remains a fallback for lower/debug paths. It does not patch Takram's sky shader. It keeps mesh shadows casting, reduces their contrast by dimming direct sun and moderately lowering `shadow.intensity`, and increases shadow radius under heavy occlusion without making shadows weightless. It is horizon-gated and reports `sun-below-horizon` when the sun direct light is off.
 - At night the same projected-disk sampler targets the visible moon. Its smoothed occlusion state attenuates the moon disc and halo before cloud composition, moon directional light, indirect fill, reflection intensity, and moon-shadow opacity while increasing shadow softness under dense cover. When clouds hide a bright moon, part of the global moon-driven star suppression is restored; the existing per-pixel cloud overlay continues to obscure stars spatially. The moon bridge is gated by moon enablement, phase illumination, elevation, and nighttime state, and stale disk samples expire rather than indefinitely dimming the moon.
 - High/ultra desktop Horizon scenes prepare a first-party PMNDRS lunar shaft effect whenever eligible clouds and Light Shafts are configured, allowing day/night cycling to activate it without rebuilding the composer. It reuses the existing Takram cloud alpha buffer for subtle cool silver linings and radial moonbeams under partial cover; it performs no second volumetric cloud raymarch. Clear sky, overcast, new/below-horizon moon, daytime, disabled shafts, low/medium quality, and XR all fade or skip the effect with diagnostics.

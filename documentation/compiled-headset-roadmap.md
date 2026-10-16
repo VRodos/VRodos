@@ -14,6 +14,8 @@ Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-ref
 
 ## Standalone Headset Policy
 
+AO assessment (2026-10-16): keep authored baked material AO and native MSAA as the standalone production path. Desktop GTAO does not enable immersive AO. Per-eye resource/camera tests are not device acceptance; no headset was attached during this work. See [AO modernization](ambient-occlusion-modernization.md) for techniques, timings, and remaining Quest 2/3 validation.
+
 - “VR Headset Full” exposes project-build GLB object quality through `vrHeadsetAssetQuality`: Low (default, `web-low`, 1024px), Medium (`web-medium`, 2048px), or High (`web-high`, 4096px, fine geometry detail). The selected scene remembers the choice; the compile request applies it to every scene in the project. All levels apply guarded eligible decoration simplification and all collision/protected-geometry rules. High is optimized quality, not original-source quality, and requires headset GPU/memory and visual validation. This choice does not change headset renderer, lighting, or post-FX policy.
 - A-Frame/WebXR owns the XR session, HMD and controller poses, controller raycasters, and stereo render loop.
 - `#player` remains an unpositioned tracking rig. Authored camera placement remains on `#cameraA`.

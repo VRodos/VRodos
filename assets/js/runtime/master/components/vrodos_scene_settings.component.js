@@ -1761,6 +1761,20 @@ AFRAME.registerComponent('scene-settings', {
                 pmndrsBundleLoaded: Boolean(window.POSTPROCESSING),
                 pmndrsComposerBuilt: Boolean(this.pmndrsComposer),
                 nativeHeadset: this.pmndrsNativeHeadsetDiagnostics || null,
+                antialiasing: {
+                    mode: this.getPmndrsAAMode(), preset: this.getPmndrsAAPreset(),
+                    requestedSamples: this._pmndrsRequestedMultisampling || 0,
+                    appliedSamples: this.pmndrsComposer ? this.pmndrsComposer.multisampling : 0,
+                    smaaActive: Boolean(this.pmndrsSmaaPass),
+                    suppressionReason: this._pmndrsMsaaFallbackReason || ''
+                },
+                ambientOcclusion: {
+                    requestedPreset: this.getAmbientOcclusionPreset(),
+                    backend: this.pmndrsAoPass ? 'gtao' : 'off',
+                    active: Boolean(this.pmndrsAoPass),
+                    budget: this._pmndrsAoBudget || null,
+                    immersiveSuppressed: this.isImmersiveXrActive()
+                },
                 pmndrsEffectPass: Boolean(this.pmndrsEffectPass),
                 lensFlareAuthored: Boolean(vrodosRuntimeTruthy(this.data.pmndrsLensFlareEnabled)),
                 lensFlareEffective: Boolean(this.isPmndrsLensFlareEnabled()),

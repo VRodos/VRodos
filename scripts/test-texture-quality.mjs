@@ -80,4 +80,16 @@ const videoVersion = video.version;
 video.needsUpdate = true;
 apply(video, videoRefresh, true);
 assert.equal(video.version, videoVersion + 1, 'video frame updates remain owned by the video texture');
+for (const strength of [0, 0.35, 1]) {
+    const aoMap = new Three.Texture(); aoMap.channel = 1;
+    const authored = new Three.MeshStandardMaterial({ aoMap, aoMapIntensity: strength });
+    for (const renderQuality of ['high', 'standard', 'performance', 'high']) {
+        for (const ambientOcclusionPreset of ['off', 'soft', 'balanced', 'strong']) {
+            context.vrodosEnhanceMeshMaterial(authored, {}, { ...quality, renderQuality, ambientOcclusionPreset, headsetProfile: true });
+            assert.equal(authored.aoMapIntensity, strength, 'quality changes must preserve authored baked AO, including zero');
+            assert.equal(aoMap.channel, 1, 'baked AO keeps its authored UV channel');
+            assert.equal(aoMap.colorSpace, Three.NoColorSpace, 'baked AO is linear data');
+        }
+    }
+}
 console.log('Texture quality tests passed.');

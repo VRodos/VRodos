@@ -11,57 +11,6 @@
         resource.dispose();
       }
     };
-    function nativeSsaoOptionsForPreset(PP, preset) {
-      const blendFunction = PP && PP.BlendFunction ? PP.BlendFunction.MULTIPLY : void 0;
-      const defaults = {
-        blendFunction,
-        distanceScaling: true,
-        depthAwareUpsampling: true,
-        depthAwareUpsamplingThreshold: 0.997,
-        distanceThreshold: 0.02,
-        distanceFalloff: 25e-4,
-        rangeThreshold: 3e-4,
-        rangeFalloff: 1e-4,
-        luminanceInfluence: 0.7,
-        minRadiusScale: 0.33,
-        bias: 0.025,
-        fade: 0.01
-      };
-      switch (preset) {
-        case "soft":
-          return Object.assign({}, defaults, {
-            samples: 8,
-            rings: 5,
-            radius: 0.06,
-            intensity: 1.33,
-            resolutionScale: 0.5
-          });
-        case "strong":
-          return Object.assign({}, defaults, {
-            samples: 20,
-            rings: 7,
-            radius: 0.06,
-            intensity: 2.01,
-            resolutionScale: 0.75
-          });
-        case "balanced":
-        default:
-          return Object.assign({}, defaults, {
-            samples: 12,
-            rings: 5,
-            radius: 0.06,
-            intensity: 1.67,
-            resolutionScale: 0.5
-          });
-      }
-    }
-    function nativeSsaoNormalPassResolutionScale(options) {
-      const scale = Number(options && options.resolutionScale);
-      if (!Number.isFinite(scale) || scale <= 0) {
-        return 0.5;
-      }
-      return Math.max(0.35, Math.min(1, scale));
-    }
     function isHorizonBackground(self) {
       return Boolean(self && self.data && self.data.selChoice === "0");
     }
@@ -2433,7 +2382,7 @@ ${uniform}`
       return "pmndrs-composer-disabled";
     }
     function getPmndrsAmbientOcclusionBackend(self) {
-      return isPmndrsAmbientOcclusionEnabled(self) ? "native-ssao" : "off";
+      return isPmndrsAmbientOcclusionEnabled(self) ? "gtao" : "off";
     }
     function isPmndrsNormalPassExcludedObject(node) {
       return Boolean(node && node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsAtmosphereStars || node.userData.vrodosPmndrsAtmosphereMoon || node.userData.vrodosVrTakramLightsOnlySky || node.userData.vrodosPmndrsLegacySuppressed));
@@ -2548,8 +2497,8 @@ ${uniform}`
       if (self.pmndrsCloudLightingMaskPass && typeof self.pmndrsCloudLightingMaskPass.mainCamera !== "undefined") {
         self.pmndrsCloudLightingMaskPass.mainCamera = camera;
       }
-      if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== "undefined") {
-        self.pmndrsNativeSsaoEffect.mainCamera = camera;
+      if (self.pmndrsAoPass && typeof self.pmndrsAoPass.mainCamera !== "undefined") {
+        self.pmndrsAoPass.mainCamera = camera;
       }
       if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== "undefined") {
         self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
@@ -2681,7 +2630,7 @@ ${uniform}`
     function getPmndrsRequestedMultisampling(self, renderer) {
       let requestedSamples = 0;
       let maxSamples = 0;
-      if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== "msaa" || isPmndrsAmbientOcclusionEnabled(self) || hasPmndrsDebugFlag("disablePmndrsMsaa", "vrodos_debug_disable_pmndrs_msaa")) {
+      if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== "msaa" || hasPmndrsDebugFlag("disablePmndrsMsaa", "vrodos_debug_disable_pmndrs_msaa")) {
         return 0;
       }
       if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true) {
@@ -3399,7 +3348,7 @@ ${selectedSummaries.join("\n")}`);
         `smaa preset: ${self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== void 0 ? self._pmndrsAppliedSmaaPreset : "off"}`,
         `composer: ${self && self.pmndrsComposer ? "yes" : "no"}`,
         `effect pass: ${self && self.pmndrsEffectPass ? "yes" : "no"}`,
-        `ao: ${self && self.pmndrsNativeSsaoEffect ? "native-ssao" : "off"}`,
+        `ao: ${self && self.pmndrsAoPass ? "gtao" : "off"}`,
         `bloom: ${self && self.pmndrsBloomEffect ? "yes" : "no"}`,
         `tone: ${getPmndrsToneMappingMode(self)}`,
         `lens flare: ${self && self.pmndrsLensFlareEffect ? "yes" : "off"}`,
@@ -3448,18 +3397,18 @@ ${selectedSummaries.join("\n")}`);
       }
       return (shouldEnablePmndrsAerialPerspective(self) ? "atmosphere:world-aerial" : "atmosphere:world-sky") + altitudeMode;
     }
-    function disposePmndrsNativeSsaoResources(self, forceNormalPass, dispose = disposeRuntimeResource) {
+    function disposePmndrsAoResources(self, forceNormalPass, dispose = disposeRuntimeResource) {
       if (!self) {
         return;
       }
-      dispose(self.pmndrsNativeSsaoEffect);
+      dispose(self.pmndrsAoPass);
       if (forceNormalPass || !(self._pmndrsNativeNormalPassReason || "").includes("cloud-aerial")) {
         dispose(self.pmndrsNativeNormalPass);
         self.pmndrsNativeNormalPass = null;
         self._pmndrsNativeNormalPassResolutionScale = 0;
         self._pmndrsNativeNormalPassReason = "";
       }
-      self.pmndrsNativeSsaoEffect = null;
+      self.pmndrsAoPass = null;
     }
     function disposePmndrsCloudEffect(self, dispose = disposeRuntimeResource) {
       if (!self) {
@@ -3499,7 +3448,7 @@ ${selectedSummaries.join("\n")}`);
         self.pmndrsLensFlarePass,
         self.pmndrsHorizonFoliageOverlayPass
       ].forEach(disposeUnattached);
-      disposePmndrsNativeSsaoResources(self, true, disposeUnattached);
+      disposePmndrsAoResources(self, true, disposeUnattached);
       disposePmndrsCloudEffect(self, disposeUnattached);
       disposePmndrsCloudLightingMaskResources(self, disposeUnattached);
       disposeUnattached(self.pmndrsMoonCloudShaftsEffect);
@@ -3529,9 +3478,9 @@ ${selectedSummaries.join("\n")}`);
       self.pmndrsSmaaPass = null;
       self.pmndrsLensFlarePass = null;
       self.pmndrsNativeNormalPass = null;
-      self.pmndrsNativeSsaoEffect = null;
+      self.pmndrsAoPass = null;
       self.pmndrsCloudLightingMaskPass = null;
-      self._pmndrsNativeSsaoBudget = null;
+      self._pmndrsAoBudget = null;
       self._pmndrsNativeNormalPassResolutionScale = 0;
       self._pmndrsNativeNormalPassReason = "";
       self.pmndrsBloomEffect = null;
@@ -3878,7 +3827,7 @@ ${selectedSummaries.join("\n")}`);
       this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
       this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
       this._pmndrsRequestedMultisampling = requestedMultisamplingInitial;
-      this._pmndrsAppliedMultisampling = requestedMultisampling;
+      this._pmndrsAppliedMultisampling = composer.multisampling;
       this._pmndrsAppliedSmaaPreset = null;
       this.pmndrsCloudLightingMaskPass = null;
       this._pmndrsCloudLightingMaskSelectedCount = 0;
@@ -3887,9 +3836,6 @@ ${selectedSummaries.join("\n")}`);
       this._pmndrsNativeNormalPassReason = "";
       if (!this._pmndrsMsaaFallbackReason) {
         this._pmndrsMsaaFallbackReason = "";
-      }
-      if (getPmndrsAAMode(this) === "msaa" && isPmndrsAmbientOcclusionEnabled(this)) {
-        this._pmndrsMsaaFallbackReason = "ao-disables-msaa";
       }
       this.pmndrsCloudsEffect = null;
       if (!xrStereoMode && isPmndrsCloudsRequested(this)) {
@@ -4107,49 +4053,18 @@ ${selectedSummaries.join("\n")}`);
       this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
       this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
       const aoPreset = !xrStereoMode && typeof this.getAmbientOcclusionPreset === "function" ? this.getAmbientOcclusionPreset() : "off";
-      const existingNormalPass = this.pmndrsNativeNormalPass || null;
-      this.pmndrsNativeSsaoEffect = null;
-      if (aoPreset && aoPreset !== "off") {
-        if (PP.NormalPass && PP.SSAOEffect) {
-          try {
-            const nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
-            let normalPassResolutionScale = nativeSsaoNormalPassResolutionScale(nativeSsaoOptions);
-            this.pmndrsNativeNormalPass = ensurePmndrsSharedNormalPass(
-              this,
-              composer,
-              scene,
-              camera,
-              PP,
-              normalPassResolutionScale,
-              "ssao"
-            );
-            if (existingNormalPass && typeof this._pmndrsNativeNormalPassResolutionScale === "number") {
-              normalPassResolutionScale = this._pmndrsNativeNormalPassResolutionScale;
-            }
-            if (!this.pmndrsNativeNormalPass) {
-              throw new Error("NormalPass unavailable.");
-            }
-            this.pmndrsNativeSsaoEffect = new PP.SSAOEffect(camera, this.pmndrsNativeNormalPass.texture, nativeSsaoOptions);
-            this._pmndrsNativeSsaoBudget = {
-              preset: aoPreset,
-              samples: nativeSsaoOptions.samples,
-              rings: nativeSsaoOptions.rings,
-              resolutionScale: nativeSsaoOptions.resolutionScale,
-              normalPassResolutionScale
-            };
-            if (this.pmndrsNativeSsaoEffect.defines && this.pmndrsNativeSsaoEffect.defines.set) {
-              this.pmndrsNativeSsaoEffect.defines.set("THRESHOLD", String(nativeSsaoOptions.depthAwareUpsamplingThreshold));
-            }
-            effects.push(this.pmndrsNativeSsaoEffect);
-          } catch (err) {
-            console.warn("[VRodos] pmndrs native SSAOEffect construction failed, skipping AO:", err);
-            disposePmndrsNativeSsaoResources(this);
-            this.pmndrsNativeSsaoEffect = null;
-            this._pmndrsNativeSsaoBudget = null;
-          }
-        } else if (!this._pmndrsNativeSsaoSkipWarned) {
-          console.info(`[VRodos] pmndrs pipeline: AO preset "${aoPreset}" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.`);
-          this._pmndrsNativeSsaoSkipWarned = true;
+      this.pmndrsAoPass = null;
+      if (aoPreset !== "off") {
+        try {
+          const normalPass = ensurePmndrsSharedNormalPass(this, composer, scene, camera, PP, 1, "gtao");
+          if (!normalPass || !window.VRODOSAmbientOcclusion) throw new Error("GTAO support is unavailable.");
+          this.pmndrsAoPass = new window.VRODOSAmbientOcclusion.Pass(scene, camera, normalPass, aoPreset);
+          this._pmndrsAoBudget = { preset: aoPreset, ...this.pmndrsAoPass.options, normalPassResolutionScale: 1 };
+          composer.addPass(this.pmndrsAoPass);
+        } catch (err) {
+          console.warn("[VRodos] GTAO construction failed, skipping AO:", err);
+          disposePmndrsAoResources(this);
+          this._pmndrsAoBudget = null;
         }
       }
       const bloomVal = typeof this.getBloomStrengthValue === "function" ? this.getBloomStrengthValue() : 0;
@@ -4461,8 +4376,8 @@ ${selectedSummaries.join("\n")}`);
           if (self.pmndrsCloudLightingMaskPass && typeof self.pmndrsCloudLightingMaskPass.mainCamera !== "undefined") {
             self.pmndrsCloudLightingMaskPass.mainCamera = camera;
           }
-          if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== "undefined") {
-            self.pmndrsNativeSsaoEffect.mainCamera = camera;
+          if (self.pmndrsAoPass && typeof self.pmndrsAoPass.mainCamera !== "undefined") {
+            self.pmndrsAoPass.mainCamera = camera;
           }
           if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== "undefined") {
             self.pmndrsAerialPerspectiveEffect.mainCamera = camera;

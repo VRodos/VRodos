@@ -26,6 +26,7 @@ import {
   createTakramAtmosphereMoonShaderPatchPlugin,
   createTakramCloudsShaderPatchPlugin,
   createThreeClassicLoaderUrlPatchPlugin,
+  createThreeAoShaderWhitespacePlugin,
   rewriteTakramCloudBundleAssetDefaults
 } from './build/vendor-patches.mjs';
 
@@ -89,6 +90,7 @@ async function buildPostprocessingBundle() {
   await buildBrowserBundle({
     entryPoint: entry('postprocessing'),
     outfile: artifactPath('postprocessing'),
+    plugins: [createThreeAoShaderWhitespacePlugin()],
     virtualModules: {
       three: {
         globalExpression: 'window.THREE || {}'

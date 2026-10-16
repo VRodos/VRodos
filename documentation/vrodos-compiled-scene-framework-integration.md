@@ -328,12 +328,14 @@ PMNDRS is the modern post-processing path. It is selected per scene through `sce
 When active, `window.POSTPROCESSING` provides the PMNDRS composer and effect classes. VRodos builds a scene-specific `EffectComposer` lazily on the first valid render frame. The current PMNDRS order is:
 
 1. `RenderPass`
-2. optional `NormalPass` for native SSAO
+2. optional shared full-resolution `NormalPass` and desktop GTAO (matching geometry depth, denoise, depth-aware MSAA-safe composite)
 3. optional standalone Takram sun `LensFlareEffect`
-4. primary `EffectPass` for optional Takram clouds, aerial perspective, SSAO, bloom, tone mapping, color, LUT, vignette, and noise
-5. optional standalone chromatic aberration
-6. optional standalone SMAA
+4. optional atmosphere `EffectPass` for clouds and aerial perspective
+5. primary `EffectPass` for bloom, tone mapping, color, LUT, vignette, and noise
+6. optional standalone chromatic aberration, then independently selected SMAA
 7. screen
+
+MSAA remains enabled with desktop GTAO. Baked AO strength remains authored; immersive standalone rendering continues to use native MSAA with screen-space AO disabled.
 
 ## 7. Takram Atmosphere And Lighting Integration
 
@@ -367,7 +369,7 @@ Runtime contract:
 - Takram cloud temporal upscaling stays enabled by default for desktop performance. Use `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` only for visual comparison because full-resolution cloud raymarching is expensive.
 - `pmndrsAerialPerspectiveEnabled` remains the authored Aerial Haze toggle, but active clouds require the AerialPerspective composition pass for cloud overlay/shadow routing. The compile dialog shows that as a checked/locked effective state while preserving the authored toggle value for when clouds are later disabled.
 - Active daytime desktop clouds also drive a CPU-only sun-occlusion bridge on Takram light-source scene lighting and the visible desktop sun disk. It combines authored cloud coverage with a Horizon sun-disk cloud-opacity sample, then dims `SunDirectionalLight`, `SkyLightProbe`, hemisphere fill, ambient bounce, reflection intensity, Takram lens flare, and direct shadow opacity/softness while keeping direct sun shadows active under heavy sun-disk occlusion. High/ultra profiles apply Takram Basic-demo-aligned phase settings (`accuratePhaseFunction`, `accurateSunSkyLight`, `multiScatteringOctaves=8`, `shadow.maxFar=100000`) so the native disk is veiled by cloud composition (`cloudSkySunDiskMode=takram-phase`). Lower/debug fallback can still use the public `SkyMaterial.sun` flag plus a VRodos sprite when the projected disk is covered. Moon/night readability remains unchanged because the bridge is gated by direct sun visibility.
-- High and Ultra desktop cloud profiles generate Takram `CloudsEffect.lightShafts` only when `pmndrsCloudsLightShaftsEnabled` is authored on, clouds are active, the sun is above the horizon, and the renderer is non-XR desktop. Generation is independent of coverage and downstream Aerial readiness; the resulting buffer routes only after masked AerialPerspective is ready. The cloud-owned shared `NormalPass` must be retained through SSAO setup and reused when AO is active. Low and Medium keep light shafts disabled for lower GPU cost. Diagnostics distinguish `lightShaftsRequested` from effective `lightShafts` and report `author-disabled`, `profile-disabled`, `not-desktop`, `sun-below-horizon`, or resource-readiness reasons as applicable. `?vrodos_debug_disable_pmndrs_cloud_light_shafts=1` remains available for troubleshooting.
+- High and Ultra desktop cloud profiles generate Takram `CloudsEffect.lightShafts` only when `pmndrsCloudsLightShaftsEnabled` is authored on, clouds are active, the sun is above the horizon, and the renderer is non-XR desktop. Generation is independent of coverage and downstream Aerial readiness; the resulting buffer routes only after masked AerialPerspective is ready. The cloud-owned shared `NormalPass` must be retained through GTAO setup and reused when AO is active. Low and Medium keep light shafts disabled for lower GPU cost. Diagnostics distinguish `lightShaftsRequested` from effective `lightShafts` and report `author-disabled`, `profile-disabled`, `not-desktop`, `sun-below-horizon`, or resource-readiness reasons as applicable. `?vrodos_debug_disable_pmndrs_cloud_light_shafts=1` remains available for troubleshooting.
 - Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
 - The cloud authoring surface stays intentionally narrow: enable, quality, coverage, style, wind animation, wind speed, wind direction, and Light Shafts. Tone mapping, location, and local date/time remain the UI controls for atmosphere/celestial context; deeper Takram cloud fields are runtime profile choices surfaced through diagnostics.
 - Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.

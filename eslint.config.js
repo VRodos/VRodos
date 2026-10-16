@@ -230,5 +230,9 @@ module.exports = [
             globals: runtimeGlobals
         },
         rules: baseRules
+    },
+    {
+        files: ['assets/js/runtime/master/vrodos_gtao_pass.js'],
+        languageOptions: { sourceType: 'module' }
     }
 ];
