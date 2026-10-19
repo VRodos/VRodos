@@ -754,7 +754,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'teleport-point': () => VRODOS.api.createTeleportPoint(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
-    const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);
+    const addCategory = VRODOS.utils.getSceneAssetSourceCategory(sceneRecord);
 
     // Execute the specific handler or fallback to generic GLB asset loader
     try {

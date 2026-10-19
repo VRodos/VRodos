@@ -316,4 +316,17 @@ await flush();
 const insertedReady = VRODOS.editor.sceneRegistry.get('insertedReady');
 assert.equal(new THREE.Box3().setFromObject(insertedReady).getSize(new THREE.Vector3()).x, 25, 'new ready oversized models fit before selection');
 assert.deepEqual(insertedReady.position.toArray(), [1, 2, 3]);
+const beforeVideoLoads = loadCalls;
+const video = VRODOS.api.addAssetToCanvas('video-without-glb', '', 'Video', {
+    asset_id: 3656, category_name: 'Video', category_slug: 'video', glb_id: '', glb_path: '',
+    video_path: '/sample.mp4', video_autoplay: '1', video_loop: '1'
+}, [2, 3, 4]);
+assert.ok(video?.isGroup, 'a video with the display name Video must create its generated display without a GLB');
+assert.equal(video.category_slug, 'video');
+assert.equal(video.video_path, '/sample.mp4', 'the generated display must retain its video source');
+assert.equal(video.video_autoplay, '1');
+assert.equal(video.video_loop, '1');
+assert.deepEqual(video.position.toArray(), [2, 3, 4], 'the video must appear at the drop position');
+assert.equal(loadCalls, beforeVideoLoads, 'adding a video must not download a GLB');
+VRODOS.api.clearSceneForReload();
 console.log('Editor asset preparation lifecycle tests passed.');
