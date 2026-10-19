@@ -332,9 +332,9 @@ assert.equal(loadCalls, beforeVideoLoads, 'adding a video must not download a GL
 VRODOS.api.clearSceneForReload();
 const imageTexture = new THREE.Texture();
 const imageUrls = [];
-context.THREE = { ...THREE, TextureLoader: class {
+context.THREE = { ...THREE, TextureLoader: class extends THREE.TextureLoader {
     load(url, onLoad) {
-        imageUrls.push(url);
+        imageUrls.push(this.manager.resolveURL(url));
         Promise.resolve().then(() => onLoad(imageTexture));
         return imageTexture;
     }
