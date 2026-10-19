@@ -582,18 +582,21 @@
 
                 const columns = runtime.api.row(frame.content, {
                     alignItems: "flex-start",
+                    flexShrink: 0,
                     gapColumn: 34,
                     width: "100%"
                 });
                 const sourceColumn = runtime.api.column(columns, {
                     flexGrow: 1,
-                    gapRow: 14,
-                    width: "50%"
+                    flexBasis: 0,
+                    minWidth: 0,
+                    gapRow: 14
                 });
                 const targetColumn = runtime.api.column(columns, {
                     flexGrow: 1,
-                    gapRow: 14,
-                    width: "50%"
+                    flexBasis: 0,
+                    minWidth: 0,
+                    gapRow: 14
                 });
                 runtime.api.text(sourceColumn, {
                     text: "Sources",
@@ -612,24 +615,14 @@
                 state.sourceOrder.forEach((sourceId) => {
                     state.view.sourceButtons[sourceId] = runtime.api.button(sourceColumn, Object.assign(
                         pairSourceButtonOptions(runtime, state, sourceId),
-                        {
-                            width: "100%",
-                            minHeight: buttonSizing.height,
-                            textSize: buttonSizing.textSize,
-                            lineHeight: buttonSizing.lineHeight
-                        }
+                        buttonSizing
                     ));
                 });
 
                 state.targetOrder.forEach((targetId) => {
                     state.view.targetButtons[targetId] = runtime.api.button(targetColumn, Object.assign(
                         pairTargetButtonOptions(runtime, state, targetId),
-                        {
-                            width: "100%",
-                            minHeight: buttonSizing.height,
-                            textSize: buttonSizing.textSize,
-                            lineHeight: buttonSizing.lineHeight
-                        }
+                        buttonSizing
                     ));
                 });
             }
@@ -638,7 +631,10 @@
 
     function getPairButtonSizing(state) {
         return {
-            height: state.entries.length > 6 ? 58 : 76,
+            width: "100%",
+            height: "auto",
+            minHeight: state.entries.length > 6 ? 58 : 76,
+            paddingY: 12,
             textSize: state.entries.length > 6 ? 19 : 22,
             lineHeight: "126%"
         };
@@ -724,23 +720,13 @@
         state.sourceOrder.forEach((sourceId) => {
             runtime.api.updateButton(view.sourceButtons[sourceId], Object.assign(
                 pairSourceButtonOptions(runtime, state, sourceId),
-                {
-                    width: "100%",
-                    minHeight: buttonSizing.height,
-                    textSize: buttonSizing.textSize,
-                    lineHeight: buttonSizing.lineHeight
-                }
+                buttonSizing
             ));
         });
         state.targetOrder.forEach((targetId) => {
             runtime.api.updateButton(view.targetButtons[targetId], Object.assign(
                 pairTargetButtonOptions(runtime, state, targetId),
-                {
-                    width: "100%",
-                    minHeight: buttonSizing.height,
-                    textSize: buttonSizing.textSize,
-                    lineHeight: buttonSizing.lineHeight
-                }
+                buttonSizing
             ));
         });
     }

@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VRodos_Text_Asset_Helper {
 	public const MAX_TEXT_LENGTH = 2000;
+	public const SUPPORTED_FORMATS = [ 'txt', 'rtf', 'docx' ];
 
 	public static function is_supported_text_attachment( string $mime_type, string $url = '', string $title = '' ): bool {
 		$mime_type = strtolower( trim( $mime_type ) );
@@ -23,6 +24,9 @@ class VRodos_Text_Asset_Helper {
 
 	public static function detect_format( string $filename_or_url, string $mime_type = '' ): string {
 		$mime_type = strtolower( trim( $mime_type ) );
+		if ( $mime_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ) {
+			return 'docx';
+		}
 		if ( $mime_type === 'text/plain' ) {
 			return 'txt';
 		}
@@ -36,7 +40,7 @@ class VRodos_Text_Asset_Helper {
 		}
 
 		$extension = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
-		return in_array( $extension, [ 'txt', 'rtf' ], true ) ? $extension : '';
+		return in_array( $extension, self::SUPPORTED_FORMATS, true ) ? $extension : '';
 	}
 
 	public static function extract_from_file( string $path, string $format = '' ): array {
@@ -52,7 +56,7 @@ class VRodos_Text_Asset_Helper {
 		}
 
 		$format = $format !== '' ? $format : self::detect_format( $path );
-		if ( ! in_array( $format, [ 'txt', 'rtf' ], true ) ) {
+		if ( ! in_array( $format, self::SUPPORTED_FORMATS, true ) ) {
 			return [
 				'success'         => false,
 				'text'            => '',
@@ -63,8 +67,8 @@ class VRodos_Text_Asset_Helper {
 			];
 		}
 
-		$raw = file_get_contents( $path );
-		if ( ! is_string( $raw ) || $raw === '' ) {
+		$raw = $format === 'docx' ? '' : file_get_contents( $path );
+		if ( $format !== 'docx' && ( ! is_string( $raw ) || $raw === '' ) ) {
 			return [
 				'success'         => false,
 				'text'            => '',
@@ -76,7 +80,11 @@ class VRodos_Text_Asset_Helper {
 		}
 
 		try {
-			$text = $format === 'rtf' ? self::rtf_to_plain_text( $raw ) : self::decode_plain_text( $raw );
+			$text = match ( $format ) {
+				'docx' => self::docx_to_plain_text( $path ),
+				'rtf'  => self::rtf_to_plain_text( $raw ),
+				default => self::decode_plain_text( $raw ),
+			};
 			if ( ! self::is_valid_utf8( $text ) ) {
 				throw new RuntimeException( 'Text file contains invalid UTF-8.' );
 			}
@@ -157,6 +165,54 @@ class VRodos_Text_Asset_Helper {
 		// Both the asset editor and scene editor update the shared asset browser cache.
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
+	}
+
+	private static function docx_to_plain_text( string $path ): string {
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			throw new RuntimeException( 'DOCX extraction requires the PHP zip extension.' );
+		}
+		$zip = new ZipArchive();
+		if ( 0 === filesize( $path ) || true !== $zip->open( $path ) ) {
+			throw new RuntimeException( 'DOCX file could not be opened.' );
+		}
+		try {
+			$entry = $zip->statName( 'word/document.xml' );
+			if ( ! $entry || $entry['size'] > 10 * 1024 * 1024 ) {
+				throw new RuntimeException( 'DOCX document content is missing or exceeds the 10 MB extraction limit.' );
+			}
+			$xml = $zip->getFromName( 'word/document.xml' );
+		} finally {
+			$zip->close();
+		}
+		$document = new DOMDocument();
+		$previous_errors = libxml_use_internal_errors( true );
+		try {
+			if ( ! is_string( $xml ) || '' === $xml || ! $document->loadXML( $xml, LIBXML_NONET ) || $document->doctype ) {
+				throw new RuntimeException( 'DOCX document XML is invalid.' );
+			}
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous_errors );
+		}
+		$namespace = $document->documentElement->namespaceURI;
+		if ( ! in_array( $namespace, [ 'http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'http://purl.oclc.org/ooxml/wordprocessingml/main' ], true ) ) {
+			throw new RuntimeException( 'DOCX document has no supported Word text content.' );
+		}
+		$xpath = new DOMXPath( $document );
+		$xpath->registerNamespace( 'w', $namespace );
+		$paragraphs = [];
+		foreach ( $xpath->query( '/w:document/w:body//w:p' ) as $paragraph ) {
+			$text = '';
+			foreach ( $xpath->query( './/w:t | .//w:tab | .//w:br | .//w:cr', $paragraph ) as $node ) {
+				$text .= match ( $node->localName ) {
+					't'     => $node->textContent,
+					'tab'   => "\t",
+					default => "\n",
+				};
+			}
+			$paragraphs[] = $text;
+		}
+		return implode( "\n", $paragraphs );
 	}
 
 	private static function normalize_text( string $text ): string {

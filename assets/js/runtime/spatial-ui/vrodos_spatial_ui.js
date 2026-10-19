@@ -2367,6 +2367,7 @@ import { MSDF } from "@zappar/msdf-generator";
                 minHeight: opts.minHeight,
                 flexGrow: opts.flexGrow,
                 flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 0,
+                paddingY: opts.paddingY,
                 pointerEvents: disabled ? "none" : "auto",
                 zIndex: opts.zIndex || 30,
                 onClick: disabled ? undefined : opts.onClick,
@@ -2589,7 +2590,7 @@ import { MSDF } from "@zappar/msdf-generator";
                         alignItems: "center",
                         flexGrow: 1,
                         width: "100%",
-                        height: "100%",
+                        height: opts.height === "auto" ? "auto" : "100%",
                         pointerEvents: "none"
                     }));
                     const labelText = new Text(resolveButtonTextProps(opts));

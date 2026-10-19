@@ -750,11 +750,12 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
         '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
         'video': () => VRODOS.api.createVideoAsset(nameModel, addedAt),
+        'image': () => VRODOS.loader.loadImageAsset(undefined, nameModel, sceneRecord, { [nameModel]: sceneRecord }),
         'primitive-plane': () => VRODOS.api.createPrimitivePlane(nameModel, addedAt),
         'teleport-point': () => VRODOS.api.createTeleportPoint(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
-    const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);
+    const addCategory = VRODOS.utils.getSceneAssetSourceCategory(sceneRecord);
 
     // Execute the specific handler or fallback to generic GLB asset loader
     try {

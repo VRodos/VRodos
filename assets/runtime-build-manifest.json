@@ -27,6 +27,7 @@
         "assets/js/runtime/components/door_component.js",
         "assets/js/runtime/components/audio_component.js",
         "assets/js/runtime/components/video_component.js",
+        "assets/js/runtime/components/vrodos_text_panel.component.js",
         "assets/js/runtime/components/vrodos_camera_start.component.js"
       ],
       "generatedBy": "build:runtime"

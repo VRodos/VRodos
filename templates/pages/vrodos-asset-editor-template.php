@@ -369,13 +369,13 @@ else { ?>
                             <i data-lucide="type" class="tw-w-4 tw-h-4 tw-text-primary"></i>
                         </div>
                         <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
-                            <input class="tw-hidden" type="file" name="textAssetFileInput" id="textAssetFileInput" accept=".txt,.rtf,text/plain,application/rtf"/>
+                            <input class="tw-hidden" type="file" name="textAssetFileInput" id="textAssetFileInput" accept=".txt,.rtf,.docx,text/plain,application/rtf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"/>
                             <label for="textAssetFileInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
                                 <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
                                     <i data-lucide="upload-cloud" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
                                 </div>
                                 <div>
-                                    <p class="tw-text-xs tw-font-bold tw-text-slate-800">TXT / RTF Upload</p>
+                                    <p class="tw-text-xs tw-font-bold tw-text-slate-800">TXT / RTF / DOCX Upload</p>
                                     <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">
                                         <?php echo ! empty( $text_asset_file_url ) ? 'Source file saved' : 'Optional source file'; ?>
                                     </p>

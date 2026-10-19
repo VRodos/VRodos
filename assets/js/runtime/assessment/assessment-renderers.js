@@ -433,28 +433,28 @@
                 ? availableSourceIds.map((sourceId) => {
                     const entry = state.entriesById[sourceId];
                     const isSelected = state.selectedSourceId === sourceId;
-                    return `<button type="button" draggable="true" data-drag-source-id="${escapeHtml(sourceId)}" style="border-radius:999px;padding:9px 12px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${isSelected ? "rgba(92,200,135,0.14)" : "#ffffff"};cursor:grab;font-size:13px;font-weight:700;color:#0f172a;">${escapeHtml(entry.source || "Source")}</button>`;
+                    return `<button type="button" draggable="true" data-drag-source-id="${escapeHtml(sourceId)}" style="max-width:100%;white-space:normal;overflow-wrap:anywhere;border-radius:999px;padding:9px 12px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${isSelected ? "rgba(92,200,135,0.14)" : "#ffffff"};cursor:grab;font-size:13px;font-weight:700;color:#0f172a;">${escapeHtml(entry.source || "Source")}</button>`;
                 }).join("")
                 : '<div style="font-size:14px;color:#166534;font-weight:700;">All sources are placed.</div>',
             "</div>",
             "</div>",
-            '<div style="min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-content:start;">',
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:10px;align-content:start;">',
             state.targetOrder.map((targetId) => {
                 const entry = state.entriesById[targetId];
                 const assignedSourceId = state.assignmentsByTarget[targetId] || "";
                 const assignedSource = assignedSourceId ? state.entriesById[assignedSourceId] : null;
                 return [
-                    `<div data-drop-target-id="${escapeHtml(targetId)}" style="border-radius:16px;border:1px dashed ${assignedSource ? "rgba(92,200,135,0.9)" : "rgba(148,163,184,0.6)"};padding:12px 14px;background:${assignedSource ? "rgba(92,200,135,0.10)" : "rgba(248,250,252,0.95)"};">`,
+                    `<div data-drop-target-id="${escapeHtml(targetId)}" style="min-width:0;border-radius:16px;border:1px dashed ${assignedSource ? "rgba(92,200,135,0.9)" : "rgba(148,163,184,0.6)"};padding:12px 14px;background:${assignedSource ? "rgba(92,200,135,0.10)" : "rgba(248,250,252,0.95)"};">`,
                     `<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:8px;">Target</div>`,
                     `<div style="font-size:14px;line-height:1.2;font-weight:700;color:#0f172a;margin-bottom:10px;overflow-wrap:anywhere;">${escapeHtml(entry.target || "Target")}</div>`,
                     assignedSource
-                        ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="display:inline-flex;align-items:center;border-radius:999px;padding:9px 12px;background:#ffffff;border:1px solid rgba(92,200,135,0.9);font-size:13px;font-weight:700;color:#166534;">${escapeHtml(assignedSource.source || "Source")}</span><button type="button" data-clear-target-id="${escapeHtml(targetId)}" style="border:0;background:transparent;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">Clear</button></div>`
+                        ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="min-width:0;overflow-wrap:anywhere;display:inline-flex;align-items:center;border-radius:999px;padding:9px 12px;background:#ffffff;border:1px solid rgba(92,200,135,0.9);font-size:13px;font-weight:700;color:#166534;">${escapeHtml(assignedSource.source || "Source")}</span><button type="button" data-clear-target-id="${escapeHtml(targetId)}" style="flex-shrink:0;border:0;background:transparent;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">Clear</button></div>`
                         : '<div style="font-size:13px;color:#94a3b8;">Drop a source here</div>',
                     "</div>"
                 ].join("");
             }).join(""),
             "</div>"
-        ].join(""), "display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:14px;");
+        ].join(""), "display:grid;grid-template-rows:auto auto auto;align-content:start;gap:14px;overflow-y:auto;");
 
         runtime.body.querySelectorAll("[data-drag-source-id]").forEach((button) => {
             button.addEventListener("click", () => {

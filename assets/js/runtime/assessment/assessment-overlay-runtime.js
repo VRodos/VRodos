@@ -177,12 +177,8 @@
 
         runtime.show = function () {
             ensureDomOverlayParent(runtime.root);
-            if (runtime.root.open && typeof runtime.root.close === "function") {
-                runtime.root.style.display = "none";
-                runtime.root.close();
-            }
             runtime.root.style.display = "flex";
-            if (typeof runtime.root.showModal === "function") {
+            if (!runtime.root.open && typeof runtime.root.showModal === "function") {
                 try {
                     runtime.root.showModal();
                 } catch (error) {
@@ -339,7 +335,7 @@
 
         dismissButton.addEventListener("click", runtime.hide);
         root.addEventListener("close", () => {
-            if (runtime.root.style.display === "none") {
+            if (runtime.root.open || runtime.root.style.display === "none") {
                 return;
             }
             runtime.root.style.display = "none";

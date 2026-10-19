@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 define( 'ABSPATH', __DIR__ . DIRECTORY_SEPARATOR );
 
+function wp_parse_url( string $url, int $component = -1 ) {
+	return parse_url( $url, $component );
+}
+
 function wp_check_invalid_utf8( string $text, bool $strip = false ): string {
 	if ( 1 !== preg_match( '//u', $text ) ) {
 		throw new RuntimeException( 'Extractor passed invalid UTF-8 to text normalization.' );
@@ -64,4 +68,51 @@ foreach ( [
 	}
 }
 
-echo "3D text encoding tests passed.\n";
+foreach ( [
+	[ 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'https://example.test/download/1', '' ],
+	[ 'application/octet-stream', 'https://example.test/falles.docx?download=1', '' ],
+	[ '', 'https://example.test/download/1', 'falles (text).DOCX' ],
+] as [ $mime, $url, $title ] ) {
+	if ( ! VRodos_Text_Asset_Helper::is_supported_text_attachment( $mime, $url, $title ) ) {
+		throw new RuntimeException( 'DOCX must be recognized without a repository category.' );
+	}
+}
+
+function extract_docx_fixture( string $xml, string $entry = 'word/document.xml' ): array {
+	$path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vrodos-docx-' . bin2hex( random_bytes( 8 ) ) . '.docx';
+	try {
+		$zip = new ZipArchive();
+		$zip->open( $path, ZipArchive::CREATE );
+		$zip->addFromString( $entry, $xml );
+		$zip->close();
+		return VRodos_Text_Asset_Helper::extract_from_file( $path, 'docx' );
+	} finally {
+		unlink( $path );
+	}
+}
+
+$docx_xml = '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
+	. '<w:p><w:r><w:t>Les Falles </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t>de València &amp; Ελληνικά</w:t><w:br/><w:t>Segona línia</w:t></w:r></w:p>'
+	. '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>Foc</w:t><w:tab/><w:t>i música</w:t></w:r></w:p></w:tc></w:tr></w:tbl>'
+	. '</w:body></w:document>';
+assert_extracted_text( 'DOCX styled runs, paragraphs, breaks and table text', extract_docx_fixture( $docx_xml ), "Les Falles de València & Ελληνικά\nSegona línia\nFoc i música" );
+$long_docx = str_replace( 'Les Falles ', str_repeat( 'a', 2100 ), $docx_xml );
+$truncated = extract_docx_fixture( $long_docx );
+if ( ! $truncated['success'] || ! $truncated['truncated'] || ! str_ends_with( $truncated['text'], '...' ) ) {
+	throw new RuntimeException( 'DOCX must use the existing text slab length limit.' );
+}
+if ( extract_fixture( 'Not a DOCX archive', 'docx' )['success'] ) {
+	throw new RuntimeException( 'Invalid DOCX must be rejected.' );
+}
+foreach ( [
+	[ $docx_xml, 'other.xml' ],
+	[ '<w:document>', 'word/document.xml' ],
+	[ '', 'word/document.xml' ],
+	[ '<!DOCTYPE document [<!ENTITY external SYSTEM "file:///missing">]>' . $docx_xml, 'word/document.xml' ],
+	[ str_repeat( 'a', 10 * 1024 * 1024 + 1 ), 'word/document.xml' ],
+] as [ $xml, $entry ] ) {
+	if ( extract_docx_fixture( $xml, $entry )['success'] ) {
+		throw new RuntimeException( 'Missing, malformed, DTD-bearing or oversized DOCX content must be rejected.' );
+	}
+}
+echo "3D text encoding and DOCX extraction tests passed.\n";
