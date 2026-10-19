@@ -22,7 +22,7 @@ final class VRodos_Immerse_Hub {
 		return home_url( '/immerse/' );
 	}
 
-	/** @return array<int, array{title:string, id:string, scenes:array}> */
+	/** @return array<int, array{title:string, id:string, lessons:array<int, array{id:int, title:string, scenes:array}>}> */
 	public static function catalog(): array {
 		$projects = get_posts( [
 			'post_type' => 'vrodos_game',
@@ -87,14 +87,19 @@ final class VRodos_Immerse_Hub {
 					$groups[ $group_key ] = [
 						'id' => $group_key,
 						'title' => '' === $use_case_name ? 'Unassigned' : $use_case_name,
-						'scenes' => [],
+						'lessons' => [],
 					];
 				}
-				array_push( $groups[ $group_key ]['scenes'], ...$scenes );
+				usort( $scenes, static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) ?: $a['id'] <=> $b['id'] );
+				$groups[ $group_key ]['lessons'][] = [
+					'id' => $project_id,
+					'title' => get_the_title( $project_id ),
+					'scenes' => $scenes,
+				];
 			}
 		}
 		foreach ( $groups as &$group ) {
-			usort( $group['scenes'], static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) ?: $a['id'] <=> $b['id'] );
+			usort( $group['lessons'], static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) ?: $a['id'] <=> $b['id'] );
 		}
 		unset( $group );
 		usort( $groups, static function ( array $a, array $b ): int {

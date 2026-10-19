@@ -27,41 +27,49 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 			</div>
 		<?php else : ?>
 			<?php foreach ( $groups as $group_index => $group ) : ?>
+				<?php $scene_count = array_sum( array_map( 'count', array_column( $group['lessons'], 'scenes' ) ) ); ?>
 				<section class="immerse-hub-project" aria-labelledby="immerse-use-case-<?php echo esc_attr( $group_index ); ?>">
 					<div class="immerse-hub-project-heading">
 						<h2 id="immerse-use-case-<?php echo esc_attr( $group_index ); ?>"><?php echo esc_html( $group['title'] ); ?></h2>
-						<span><?php echo esc_html( count( $group['scenes'] ) ); ?> <?php echo count( $group['scenes'] ) === 1 ? 'scene' : 'scenes'; ?></span>
+						<span><?php echo esc_html( $scene_count ); ?> <?php echo $scene_count === 1 ? 'scene' : 'scenes'; ?></span>
 					</div>
-					<div class="immerse-hub-grid">
-						<?php foreach ( $group['scenes'] as $scene ) : ?>
-							<?php $available = '' !== $scene['url']; ?>
-							<?php if ( $available ) : ?>
-								<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?> in a new tab">
-							<?php else : ?>
-								<div class="immerse-hub-card is-unavailable">
-							<?php endif; ?>
-								<div class="immerse-hub-preview">
-									<?php if ( $scene['preview'] ) : ?>
-										<img src="<?php echo esc_url( $scene['preview'] ); ?>" alt="" loading="lazy">
-									<?php else : ?>
-										<div class="immerse-hub-placeholder"><i data-lucide="cuboid" aria-hidden="true"></i></div>
-									<?php endif; ?>
-									<div class="immerse-hub-badges">
-										<span title="Build mode: <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?>"><i data-lucide="<?php echo esc_attr( $mode_icons[ $scene['mode'] ] ); ?>" aria-hidden="true"></i><?php echo esc_html( $mode_labels[ $scene['mode'] ] ); ?></span>
-									</div>
-								</div>
-								<div class="immerse-hub-card-body">
-									<h3><?php echo esc_html( $scene['title'] ); ?></h3>
-									<?php if ( $scene['builtAt'] > 0 ) : ?>
-										<time class="immerse-hub-built-at" datetime="<?php echo esc_attr( gmdate( 'c', $scene['builtAt'] ) ); ?>">Latest build: <?php echo esc_html( wp_date( 'M j, Y · g:i A', $scene['builtAt'] ) ); ?></time>
-									<?php endif; ?>
+					<div class="immerse-hub-lessons">
+						<?php foreach ( $group['lessons'] as $lesson ) : ?>
+							<section class="immerse-hub-lesson<?php echo count( $lesson['scenes'] ) > 2 ? ' immerse-hub-lesson-wide' : ''; ?>" aria-labelledby="immerse-lesson-<?php echo esc_attr( $lesson['id'] ); ?>">
+								<h3 id="immerse-lesson-<?php echo esc_attr( $lesson['id'] ); ?>"><?php echo esc_html( $lesson['title'] ); ?></h3>
+								<div class="immerse-hub-grid">
+									<?php foreach ( $lesson['scenes'] as $scene ) : ?>
+									<?php $available = '' !== $scene['url']; ?>
 									<?php if ( $available ) : ?>
-										<span class="immerse-hub-enter">Enter scene <i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
+										<a class="immerse-hub-card" href="<?php echo esc_url( $scene['url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Open <?php echo esc_attr( $scene['title'] ); ?>, <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?> in a new tab">
 									<?php else : ?>
-										<span class="immerse-hub-unavailable">Public runtime URL is not configured in VRodos Settings.</span>
+										<div class="immerse-hub-card is-unavailable">
 									<?php endif; ?>
+										<div class="immerse-hub-preview">
+											<?php if ( $scene['preview'] ) : ?>
+												<img src="<?php echo esc_url( $scene['preview'] ); ?>" alt="" loading="lazy">
+											<?php else : ?>
+												<div class="immerse-hub-placeholder"><i data-lucide="cuboid" aria-hidden="true"></i></div>
+											<?php endif; ?>
+											<div class="immerse-hub-badges">
+												<span title="Build mode: <?php echo esc_attr( $mode_labels[ $scene['mode'] ] ); ?>"><i data-lucide="<?php echo esc_attr( $mode_icons[ $scene['mode'] ] ); ?>" aria-hidden="true"></i><?php echo esc_html( $mode_labels[ $scene['mode'] ] ); ?></span>
+											</div>
+										</div>
+										<div class="immerse-hub-card-body">
+											<h4><?php echo esc_html( $scene['title'] ); ?></h4>
+											<?php if ( $scene['builtAt'] > 0 ) : ?>
+												<time class="immerse-hub-built-at" datetime="<?php echo esc_attr( gmdate( 'c', $scene['builtAt'] ) ); ?>">Latest build: <?php echo esc_html( wp_date( 'M j, Y · g:i A', $scene['builtAt'] ) ); ?></time>
+											<?php endif; ?>
+											<?php if ( $available ) : ?>
+												<span class="immerse-hub-enter">Enter scene <i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
+											<?php else : ?>
+												<span class="immerse-hub-unavailable">Public runtime URL is not configured in VRodos Settings.</span>
+											<?php endif; ?>
+										</div>
+									<?php if ( $available ) : ?></a><?php else : ?></div><?php endif; ?>
+									<?php endforeach; ?>
 								</div>
-							<?php if ( $available ) : ?></a><?php else : ?></div><?php endif; ?>
+							</section>
 						<?php endforeach; ?>
 					</div>
 				</section>
