@@ -90,6 +90,7 @@ for (const path of [
     'assets/js/editor/scene/vrodos_scene_registry.js',
     'assets/js/editor/scene/vrodos_scene_object_factory.js',
     'assets/js/editor/loaders/vrodos_loader_object_factories.js',
+    'assets/js/editor/loaders/vrodos_loader_generated_assets.js',
     'assets/js/editor/loaders/vrodos_loader_glb_asset_cache.js',
     'assets/js/editor/scene/vrodos_scene_disposal.js',
     'assets/js/runtime/master/vrodos_model_origin.js',
@@ -328,5 +329,53 @@ assert.equal(video.video_autoplay, '1');
 assert.equal(video.video_loop, '1');
 assert.deepEqual(video.position.toArray(), [2, 3, 4], 'the video must appear at the drop position');
 assert.equal(loadCalls, beforeVideoLoads, 'adding a video must not download a GLB');
+VRODOS.api.clearSceneForReload();
+const imageTexture = new THREE.Texture();
+const imageUrls = [];
+context.THREE = { ...THREE, TextureLoader: class {
+    load(url, onLoad) {
+        imageUrls.push(url);
+        Promise.resolve().then(() => onLoad(imageTexture));
+        return imageTexture;
+    }
+} };
+const beforeImageLoads = loadCalls;
+const image = VRODOS.api.addAssetToCanvas('image-without-glb', '', 'Image', {
+    asset_id: 3657, category_name: 'Image', category_slug: 'image', glb_id: '', glb_path: '',
+    image_path: '/sample.png'
+}, [4, 3, 2]);
+assert.ok(image?.isMesh, 'a standalone image must create its plane without a GLB');
+assert.equal(image.material.map, imageTexture, 'the standalone plane must display the image texture');
+assert.deepEqual(imageUrls, ['/sample.png']);
+assert.deepEqual(image.position.toArray(), [4, 3, 2], 'the image must appear at the drop position');
+assert.equal(loadCalls, beforeImageLoads, 'adding an image must not download a GLB');
+await flush();
+VRODOS.api.clearSceneForReload();
+const slabText = 'Les Falles de València\nΕλληνικά';
+const drawnText = [];
+context.atob = atob;
+context.TextDecoder = TextDecoder;
+const canvasContext = {
+    clearRect() {}, measureText: text => ({ width: text.length * 12 }),
+    fillText: text => drawnText.push(text)
+};
+const createElement = context.document.createElement;
+context.document.createElement = tag => tag === 'canvas' ? { getContext: () => canvasContext } : createElement(tag);
+const textAttributes = {
+    category_name: '3D Text', category_slug: '3d-text', asset_id: '3658',
+    asset_slug: 'falles-text-docx', text_format: 'docx', glb_id: '',
+    text_content_b64: Buffer.from(slabText).toString('base64')
+};
+const textDrag = VRODOS.utils.createAssetDragPayload({
+    attributes: Object.entries(textAttributes).map(([key, value]) => ({ name: `data-${key}`, value })),
+    getAttribute: name => textAttributes[name.slice(5)]
+});
+const beforeTextLoads = loadCalls;
+const textSlab = VRODOS.api.addAssetToCanvas(textDrag.title, '', textDrag.category_name, textDrag, [1, 3, 5]);
+assert.ok(textSlab?.isGroup, 'a DOCX text asset must create its slab without a GLB');
+assert.equal(textSlab.text_content, slabText, 'dragging a text asset must preserve its extracted Unicode text');
+assert.deepEqual(drawnText.filter(Boolean), slabText.split('\n'), 'the generated slab must render its document text');
+assert.deepEqual(textSlab.position.toArray(), [1, 3, 5]);
+assert.equal(loadCalls, beforeTextLoads, 'a text slab must not download a GLB');
 VRODOS.api.clearSceneForReload();
 console.log('Editor asset preparation lifecycle tests passed.');

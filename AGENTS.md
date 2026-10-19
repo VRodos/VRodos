@@ -70,6 +70,8 @@ The connector's `vrodos_immerse_environments` capability grants Immerse Users ac
 
 ## Runtime And Rendering
 
+TXT, RTF and DOCX attachments render as generated `3d-text` slabs without a GLB. Detect text attachments by filename/URL or MIME type even when Immerse supplies no category; DOCX takes precedence over its ZIP container MIME type. `VRodos_Text_Asset_Helper` owns extraction and the shared 2,000-character limit. DOCX extraction reads only bounded `word/document.xml` content through PHP ZIP/DOM and rejects DTDs.
+
 The active compiled runtime targets:
 
 - A-Frame metadata declared in root `package.json`

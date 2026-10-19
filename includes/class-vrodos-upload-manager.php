@@ -88,8 +88,8 @@ final class VRodos_Upload_Manager {
 		$format = class_exists( 'VRodos_Text_Asset_Helper' )
 			? VRodos_Text_Asset_Helper::detect_format( (string) ( $file['name'] ?? '' ), (string) ( $file['type'] ?? '' ) )
 			: '';
-		if ( ! in_array( $format, [ 'txt', 'rtf' ], true ) ) {
-			return [ 'success' => false, 'error' => 'Only TXT and RTF files are supported for 3D Text assets.' ];
+		if ( '' === $format ) {
+			return [ 'success' => false, 'error' => 'Only TXT, RTF and DOCX files are supported for 3D Text assets.' ];
 		}
 		$new_id = VRodos_Storage_Manager::store_uploaded_attachment( $file, $asset_id, 'asset', 'source' );
 		if ( is_wp_error( $new_id ) ) {
