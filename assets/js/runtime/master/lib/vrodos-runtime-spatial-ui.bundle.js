@@ -18102,6 +18102,7 @@
           minHeight: opts.minHeight,
           flexGrow: opts.flexGrow,
           flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 0,
+          paddingY: opts.paddingY,
           pointerEvents: disabled ? "none" : "auto",
           zIndex: opts.zIndex || 30,
           onClick: disabled ? void 0 : opts.onClick,
@@ -18309,7 +18310,7 @@
               alignItems: "center",
               flexGrow: 1,
               width: "100%",
-              height: "100%",
+              height: opts.height === "auto" ? "auto" : "100%",
               pointerEvents: "none"
             }));
             const labelText = new Text(resolveButtonTextProps(opts));

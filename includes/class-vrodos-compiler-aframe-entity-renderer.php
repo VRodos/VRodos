@@ -1116,6 +1116,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'text-panel_' . $uuid );
+		$entity->setAttribute( 'vrodos-text-panel', '' );
 		$entity->setAttribute( 'class', 'hideable' );
 		$this->apply_compiled_collision_attributes( $entity, $obj, 'text-panel' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
@@ -1124,6 +1125,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
 		$backing = $dom->createElement( 'a-box' );
+		$backing->setAttribute( 'data-vrodos-text-backing', '' );
 		$backing->setAttribute( 'width', $panel_width );
 		$backing->setAttribute( 'height', $panel_height );
 		$backing->setAttribute( 'depth', $panel_depth );
@@ -1139,8 +1141,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			[ '0.008', '1.68', '0.006', '0.59 0 0.021' ],
 		];
 		$border_elements  = [];
-		foreach ( $border_specs as $border_spec ) {
+		foreach ( $border_specs as $index => $border_spec ) {
 			$border = $dom->createElement( 'a-box' );
+			$border->setAttribute( 'data-vrodos-text-border', [ 'top', 'bottom', 'left', 'right' ][ $index ] );
 			$border->setAttribute( 'width', $border_spec[0] );
 			$border->setAttribute( 'height', $border_spec[1] );
 			$border->setAttribute( 'depth', $border_spec[2] );

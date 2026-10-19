@@ -535,6 +535,16 @@ VRODOS.loader.normalizeTextPanelContent = function(resource) {
     return text || 'Text asset';
 };
 
+VRODOS.loader.resizeTextPanelObject = function(object, texture) {
+    const textHeight = texture.userData.textPanelHeight;
+    const panelHeight = textHeight + 0.23;
+    object.children.forEach((child) => {
+        if (child.isLineSegments) child.scale.y = (panelHeight - 1.77 * 0.05) / (1.77 * 0.95);
+        else if (child.material && child.material.map) child.scale.y = textHeight / 1.54;
+        else if (child.isMesh) child.scale.y = panelHeight / 1.77;
+    });
+};
+
 // Update the texture in place so transforms, selection and placement identity survive.
 VRODOS.loader.updateTextPanelObject = function(object, data) {
     const materials = new Set();
@@ -549,10 +559,11 @@ VRODOS.loader.updateTextPanelObject = function(object, data) {
         material.needsUpdate = true;
     });
     oldTextures.forEach((oldTexture) => oldTexture.dispose());
+    VRODOS.loader.resizeTextPanelObject(object, texture);
     Object.assign(object, data);
 };
 
-VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
+VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth) {
     const lines = [];
     const paragraphs = String(text || '').split('\n');
 
@@ -562,13 +573,21 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
 
         words.forEach((word) => {
             const testLine = line ? `${line  } ${  word}` : word;
-            if (ctx.measureText(testLine).width <= maxWidth || line === '') {
+            if (ctx.measureText(testLine).width <= maxWidth) {
                 line = testLine;
                 return;
             }
 
-            lines.push(line);
-            line = word;
+            if (line) lines.push(line);
+            line = '';
+            // A single long word must fit the same width as ordinary wrapped text.
+            for (const character of word) {
+                if (line && ctx.measureText(line + character).width > maxWidth) {
+                    lines.push(line);
+                    line = '';
+                }
+                line += character;
+            }
         });
 
         if (line || words.length === 1) {
@@ -580,10 +599,6 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
         }
     });
 
-    if (lines.length > maxLines) {
-        return lines.slice(0, Math.max(0, maxLines - 1)).concat('...');
-    }
-
     return lines;
 };
 
@@ -594,26 +609,29 @@ VRODOS.loader.normalizeCompiledCollisionEnabled = function(value, resource) {
 VRODOS.loader.createTextPanelTexture = function(text) {
     const canvas = document.createElement('canvas');
     canvas.width = 768;
-    canvas.height = 1088;
-
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#111827';
     ctx.font = '600 34px Arial, Helvetica, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
 
     const paddingX = 56;
     const paddingY = 64;
     const lineHeight = 47;
-    const maxLines = Math.floor((canvas.height - paddingY * 2) / lineHeight);
-    const lines = VRODOS.loader.wrapTextPanelLines(ctx, text, canvas.width - paddingX * 2, maxLines);
+    const lines = VRODOS.loader.wrapTextPanelLines(ctx, text, canvas.width - paddingX * 2);
+    const layoutHeight = Math.max(1088, lines.length * lineHeight + paddingY * 2);
+    const textureScale = Math.min(1, 8192 / layoutHeight);
+    canvas.width = Math.ceil(768 * textureScale);
+    canvas.height = Math.ceil(layoutHeight * textureScale);
+    ctx.fillStyle = '#111827';
+    ctx.font = `600 ${34 * textureScale}px Arial, Helvetica, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
 
     lines.forEach((line, index) => {
-        ctx.fillText(line, paddingX, paddingY + index * lineHeight);
+        ctx.fillText(line, paddingX * textureScale, (paddingY + index * lineHeight) * textureScale);
     });
 
-    return VRODOS.loader.createCanvasTexture(canvas);
+    const texture = VRODOS.loader.createCanvasTexture(canvas);
+    texture.userData.textPanelHeight = 1.54 * layoutHeight / 1088;
+    return texture;
 };
 
 VRODOS.loader.createTextPanelObject = function(name, resource) {
@@ -633,6 +651,7 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
     group.isSelectableMesh = true;
     group.isLight = false;
 
+    const texture = VRODOS.loader.createTextPanelTexture(text);
     const panel = new THREE.Mesh(
         new THREE.BoxGeometry(panelWidth, panelHeight, 0.035),
         new THREE.MeshStandardMaterial({
@@ -663,10 +682,11 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
 
     group.add(...VRODOS.loader.createOutwardFacingPlanes(
         `${name}_text`, textWidth, textHeight, 0.026,
-        VRODOS.loader.createDoubleSidedTextureMaterial(VRODOS.loader.createTextPanelTexture(text), {
+        VRODOS.loader.createDoubleSidedTextureMaterial(texture, {
             depthWrite: false
         })
     ));
+    VRODOS.loader.resizeTextPanelObject(group, texture);
 
     return group;
 };
