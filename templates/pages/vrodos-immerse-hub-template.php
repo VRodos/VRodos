@@ -26,10 +26,10 @@ $mode_icons = [ 'single-player' => 'user-round', 'networked' => 'users-round' ];
 				<p>Scenes will appear here after they are built in VRodos.</p>
 			</div>
 		<?php else : ?>
-			<?php foreach ( $groups as $group ) : ?>
-				<section class="immerse-hub-project" aria-labelledby="immerse-project-<?php echo esc_attr( $group['id'] ); ?>">
+			<?php foreach ( $groups as $group_index => $group ) : ?>
+				<section class="immerse-hub-project" aria-labelledby="immerse-use-case-<?php echo esc_attr( $group_index ); ?>">
 					<div class="immerse-hub-project-heading">
-						<h2 id="immerse-project-<?php echo esc_attr( $group['id'] ); ?>"><?php echo esc_html( $group['title'] ); ?></h2>
+						<h2 id="immerse-use-case-<?php echo esc_attr( $group_index ); ?>"><?php echo esc_html( $group['title'] ); ?></h2>
 						<span><?php echo esc_html( count( $group['scenes'] ) ); ?> <?php echo count( $group['scenes'] ) === 1 ? 'scene' : 'scenes'; ?></span>
 					</div>
 					<div class="immerse-hub-grid">

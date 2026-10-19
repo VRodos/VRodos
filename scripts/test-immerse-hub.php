@@ -13,6 +13,7 @@ class WP_Error {
 
 $test_root = sys_get_temp_dir() . '/vrodos-immerse-hub-' . bin2hex( random_bytes( 6 ) );
 $test_projects = [ new WP_Post( 11, 'vrodos_game', 'publish', 'immerse-a', 'Immerse A' ) ];
+$test_use_cases = [ 11 => [ '_immerse_use_case_id' => 'de', '_immerse_use_case_name' => 'Germany' ] ];
 $test_scenes = [
 	21 => new WP_Post( 21, 'vrodos_scene', 'publish', 'scene-a', 'Scene A' ),
 	22 => new WP_Post( 22, 'vrodos_scene', 'publish', 'scene-b', 'Scene B' ),
@@ -44,7 +45,7 @@ function get_post( int $id ): ?WP_Post { global $test_projects, $test_scenes, $t
 function get_post_field( string $field, int $id ): string { return get_post( $id )->post_name; }
 function get_the_title( int $id ): string { return get_post( $id )->post_title; }
 function wp_get_post_terms( int $id, string $taxonomy ): array { global $test_terms; return $test_terms[ $id ] ?? []; }
-function get_post_meta( int $id, string $key, bool $single = false ) { global $test_inventory, $test_page_template, $test_frontend_templates; if ( isset( $test_frontend_templates[$id] ) && '_wp_page_template' === $key ) { return $test_frontend_templates[$id]; } if ( '_wp_page_template' === $key && 99 === $id ) { return $test_page_template; } return '_vrodos_published_inventory' === $key ? ( $test_inventory[ $id ] ?? '' ) : ''; }
+function get_post_meta( int $id, string $key, bool $single = false ) { global $test_inventory, $test_page_template, $test_frontend_templates, $test_use_cases; if ( isset( $test_use_cases[$id][$key] ) ) { return $test_use_cases[$id][$key]; } if ( isset( $test_frontend_templates[$id] ) && '_wp_page_template' === $key ) { return $test_frontend_templates[$id]; } if ( '_wp_page_template' === $key && 99 === $id ) { return $test_page_template; } return '_vrodos_published_inventory' === $key ? ( $test_inventory[ $id ] ?? '' ) : ''; }
 function update_post_meta( int $id, string $key, $value ): bool { global $test_inventory, $test_page_template, $test_frontend_templates; if ( isset( $test_frontend_templates[$id] ) && '_wp_page_template' === $key ) { return $test_frontend_templates[$id]; } if ( '_wp_page_template' === $key && 99 === $id ) { $test_page_template = $value; } else { $test_inventory[ $id ] = $value; } return true; }
 function wp_upload_dir( $time = null, bool $create = false ): array { global $test_root; return [ 'basedir' => $test_root, 'baseurl' => 'https://wp.test/uploads', 'error' => '' ]; }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
@@ -133,6 +134,42 @@ check( '' === $groups[0]['scenes'][0]['url'], 'Networked scene exposed a local r
 $test_options['vrodos_general_settings']['vrodos_runtime_public_base_url'] = 'https://runtime.test/';
 $groups = VRodos_Immerse_Hub::catalog();
 check( 'https://runtime.test/vrodos-published/projects/11/clients/index_21.html' === $groups[0]['scenes'][0]['url'], 'Networked scene did not use the public runtime URL.' );
+$current_preview = $groups[0]['scenes'][0]['preview'];
+// Lessons from the same use case share one country section, regardless of build date.
+$test_projects[] = new WP_Post( 12, 'vrodos_game', 'publish', 'immerse-b', 'Germany - Another lesson' );
+$test_projects[] = new WP_Post( 13, 'vrodos_game', 'publish', 'immerse-c', 'Austria - Lesson' );
+$test_projects[] = new WP_Post( 14, 'vrodos_game', 'publish', 'immerse-d', 'Unassigned lesson' );
+$test_use_cases[12] = $test_use_cases[11];
+$test_use_cases[13] = [ '_immerse_use_case_id' => 'at', '_immerse_use_case_name' => ' Austria ' ];
+foreach ( [ 12 => 24, 13 => 25, 14 => 26 ] as $project_id => $scene_id ) {
+	$project = get_post( $project_id );
+	$test_scenes[$scene_id] = new WP_Post( $scene_id, 'vrodos_scene', 'publish', 'scene-' . $scene_id, 'A scene from ' . $project_id );
+	$test_terms[$scene_id] = [ (object) [ 'slug' => $project->post_name ] ];
+	$test_inventory[$project_id] = [
+		'projectId' => $project_id, 'publishedAt' => '2026-10-01',
+		'runtimeMode' => 'single-player', 'buildTarget' => 'automatic',
+		'clients' => [ 'index_' . $scene_id . '.html' ], 'entrypoints' => [ 'index_' . $scene_id . '.html' ],
+	];
+	file_put_contents( VRodos_Storage_Manager::published_project_directory( $project_id, 'clients' ) . 'index_' . $scene_id . '.html', '<html>scene entry</html>' );
+}
+$groups = VRodos_Immerse_Hub::catalog();
+check( [ 'Austria', 'Germany', 'Unassigned' ] === array_column( $groups, 'title' ), 'Catalog must group by country/use case alphabetically with Unassigned last.' );
+check( [ 24, 21 ] === array_column( $groups[1]['scenes'], 'id' ), 'Scenes from different lessons in one use case must be merged and sorted by title.' );
+check( 'https://wp.test/uploads/vrodos/published/projects/12/clients/index_24.html' === $groups[1]['scenes'][0]['url'], 'Grouping changed the scene launch project.' );
+check( strtotime( '2026-10-01 UTC' ) === $groups[1]['scenes'][0]['builtAt'] && $original_build_time === $groups[1]['scenes'][1]['builtAt'], 'Grouping must preserve each scene publication time.' );
+check( $current_preview === $groups[1]['scenes'][1]['preview'] && '' !== $groups[1]['scenes'][1]['preview'], 'Grouping discarded the published preview.' );
+// A named use case without a remote ID still groups its lessons together.
+unset( $test_use_cases[11]['_immerse_use_case_id'], $test_use_cases[12]['_immerse_use_case_id'] );
+check( [ 'Austria', 'Germany', 'Unassigned' ] === array_column( VRodos_Immerse_Hub::catalog(), 'title' ), 'Use-case names must group lessons without remote IDs.' );
+foreach ( [ 12 => 24, 13 => 25, 14 => 26 ] as $project_id => $scene_id ) {
+	$project_clients = VRodos_Storage_Manager::published_project_directory( $project_id, 'clients' );
+	unlink( $project_clients . 'index_' . $scene_id . '.html' );
+	rmdir( $project_clients );
+	rmdir( dirname( rtrim( $project_clients, '/' ) ) );
+	unset( $test_inventory[$project_id], $test_scenes[$scene_id], $test_terms[$scene_id], $test_use_cases[$project_id] );
+}
+$test_projects = [ $test_projects[0] ];
+$test_use_cases[11]['_immerse_use_case_id'] = 'de';
 $pages_manager = new VRodos_Pages_Manager();
 $post = $test_hub_page;
 $robots = $pages_manager->robots( [ 'index' => true, 'follow' => true, 'max-image-preview' => 'large' ] );
