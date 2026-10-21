@@ -72,7 +72,7 @@ final class VRodos_Compiler_Entity_Policy {
 		}
 
 		$scene_role = strtolower( trim( (string) ( $source->sceneAssetRole ?? '' ) ) );
-		return in_array( $scene_role, [ ...self::SCENE_ASSET_ROLES, 'poi-imagetext' ], true ) ? $scene_role : $source_category;
+		return in_array( $scene_role, [ ...self::SCENE_ASSET_ROLES, 'poi-imagetext', 'door' ], true ) ? $scene_role : $source_category;
 	}
 
 	public function physical_category( object $source ): string {

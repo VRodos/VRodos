@@ -12,16 +12,19 @@ scene.add(light);
 let selected = light;
 let saves = 0;
 const inputs = new Map();
-for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title', 'poi_image_title_text', 'poi_image_desc_text', 'teleport_point_name']) {
+for (const id of ['lampPower', 'lampRadius', 'ambientColor', 'spotTargetObject', 'poi_chat_title', 'poi_image_title_text', 'poi_image_desc_text', 'teleport_point_name', 'popupDoorSelect']) {
     const handlers = {};
     inputs.set(id, { value: '', addEventListener(type, callback) { handlers[type] = callback; },
         fire(type, value) { if (value !== undefined) this.value = value; handlers[type]?.call(this); } });
 }
+inputs.get('popupDoorSelect').dataset = {};
+inputs.get('popupDoorSelect').options = ['Default', '102', '103'].map(value => ({ value, textContent: value }));
 const context = vm.createContext({ THREE, console,
     document: { readyState: 'loading', addEventListener() {}, getElementById: id => inputs.get(id) || null },
     vrodosPersistentPropertyListenersBound: false,
     getSelectedPropertyTarget: () => selected,
     getEditorSceneObjectByName: name => scene.getObjectByName(name),
+    getEditorSceneObjectByUuid: uuid => scene.getObjectByProperty('uuid', uuid),
     VRODOS: { editor: { envir: { scene }, requestRender() {}, animate() {},
         sceneRegistry: { get: id => scene.getObjectByProperty('uuid', id) } },
     utils: {}, ui: {}, loader: { refreshPrimitivePlaneProperty() {} },
@@ -34,7 +37,9 @@ vm.runInContext(read('scene/vrodos_undo_engine.js'), context);
 const source = read('ui/vrodos_property_controls.js');
 const names = new Set(['initPersistentPropertyListeners', 'bindPoiImageControls', '_getEditorInput', '_bindEditorInputChange',
     '_bindTrackedEditorInputChange', '_getLightShadowRadius', '_getFirstChildMaterialColorHex',
-    '_getObjectColorHex', 'sanitizeInputValue', 'displaySharedPropertySections']);
+    '_getObjectColorHex', 'sanitizeInputValue', 'displaySharedPropertySections',
+    '_normalizeDoorTargetValue', '_getDoorTargetValue', '_findDoorTargetOption', '_setDoorSelectValue',
+    '_bindDoorSelectToObject', '_getDoorSelectObject', '_syncDoorTargetSceneRecord']);
 for (const node of parse(source, { ecmaVersion: 'latest' }).body) {
     if (node.type === 'FunctionDeclaration' && names.has(node.id.name)) {
         vm.runInContext(source.slice(node.start, node.end), context);
@@ -145,6 +150,28 @@ other.category_slug = 'poi-imagetext';
 context.displaySharedPropertySections({}, other);
 assert.equal(inputs.get('poi_photo_properties').hidden, false, 'Selecting a normal POI restores photo controls.');
 assert.equal(inputs.get('image_dialog_properties_hint').hidden, true);
+
+const doorAssignment = parse(categories, { ecmaVersion: 'latest' }).body.find(node =>
+    node.type === 'ExpressionStatement' && node.expression.left?.property?.name === 'displayDoorProperties');
+vm.runInContext(categories.slice(doorAssignment.start, doorAssignment.end), context);
+context.vrodosGetEffectiveObjectCategory = context.VRODOS.utils.resolveSceneAssetCategory;
+other.category_slug = 'decoration';
+other.sceneAssetRole = 'door';
+panel.style.display = 'none';
+assert.equal(context.displaySharedPropertySections({}, other), true);
+assert.equal(panel.style.display, '', 'A decoration with the Door role must expose destination controls.');
+const destination = inputs.get('popupDoorSelect');
+assert.equal(destination.value, 'Default');
+const savesBeforeDestination = saves;
+destination.fire('change', '102');
+assert.equal(other.sceneID_target, '102', 'Converted doors must accept a destination scene.');
+assert.equal(saves, savesBeforeDestination + 1, 'Choosing a door destination must save.');
+manager.undo();
+assert.equal(other.sceneID_target, '', 'Undo must clear a newly chosen door destination.');
+manager.redo();
+assert.equal(other.sceneID_target, '102', 'Redo must restore the door destination.');
+context.displaySharedPropertySections({}, other);
+assert.equal(destination.value, '102', 'Reopening a converted door must display its destination.');
 selected = null;
 power.fire('focus');
 power.fire('change', '1');

@@ -116,6 +116,14 @@ assert(context.VRODOS.utils.resolveScenePhysicalCategory({ ...poiPlacement, scen
 assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...primitivePlane, sceneAssetRole: 'poi-imagetext' }) === 'walkable-surface', 'planes must not convert to POIs');
 assert(!context.VRODOS.utils.isSceneAssetRoleEligible({ category_slug: 'poi-imagetext' }), 'existing POI assets must retain their presentation');
 
+const doorPlacement = exportPlacement({ sceneAssetRole: 'door', sceneID_target: '102' });
+assert(doorPlacement.category_slug === 'decoration' && doorPlacement.sceneAssetRole === 'door', 'door conversion must retain the asset category and placement role');
+assert(doorPlacement.sceneID_target === '102', 'door destination must survive saving');
+assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...doorPlacement }) === 'door', 'saved GLB doors must reload as doors');
+assert(context.VRODOS.utils.resolveSceneAssetCategory(untouchedPlacement) === 'decoration', 'door conversion must leave other placements unchanged');
+assert(context.VRODOS.utils.resolveSceneAssetCategory({ ...primitivePlane, sceneAssetRole: 'door' }) === 'walkable-surface', 'planes must not convert to doors');
+assert(context.VRODOS.utils.sceneAssetRoleOverrideFor(primitivePlane, 'door') === '', 'plane door overrides must not persist');
+
 const persisted = exportPlacement({
     sceneAssetRole: "walkable-surface",
     walkableBehavior: "auto"
@@ -175,6 +183,16 @@ context.VRODOS.editor.undoManager.redo();
 assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === "walkable-surface", "redo must restore the placement override");
 assert(undoObject.userData.sceneAssetRole === "walkable-surface", "redo must keep object metadata in sync");
 assert(presentationRefreshes === 2 && autosaves === 2, "undo and redo must refresh presentation and autosave");
+
+const doorRoleCommand = new context.VRODOS.editor.PropertyCommand(undoObject, 'sceneAssetRole', 'walkable-surface', 'door');
+doorRoleCommand.redo();
+undoObject.sceneID_target = '102';
+assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === 'door', 'redo must enter door mode');
+doorRoleCommand.undo();
+assert(context.VRODOS.utils.resolveSceneAssetCategory(undoObject) === 'walkable-surface', 'undo must restore the previous role');
+doorRoleCommand.redo();
+assert(undoObject.sceneID_target === '102', 'role undo and redo must retain the authored destination');
+doorRoleCommand.undo();
 
 const poiRoleCommand = new context.VRODOS.editor.PropertyCommand(undoObject, 'sceneAssetRole', 'walkable-surface', 'poi-imagetext');
 poiRoleCommand.redo();
