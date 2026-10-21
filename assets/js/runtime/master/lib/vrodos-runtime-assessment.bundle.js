@@ -546,14 +546,63 @@
       }));
     }
     namespace.buildWordSearchAnswers = buildWordSearchAnswers;
-    function buildHighlightSelections(state) {
-      return state.annotations.map((annotation) => ({
-        annotationId: annotation.id,
-        text: state.sourceText.slice(annotation.start, annotation.end),
-        selected: state.selectedIds.has(annotation.id),
-        isCorrect: state.selectedIds.has(annotation.id)
-      }));
+    function createHighlightState(sourceText, annotations) {
+      const highlights = normalizeTextAnnotations(sourceText, annotations, "highlight");
+      const verses = [];
+      let cursor = 0;
+      function addVerse(end) {
+        const raw = sourceText.slice(cursor, end);
+        const start = cursor + raw.length - raw.trimStart().length;
+        const trimmedEnd = end - (raw.length - raw.trimEnd().length);
+        if (start < trimmedEnd) {
+          verses.push({
+            id: "verse-" + start,
+            start,
+            end: trimmedEnd,
+            text: sourceText.slice(start, trimmedEnd),
+            expectedSelected: highlights.some((annotation) => annotation.start < trimmedEnd && annotation.end > start)
+          });
+        }
+      }
+      for (const separator of sourceText.matchAll(/\r?\n(?:[^\S\r\n]*\r?\n)+/g)) {
+        addVerse(separator.index);
+        cursor = separator.index + separator[0].length;
+      }
+      addVerse(sourceText.length);
+      return { mode: "highlight", sourceText, annotations: highlights, verses, selectedIds: /* @__PURE__ */ new Set() };
     }
+    function canSubmitHighlight(state) {
+      return state.selectedIds.size > 0 && state.verses.some((verse) => verse.expectedSelected);
+    }
+    function buildHighlightSelections(state) {
+      return state.verses.map((verse) => {
+        const selected = state.selectedIds.has(verse.id);
+        return {
+          annotationId: verse.id,
+          text: verse.text,
+          selected,
+          expectedSelected: verse.expectedSelected,
+          // Untouched distractors do not earn points in result summaries.
+          isCorrect: selected || verse.expectedSelected ? selected === verse.expectedSelected : null
+        };
+      });
+    }
+    function buildHighlightResult(state) {
+      const selections = buildHighlightSelections(state);
+      const required = state.verses.filter((verse) => verse.expectedSelected).length;
+      const correct = selections.filter((entry) => entry.selected && entry.expectedSelected).length;
+      const wrong = selections.filter((entry) => entry.selected && !entry.expectedSelected).length;
+      return {
+        response: { selections, variant: "highlight" },
+        extra: {
+          isCorrect: required > 0 && correct === required && wrong === 0,
+          score: required ? Math.round(100 * Math.max(0, correct - wrong) / required) : 0
+        }
+      };
+    }
+    namespace.createHighlightState = createHighlightState;
+    namespace.canSubmitHighlight = canSubmitHighlight;
+    namespace.buildHighlightResult = buildHighlightResult;
     namespace.buildHighlightSelections = buildHighlightSelections;
     function buildFillGapAnswers(state) {
       return state.annotations.map((annotation, index) => {
@@ -3071,18 +3120,13 @@
     function createTextRenderer() {
       return {
         createState(payload) {
-          const sourceText = normalizeAssessmentLineBreaks(decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : ""));
+          const rawText = decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : "");
           const typeKey = normalizeComparableText(payload && payload.type);
           const mode = typeKey === "highlight" ? "highlight" : "fill-gaps";
           if (mode === "highlight") {
-            const highlights = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "highlight");
-            return {
-              mode,
-              sourceText,
-              annotations: highlights,
-              selectedIds: /* @__PURE__ */ new Set()
-            };
+            return namespace.createHighlightState(rawText, payload && payload.content && payload.content.annotations);
           }
+          const sourceText = normalizeAssessmentLineBreaks(rawText);
           const blanks = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "blank");
           return {
             mode,
@@ -3105,14 +3149,11 @@
         onPrimaryAction(runtime) {
           const state = runtime.state;
           if (state.mode === "highlight") {
-            if (state.selectedIds.size !== state.annotations.length) {
+            if (!namespace.canSubmitHighlight(state)) {
               return;
             }
-            const selections = namespace.buildHighlightSelections(state);
-            runtime.finish(
-              { selections, variant: "highlight" },
-              { isCorrect: namespace.gradeResponses(selections) }
-            );
+            const result = namespace.buildHighlightResult(state);
+            runtime.finish(result.response, result.extra);
             return;
           }
           const blanks = namespace.buildFillGapAnswers(state);
@@ -3156,7 +3197,7 @@
         }).join("") : '<div style="font-size:14px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg> All words are placed.</div>',
         "</div>",
         "</div>",
-        `<div style="min-height:0;overflow:hidden;padding:18px;border-radius:20px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:'Outfit', -apple-system, sans-serif;font-size:16px;line-height:1.85;color:#1e293b;white-space:pre-wrap;box-shadow:0 4px 20px rgba(15,23,42,0.02);">`,
+        `<div style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:'Outfit', -apple-system, sans-serif;font-size:16px;line-height:1.85;color:#1e293b;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 4px 20px rgba(15,23,42,0.02);">`,
         segments.map((segment) => {
           if (segment.type !== "blank") {
             const displayText = textSegmentIndex === 0 ? stripFillGapWordBankIntro(segment.text) : segment.text;
@@ -3172,7 +3213,7 @@
           ].join("");
         }).join(""),
         "</div>"
-      ].join(""), "display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:12px;");
+      ].join(""), "display:grid;grid-template-rows:auto auto auto;align-content:start;gap:12px;overflow-y:auto;");
       runtime.body.querySelectorAll("[data-fill-gap-word-id]").forEach((button) => {
         button.addEventListener("click", () => {
           const wordId = button.getAttribute("data-fill-gap-word-id") || "";
@@ -3228,23 +3269,19 @@
     }
     function renderHighlightText(runtime) {
       const state = runtime.state;
-      if (!state.annotations.length || !state.sourceText) {
+      if (!state.verses.length || !state.annotations.length) {
         renderEmptyState(runtime, "This assessment is empty.", "Add text and at least one highlight annotation in Immerse to make it playable in VRodos.");
         return;
       }
-      const segments = buildTextSegments(state.sourceText, state.annotations);
       runtime.body.innerHTML = assessmentShell("highlight-text", [
-        '<div style="padding:14px 16px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:13px;line-height:1.45;">Select every highlighted target in the passage to finish.</div>',
-        `<div style="min-height:0;overflow:hidden;padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.65;color:#0f172a;white-space:pre-wrap;">`,
-        segments.map((segment) => {
-          if (segment.type !== "highlight") {
-            return escapeHtml(segment.text).replace(/\n/g, "<br />");
-          }
-          const selected = state.selectedIds.has(segment.id);
-          return `<span role="button" tabindex="0" data-highlight-id="${escapeHtml(segment.id)}" style="display:inline;border-radius:8px;padding:0 3px;background:${selected ? "rgba(92,200,135,0.18)" : "rgba(250,204,21,0.24)"};border-bottom:2px solid ${selected ? "rgba(92,200,135,0.95)" : "rgba(234,179,8,0.95)"};cursor:pointer;">${escapeHtml(segment.text)}</span>`;
+        renderInfoCallout("Select all verses you think are correct, then submit. An empty line separates verses."),
+        '<div style="display:grid;gap:16px;">',
+        state.verses.map((verse) => {
+          const selected = state.selectedIds.has(verse.id);
+          return `<button type="button" aria-pressed="${selected}" data-highlight-id="${escapeHtml(verse.id)}" style="display:block;width:100%;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Georgia,serif;font-size:16px;line-height:1.65;color:#0f172a;border-radius:12px;padding:12px 16px;background:${selected ? "#dbeafe" : "#ffffff"};border:2px solid ${selected ? "#3b82f6" : "#cbd5e1"};cursor:pointer;">${escapeHtml(verse.text)}</button>`;
         }).join(""),
         "</div>"
-      ].join(""), "display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;");
+      ].join(""), "display:grid;grid-template-rows:auto auto;align-content:start;gap:12px;overflow-y:auto;");
       runtime.body.querySelectorAll("[data-highlight-id]").forEach((button) => {
         button.addEventListener("click", () => {
           const annotationId = button.getAttribute("data-highlight-id") || "";
@@ -3253,14 +3290,22 @@
           } else {
             state.selectedIds.add(annotationId);
           }
-          runtime.rerender();
+          const selected = state.selectedIds.has(annotationId);
+          button.setAttribute("aria-pressed", String(selected));
+          button.style.background = selected ? "#dbeafe" : "#ffffff";
+          button.style.borderColor = selected ? "#3b82f6" : "#cbd5e1";
+          updateHighlightControls(runtime);
         });
       });
-      runtime.setStatus(`Selected ${state.selectedIds.size} of ${state.annotations.length} highlights`);
+      updateHighlightControls(runtime);
+    }
+    function updateHighlightControls(runtime) {
+      const state = runtime.state;
+      runtime.setStatus(`Selected ${state.selectedIds.size} verses`);
       runtime.configurePrimaryAction({
         visible: true,
-        label: "Finish",
-        disabled: state.selectedIds.size !== state.annotations.length
+        label: "Submit",
+        disabled: !namespace.canSubmitHighlight(state)
       });
     }
     const ASSESSMENT_RENDERERS = {
@@ -3307,7 +3352,6 @@
     const INFO_TEXT_FONT_SIZE = 26;
     const BINGO_INSTRUCTION_FONT_SIZE = 28;
     const UNSUPPORTED_MESSAGE_FONT_SIZE = 30;
-    const FILL_GAP_WORDS_PER_PAGE = 9;
     function value(value2, fallback) {
       const text = decodeDisplayText ? decodeDisplayText(value2 || "") : String(value2 || "");
       return text || fallback || "";
@@ -3359,7 +3403,30 @@
         },
         primary
       }, options || {});
-      return api.frame(frameOptions);
+      const frame = api.frame(frameOptions);
+      if (frameOptions.scrollContent) {
+        addScrollControls(api, frame.contentOuter, frame.content);
+      }
+      return frame;
+    }
+    function addScrollControls(api, parent, scrollTarget) {
+      const controls = api.row(parent, {
+        width: "100%",
+        height: 60,
+        flexShrink: 0,
+        gapColumn: 18,
+        justifyContent: "center"
+      });
+      [-1, 1].forEach((direction) => api.button(controls, {
+        label: direction < 0 ? "Scroll up" : "Scroll down",
+        variant: "secondary",
+        width: 240,
+        height: 60,
+        textSize: 28,
+        onClick: function() {
+          api.scrollPage(scrollTarget, direction);
+        }
+      }));
     }
     function addInfo(api, frame, message) {
       const info = api.container(frame.content, {
@@ -4252,28 +4319,20 @@
     function createTextRenderer() {
       return {
         createState: function(payload) {
-          const sourceText = normalizeAssessmentLineBreaks(decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : ""));
+          const rawText = decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : "");
           const typeKey = normalizeComparableText(payload && payload.type);
           const mode = typeKey === "highlight" ? "highlight" : "fill-gaps";
           if (mode === "highlight") {
-            return {
-              mode,
-              sourceText,
-              annotations: normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "highlight"),
-              selectedIds: /* @__PURE__ */ new Set()
-            };
+            return namespace.createHighlightState(rawText, payload && payload.content && payload.content.annotations);
           }
+          const sourceText = normalizeAssessmentLineBreaks(rawText);
           const blanks = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "blank");
           return {
             mode,
             sourceText,
             annotations: blanks,
-            phrases: createFillGapPhrases(sourceText, blanks),
             values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
             wordBank: shuffleFillGapWordBank(createFillGapWordBank(sourceText, blanks)),
-            activeBlankIndex: 0,
-            activePhraseIndex: 0,
-            wordPage: 0,
             assignmentsByBlank: {},
             selectedWordId: ""
           };
@@ -4315,40 +4374,6 @@
       state.values[blankId] = word.text;
       state.selectedWordId = "";
     }
-    function createFillGapPhrases(sourceText, annotations) {
-      const boundaries = /* @__PURE__ */ new Set([0, sourceText.length]);
-      const numbered = Array.from(sourceText.matchAll(/(?:^|\s)(\d+[.)])(?=\s*\p{L})/gu));
-      if (numbered.length) {
-        numbered.forEach((match) => boundaries.add(match.index + match[0].length - match[1].length));
-      } else {
-        for (const match of sourceText.matchAll(/\n+|[.!?;](?=\s|$)/g)) {
-          boundaries.add(match.index + match[0].length);
-        }
-      }
-      const offsets = Array.from(boundaries).filter((offset) => !annotations.some((annotation) => offset > annotation.start && offset < annotation.end)).sort((left, right) => left - right);
-      return offsets.slice(0, -1).map((start, index) => {
-        const end = offsets[index + 1];
-        const blankIndices = annotations.reduce((indices, annotation, blankIndex) => {
-          if (annotation.start >= start && annotation.end <= end) {
-            indices.push(blankIndex);
-          }
-          return indices;
-        }, []);
-        return { start, end, blankIndices };
-      }).filter((phrase) => phrase.blankIndices.length);
-    }
-    function fillGapContext(state) {
-      const phrase = state.phrases[state.activePhraseIndex];
-      let text = "";
-      let cursor = phrase.start;
-      phrase.blankIndices.forEach((index) => {
-        const annotation = state.annotations[index];
-        text += state.sourceText.slice(cursor, annotation.start);
-        text += "[" + (index + 1) + ": " + (state.values[annotation.id] || "____") + "]";
-        cursor = annotation.end;
-      });
-      return (text + state.sourceText.slice(cursor, phrase.end)).trim().replace(/\t/g, " ");
-    }
     function renderFillGaps(runtime) {
       const state = runtime.state;
       if (!state.annotations.length || !state.wordBank.length) {
@@ -4357,221 +4382,152 @@
       }
       const api = runtime.api;
       const wordButtons = [];
-      const gapButtons = [];
-      const phrase = state.phrases[state.activePhraseIndex];
-      const active = state.annotations[state.activeBlankIndex];
-      const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
-      const frame = createFrame(runtime, "Filled " + filledCount + " of " + state.annotations.length + " blanks", {
+      const blankButtons = [];
+      const frame = createFrame(runtime, "Filled 0 of " + state.annotations.length + " blanks", {
         label: "Submit",
-        disabled: filledCount !== state.annotations.length,
+        disabled: true,
         onClick: function() {
-          if (state.annotations.some((annotation) => !normalizeFreeText(state.values[annotation.id] || ""))) {
-            return;
-          }
+          if (state.annotations.some((annotation) => !normalizeFreeText(state.values[annotation.id] || ""))) return;
           const blanks = namespace.buildFillGapAnswers(state);
-          runtime.finish(
-            { blanks, variant: "fill-in-the-gaps" },
-            { isCorrect: namespace.gradeResponses(blanks) }
-          );
+          runtime.finish({ blanks, variant: "fill-in-the-gaps" }, { isCorrect: namespace.gradeResponses(blanks) });
         }
-      }, { scrollContent: false, headerHeight: 96, footerHeight: 80, paddingX: 36, paddingY: 16, gapY: 12 });
-      const navigation = api.row(frame.content, { width: "100%", gapColumn: 16, height: 64, flexShrink: 0 });
-      function navigate(delta) {
-        state.activePhraseIndex += delta;
-        state.activeBlankIndex = state.phrases[state.activePhraseIndex].blankIndices[0];
-        state.wordPage = 0;
-        runtime.rerender();
-      }
-      api.button(navigation, {
-        label: "Previous",
-        width: 200,
-        height: 64,
-        textSize: 26,
-        disabled: state.activePhraseIndex === 0,
-        onClick: () => navigate(-1)
       });
-      api.text(navigation, {
-        text: "Phrase " + (state.activePhraseIndex + 1) + " of " + state.phrases.length,
-        fontSize: 30,
-        fontWeight: 600,
-        flexGrow: 1,
-        textAlign: "center"
+      api.text(frame.content, {
+        text: "Choose a word, then tap a blank. Tap an answer to clear it.",
+        fontSize: 26,
+        flexShrink: 0
       });
-      api.button(navigation, {
-        label: "Next",
-        width: 200,
-        height: 64,
-        textSize: 26,
-        disabled: state.activePhraseIndex === state.phrases.length - 1,
-        onClick: () => navigate(1)
-      });
-      const passage = api.container(frame.content, {
+      const bank = api.row(frame.content, {
         width: "100%",
-        height: 166,
+        flexWrap: "wrap",
+        gapColumn: 12,
+        gapRow: 12,
+        flexShrink: 0
+      });
+      state.wordBank.forEach((word) => wordButtons.push({ word, button: api.button(bank, {
+        label: word.text,
+        width: "31%",
+        height: "auto",
+        minHeight: 64,
+        textSize: 28,
+        variant: "secondary",
+        onClick: function() {
+          if (Object.values(state.assignmentsByBlank).includes(word.id)) return;
+          state.selectedWordId = state.selectedWordId === word.id ? "" : word.id;
+          updateView();
+        }
+      }) }));
+      const passage = api.column(frame.content, {
+        width: "100%",
         flexShrink: 0,
-        overflow: "scroll",
-        pointerEvents: "listener",
+        gapRow: 4,
         backgroundColor: "#e0f2fe",
         borderRadius: 16,
         padding: 18
       });
-      const passageText = api.text(passage, {
-        text: fillGapContext(state),
-        fontSize: 32,
-        lineHeight: "130%",
-        color: "#0c4a6e",
-        width: "100%",
-        flexShrink: 0
-      });
-      if (phrase.blankIndices.length > 1) {
-        const gaps = api.row(frame.content, {
+      function newLine() {
+        return api.row(passage, {
           width: "100%",
-          height: 64,
+          minHeight: 42,
           flexShrink: 0,
-          gapColumn: 16,
-          overflow: "scroll",
-          pointerEvents: "listener"
+          flexWrap: "wrap",
+          alignItems: "center",
+          gapRow: 4
         });
-        phrase.blankIndices.forEach((index) => gapButtons.push({ index, button: api.button(gaps, {
-          label: "Gap " + (index + 1),
-          width: 160,
-          height: 64,
-          flexShrink: 0,
-          textSize: 28,
-          variant: index === state.activeBlankIndex ? "primary" : state.values[state.annotations[index].id] ? "positive" : "secondary",
-          onClick: function() {
-            state.activeBlankIndex = index;
-            state.wordPage = 0;
-            runtime.rerender();
-          }
-        }) }));
       }
-      const prompt = api.row(frame.content, { width: "100%", height: 56, flexShrink: 0 });
-      const promptText = api.text(prompt, {
-        text: state.values[active.id] ? "Gap " + (state.activeBlankIndex + 1) + " filled. You can change the word." : "Choose a word for gap " + (state.activeBlankIndex + 1) + ".",
-        fontSize: 26,
-        flexGrow: 1
-      });
-      const clearButton = api.button(prompt, {
-        label: "Clear",
-        width: 140,
-        height: 56,
-        textSize: 26,
-        disabled: !state.values[active.id],
-        onClick: function() {
-          delete state.assignmentsByBlank[active.id];
-          state.values[active.id] = "";
-          updateView();
-        }
-      });
-      const availableWords = state.wordBank;
-      const pageCount = Math.max(1, Math.ceil(availableWords.length / FILL_GAP_WORDS_PER_PAGE));
-      state.wordPage = Math.min(state.wordPage, pageCount - 1);
-      const choices = api.column(frame.content, { width: "100%", height: 264, flexShrink: 0, gapRow: 12 });
-      const pageStart = state.wordPage * FILL_GAP_WORDS_PER_PAGE;
-      const words = availableWords.slice(pageStart, pageStart + FILL_GAP_WORDS_PER_PAGE);
-      for (let index = 0; index < words.length; index += 3) {
-        const row = api.row(choices, { width: "100%", height: 80, flexShrink: 0, gapColumn: 16 });
-        words.slice(index, index + 3).forEach((word) => wordButtons.push({ word, button: api.button(row, {
-          label: word.text,
-          width: "31%",
-          height: 80,
-          minHeight: 80,
-          flexShrink: 0,
-          textSize: 30,
-          variant: state.assignmentsByBlank[active.id] === word.id ? "primary" : "secondary",
+      let line = newLine();
+      function appendText(text) {
+        text.split("\n").forEach((part, index) => {
+          if (index > 0) line = newLine();
+          (part.match(/\s*\S+\s*|\s+/g) || []).forEach((word) => api.text(line, {
+            text: word.replace(/\t/g, " "),
+            fontSize: 30,
+            lineHeight: "130%",
+            color: "#0c4a6e",
+            flexShrink: 0,
+            maxWidth: "100%",
+            whiteSpace: "pre"
+          }));
+        });
+      }
+      let cursor = 0;
+      state.annotations.forEach((annotation, index) => {
+        appendText(state.sourceText.slice(cursor, annotation.start));
+        blankButtons.push({ annotation, index, button: api.button(line, {
+          label: "[" + (index + 1) + ": ____]",
+          width: 180,
+          height: "auto",
+          minHeight: 48,
+          textSize: 28,
+          variant: "secondary",
           onClick: function() {
-            if (Object.entries(state.assignmentsByBlank).some(([blankId, wordId]) => blankId !== active.id && wordId === word.id)) {
-              return;
+            if (state.selectedWordId) {
+              assignFillGapWord(state, state.selectedWordId, annotation.id);
+            } else {
+              delete state.assignmentsByBlank[annotation.id];
+              state.values[annotation.id] = "";
             }
-            assignFillGapWord(state, word.id, active.id);
             updateView();
           }
-        }) }));
-      }
-      const pages = api.row(frame.content, { width: "100%", height: 60, flexShrink: 0, gapColumn: 16 });
-      api.button(pages, {
-        label: "Back words",
-        width: 220,
-        height: 60,
-        textSize: 26,
-        disabled: state.wordPage === 0,
-        onClick: function() {
-          state.wordPage -= 1;
-          runtime.rerender();
-        }
+        }) });
+        cursor = annotation.end;
       });
-      api.text(pages, { text: "Words " + (state.wordPage + 1) + " / " + pageCount, fontSize: 26, flexGrow: 1, textAlign: "center" });
-      api.button(pages, {
-        label: "More words",
-        width: 220,
-        height: 60,
-        textSize: 26,
-        disabled: state.wordPage === pageCount - 1,
-        onClick: function() {
-          state.wordPage += 1;
-          runtime.rerender();
-        }
-      });
+      appendText(state.sourceText.slice(cursor));
       function updateView() {
         const filled = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
         api.updateText(frame.statusText, { text: "Filled " + filled + " of " + state.annotations.length + " blanks" });
         api.updateButton(frame.primaryButton, { disabled: filled !== state.annotations.length });
-        api.updateText(passageText, { text: fillGapContext(state) });
-        api.updateText(promptText, {
-          text: state.values[active.id] ? "Gap " + (state.activeBlankIndex + 1) + " filled. You can change the word." : "Choose a word for gap " + (state.activeBlankIndex + 1) + "."
-        });
-        api.updateButton(clearButton, { disabled: !state.values[active.id] });
         const assignedWordIds = new Set(Object.values(state.assignmentsByBlank));
-        wordButtons.forEach(({ word, button }) => {
-          const selected = state.assignmentsByBlank[active.id] === word.id;
-          api.updateButton(button, {
-            variant: selected ? "primary" : "secondary",
-            disabled: assignedWordIds.has(word.id) && !selected
-          });
-        });
-        gapButtons.forEach(({ index, button }) => api.updateButton(button, {
-          variant: index === state.activeBlankIndex ? "primary" : state.values[state.annotations[index].id] ? "positive" : "secondary"
+        wordButtons.forEach(({ word, button }) => api.updateButton(button, {
+          variant: state.selectedWordId === word.id ? "primary" : "secondary",
+          disabled: assignedWordIds.has(word.id)
+        }));
+        blankButtons.forEach(({ annotation, index, button }) => api.updateButton(button, {
+          label: "[" + (index + 1) + ": " + (state.values[annotation.id] || "____") + "]",
+          variant: state.values[annotation.id] ? "positive" : "secondary"
         }));
       }
       updateView();
     }
     function renderHighlight(runtime) {
       const state = runtime.state;
-      if (!state.annotations.length) {
+      if (!state.verses.length || !state.annotations.length) {
         renderUnsupported(runtime, "This highlight assessment is empty.");
         return;
       }
-      const frame = createFrame(runtime, "Selected " + state.selectedIds.size + " of " + state.annotations.length + " highlights", {
-        label: "Finish",
-        disabled: state.selectedIds.size !== state.annotations.length,
+      const api = runtime.api;
+      const frame = createFrame(runtime, "Selected " + state.selectedIds.size + " verses", {
+        label: "Submit",
+        disabled: !namespace.canSubmitHighlight(state),
         onClick: function() {
-          const selections = namespace.buildHighlightSelections(state);
-          runtime.finish(
-            { selections, variant: "highlight" },
-            { isCorrect: namespace.gradeResponses(selections) }
-          );
+          if (!namespace.canSubmitHighlight(state)) return;
+          const result = namespace.buildHighlightResult(state);
+          runtime.finish(result.response, result.extra);
         }
       });
-      addInfo(runtime.api, frame, "Select every target highlight to finish.");
-      addButtonGrid(runtime.api, frame.content, state.annotations.map((annotation) => {
-        const selected = state.selectedIds.has(annotation.id);
-        return {
-          label: state.sourceText.slice(annotation.start, annotation.end),
-          variant: selected ? "positive" : "secondary",
+      addInfo(api, frame, "Select all verses you think are correct, then submit. An empty line separates verses.");
+      state.verses.forEach((verse) => {
+        const button = api.button(frame.content, {
+          label: verse.text,
+          width: "100%",
+          minHeight: 80,
+          height: "auto",
+          flexShrink: 0,
+          textSize: 28,
+          textAlign: "left",
+          whiteSpace: "pre-line",
+          variant: state.selectedIds.has(verse.id) ? "primary" : "secondary",
           onClick: function() {
-            if (selected) {
-              state.selectedIds.delete(annotation.id);
+            if (state.selectedIds.has(verse.id)) {
+              state.selectedIds.delete(verse.id);
             } else {
-              state.selectedIds.add(annotation.id);
+              state.selectedIds.add(verse.id);
             }
-            runtime.rerender();
+            api.updateButton(button, { variant: state.selectedIds.has(verse.id) ? "primary" : "secondary" });
+            api.updateText(frame.statusText, { text: "Selected " + state.selectedIds.size + " verses" });
+            api.updateButton(frame.primaryButton, { disabled: !namespace.canSubmitHighlight(state) });
           }
-        };
-      }), {
-        columns: 2,
-        itemHeight: 64,
-        textSize: 22
+        });
       });
     }
     function renderUnsupported(runtime, message) {

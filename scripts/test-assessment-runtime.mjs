@@ -34,6 +34,7 @@ function createSpatialApi() {
         refreshed: 0,
         updatedButtons: 0,
         updatedTexts: 0,
+        scrollRequests: [],
 
         clear() {
             this.frames = [];
@@ -52,10 +53,12 @@ function createSpatialApi() {
                 kind: "frame",
                 options: options || {},
                 content: createNode("frame-content"),
+                contentOuter: createNode("frame-content-outer"),
                 footer: createNode("frame-footer"),
                 statusText: null,
                 primaryButton: null
             };
+            frame.contentOuter.children.push(frame.content);
             this.frames.push(frame);
             if (options && options.status) {
                 frame.statusText = this.text(frame.footer, { text: options.status });
@@ -72,6 +75,14 @@ function createSpatialApi() {
                 parent.children.push(node);
             }
             return node;
+        },
+
+        scrollPage(target, direction) {
+            this.scrollRequests.push({ target, direction });
+        },
+
+        scroll(parent, options) {
+            return this.container(parent, Object.assign({ overflow: "scroll" }, options));
         },
 
         row(parent, options) {
@@ -332,6 +343,19 @@ fixtures.forEach((fixture) => {
     assert(activePanel && activePanel.api.buttons.length > 0, `${fixture.name}: no interactive buttons rendered`);
     assert(activePanel.config.distance === 2.15, `${fixture.name}: expected readable assessment panel distance`);
     assert(activePanel.api.refreshed > 0, `${fixture.name}: spatial targets were not refreshed`);
+
+    const scrollFrame = activePanel.api.frames.at(-1);
+    const scrollParent = scrollFrame.contentOuter;
+    const controls = scrollParent.children.find((node) => node.children.some((child) => child.options.label === "Scroll down"));
+    assert(controls && controls.options.flexShrink === 0, `${fixture.name}: fixed scroll controls are missing`);
+    const beforeScroll = runtime.renderCount;
+    controls.children.find((node) => node.options.label === "Scroll down").options.onClick();
+    controls.children.find((node) => node.options.label === "Scroll up").options.onClick();
+    const requests = activePanel.api.scrollRequests;
+    assert(requests.length === 2 && requests[0].direction === 1 && requests[1].direction === -1, `${fixture.name}: scroll buttons did not dispatch both directions`);
+    assert(requests[0].target === requests[1].target, `${fixture.name}: scroll directions target different containers`);
+    assert(requests[0].target === scrollFrame.content, `${fixture.name}: scroll controls target the wrong content`);
+    assert(runtime.renderCount === beforeScroll, `${fixture.name}: scrolling rebuilt the assessment`);
 
     const genericUnsupported = activePanel.api.texts.some((entry) =>
         String(entry.text || "").includes("This assessment type is not interactive in VRodos yet")
@@ -804,8 +828,12 @@ async function runAssessmentFreeSceneHarness() {
     cefr.unregister(a1);
 }
 
-// A headset user can page through the word bank, revise answers, and submit
-// only after every gap has a response. Authored answers must be masked in context.
+function renderedFillGapPassage() {
+    const passage = activePanel.api.frames.at(-1).content.children.find((node) => node.options.backgroundColor === "#e0f2fe");
+    return passage.children.map((line) => line.children.map((node) => node.options.text || node.options.label || "").join("")).join("\n");
+}
+
+// One word bank and inline blanks; selections and revisions preserve the attempt.
 {
     const answers = ["temple", "marble", "column", "the", "goddess", "statue", "steps", "pediment", "democracy", "Athens"];
     const text = answers.map((answer) => "Place " + answer + " here.").join(" ");
@@ -815,123 +843,88 @@ async function runAssessmentFreeSceneHarness() {
         cursor = start + answer.length;
         return { id: "gap-" + index, start, end: cursor, type: "blank", correctValue: answer };
     });
-    runtime.open(makePayload("Ten gaps", "Text", "Fill in the gaps", { text, annotations }));
-    const authoredOrder = answers.join("|");
+    const payload = makePayload("Ten gaps", "Text", "Fill in the gaps", { text, annotations });
+    runtime.open(payload);
     const headsetWordOrder = runtime.state.wordBank.map((word) => word.text).join("|");
-    assert(headsetWordOrder !== authoredOrder, "VR fill gaps: word bank exposed the authored answer order");
-    const desktopPayload = makePayload("Ten gaps desktop", "Text", "Fill in the gaps", { text, annotations });
-    const desktopWordBank = namespace.resolveRenderer(desktopPayload).createState(desktopPayload).wordBank;
-    assert(desktopWordBank.map((word) => word.text).join("|") !== authoredOrder, "Desktop fill gaps: word bank exposed the authored answer order");
+    assert(headsetWordOrder !== answers.join("|"), "VR fill gaps: word bank exposed the authored answer order");
+    const desktopWordBank = namespace.resolveRenderer(payload).createState(payload).wordBank;
+    assert(desktopWordBank.map((word) => word.text).join("|") !== answers.join("|"), "Desktop fill gaps: word bank exposed the authored answer order");
     const repeatedWords = [{ text: "same" }, { text: "same" }, { text: "other" }];
     assert(namespace.shuffleFillGapWordBank(repeatedWords).map((word) => word.text).join("|") !== "same|same|other", "Fill gaps: repeated words kept the visible answer order");
-    const button = (label) => {
-        const frame = activePanel.api.frames.at(-1);
-        const pending = [frame.content, frame.footer];
+    function buttons() {
+        const pending = [activePanel.api.frames.at(-1).content, activePanel.api.frames.at(-1).footer];
+        const result = [];
         while (pending.length) {
             const node = pending.pop();
-            if (node.kind === "button" && node.options.label === label) {
-                return node.options;
-            }
+            if (node.kind === "button") result.push(node.options);
             pending.push(...node.children);
         }
-        return null;
-    };
+        return result;
+    }
+    const button = (label) => buttons().find((entry) => entry.label === label);
     const click = (label) => {
         const target = button(label);
         assert(target && !target.disabled, "Fill gaps: unavailable action " + label);
         target.onClick();
     };
-    const choose = (answer) => {
-        while (!button("Back words").disabled) {
-            click("Back words");
-        }
-        while (!button(answer)) {
-            click("More words");
-        }
-        click(answer);
-    };
-    const contextText = activePanel.api.texts.find((entry) => entry.color === "#0c4a6e").text;
-    assert(contextText.includes("Place [1: ____] here."), "Fill gaps: missing masked passage context");
-    assert(!contextText.includes("temple"), "Fill gaps: authored answer leaked in passage");
-    assert(button("Submit").disabled, "Fill gaps: incomplete submission enabled");
-    while (!button(answers[0])) click("More words");
-    const answerFrame = activePanel.api.frames.at(-1);
-    const answerRenderCount = runtime.renderCount;
-    click(answers[0]);
-    assert(activePanel.api.frames.at(-1) === answerFrame && runtime.renderCount === answerRenderCount, "Fill gaps: selecting a word rebuilt the panel");
-    assert(answerFrame.statusText.options.text === "Filled 1 of 10 blanks", "Fill gaps: status did not update in place");
-    click("Clear");
-    assert(activePanel.api.frames.at(-1) === answerFrame && runtime.renderCount === answerRenderCount, "Fill gaps: clearing a word rebuilt the panel");
-    assert(!button(answers[0]).disabled && button("Clear").disabled, "Fill gaps: clear did not restore controls");
-    assert(runtime.state.values["gap-0"] === "", "Fill gaps: clear retained a response");
-    choose(answers[1]);
-    choose(answers[0]);
-    assert(runtime.state.values["gap-0"] === answers[0], "Fill gaps: replacement failed");
-    for (let index = 1; index < answers.length; index += 1) {
-        click("Next");
-        while (!button(answers[0])) click("More words");
-        assert(button(answers[0])?.disabled, "Fill gaps: assigned word must stay visible and disabled");
-        choose(answers[index]);
+    const blank = (index) => buttons().find((entry) => entry.label.startsWith("[" + (index + 1) + ":"));
+    const choose = (answer, index) => { click(answer); blank(index).onClick(); };
+    for (const label of ["Previous", "Next", "Clear", "Back words", "More words", "Gap 1"]) {
+        assert(!button(label), "Fill gaps: redundant control remains: " + label);
     }
-    click("Previous");
-    assert(runtime.state.values["gap-7"] === answers[7], "Fill gaps: navigation lost response");
-    assert(runtime.state.wordBank.map((word) => word.text).join("|") === headsetWordOrder, "Fill gaps: word bank reshuffled during the attempt");
+    assert(answers.every((answer) => button(answer)), "Fill gaps: words still require paging");
+    assert(renderedFillGapPassage() === answers.map((_, index) => "Place [" + (index + 1) + ": ____] here.").join(" "), "Fill gaps: complete passage was not masked");
+    assert(button("Submit").disabled, "Fill gaps: incomplete submission enabled");
+    const frame = activePanel.api.frames.at(-1);
+    const renderCount = runtime.renderCount;
+    click(answers[0]);
+    assert(!runtime.state.values["gap-0"], "Fill gaps: choosing a word filled an unselected blank");
+    blank(0).onClick();
+    assert(frame.statusText.options.text === "Filled 1 of 10 blanks", "Fill gaps: blank click did not assign the selected word");
+    assert(button(answers[0]).disabled, "Fill gaps: used word was available twice");
+    blank(0).onClick();
+    assert(!runtime.state.values["gap-0"] && !button(answers[0]).disabled, "Fill gaps: tapping an answer did not clear and release its word");
+    choose(answers[1], 0);
+    choose(answers[0], 0);
+    assert(!button(answers[1]).disabled, "Fill gaps: replacing an answer did not release its previous word");
+    for (let index = 1; index < answers.length; index += 1) choose(answers[index], index);
+    assert(activePanel.api.frames.at(-1) === frame && runtime.renderCount === renderCount, "Fill gaps: answering rebuilt the panel");
+    assert(runtime.state.wordBank.map((word) => word.text).join("|") === headsetWordOrder, "Fill gaps: word bank reshuffled during an attempt");
     click("Submit");
-    assert(windowStub.__vrodosLastAssessmentResult.isCorrect === true, "Fill gaps: completed response graded incorrectly");
+    assert(windowStub.__vrodosLastAssessmentResult.isCorrect === true, "Fill gaps: complete response graded incorrectly");
 
-    const phraseText = () => {
-        const pending = [activePanel.api.frames.at(-1).content];
-        while (pending.length) {
-            const node = pending.pop();
-            if (node.kind === "text" && node.options.color === "#0c4a6e") {
-                return node.options.text;
-            }
-            pending.push(...node.children);
-        }
-        throw new Error("Fill gaps: missing phrase text");
-    };
     const numberedText = "1.The Parthenon is an ancient temple in Athens. Visit it today.\n2.The building is made of marble. Each column supports the roof.\n3.Η δημοκρατία ξεκίνησε εδώ.";
     const numberedAnswers = ["temple", "marble", "column", "δημοκρατία"];
     const numberedAnnotations = numberedAnswers.map((answer, index) => {
         const start = numberedText.indexOf(answer);
         return { id: "numbered-" + index, start, end: start + answer.length, type: "blank", correctValue: answer };
     });
-    runtime.open(makePayload("Numbered phrases", "Text", "Fill in the gaps", { text: numberedText, annotations: numberedAnnotations }));
-    assert(runtime.state.phrases.length === 3, "Fill gaps: numbered questions split at internal punctuation");
-    assert(phraseText() === "1.The Parthenon is an ancient [1: ____] in Athens. Visit it today.", "Fill gaps: first question included neighboring text or lost its ending");
-    click("Next");
-    assert(phraseText() === "2.The building is made of [2: ____]. Each [3: ____] supports the roof.", "Fill gaps: second question was not isolated and masked");
-    click("Gap 3");
-    click("column");
-    assert(runtime.state.values["numbered-2"] === "column" && !runtime.state.values["numbered-1"], "Fill gaps: selected gap received the wrong response");
-    click("Gap 2");
-    click("marble");
-    assert(phraseText().includes("[2: marble]") && phraseText().includes("[3: column]"), "Fill gaps: multiple responses in a phrase were not retained");
-    click("Next");
-    assert(phraseText() === "3.Η [4: ____] ξεκίνησε εδώ.", "Fill gaps: Greek numbered phrase was not isolated");
-    click("Previous");
-    assert(runtime.state.values["numbered-2"] === "column", "Fill gaps: phrase navigation lost responses");
-
+    runtime.open(makePayload("Numbered passage", "Text", "Fill in the gaps", { text: numberedText, annotations: numberedAnnotations }));
+    const maskedPassage = numberedText.replace("temple", "[1: ____]").replace("marble", "[2: ____]").replace("column", "[3: ____]").replace("δημοκρατία", "[4: ____]");
+    assert(renderedFillGapPassage() === maskedPassage, "Fill gaps: complete numbered/Greek passage was lost");
+    choose("column", 2);
+    choose("marble", 1);
+    assert(renderedFillGapPassage().includes("[2: marble]") && renderedFillGapPassage().includes("[3: column]"), "Fill gaps: direct blank selection lost responses");
     const longText = "The " + "very ancient ".repeat(30) + "temple stands in Athens.";
     const start = longText.indexOf("temple");
-    runtime.open(makePayload("Long phrase", "Text", "Fill in the gaps", {
+    runtime.open(makePayload("Long passage", "Text", "Fill in the gaps", {
         text: longText, annotations: [{ start, end: start + 6, type: "blank", correctValue: "temple" }]
     }));
-    assert(phraseText() === longText.replace("temple", "[1: ____]"), "Fill gaps: long phrase was truncated");
+    assert(renderedFillGapPassage() === longText.replace("temple", "[1: ____]"), "Fill gaps: long text was truncated");
     for (const prefix of ["1.\t", "1.", "1.t"]) {
         const tabText = prefix + "The temple stands in Athens.";
         const tabStart = tabText.indexOf("temple");
         runtime.open(makePayload("Tab formatting", "Text", "Fill in the gaps", {
             text: tabText, annotations: [{ start: tabStart, end: tabStart + 6, type: "blank", correctValue: "temple" }]
         }));
-        assert(!phraseText().includes("tThe") && !phraseText().includes("\\t"), "Fill gaps: tab artifact retained in numbered phrase");
-        assert(phraseText().includes("The [1: ____] stands in Athens."), "Fill gaps: tab cleanup shifted the annotation");
+        assert(!renderedFillGapPassage().includes("tThe"), "Fill gaps: tab repair changed annotation offsets");
+        assert(renderedFillGapPassage().includes("The [1: ____] stands in Athens."), "Fill gaps: tab repair lost content");
     }
     const legitimateText = "1.temple architecture matters.";
     runtime.open(makePayload("Legitimate t", "Text", "Fill in the gaps", {
         text: legitimateText, annotations: [{ start: 9, end: 21, type: "blank", correctValue: "architecture" }]
     }));
-    assert(phraseText().startsWith("1.temple"), "Fill gaps: legitimate leading t was removed");
+    assert(renderedFillGapPassage().startsWith("1.temple"), "Fill gaps: legitimate leading t was removed");
     runtime.close("test");
 }
 
@@ -959,7 +952,8 @@ async function runAssessmentFreeSceneHarness() {
         assert(!desktop.body.innerHTML.includes("n•t"), "Desktop fill gaps: control character residue rendered");
         assert(desktop.primary.disabled && desktop.status === "Filled 0 of 4 blanks", "Desktop fill gaps: incorrect initial completion state");
         runtime.open(payload);
-        assert(runtime.state.phrases.length === 4, "VR fill gaps: bullet definitions did not form separate phrases");
+        const passage = renderedFillGapPassage();
+        assert(passage.split("\n").length === 4 && passage.includes("[4: ____]"), "VR fill gaps: complete bullet passage was not shown");
         [desktop.state, runtime.state].forEach((state) => state.annotations.forEach((annotation, index) => {
             assert(state.sourceText.slice(annotation.start, annotation.end) === words[index], "Fill gaps: control characters shifted answer offsets");
         }));
@@ -967,6 +961,83 @@ async function runAssessmentFreeSceneHarness() {
     }
     const ordinaryText = "1.temple architecture matters.\n•temple\n•tRNA is a molecule.";
     assert(namespace.normalizeAssessmentLineBreaks(ordinaryText) === ordinaryText, "Fill gaps: list repair changed legitimate leading t characters");
+}
+
+// Highlight selects entire blank-line-separated verses, then grades one submission.
+{
+    const text = "First correct line\ncontinued verse\n \nWrong verse\n\nΔεύτερος σωστός\nστίχος\n\nUntouched distractor";
+    const secondStart = text.indexOf("Δεύτερος");
+    const payload = makePayload("Verses", "Text", "Highlight", {
+        text,
+        annotations: [
+            { start: 6, end: 13, type: "highlight" },
+            { start: secondStart, end: secondStart + 8, type: "highlight" }
+        ]
+    });
+    const renderer = namespace.resolveRenderer(payload);
+    const desktop = {
+        payload, state: renderer.createState(payload), buttons: new Map(),
+        body: {
+            innerHTML: "",
+            querySelectorAll() {
+                for (const match of this.innerHTML.matchAll(/data-highlight-id="([^"]+)"/g)) {
+                    desktop.buttons.set(match[1], {
+                        style: {}, getAttribute: () => match[1], setAttribute() {},
+                        addEventListener(type, handler) { this[type] = handler; }
+                    });
+                }
+                return [...desktop.buttons.values()];
+            }
+        },
+        setStatus(status) { this.status = status; },
+        configurePrimaryAction(options) { this.primary = options; },
+        finish(response, extra) { this.lastResult = namespace.buildAssessmentResult(payload, response, extra); }
+    };
+    renderer.render(desktop);
+    const verses = desktop.state.verses;
+    assert(verses.length === 4 && verses[0].text === "First correct line\ncontinued verse", "Highlight: single line breaks must remain in the verse");
+    assert(verses[2].text === "Δεύτερος σωστός\nστίχος", "Highlight: Greek verse was split or damaged");
+    assert(desktop.buttons.size === 4 && desktop.primary.disabled, "Highlight: every verse must be selectable without an initial selection");
+    renderer.onPrimaryAction(desktop);
+    assert(!desktop.lastResult, "Highlight: empty submission accepted");
+    const select = (index) => desktop.buttons.get(verses[index].id).click();
+    select(0);
+    assert(!desktop.primary.disabled, "Highlight: partial answer cannot be submitted");
+    renderer.onPrimaryAction(desktop);
+    assert(desktop.lastResult.score === 50 && !desktop.lastResult.isCorrect, "Highlight: missed correct verse did not reduce score");
+    select(2);
+    assert(namespace.buildHighlightResult(desktop.state).extra.score === 100, "Highlight: all correct verses must score 100");
+    select(1);
+    renderer.onPrimaryAction(desktop);
+    assert(desktop.lastResult.score === 50 && !desktop.lastResult.isCorrect, "Highlight: wrong selection did not reduce score");
+    assert(desktop.lastResult.response.selections[3].isCorrect === null, "Highlight: untouched distractor earned points");
+    select(1); select(1);
+    assert(desktop.state.selectedIds.size === 3, "Highlight: repeated selection was counted twice");
+
+    runtime.open(clone(payload));
+    const frame = activePanel.api.frames.at(-1);
+    const renderCount = runtime.renderCount;
+    const vrButton = (label) => activePanel.api.buttons.findLast((button) => button.label === label);
+    const lastResult = runtime.lastResult;
+    vrButton("Submit").onClick();
+    assert(runtime.lastResult === lastResult, "VR highlight: empty submission accepted");
+    for (const index of [0, 2, 1]) vrButton(verses[index].text).onClick();
+    vrButton(verses[1].text).onClick();
+    vrButton(verses[1].text).onClick();
+    assert(runtime.renderCount === renderCount && activePanel.api.frames.at(-1) === frame, "VR highlight: verse selection replaced controller targets");
+    vrButton("Submit").onClick();
+    assert(runtime.lastResult.score === 50, "VR highlight: wrong selection penalty was lost");
+    assert(JSON.stringify(runtime.lastResult.response) === JSON.stringify(desktop.lastResult.response), "Highlight: desktop and VR submissions disagree");
+    const allWrong = namespace.createHighlightState(text, payload.content.annotations);
+    allWrong.selectedIds.add(allWrong.verses[1].id);
+    assert(namespace.buildHighlightResult(allWrong).extra.score === 0, "Highlight: score must never be negative");
+    const unconfigured = namespace.createHighlightState(text, []);
+    unconfigured.selectedIds.add(unconfigured.verses[0].id);
+    assert(!namespace.canSubmitHighlight(unconfigured), "Highlight: missing answer key must not complete");
+    const windowsText = "  😀 σωστό\r\nσυνέχεια\r\n \t\r\nλάθος  ";
+    const windowsState = namespace.createHighlightState(windowsText, [{ start: 2, end: 4, type: "highlight" }]);
+    assert(windowsState.verses.length === 2 && windowsState.verses[0].expectedSelected && !windowsState.verses[1].expectedSelected, "Highlight: CRLF/UTF-16 offsets changed the answer key");
+    runtime.close("test");
 }
 
 // Bingo uses the authored correctness flags, with one board shared by desktop

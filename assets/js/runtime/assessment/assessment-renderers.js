@@ -1018,19 +1018,14 @@
     function createTextRenderer() {
         return {
             createState(payload) {
-                const sourceText = normalizeAssessmentLineBreaks(decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : ""));
+                const rawText = decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : "");
                 const typeKey = normalizeComparableText(payload && payload.type);
                 const mode = typeKey === "highlight" ? "highlight" : "fill-gaps";
                 if (mode === "highlight") {
-                    const highlights = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "highlight");
-                    return {
-                        mode,
-                        sourceText,
-                        annotations: highlights,
-                        selectedIds: new Set()
-                    };
+                    return namespace.createHighlightState(rawText, payload && payload.content && payload.content.annotations);
                 }
 
+                const sourceText = normalizeAssessmentLineBreaks(rawText);
                 const blanks = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "blank");
                 return {
                     mode,
@@ -1053,16 +1048,12 @@
             onPrimaryAction(runtime) {
                 const state = runtime.state;
                 if (state.mode === "highlight") {
-                    if (state.selectedIds.size !== state.annotations.length) {
+                    if (!namespace.canSubmitHighlight(state)) {
                         return;
                     }
 
-                    const selections = namespace.buildHighlightSelections(state);
-
-                    runtime.finish(
-                        { selections, variant: "highlight" },
-                        { isCorrect: namespace.gradeResponses(selections) }
-                    );
+                    const result = namespace.buildHighlightResult(state);
+                    runtime.finish(result.response, result.extra);
                     return;
                 }
 
@@ -1114,7 +1105,7 @@
                 : '<div style="font-size:14px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg> All words are placed.</div>',
             "</div>",
             "</div>",
-            '<div style="min-height:0;overflow:hidden;padding:18px;border-radius:20px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:\'Outfit\', -apple-system, sans-serif;font-size:16px;line-height:1.85;color:#1e293b;white-space:pre-wrap;box-shadow:0 4px 20px rgba(15,23,42,0.02);">',
+            '<div style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:\'Outfit\', -apple-system, sans-serif;font-size:16px;line-height:1.85;color:#1e293b;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 4px 20px rgba(15,23,42,0.02);">',
             segments.map((segment) => {
                 if (segment.type !== "blank") {
                     const displayText = textSegmentIndex === 0 ? stripFillGapWordBankIntro(segment.text) : segment.text;
@@ -1131,7 +1122,7 @@
                 ].join("");
             }).join(""),
             "</div>",
-        ].join(""), "display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:12px;");
+        ].join(""), "display:grid;grid-template-rows:auto auto auto;align-content:start;gap:12px;overflow-y:auto;");
 
         runtime.body.querySelectorAll("[data-fill-gap-word-id]").forEach((button) => {
             button.addEventListener("click", () => {
@@ -1198,25 +1189,20 @@
 
     function renderHighlightText(runtime) {
         const state = runtime.state;
-        if (!state.annotations.length || !state.sourceText) {
+        if (!state.verses.length || !state.annotations.length) {
             renderEmptyState(runtime, "This assessment is empty.", "Add text and at least one highlight annotation in Immerse to make it playable in VRodos.");
             return;
         }
 
-        const segments = buildTextSegments(state.sourceText, state.annotations);
         runtime.body.innerHTML = assessmentShell("highlight-text", [
-            '<div style="padding:14px 16px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:13px;line-height:1.45;">Select every highlighted target in the passage to finish.</div>',
-            '<div style="min-height:0;overflow:hidden;padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,\'Times New Roman\',serif;font-size:16px;line-height:1.65;color:#0f172a;white-space:pre-wrap;">',
-            segments.map((segment) => {
-                if (segment.type !== "highlight") {
-                    return escapeHtml(segment.text).replace(/\n/g, "<br />");
-                }
-
-                const selected = state.selectedIds.has(segment.id);
-                return `<span role="button" tabindex="0" data-highlight-id="${escapeHtml(segment.id)}" style="display:inline;border-radius:8px;padding:0 3px;background:${selected ? "rgba(92,200,135,0.18)" : "rgba(250,204,21,0.24)"};border-bottom:2px solid ${selected ? "rgba(92,200,135,0.95)" : "rgba(234,179,8,0.95)"};cursor:pointer;">${escapeHtml(segment.text)}</span>`;
+            renderInfoCallout("Select all verses you think are correct, then submit. An empty line separates verses."),
+            '<div style="display:grid;gap:16px;">',
+            state.verses.map((verse) => {
+                const selected = state.selectedIds.has(verse.id);
+                return `<button type="button" aria-pressed="${selected}" data-highlight-id="${escapeHtml(verse.id)}" style="display:block;width:100%;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Georgia,serif;font-size:16px;line-height:1.65;color:#0f172a;border-radius:12px;padding:12px 16px;background:${selected ? "#dbeafe" : "#ffffff"};border:2px solid ${selected ? "#3b82f6" : "#cbd5e1"};cursor:pointer;">${escapeHtml(verse.text)}</button>`;
             }).join(""),
             "</div>",
-        ].join(""), "display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;");
+        ].join(""), "display:grid;grid-template-rows:auto auto;align-content:start;gap:12px;overflow-y:auto;");
 
         runtime.body.querySelectorAll("[data-highlight-id]").forEach((button) => {
             button.addEventListener("click", () => {
@@ -1226,15 +1212,24 @@
                 } else {
                     state.selectedIds.add(annotationId);
                 }
-                runtime.rerender();
+                const selected = state.selectedIds.has(annotationId);
+                button.setAttribute("aria-pressed", String(selected));
+                button.style.background = selected ? "#dbeafe" : "#ffffff";
+                button.style.borderColor = selected ? "#3b82f6" : "#cbd5e1";
+                updateHighlightControls(runtime);
             });
         });
 
-        runtime.setStatus(`Selected ${state.selectedIds.size} of ${state.annotations.length} highlights`);
+        updateHighlightControls(runtime);
+    }
+
+    function updateHighlightControls(runtime) {
+        const state = runtime.state;
+        runtime.setStatus(`Selected ${state.selectedIds.size} verses`);
         runtime.configurePrimaryAction({
             visible: true,
-            label: "Finish",
-            disabled: state.selectedIds.size !== state.annotations.length
+            label: "Submit",
+            disabled: !namespace.canSubmitHighlight(state)
         });
     }
 

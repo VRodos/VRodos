@@ -715,14 +715,66 @@
     }
     namespace.buildWordSearchAnswers = buildWordSearchAnswers;
 
-    function buildHighlightSelections(state) {
-        return state.annotations.map((annotation) => ({
-            annotationId: annotation.id,
-            text: state.sourceText.slice(annotation.start, annotation.end),
-            selected: state.selectedIds.has(annotation.id),
-            isCorrect: state.selectedIds.has(annotation.id)
-        }));
+    function createHighlightState(sourceText, annotations) {
+        const highlights = normalizeTextAnnotations(sourceText, annotations, "highlight");
+        const verses = [];
+        let cursor = 0;
+        function addVerse(end) {
+            const raw = sourceText.slice(cursor, end);
+            const start = cursor + raw.length - raw.trimStart().length;
+            const trimmedEnd = end - (raw.length - raw.trimEnd().length);
+            if (start < trimmedEnd) {
+                verses.push({
+                    id: "verse-" + start,
+                    start,
+                    end: trimmedEnd,
+                    text: sourceText.slice(start, trimmedEnd),
+                    expectedSelected: highlights.some((annotation) => annotation.start < trimmedEnd && annotation.end > start)
+                });
+            }
+        }
+        // A verse may contain line breaks; only an empty line ends it.
+        for (const separator of sourceText.matchAll(/\r?\n(?:[^\S\r\n]*\r?\n)+/g)) {
+            addVerse(separator.index);
+            cursor = separator.index + separator[0].length;
+        }
+        addVerse(sourceText.length);
+        return { mode: "highlight", sourceText, annotations: highlights, verses, selectedIds: new Set() };
     }
+
+    function canSubmitHighlight(state) {
+        return state.selectedIds.size > 0 && state.verses.some((verse) => verse.expectedSelected);
+    }
+
+    function buildHighlightSelections(state) {
+        return state.verses.map((verse) => {
+            const selected = state.selectedIds.has(verse.id);
+            return {
+                annotationId: verse.id,
+                text: verse.text,
+                selected,
+                expectedSelected: verse.expectedSelected,
+                // Untouched distractors do not earn points in result summaries.
+                isCorrect: selected || verse.expectedSelected ? selected === verse.expectedSelected : null
+            };
+        });
+    }
+    function buildHighlightResult(state) {
+        const selections = buildHighlightSelections(state);
+        const required = state.verses.filter((verse) => verse.expectedSelected).length;
+        const correct = selections.filter((entry) => entry.selected && entry.expectedSelected).length;
+        const wrong = selections.filter((entry) => entry.selected && !entry.expectedSelected).length;
+        return {
+            response: { selections, variant: "highlight" },
+            extra: {
+                isCorrect: required > 0 && correct === required && wrong === 0,
+                score: required ? Math.round(100 * Math.max(0, correct - wrong) / required) : 0
+            }
+        };
+    }
+    namespace.createHighlightState = createHighlightState;
+    namespace.canSubmitHighlight = canSubmitHighlight;
+    namespace.buildHighlightResult = buildHighlightResult;
     namespace.buildHighlightSelections = buildHighlightSelections;
 
     function buildFillGapAnswers(state) {

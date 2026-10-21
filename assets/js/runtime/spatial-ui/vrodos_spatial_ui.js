@@ -2384,11 +2384,11 @@ import { MSDF } from "@zappar/msdf-generator";
                 fontSize: px(opts.fontSize, opts.textSize || 30),
                 lineHeight: opts.lineHeight || opts.textLineHeight || "118%",
                 fontWeight: opts.fontWeight || 500,
-                textAlign: "center",
+                textAlign: opts.textAlign || "center",
                 verticalAlign: "center",
                 width: "100%",
                 wordBreak: opts.wordBreak || "break-word",
-                whiteSpace: "normal",
+                whiteSpace: opts.whiteSpace || "normal",
                 pointerEvents: "none"
                 }, fontProps(opts)));
         }
@@ -2472,6 +2472,16 @@ import { MSDF } from "@zappar/msdf-generator";
                     pointerEvents: "listener",
                     zIndex: 8
                 }, options || {}));
+            },
+
+            scrollPage: function (container, direction) {
+                const [x, y] = container.scrollPosition.value;
+                const maxY = container.maxScrollPosition.value[1] || 0;
+                const height = container.size.value ? container.size.value[1] : 0;
+                // Keep some overlap so the next page retains reading context.
+                const nextY = clamp(y + direction * height * 0.75, 0, maxY);
+                container.scrollVelocity.set(0, 0);
+                container.scrollPosition.value = [x, nextY];
             },
 
             text: function (parent, options) {
