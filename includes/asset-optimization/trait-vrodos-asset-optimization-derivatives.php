@@ -407,16 +407,28 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			throw new RuntimeException( 'The source asset changed while its derivative was being generated; the obsolete result was discarded.' );
 		}
 
-		$attachment_id = VRodos_Storage_Manager::register_existing_private_attachment( $paths['file'], 'model/gltf-binary', $asset_id, 'asset', 'derivatives', $profile );
-		if ( is_wp_error( $attachment_id ) ) {
-			throw new RuntimeException( $attachment_id->get_error_message() );
-		}
 		$previous_record = $is_web_profile
 			? (array) ( $meta['webVariants'][ $job_key ] ?? [] )
 			: (array) ( $meta['derivatives'][ $profile ] ?? [] );
 		$previous_attachment_id = absint( $previous_record['attachmentId'] ?? 0 );
+		$registered_new_attachment = false;
+		if (
+			$previous_attachment_id > 0
+			&& VRodos_Storage_Manager::attachment_is_owned_by( $previous_attachment_id, 'asset', $asset_id )
+			&& wp_normalize_path( (string) get_attached_file( $previous_attachment_id, true ) ) === wp_normalize_path( (string) $paths['file'] )
+		) {
+			$attachment_id = $previous_attachment_id;
+		} else {
+			$attachment_id = VRodos_Storage_Manager::register_existing_private_attachment( $paths['file'], 'model/gltf-binary', $asset_id, 'asset', 'derivatives', $profile );
+			if ( is_wp_error( $attachment_id ) ) {
+				throw new RuntimeException( $attachment_id->get_error_message() );
+			}
+			$registered_new_attachment = true;
+		}
 		if ( $is_web_profile && ! self::source_identity_matches( $asset_id, $source_hash, $source_generation ) ) {
-			VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
 			self::delete_generated_derivative_files( $paths );
 			throw new RuntimeException( 'The source asset changed before its derivative could be registered; the obsolete result was discarded.' );
 		}
@@ -468,7 +480,9 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 		$updated = update_post_meta( $asset_id, self::META_KEY, $meta );
 		if ( false === $updated && get_post_meta( $asset_id, self::META_KEY, true ) !== $meta ) {
-			VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
 			if ( is_file( $paths['manifest'] ) ) {
 				wp_delete_file( $paths['manifest'] );
 			}
@@ -481,7 +495,9 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 				unset( $current_meta['webProfileDefaults'][ $profile ], $current_meta['derivatives'][ $profile ] );
 			}
 			update_post_meta( $asset_id, self::META_KEY, $current_meta );
-			VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
 			self::delete_generated_derivative_files( $paths );
 			throw new RuntimeException( 'The source asset changed while the derivative record was being published; the obsolete result was discarded.' );
 		}

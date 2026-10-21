@@ -82,6 +82,7 @@ export const testGroups = Object.freeze({
     "scripts/test-import-session.php",
     "scripts/test-optimizer-source-inspection.php",
     "scripts/test-optimizer-failure-message.php",
+    "scripts/test-derivative-regeneration.php",
     "scripts/test-cefr-levels.php",
     "scripts/test-compiler-runtime-script-planner.php",
     "scripts/test-compiler-runtime-dom-transformer.php",

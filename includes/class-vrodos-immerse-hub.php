@@ -8,7 +8,7 @@ require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
 require_once __DIR__ . '/class-vrodos-compiler-scene-repository.php';
 require_once __DIR__ . '/class-vrodos-runtime-url-resolver.php';
 
-/** Public catalog of the latest published Immerse project builds. */
+/** Public catalog of published Immerse scenes grouped by country/use case. */
 final class VRodos_Immerse_Hub {
 	public const SETTING = 'vrodos_immerse_hub_enabled';
 	private const INVENTORY_META = '_vrodos_published_inventory';
@@ -22,7 +22,7 @@ final class VRodos_Immerse_Hub {
 		return home_url( '/immerse/' );
 	}
 
-	/** @return array<int, array{title:string, id:int, publishedAt:string, scenes:array}> */
+	/** @return array<int, array{title:string, id:string, lessons:array<int, array{id:int, title:string, scenes:array}>}> */
 	public static function catalog(): array {
 		$projects = get_posts( [
 			'post_type' => 'vrodos_game',
@@ -80,16 +80,34 @@ final class VRodos_Immerse_Hub {
 				];
 			}
 			if ( $scenes ) {
-				usort( $scenes, static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) );
-				$groups[] = [
+				$use_case_name = trim( (string) get_post_meta( $project_id, '_immerse_use_case_name', true ) );
+				$use_case_id = trim( (string) get_post_meta( $project_id, '_immerse_use_case_id', true ) );
+				$group_key = '' === $use_case_name ? 'unassigned' : ( '' !== $use_case_id ? 'id:' . $use_case_id : 'name:' . $use_case_name );
+				if ( ! isset( $groups[ $group_key ] ) ) {
+					$groups[ $group_key ] = [
+						'id' => $group_key,
+						'title' => '' === $use_case_name ? 'Unassigned' : $use_case_name,
+						'lessons' => [],
+					];
+				}
+				usort( $scenes, static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) ?: $a['id'] <=> $b['id'] );
+				$groups[ $group_key ]['lessons'][] = [
 					'id' => $project_id,
 					'title' => get_the_title( $project_id ),
-					'publishedAt' => (string) ( $inventory['publishedAt'] ?? '' ),
 					'scenes' => $scenes,
 				];
 			}
 		}
-		usort( $groups, static fn ( array $a, array $b ): int => strcmp( $b['publishedAt'], $a['publishedAt'] ) );
+		foreach ( $groups as &$group ) {
+			usort( $group['lessons'], static fn ( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) ?: $a['id'] <=> $b['id'] );
+		}
+		unset( $group );
+		usort( $groups, static function ( array $a, array $b ): int {
+			if ( ( 'unassigned' === $a['id'] ) !== ( 'unassigned' === $b['id'] ) ) {
+				return 'unassigned' === $a['id'] ? 1 : -1;
+			}
+			return strcasecmp( $a['title'], $b['title'] ) ?: strcmp( $a['id'], $b['id'] );
+		} );
 		return $groups;
 	}
 
