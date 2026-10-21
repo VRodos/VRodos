@@ -3136,7 +3136,7 @@ ${selectedSummaries.join("\n")}`);
       this.name = "VRodosPmndrsHorizonFoliageOverlayPass";
       this.enabled = true;
       this.needsSwap = false;
-      this.needsDepthTexture = false;
+      this.needsDepthTexture = true;
       this.renderToScreen = false;
       this.selection = new PP.Selection(void 0, PMNDRS_HORIZON_FOLIAGE_OVERLAY_LAYER);
       this.renderPass = new PP.RenderPass(scene, camera);
@@ -3147,9 +3147,11 @@ ${selectedSummaries.join("\n")}`);
       if (this.renderPass.clearPass) {
         this.renderPass.clearPass.overrideClearColor = new THREE2.Color(0);
         this.renderPass.clearPass.overrideClearAlpha = 0;
+        this.renderPass.clearPass.depth = false;
       }
       this.renderTarget = new THREE2.WebGLRenderTarget(1, 1, {
-        depthBuffer: false,
+        depthBuffer: true,
+        depthTexture: new THREE2.DepthTexture(1, 1, THREE2.FloatType),
         stencilBuffer: false,
         type: THREE2.HalfFloatType
       });
@@ -3286,9 +3288,14 @@ ${selectedSummaries.join("\n")}`);
       let swaps;
       if (this.renderPass) {
         swaps = this.prepareSelectionMaterials();
+        const autoClear = renderer.autoClear;
+        renderer.autoClear = false;
         try {
+          renderer.initRenderTarget(this.renderTarget);
+          renderer.copyTextureToTexture(this.depthTexture, this.renderTarget.depthTexture);
           this.renderPass.render(renderer, this.renderTarget, null, deltaTime, stencilTest);
         } finally {
+          renderer.autoClear = autoClear;
           this.restoreSelectionMaterials(swaps);
         }
       }
@@ -3301,6 +3308,14 @@ ${selectedSummaries.join("\n")}`);
     PmndrsHorizonFoliageOverlayPass.prototype.setDepthTexture = function(depthTexture, depthPacking) {
       this.depthTexture = depthTexture || null;
       this.depthPacking = depthPacking;
+      if (depthTexture) {
+        const ownedDepth = this.renderTarget.depthTexture;
+        if (ownedDepth.type !== depthTexture.type || ownedDepth.format !== depthTexture.format) {
+          ownedDepth.type = depthTexture.type;
+          ownedDepth.format = depthTexture.format;
+          this.renderTarget.dispose();
+        }
+      }
     };
     PmndrsHorizonFoliageOverlayPass.prototype.getDepthTexture = function() {
       return this.depthTexture || null;
@@ -3322,6 +3337,7 @@ ${selectedSummaries.join("\n")}`);
       if (this.renderPass && typeof this.renderPass.dispose === "function") {
         this.renderPass.dispose();
       }
+      this.depthTexture = null;
     };
     function ensurePmndrsAADebugOverlay(self) {
       if (!self || !isPmndrsAADebugOverlayEnabled() || typeof document === "undefined" || !document.body) {

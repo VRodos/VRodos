@@ -7457,7 +7457,7 @@
       const collisionPolicy = mode === "walkable" && settings.collisionMode !== "off";
       if (collisionPolicy && !this.areCollisionsEnabled(settings)) return null;
       const limits = { maxStepHeight: this.groundSnapDistance, maxDropHeight: this.groundSnapDistance };
-      const ground = projectBelow ? this.getTeleportGround(floor) : this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
+      const ground = this.getTeleportGround(floor);
       if (!ground || !projectBelow && Math.abs(ground.point.y - floor.y) > this.groundSnapDistance) {
         return collisionPolicy ? null : { floor, ground: null };
       }

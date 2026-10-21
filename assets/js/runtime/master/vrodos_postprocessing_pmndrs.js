@@ -3745,7 +3745,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         this.name = 'VRodosPmndrsHorizonFoliageOverlayPass';
         this.enabled = true;
         this.needsSwap = false;
-        this.needsDepthTexture = false;
+        this.needsDepthTexture = true;
         this.renderToScreen = false;
         this.selection = new PP.Selection(undefined, PMNDRS_HORIZON_FOLIAGE_OVERLAY_LAYER);
         this.renderPass = new PP.RenderPass(scene, camera);
@@ -3756,9 +3756,11 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (this.renderPass.clearPass) {
             this.renderPass.clearPass.overrideClearColor = new THREE.Color(0x000000);
             this.renderPass.clearPass.overrideClearAlpha = 0;
+            this.renderPass.clearPass.depth = false;
         }
         this.renderTarget = new THREE.WebGLRenderTarget(1, 1, {
-            depthBuffer: false,
+            depthBuffer: true,
+            depthTexture: new THREE.DepthTexture(1, 1, THREE.FloatType),
             stencilBuffer: false,
             type: THREE.HalfFloatType
         });
@@ -3914,9 +3916,16 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
 
         if (this.renderPass) {
             swaps = this.prepareSelectionMaterials();
+            const autoClear = renderer.autoClear;
+            renderer.autoClear = false;
             try {
+                // Seed an owned depth attachment from the composer's resolved
+                // scene depth so cutouts cannot draw through opaque buildings.
+                renderer.initRenderTarget(this.renderTarget);
+                renderer.copyTextureToTexture(this.depthTexture, this.renderTarget.depthTexture);
                 this.renderPass.render(renderer, this.renderTarget, null, deltaTime, stencilTest);
             } finally {
+                renderer.autoClear = autoClear;
                 this.restoreSelectionMaterials(swaps);
             }
         }
@@ -3931,6 +3940,14 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     PmndrsHorizonFoliageOverlayPass.prototype.setDepthTexture = function (depthTexture, depthPacking) {
         this.depthTexture = depthTexture || null;
         this.depthPacking = depthPacking;
+        if (depthTexture) {
+            const ownedDepth = this.renderTarget.depthTexture;
+            if (ownedDepth.type !== depthTexture.type || ownedDepth.format !== depthTexture.format) {
+                ownedDepth.type = depthTexture.type;
+                ownedDepth.format = depthTexture.format;
+                this.renderTarget.dispose();
+            }
+        }
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.getDepthTexture = function () {
@@ -3957,6 +3974,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (this.renderPass && typeof this.renderPass.dispose === 'function') {
             this.renderPass.dispose();
         }
+        this.depthTexture = null;
     };
 
     function ensurePmndrsAADebugOverlay(self) {

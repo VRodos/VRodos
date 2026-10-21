@@ -3234,8 +3234,9 @@ AFRAME.registerComponent('custom-movement', {
         if (collisionPolicy && !this.areCollisionsEnabled(settings)) return null;
 
         const limits = { maxStepHeight: this.groundSnapDistance, maxDropHeight: this.groundSnapDistance };
-        const ground = projectBelow ? this.getTeleportGround(floor)
-            : this.sampleGroundAtSingle(floor, floor.y, this.createGroundHit(), limits);
+        // Walking's Auto sampler may prefer a lower overlapping surface. Keep
+        // the same topmost-floor selection at departure and arrival instead.
+        const ground = this.getTeleportGround(floor);
         if (!ground || (!projectBelow && Math.abs(ground.point.y - floor.y) > this.groundSnapDistance)) {
             return collisionPolicy ? null : { floor, ground: null };
         }

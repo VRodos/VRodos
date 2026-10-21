@@ -266,6 +266,21 @@ assert(snap.nav.teleportToPoint(point(7, 25, 0)), 'a raised walking destination 
 snap.nav.tickTeleport(snap.nav.teleportTravel.duration);
 near(snap.nav.getNavigationWorldPosition(), point(7, 1.8, 0), 'raised marker preserves eye height at its ground projection');
 
+// Thin pavement overlays must remain the landing floor on arrival. Walking's
+// Auto ground policy deliberately prefers the base layer within this distance.
+for (const immersive of [false, true]) {
+    const pavement = fixture({ mode: 'walkable', collisions: true });
+    pavement.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+    pavement.addMesh(floorGeometry.clone(), point(0, 0.0672, 0), true);
+    if (immersive) pavement.enterVr();
+    const destination = point(4, 0.1, -3);
+    assert(pavement.nav.teleportToPoint(destination), 'pavement accepts departure');
+    pavement.nav.tickTeleport(pavement.nav.teleportTravel.duration / 2);
+    pavement.nav.tickTeleport(pavement.nav.teleportTravel.duration);
+    near(pavement.nav.getNavigationWorldPosition(), point(4, 0.0672 + (immersive ? 1.6 : 1.8), -3),
+        'arrival keeps the pavement instead of rejecting the lower base-layer landing');
+}
+
 const stacked = fixture({ mode: 'walkable', collisions: true });
 stacked.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
 const upperPlatform = new THREE.PlaneGeometry(10, 10);
