@@ -18,7 +18,10 @@ const required = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     'áéíóúüñÁÉÍÓÚÜÑ¿¡àèòçïÀÈÒÇÏ·' +
     'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρστυφχψω' +
     'άέήίόύώΆΈΉΊΌΎΏϊϋΐΰς' + '.,;:!?()[]«»“”‘’–—…€';
+const spatialUiSource = readFileSync(new URL('../assets/js/runtime/spatial-ui/vrodos_spatial_ui.js', import.meta.url), 'utf8');
+const spatialCharset = new Set(JSON.parse(spatialUiSource.match(/const SPATIAL_UI_FONT_CHARSET_SEED = (".*");/)[1]));
 for (const character of new Set(required)) {
+    assert.ok(spatialCharset.has(character), `spatial UI atlas is missing glyph ${character}`);
     const glyph = glyphs.get(character.codePointAt(0));
     assert.ok(glyph, `missing glyph ${character}`);
     assert.ok(glyph.width > 4 && glyph.height > 4, `empty glyph ${character}`);
@@ -39,4 +42,4 @@ for (const glyph of glyphs.values()) {
     assert.ok(glyph.x >= 0 && glyph.y >= 0 && glyph.x + glyph.width <= image.width && glyph.y + glyph.height <= image.height, `glyph ${glyph.char} exceeds its atlas`);
     assert.ok([glyph.xadvance, glyph.xoffset, glyph.yoffset].every(Number.isFinite));
 }
-console.log('Compiled text font coverage tests passed.');
+console.log('Compiled and spatial UI text font coverage tests passed.');

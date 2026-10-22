@@ -16029,7 +16029,7 @@
     const DIALOG_CLOSE_ICON_COLOR = "#ffffff";
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
-    const SPATIAL_UI_FONT_CHARSET_SEED = ` 	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'"()-[]{}@#$%&*+=/\\<>_\u2013\u2014\xAB\xBB\u201C\u201D\u2018\u2019\u2026\u2264\u2265\xB0%\u20AC\u0386\u0388\u0389\u038A\u038C\u038E\u038F\u03AA\u03AB\u0391\u0392\u0393\u0394\u0395\u0396\u0397\u0398\u0399\u039A\u039B\u039C\u039D\u039E\u039F\u03A0\u03A1\u03A3\u03A4\u03A5\u03A6\u03A7\u03A8\u03A9\u03AC\u03AD\u03AE\u03AF\u03CC\u03CD\u03CE\u03CA\u03CB\u0390\u03B0\u03B1\u03B2\u03B3\u03B4\u03B5\u03B6\u03B7\u03B8\u03B9\u03BA\u03BB\u03BC\u03BD\u03BE\u03BF\u03C0\u03C1\u03C3\u03C4\u03C5\u03C6\u03C7\u03C8\u03C9\u03C2`;
+    const SPATIAL_UI_FONT_CHARSET_SEED = ` 	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\xE1\xE9\xED\xF3\xFA\xFC\xF1\xC1\xC9\xCD\xD3\xDA\xDC\xD1\xBF\xA1\xE0\xE8\xF2\xE7\xEF\xC0\xC8\xD2\xC7\xCF\xB7!?.,;:'"()-[]{}@#$%&*+=/\\<>_\u2013\u2014\xAB\xBB\u201C\u201D\u2018\u2019\u2026\u2264\u2265\xB0%\u20AC\u0386\u0388\u0389\u038A\u038C\u038E\u038F\u03AA\u03AB\u0391\u0392\u0393\u0394\u0395\u0396\u0397\u0398\u0399\u039A\u039B\u039C\u039D\u039E\u039F\u03A0\u03A1\u03A3\u03A4\u03A5\u03A6\u03A7\u03A8\u03A9\u03AC\u03AD\u03AE\u03AF\u03CC\u03CD\u03CE\u03CA\u03CB\u0390\u03B0\u03B1\u03B2\u03B3\u03B4\u03B5\u03B6\u03B7\u03B8\u03B9\u03BA\u03BB\u03BC\u03BD\u03BE\u03BF\u03C0\u03C1\u03C3\u03C4\u03C5\u03C6\u03C7\u03C8\u03C9\u03C2`;
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
     const SPATIAL_UI_ASSET_ROOT = "assets/vendor/";
@@ -16258,7 +16258,7 @@
             fontSize: SPATIAL_UI_FONT_SIZE,
             textureSize: SPATIAL_UI_FONT_TEXTURE_SIZE
           });
-          recordDiagnostic("debug", "Generated Greek-capable spatial UI font atlas.", {
+          recordDiagnostic("debug", "Generated multilingual spatial UI font atlas.", {
             families: Object.keys(generated || {}),
             charsetLength: charset.length
           });

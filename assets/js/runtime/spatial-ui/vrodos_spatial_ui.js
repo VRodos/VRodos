@@ -75,7 +75,7 @@ import { MSDF } from "@zappar/msdf-generator";
     const DIALOG_CLOSE_ICON_COLOR = "#ffffff";
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
-    const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
+    const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789áéíóúüñÁÉÍÓÚÜÑ¿¡àèòçïÀÈÒÇÏ·!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
     const SPATIAL_UI_ASSET_ROOT = "assets/vendor/";
@@ -330,7 +330,7 @@ import { MSDF } from "@zappar/msdf-generator";
                     fontSize: SPATIAL_UI_FONT_SIZE,
                     textureSize: SPATIAL_UI_FONT_TEXTURE_SIZE
                 });
-                recordDiagnostic("debug", "Generated Greek-capable spatial UI font atlas.", {
+                recordDiagnostic("debug", "Generated multilingual spatial UI font atlas.", {
                     families: Object.keys(generated || {}),
                     charsetLength: charset.length
                 });
