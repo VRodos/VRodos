@@ -595,6 +595,8 @@ VRODOS.utils = VRODOS.utils || {};
             return;
         }
 
+        // Ground placement needs the nearest surface; picking still keeps all hits for click cycling.
+        this.directorGroundGuideRaycaster.firstHitOnly = true;
         this.directorGroundGuideRaycaster.near = 0;
         this.directorGroundGuideRaycaster.far = directorGroundGuide.maxDistance;
         this.directorGroundGuideRaycaster.set(
@@ -602,7 +604,9 @@ VRODOS.utils = VRODOS.utils || {};
             this.directorGroundGuideRayDirection
         );
 
-        const intersections = this.directorGroundGuideRaycaster.intersectObjects(this.directorGroundGuideTargets, false);
+        const intersections = this.directorGroundGuideRaycaster.intersectObjects(
+            this.directorGroundGuideTargets.filter(directorGroundGuideObjectVisible), false
+        );
         for (let i = 0; i < intersections.length; i++) {
             const hit = intersections[i];
             if (!hit || !hit.object || !hit.face || !hit.point) {

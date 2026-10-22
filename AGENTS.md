@@ -251,6 +251,7 @@ Template rules:
 - Pending GLB placements use a movable editor-only box under a stable selectable Group. Replace its visual children when the model arrives; preserve root identity, transforms, selection, locks, and undo history.
 - Asset cards and upload notices use the editor-load resolver's readiness contract. Save pending asset references and transforms normally; never publish placeholder geometry or preparation status.
 - `envir.camera` is not used; use `envir.orbitControls.object` for the camera.
+- Editor GLB instances use the shared BVH vendor for precise picking and Director/teleport ground probes on static meshes with at least 2,000 triangles. Build one indirect tree per shared geometry, retain all hits for selection cycling, and request nearest hits only for the Director ground guide. Skip skinned, morphed, instanced, and custom-raycast meshes; release owned trees when cached geometry is disposed.
 - Use the cel-shaded back-face hull highlight helpers instead of `OutlinePass`.
 - Use `lil-gui`, not `dat.gui`.
 - Add null guards when accessing `transform_controls.object`.

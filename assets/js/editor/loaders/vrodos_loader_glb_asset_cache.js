@@ -112,6 +112,32 @@ VRODOS.loader = VRODOS.loader || {};
         });
     }
 
+    function prepareInstanceRaycasts(object) {
+        const bvh = window.VRODOS_COLLISION_BVH;
+        object.traverse((mesh) => {
+            const geometry = mesh.geometry;
+            // Static trees cannot follow skinning, morphs, or instance transforms.
+            if (!mesh.isMesh || mesh.isSkinnedMesh || mesh.isInstancedMesh || !geometry ||
+                mesh.raycast !== THREE.Mesh.prototype.raycast ||
+                geometry.attributes.skinIndex || geometry.attributes.skinWeight ||
+                Object.keys(geometry.morphAttributes || {}).length) return;
+            const triangles = (geometry.index?.count || geometry.attributes.position?.count || 0) / 3;
+            if (triangles < 2000) return;
+
+            if (!geometry.boundsTree) {
+                // Placements share geometry: build once, preserving face indices and material groups.
+                bvh.computeBoundsTree.call(geometry, { indirect: true });
+                const tree = geometry.boundsTree;
+                const onDispose = () => {
+                    if (geometry.boundsTree === tree) bvh.disposeBoundsTree.call(geometry);
+                    geometry.removeEventListener('dispose', onDispose);
+                };
+                geometry.addEventListener('dispose', onDispose);
+            }
+            mesh.raycast = bvh.acceleratedRaycast;
+        });
+    }
+
     function recordDiagnostic(result) {
         const diagnostics = VRODOS.editor && VRODOS.editor.diagnostics;
         if (diagnostics && typeof diagnostics.recordParsedGlbCache === 'function') {
@@ -212,6 +238,7 @@ VRODOS.loader = VRODOS.loader || {};
 
             const scene = cloneSceneGraph(entry.template.scene);
             cloneInstanceMaterials(scene);
+            prepareInstanceRaycasts(scene);
             scene.userData = Object.assign({}, scene.userData || {}, {
                 vrodosGlbCacheInstance: true,
                 vrodosGlbCacheKey: key
