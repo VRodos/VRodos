@@ -57,7 +57,8 @@ function fixture() {
     }, cancelTeleport() { movement.teleportTravel = null; } };
     scene.components['vrodos-scene-loader'] = { isReady: true };
     scene.querySelector = () => ({ components: { 'custom-movement': movement } });
-    scene.querySelectorAll = selector => selector === '[vrodos-teleport-point]' ? markerElements : controllers.filter(el => el.isConnected);
+    scene.querySelectorAll = selector => selector === '[vrodos-teleport-point]' ? markerElements
+        : (selector === '#oculusRight' ? controllers.slice(1) : controllers).filter(el => el.isConnected);
     window.VRODOSSpatialUI = { prewarm: async () => true, openPanel(config) {
         window.VRODOSRuntimeOverlay.interactionLocked = true;
         movement.teleportPaused = true;
@@ -136,10 +137,13 @@ await f.selector.togglePanel();
 assert.equal(f.panels.length, 0, 'another modal is never replaced');
 f.window.VRODOSRuntimeOverlay.interactionLocked = false;
 for (let order = 3; order <= 8; order++) f.addPoint(order);
-for (const controller of f.controllers) {
+f.controllers[0].emit('thumbstickdown');
+await flush();
+assert.equal(f.selector.panel, null, 'the left thumbstick does not open destinations');
+for (const controller of f.controllers.slice(1)) {
     controller.emit('thumbstickdown');
     await flush();
-    assert(f.selector.panel, 'either controller opens destinations');
+    assert(f.selector.panel, 'the right thumbstick opens destinations');
     controller.emit('thumbstickdown');
     assert.equal(f.selector.panel, null, 'the same shortcut closes destinations');
 }
@@ -190,6 +194,7 @@ await pending;
 assert.equal(f.selector.panel, null);
 f.selector.remove();
 assert.equal(f.controllers[0].listenerCount(), 0);
+assert.equal(f.controllers[1].listenerCount(), 0);
 assert.equal(f.frames.size, 0);
 assert.equal(f.timers.size, 0);
 console.log('Teleport destination selection acceptance tests passed.');
