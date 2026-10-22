@@ -690,6 +690,18 @@ async function runSessionIdentityChangeHarness() {
     assert(!writes.some((entry) => entry.url.endsWith("/assessment-results") && entry.body && entry.body.cefr_level === "A2"), "Stale A2 assessment result was posted after switching to A1");
 }
 
+function createCefrElement(levels) {
+    const attributes = { "data-immerse-cefr-levels": Buffer.from(JSON.stringify(levels)).toString("base64") };
+    const classes = new Set(["raycastable"]);
+    return {
+        dataset: {},
+        classList: { contains: (name) => classes.has(name), add: (name) => classes.add(name), remove: (name) => classes.delete(name) },
+        getAttribute: (name) => attributes[name] || null,
+        setAttribute: (name, value) => { attributes[name] = value; },
+        removeAttribute: (name) => { delete attributes[name]; }
+    };
+}
+
 function runCefrIdentityHarness() {
     const cefrWindow = {
         console,
@@ -713,6 +725,7 @@ function runCefrIdentityHarness() {
     cefrWindow.window = cefrWindow;
     const cefrContext = vm.createContext({
         window: cefrWindow,
+        document: { getElementById: () => null },
         console,
         TextDecoder,
         Uint8Array,
@@ -722,6 +735,7 @@ function runCefrIdentityHarness() {
         clearTimeout
     });
     [
+        "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/assessment/assessment-utils.js",
         "assets/js/runtime/assessment/assessment-session-runtime.js",
         "assets/js/runtime/assessment/assessment-cefr-runtime.js"
@@ -730,12 +744,39 @@ function runCefrIdentityHarness() {
     });
 
     const cefrRuntime = cefrWindow.VRodosImmerseAssessment.getCefrRuntime();
+    cefrRuntime.schedulePrompt = () => {};
+    const a1 = createCefrElement(["A1"]), b1 = createCefrElement(["B1"]);
+    cefrRuntime.register(a1);
+    cefrRuntime.register(b1);
+    let dismissals = 0;
+    cefrRuntime.hidePrompt = () => { dismissals += 1; };
     assert(cefrRuntime.requiresParticipantName() === true, "CEFR runtime should require a name for Immerse results");
     assert(cefrRuntime.canStart() === false, "CEFR runtime should not start without level and name");
+    cefrRuntime.startExperience();
+    assert(dismissals === 0 && !cefrRuntime.levelApplied, "Empty Start dismissed the prompt");
     cefrRuntime.selectLevel("B1");
     assert(cefrRuntime.canStart() === false, "CEFR runtime should not start without a name");
+    const api = createSpatialApi();
+    cefrRuntime.renderVrPrompt(api);
+    assert(api.frames[0].options.showClose === false, "VR startup prompt allows implicit dismissal");
+    assert(api.frames[0].primaryButton.options.disabled, "VR Start must stay disabled without a name");
+    cefrRuntime.startExperience();
+    assert(dismissals === 0, "Start dismissed the prompt without a name");
     cefrRuntime.setParticipantName("Ada");
     assert(cefrRuntime.canStart() === true, "CEFR runtime should start with name and level");
+    api.buttons.find((button) => button.label === "SKIP").onClick();
+    assert(dismissals === 1 && cefrRuntime.levelApplied && cefrRuntime.selectedLevel === "ALL", "VR SKIP did not explicitly start at ALL");
+    assert(cefrRuntime.participantName === "", "SKIP retained a partially entered name");
+    assert([a1, b1].every((element) => element.getAttribute("visible") === "true" && element.classList.contains("raycastable")), "SKIP did not reveal all CEFR content");
+    const late = createCefrElement(["A2"]);
+    cefrRuntime.register(late);
+    assert(late.getAttribute("visible") === "true" && late.classList.contains("raycastable"), "Late CEFR content did not inherit ALL");
+    const session = cefrWindow.VRodosImmerseAssessment.getAssessmentSessionRuntime();
+    session.recordAssessmentResult({ assetId: 1 }, { isCorrect: true });
+    assert(!session.hasIdentity() && session.state.pendingWrites.length === 0, "SKIP created or submitted a named results session");
+    cefrRuntime.unregister(a1);
+    cefrRuntime.unregister(b1);
+    cefrRuntime.unregister(late);
 }
 
 async function runAssessmentFreeSceneHarness() {
@@ -790,20 +831,9 @@ async function runAssessmentFreeSceneHarness() {
     assert(writes.length === 0 && session.state.pendingWrites.length === 0, "Assessment-free scene submitted or queued results");
     assert(store.size === 1 && store.get("vrodos:immerse-results:7") === savedSession, "Assessment-free scene changed the project's stored results session");
 
-    const attachment = (levels) => {
-        const attributes = { "data-immerse-cefr-levels": Buffer.from(JSON.stringify(levels)).toString("base64") };
-        const classes = new Set(["raycastable"]);
-        return {
-            dataset: {},
-            classList: { contains: (name) => classes.has(name), add: (name) => classes.add(name), remove: (name) => classes.delete(name) },
-            getAttribute: (name) => attributes[name] || null,
-            setAttribute: (name, value) => { attributes[name] = value; },
-            removeAttribute: (name) => { delete attributes[name]; }
-        };
-    };
     let prompts = 0;
     cefr.schedulePrompt = () => { prompts += 1; };
-    const a1 = attachment(["A1"]), b1 = attachment(["B1"]);
+    const a1 = createCefrElement(["A1"]), b1 = createCefrElement(["B1"]);
     cefr.register(a1);
     cefr.register(b1);
     assert(prompts > 0 && !cefr.requiresParticipantName(), "CEFR attachments did not retain a level-only prompt");
