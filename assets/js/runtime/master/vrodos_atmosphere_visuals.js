@@ -512,52 +512,6 @@
             return vector;
         }
 
-        function isPmndrsGeneratedSunElement(el) {
-            if (!el) {
-                return false;
-            }
-
-            const id = (typeof el.id === 'string' ? el.id : '').toLowerCase();
-            return id === 'vrodos-pmndrs-sun' ||
-                id === 'vrodos-pmndrs-sun-haze' ||
-                (el.hasAttribute && el.hasAttribute('data-vrodos-pmndrs-sun'));
-        }
-
-        function restorePmndrsHorizonEnvironmentVisuals(self) {
-            if (!self || !self.el || !self.el.object3D) {
-                return;
-            }
-
-            const restoredElements = [];
-            self.el.object3D.traverse((node) => {
-                if (!node || !node.userData || !node.userData.vrodosPmndrsLegacySuppressed) {
-                    return;
-                }
-                if (isPmndrsGeneratedSunElement(node.el)) {
-                    delete node.userData.vrodosPmndrsLegacySuppressed;
-                    return;
-                }
-
-                node.visible = true;
-                delete node.userData.vrodosPmndrsLegacySuppressed;
-                if (node.el && restoredElements.indexOf(node.el) === -1) {
-                    restoredElements.push(node.el);
-                }
-            });
-
-            restoredElements.forEach((el) => {
-                if (el && typeof el.setAttribute === 'function') {
-                    el.setAttribute('visible', 'true');
-                }
-            });
-
-            Array.prototype.forEach.call(self.el.querySelectorAll('#default-sky, #default-sun, a-sun-sky, a-sky[data-vrodos-preset-sky="true"], .environmentSun, .environment-sun, .environmentSky, .environment-sky, [class*="environmentSun"], [class*="environmentSky"]'), (el) => {
-                if (el && !isPmndrsGeneratedSunElement(el) && typeof el.setAttribute === 'function') {
-                    el.setAttribute('visible', 'true');
-                }
-            });
-        }
-
         function primeVrTakramSkyDirectShader(self) {
             const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
             const material = state && state.skyMaterial ? state.skyMaterial : null;

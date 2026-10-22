@@ -4202,8 +4202,7 @@
     ensurePmndrsAtmosphereResources: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function() {
       return null;
     },
-    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function() {
-    },
+    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || vrodosRuntimeNoop,
     getPmndrsAtmosphereConfig: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
       return null;
     },
@@ -4223,21 +4222,16 @@
       return 1;
     },
     updateReflectionEnvironmentIntensity: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
-    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
-    },
-    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
-    },
-    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function() {
-    },
+    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || vrodosRuntimeNoop,
+    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || vrodosRuntimeNoop,
+    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || vrodosRuntimeNoop,
     isPmndrsDayNightCycleActive: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
     updatePmndrsDayNightCycleFrame: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
-    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function() {
-    },
+    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || vrodosRuntimeNoop,
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function() {
       return false;
     },
-    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function() {
-    },
+    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || vrodosRuntimeNoop,
     isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function() {
       return false;
     },
@@ -4250,8 +4244,7 @@
     prepareVrTakramVisibleSkyForReveal: VRODOSSceneSettingsMaster.SceneSettingsHelpers.prepareVrTakramVisibleSkyForReveal || function() {
       return true;
     },
-    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function() {
-    },
+    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || vrodosRuntimeNoop,
     initializeHardwareDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.initializeHardwareDiagnostics || vrodosRuntimeNoop,
     updateHardwarePerformanceDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateHardwarePerformanceDiagnostics || vrodosRuntimeNoop,
     getHardwareDiagnosticsState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getHardwareDiagnosticsState || function() {
@@ -4548,6 +4541,8 @@
           }
           break;
         }
+        default:
+          break;
       }
       this.queueQualityRefresh(true);
       this.applyVrRenderBudgetPolicy("init");
@@ -9995,7 +9990,7 @@
       }
       return this.el.getAttribute("position");
     },
-    tick: function(time, timeDelta) {
+    tick: function(time) {
       if (time - this.lastTextUpdate < 250) return;
       this.lastTextUpdate = time;
       if (this.positionShow) {

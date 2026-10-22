@@ -3443,31 +3443,6 @@
         lineHeight: "120%"
       });
     }
-    function buttonVariant(item, selectedFallback) {
-      if (item.variant) {
-        return item.variant;
-      }
-      if (item.selected || selectedFallback) {
-        return "positive";
-      }
-      if (item.negative) {
-        return "negative";
-      }
-      return item.secondary === false ? "primary" : "secondary";
-    }
-    function addButtonGrid(api, parent, items, options) {
-      const cfg = options || {};
-      api.grid(parent || api.content, items.map((item) => Object.assign({}, item, {
-        variant: buttonVariant(item),
-        textSize: item.textSize || cfg.textSize || 30,
-        minHeight: item.minHeight || cfg.itemHeight || 82
-      })), {
-        columns: cfg.columns || 2,
-        gapX: cfg.gapX || 22,
-        gapY: cfg.gapY || 22,
-        itemHeight: cfg.itemHeight || cfg.height || 84
-      });
-    }
     function resolveVrRendererKey(payload) {
       if (!payload) {
         return "";

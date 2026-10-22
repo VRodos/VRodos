@@ -2669,11 +2669,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         return panel;
     }
 
-    function getActiveSpatialUiPanelGroup(scene) {
-        const panel = getActiveSpatialUiPanelState(scene);
-        return panel && panel.group ? panel.group : null;
-    }
-
     function collectSpatialUiRayOverlayObjects(panel) {
         const objects = [];
         const seen = new Set();

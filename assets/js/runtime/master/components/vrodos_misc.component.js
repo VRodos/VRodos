@@ -190,7 +190,7 @@ AFRAME.registerComponent('show-position', {
 
         return this.el.getAttribute('position');
     },
-    tick: function (time, timeDelta) {
+    tick: function (time) {
         if (time - this.lastTextUpdate < 250) return;
         this.lastTextUpdate = time;
         if (this.positionShow) {

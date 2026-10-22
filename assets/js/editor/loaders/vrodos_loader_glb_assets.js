@@ -317,7 +317,7 @@ function vrodosLoaderEnsurePlaceholder(request, resources3D) {
         const material = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.18, depthWrite: false });
         const box = new THREE.Mesh(geometry, material);
         const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ color: 0xf59e0b }));
-        edges.raycast = () => {};
+        edges.raycast = () => { /* Placeholder edges do not participate in picking. */ };
         if (validBounds && request.resource.vrodosAssetOriginMode !== 'bounds-center') {
             box.position.fromArray(bounds.center);
             edges.position.copy(box.position);

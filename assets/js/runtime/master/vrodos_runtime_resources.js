@@ -56,7 +56,7 @@ window.VRODOSMaster = window.VRODOSMaster || {};
         }
 
         function defer(callback, schedule, cancel) {
-            if (released) return () => {};
+            if (released) return () => { /* A released registry has no scheduled work to cancel. */ };
             let pending = true;
             const handle = schedule((...args) => {
                 if (!pending || released) return;

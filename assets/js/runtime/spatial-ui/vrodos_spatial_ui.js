@@ -643,8 +643,8 @@ import { MSDF } from "@zappar/msdf-generator";
             timeStamp: typeof performance !== "undefined" && typeof performance.now === "function"
                 ? performance.now()
                 : Date.now(),
-            preventDefault: function () {},
-            stopPropagation: function () {}
+            preventDefault: function () { /* Synthetic events have no browser default action. */ },
+            stopPropagation: function () { /* Synthetic events have no DOM propagation path. */ }
         };
     }
 

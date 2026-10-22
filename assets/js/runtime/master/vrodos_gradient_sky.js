@@ -89,7 +89,7 @@
             sky.userData.vrodosVrTakramLightsOnlySky = true;
             sky.castShadow = false;
             sky.receiveShadow = false;
-            sky.raycast = function () {};
+            sky.raycast = function () { /* The background sky does not participate in picking. */ };
             self.el.object3D.add(sky);
             self._vrTakramLightsOnlyGradientSky = sky;
         } else if (sky.parent !== self.el.object3D) {
