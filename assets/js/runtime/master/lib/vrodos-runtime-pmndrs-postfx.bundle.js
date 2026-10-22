@@ -2989,7 +2989,6 @@ ${uniform}`
       let overlayPass;
       let overrides;
       let seen;
-      let alphaTestTarget;
       let uuid;
       let entry;
       if (!self) {

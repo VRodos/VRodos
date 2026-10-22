@@ -893,7 +893,6 @@
     }
 
     function sceneRayFeedbackAllowed() {
-        const overlayApi = window.VRODOSRuntimeOverlay || null;
         return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true &&
             getPresentationMode() === "immersive-xr" &&
             !hasSpatialModalOpen();
@@ -1121,7 +1120,7 @@
                 bridge.lastClickAt = performance.now();
             };
 
-            const handleDown = (event) => {
+            const handleDown = () => {
                 const hit = currentControllerIntersection(controllerEl);
                 controllerEl.__vrodosControllerClickBridge.downTarget = hit && hit.target || null;
                 controllerEl.__vrodosControllerClickBridge.downAt = performance.now();
@@ -1196,7 +1195,7 @@
                 bridge.lastClickAt = performance.now();
             };
 
-            const handleDown = (event) => {
+            const handleDown = () => {
                 if (hasSpatialModalOpen()) {
                     bridge.downTarget = null;
                     return;

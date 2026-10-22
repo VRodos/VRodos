@@ -17869,7 +17869,6 @@
       }
       const baseScale = panelScaleForOptions(options);
       const width = Math.max(0.1, numberOrDefault(options && options.width, DEFAULT_WIDTH)) * baseScale;
-      const height = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * baseScale;
       const side = options && options.anchorSide === "left" ? -1 : 1;
       const horizontalOffset = numberOrDefault(options && options.anchorHorizontalOffset, width * 0.5 + 0.45);
       const verticalOffset = numberOrDefault(options && options.verticalOffset, 0);

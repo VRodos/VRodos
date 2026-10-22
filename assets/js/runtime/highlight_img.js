@@ -38,7 +38,7 @@ AFRAME.registerComponent('highlight', {
         })
     },
 
-    onMouseEnter: function (evt) {
+    onMouseEnter: function () {
         this.mouseHovering = true;
         this.applyHighlight();
     },
@@ -89,7 +89,7 @@ AFRAME.registerComponent('highlight', {
         })
     },
 
-    onMouseLeave: function (evt) {
+    onMouseLeave: function () {
         this.mouseHovering = false;
         if (this.hoverSources.size === 0) {
             this.clearHighlight();
@@ -149,7 +149,7 @@ AFRAME.registerComponent('highlight', {
         })
     },
 
-    onBackgroundClick: function (evt) {
+    onBackgroundClick: function () {
         this.clearHighlight();
     },
 

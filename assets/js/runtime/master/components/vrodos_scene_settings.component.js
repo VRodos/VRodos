@@ -3339,7 +3339,7 @@ AFRAME.registerComponent('scene-settings', {
             case "2":
                 clearGeneratedBackground();
 
-                if (this.data.presChoice == "ocean") {
+                if (this.data.presChoice === "ocean") {
                     const sky = document.createElement('a-sky');
                     sky.setAttribute("color", "#a4bede");
                     sky.setAttribute("data-vrodos-preset-sky", "true");
@@ -3364,7 +3364,7 @@ AFRAME.registerComponent('scene-settings', {
                     backgroundEl.setAttribute("environment", "shadow", "true");
                 }
                 break;
-            case "3":
+            case "3": {
                 clearGeneratedBackground();
                 const customImgAsset = document.querySelector('#custom_sky');
                 if (customImgAsset && customImgAsset.getAttribute("src")) {
@@ -3376,6 +3376,7 @@ AFRAME.registerComponent('scene-settings', {
                     backgroundEl.setAttribute("background", "color", "#ffffff");
                 }
                 break;
+            }
         }
 
         this.queueQualityRefresh(true);

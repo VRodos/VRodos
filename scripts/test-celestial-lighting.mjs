@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { runtimeBuildChunks } from './build/runtime-chunks.mjs';
 
 let lighting;
+let blendColor;
 const components = {};
 const elements = new Map();
 function element(tag = 'a-entity') {
@@ -32,10 +33,19 @@ context.VRODOS_RUNTIME_SETTINGS_CONTRACT = JSON.parse(readFileSync(new URL('../a
 for (const name of ['vrodos_runtime_settings_helpers.js', 'vrodos_celestial_clock.js', 'vrodos_moon_phase.js', 'vrodos_celestial_coordinates.js', 'vrodos_light_smoothing.js', 'vrodos_shadow_maps.js', 'vrodos_shadow_runtime.js', 'vrodos_celestial_lighting.js', 'vrodos_render_quality.js', 'vrodos_cloud_occlusion.js', 'vrodos_sun_occlusion.js', 'vrodos_sun_sprite.js', 'vrodos_gradient_sky.js', 'vrodos_atmosphere_visuals.js', 'vrodos_quality_profiles.js']) {
     if (name === 'vrodos_quality_profiles.js') {
         const create = context.VRODOSMaster.CelestialLighting.create;
-        context.VRODOSMaster.CelestialLighting = { create: args => (lighting = create(args)) };
+        context.VRODOSMaster.CelestialLighting = { create: args => {
+            blendColor = args.host.lerpPmndrsColor;
+            return (lighting = create(args));
+        } };
     }
     vm.runInContext(readFileSync(new URL(`../assets/js/runtime/master/${name}`, import.meta.url), 'utf8'), context);
 }
+// Exercise the actual quality-profile helper passed to celestial lighting.
+assert.equal(blendColor('#123456', '#abcdef', 0), '#123456');
+assert.equal(blendColor('#123456', '#abcdef', 1), '#abcdef');
+assert.equal(blendColor('#000000', '#ffffff', 0.5), '#808080');
+assert.equal(blendColor('#204060', '#a08020', 0.25), '#405050');
+
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 const config = (overrides = {}) => ({

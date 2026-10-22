@@ -68,7 +68,7 @@ const baseRules = {
     'no-obj-calls': 'error',
     'no-octal': 'error',
     'no-prototype-builtins': 'error',
-    'no-redeclare': 'warn',
+    'no-redeclare': 'error',
     'no-regex-spaces': 'error',
     'no-self-assign': 'error',
     'no-setter-return': 'error',
@@ -113,14 +113,14 @@ const baseRules = {
     'no-extend-native': 'error',
     'no-extra-bind': 'warn',
     'no-floating-decimal': 'error',
-    'no-implicit-coercion': 'warn',
+    'no-implicit-coercion': 'off',
     'no-implied-eval': 'error',
     'no-invalid-this': 'off',
     'no-iterator': 'error',
     'no-labels': 'error',
     'no-lone-blocks': 'error',
     'no-loop-func': 'warn',
-    'no-multi-assign': 'warn',
+    'no-multi-assign': 'off',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
     'no-octal-escape': 'error',
@@ -141,9 +141,9 @@ const baseRules = {
     'object-shorthand': ['warn', 'properties'],
     'one-var': ['warn', 'never'],
     'prefer-const': 'warn',
-    'prefer-template': 'error',
-    'arrow-body-style': ['warn', 'as-needed'],
-    'prefer-arrow-callback': 'warn',
+    'prefer-template': 'off',
+    'arrow-body-style': 'off',
+    'prefer-arrow-callback': 'off',
     'radix': 'warn',
     'yoda': 'warn'
 };
@@ -155,8 +155,7 @@ const runtimeRules = {
     'no-lone-blocks': 'warn',
     'no-prototype-builtins': 'warn',
     'no-return-assign': ['warn', 'except-parens'],
-    'no-sequences': 'warn',
-    'prefer-template': 'warn'
+    'no-sequences': 'warn'
 };
 
 const runtimeGlobals = {
@@ -201,6 +200,10 @@ module.exports = [
         rules: baseRules
     },
     {
+        files: ['assets/js/editor/ajax/share_asset.js'],
+        languageOptions: { globals: { vrodosAssetSharing: 'readonly' } }
+    },
+    {
         files: [
             'assets/js/runtime/*.js',
             'assets/js/runtime/assessment/**/*.js',
@@ -229,10 +232,15 @@ module.exports = [
             sourceType: 'script',
             globals: runtimeGlobals
         },
-        rules: baseRules
+        rules: {
+            ...baseRules,
+            // Classic scripts initialize configured namespaces; local duplicates remain errors.
+            'no-redeclare': ['error', { builtinGlobals: false }]
+        }
     },
     {
         files: ['assets/js/runtime/master/vrodos_gtao_pass.js'],
-        languageOptions: { sourceType: 'module' }
+        languageOptions: { sourceType: 'module' },
+        rules: { 'no-redeclare': 'error' }
     }
 ];

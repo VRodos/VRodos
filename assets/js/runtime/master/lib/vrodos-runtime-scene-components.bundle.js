@@ -878,7 +878,6 @@
       return null;
     }
     function sceneRayFeedbackAllowed() {
-      const overlayApi = window.VRODOSRuntimeOverlay || null;
       return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true && getPresentationMode() === "immersive-xr" && !hasSpatialModalOpen();
     }
     function sceneRayHitPoint(hit) {
@@ -1073,7 +1072,7 @@
           bridge.lastClickTarget = target || null;
           bridge.lastClickAt = performance.now();
         };
-        const handleDown = (event) => {
+        const handleDown = () => {
           const hit = currentControllerIntersection(controllerEl);
           controllerEl.__vrodosControllerClickBridge.downTarget = hit && hit.target || null;
           controllerEl.__vrodosControllerClickBridge.downAt = performance.now();
@@ -1139,7 +1138,7 @@
           bridge.lastClickTarget = target || null;
           bridge.lastClickAt = performance.now();
         };
-        const handleDown = (event) => {
+        const handleDown = () => {
           if (hasSpatialModalOpen()) {
             bridge.downTarget = null;
             return;
@@ -1624,7 +1623,7 @@
         }
       });
     },
-    onMouseEnter: function(evt) {
+    onMouseEnter: function() {
       this.mouseHovering = true;
       this.applyHighlight();
     },
@@ -1662,7 +1661,7 @@
         }
       });
     },
-    onMouseLeave: function(evt) {
+    onMouseLeave: function() {
       this.mouseHovering = false;
       if (this.hoverSources.size === 0) {
         this.clearHighlight();
@@ -1709,7 +1708,7 @@
         }
       });
     },
-    onBackgroundClick: function(evt) {
+    onBackgroundClick: function() {
       this.clearHighlight();
     },
     reset: function() {

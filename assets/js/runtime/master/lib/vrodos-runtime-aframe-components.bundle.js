@@ -4510,7 +4510,7 @@
           break;
         case "2":
           clearGeneratedBackground();
-          if (this.data.presChoice == "ocean") {
+          if (this.data.presChoice === "ocean") {
             const sky = document.createElement("a-sky");
             sky.setAttribute("color", "#a4bede");
             sky.setAttribute("data-vrodos-preset-sky", "true");
@@ -4535,7 +4535,7 @@
             backgroundEl.setAttribute("environment", "shadow", "true");
           }
           break;
-        case "3":
+        case "3": {
           clearGeneratedBackground();
           const customImgAsset = document.querySelector("#custom_sky");
           if (customImgAsset && customImgAsset.getAttribute("src")) {
@@ -4547,6 +4547,7 @@
             backgroundEl.setAttribute("background", "color", "#ffffff");
           }
           break;
+        }
       }
       this.queueQualityRefresh(true);
       this.applyVrRenderBudgetPolicy("init");
@@ -9904,7 +9905,7 @@
           elem.emit("avatar-changed-animation", "idle", false);
         }
       });
-      this.resources.listen(document, "keyup", (event) => {
+      this.resources.listen(document, "keyup", () => {
         const cameraA = document.getElementById("cameraA");
         if (cameraA) {
           elem.emit("avatar-changed-animation", "stopped", false);

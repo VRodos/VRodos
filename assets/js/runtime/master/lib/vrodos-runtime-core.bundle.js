@@ -10448,13 +10448,13 @@ ${shader.fragmentShader}` : withUniform;
           b: parseInt(normalized.slice(5, 7), 16)
         };
       }
-      function toHex(value) {
+      function channelToHex(value) {
         const clamped = Math.max(0, Math.min(255, Math.round(value)));
         return clamped.toString(16).padStart(2, "0");
       }
       const from = hexToRgb(fromHex);
       const to = hexToRgb(toHex);
-      return `#${toHex(lerpNumber(from.r, to.r, t))}${toHex(lerpNumber(from.g, to.g, t))}${toHex(lerpNumber(from.b, to.b, t))}`;
+      return `#${channelToHex(lerpNumber(from.r, to.r, t))}${channelToHex(lerpNumber(from.g, to.g, t))}${channelToHex(lerpNumber(from.b, to.b, t))}`;
     }
     function getPmndrsAtmosphereLookDefaults(preset, intensity) {
       const midday = PMNDRS_ATMOSPHERE_LOOK_DEFAULTS.midday;

@@ -3570,7 +3570,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         let overlayPass;
         let overrides;
         let seen;
-        let alphaTestTarget;
         let uuid;
         let entry;
 

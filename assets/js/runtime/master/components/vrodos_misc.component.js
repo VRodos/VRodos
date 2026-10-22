@@ -96,7 +96,7 @@ AFRAME.registerComponent('entity-movement-emitter', {
             }
         });
 
-        this.resources.listen(document, 'keyup', (event) => {
+        this.resources.listen(document, 'keyup', () => {
             const cameraA = document.getElementById('cameraA');
             if (cameraA) {
                 elem.emit('avatar-changed-animation', "stopped", false);
