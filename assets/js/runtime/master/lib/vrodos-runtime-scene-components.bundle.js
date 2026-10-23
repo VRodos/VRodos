@@ -1398,8 +1398,8 @@
         const keyboardMovement = (_d = (_c = this.el.querySelector("[wasd-controls]")) == null ? void 0 : _c.components) == null ? void 0 : _d["wasd-controls"];
         if (!disabled && (movement || !immersive && (keyboardMovement == null ? void 0 : keyboardMovement.data.enabled))) {
           add(immersive ? "Left stick" : "WASD", "Move", immersive ? "left-stick" : void 0);
-          if (immersive) add("Right stick", "Turn", "right-stick");
         }
+        if (immersive && movement) add("Right stick", "Turn", "right-stick");
         if (!immersive) add("Left click drag", "Look", "mouse-drag");
         add(immersive ? "Point + right trigger (RT)" : "Left click", "Select", immersive ? "right-trigger" : "mouse-click");
         if (movement && !disabled && movement.getNavigationMode(settings) === "walkable" && movement.areCollisionsEnabled(settings)) {

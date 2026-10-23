@@ -5208,6 +5208,9 @@
         this.lastVerticalTransitionAt = this.getRuntimeNow();
         return false;
       }
+      if (this.isImmersiveXrPresenting()) {
+        this.heightOffset = navigationPosition.y - supportGround.point.y;
+      }
       this.setResolvedGroundHit(supportGround, navigationPosition, this.lastGroundHit);
       this.rememberGroundedPosition(navigationPosition, this.lastGroundHit);
       this.jumpLaunchVelocity = Math.sqrt(2 * this.gravity * this.jumpHeight);
@@ -9042,6 +9045,7 @@
           this.measureImmersiveSmoothness(smoothnessFrame, "setPositionMs", this.setNavigationWorldPosition, this.lastResolvedPosition);
           return;
         }
+        this.measureImmersiveSmoothness(smoothnessFrame, "rightStickTurnMs", this.applyRightThumbstickTurn, timeDelta);
         const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === "true" || settings.movement_disabled === "1";
         if (movementDisabled) {
           if (this.isAirborne()) {
@@ -9096,7 +9100,6 @@
             if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, "externalMovementMs", this.getRuntimeNow() - measuredAt);
           }
         }
-        this.measureImmersiveSmoothness(smoothnessFrame, "rightStickTurnMs", this.applyRightThumbstickTurn, timeDelta);
         let inputX = 0;
         let inputY = 0;
         let inputVertical = 0;
@@ -9311,10 +9314,20 @@
     init: function() {
       this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
       this.marker = window.VRODOSTeleport.createMarker();
+      this.markerMaterials = [];
+      this.occupied = false;
+      this.viewerPosition = new THREE.Vector3();
+      this.centerPosition = new THREE.Vector3();
       this.marker.traverse((node) => {
         if (node.isMesh) {
           this.resources.track(node.geometry);
           this.resources.track(node.material);
+          this.markerMaterials.push({
+            material: node.material,
+            opacity: node.material.opacity,
+            transparent: node.material.transparent,
+            depthWrite: node.material.depthWrite
+          });
         }
       });
       this.el.setObject3D("mesh", this.marker);
@@ -9358,6 +9371,7 @@
     },
     tick: function(time) {
       this.updateGroundProjection(time);
+      this.updateOccupancy();
       this.updateHoverPillar();
     },
     updateGroundProjection: function(time) {
@@ -9383,6 +9397,36 @@
       this.groundDirty = !ground;
       const renderedFloor = ground ? movement.authoredToRenderedPosition(ground.point, this.destination) : null;
       window.VRODOSTeleport.setMarkerGroundPosition(this.marker, renderedFloor);
+    },
+    updateOccupancy: function() {
+      var _a;
+      const movement = this.getMovement();
+      let occupied = false;
+      if (movement) {
+        this.center.updateWorldMatrix(true, false);
+        this.center.getWorldPosition(this.centerPosition);
+        if (movement.isImmersiveXrPresenting()) {
+          movement.getImmersivePhysicalAnchorPosition(this.viewerPosition);
+        } else {
+          this.viewerPosition.copy(movement.getNavigationWorldPosition());
+        }
+        const height = this.viewerPosition.y - this.centerPosition.y;
+        this.center.worldToLocal(this.viewerPosition);
+        const radius = this.marker.children[0].geometry.parameters.outerRadius;
+        occupied = this.viewerPosition.x ** 2 + this.viewerPosition.y ** 2 <= radius ** 2 && height >= 0 && height <= ((_a = movement.heightOffset) != null ? _a : 1.6) + movement.groundSnapDistance;
+      }
+      if (occupied === this.occupied) return;
+      this.occupied = occupied;
+      for (const original of this.markerMaterials) {
+        const material = original.material;
+        material.opacity = original.opacity * (occupied ? 0.08 : 1);
+        material.depthWrite = occupied ? false : original.depthWrite;
+        const transparent = occupied || original.transparent;
+        if (material.transparent !== transparent) {
+          material.transparent = transparent;
+          material.needsUpdate = true;
+        }
+      }
     },
     activate: function() {
       const movement = this.getMovement();
@@ -9410,7 +9454,7 @@
       const movement = this.getMovement();
       const loader = scene.components["vrodos-scene-loader"];
       const ownPanel = (_a = scene.components["vrodos-teleport-destinations"]) == null ? void 0 : _a.panel;
-      const visible = Boolean((this.hovered || this.menuHovered) && scene.hasLoaded && (!loader || loader.isReady) && movement && !movement.teleportTravel && (!((_b = window.VRODOSRuntimeOverlay) == null ? void 0 : _b.interactionLocked) || this.menuHovered && ownPanel));
+      const visible = Boolean(!this.occupied && (this.hovered || this.menuHovered) && scene.hasLoaded && (!loader || loader.isReady) && movement && !movement.teleportTravel && (!((_b = window.VRODOSRuntimeOverlay) == null ? void 0 : _b.interactionLocked) || this.menuHovered && ownPanel));
       if (visible && !this.pillar) {
         this.pillar = window.VRODOSTeleport.createHoverPillar();
         this.resources.track(this.pillar.geometry);

@@ -4,10 +4,16 @@ AFRAME.registerComponent('vrodos-teleport-point', {
     init: function () {
         this.resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         this.marker = window.VRODOSTeleport.createMarker();
+        this.markerMaterials = [];
+        this.occupied = false;
+        this.viewerPosition = new THREE.Vector3();
+        this.centerPosition = new THREE.Vector3();
         this.marker.traverse(node => {
             if (node.isMesh) {
                 this.resources.track(node.geometry);
                 this.resources.track(node.material);
+                this.markerMaterials.push({ material: node.material, opacity: node.material.opacity,
+                    transparent: node.material.transparent, depthWrite: node.material.depthWrite });
             }
         });
         this.el.setObject3D('mesh', this.marker);
@@ -42,6 +48,7 @@ AFRAME.registerComponent('vrodos-teleport-point', {
 
     tick: function (time) {
         this.updateGroundProjection(time);
+        this.updateOccupancy();
         this.updateHoverPillar();
     },
 
@@ -72,6 +79,37 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         window.VRODOSTeleport.setMarkerGroundPosition(this.marker, renderedFloor);
     },
 
+    updateOccupancy: function () {
+        const movement = this.getMovement();
+        let occupied = false;
+        if (movement) {
+            this.center.updateWorldMatrix(true, false);
+            this.center.getWorldPosition(this.centerPosition);
+            if (movement.isImmersiveXrPresenting()) {
+                movement.getImmersivePhysicalAnchorPosition(this.viewerPosition);
+            } else {
+                this.viewerPosition.copy(movement.getNavigationWorldPosition());
+            }
+            const height = this.viewerPosition.y - this.centerPosition.y;
+            this.center.worldToLocal(this.viewerPosition);
+            const radius = this.marker.children[0].geometry.parameters.outerRadius;
+            occupied = this.viewerPosition.x ** 2 + this.viewerPosition.y ** 2 <= radius ** 2 &&
+                height >= 0 && height <= (movement.heightOffset ?? 1.6) + movement.groundSnapDistance;
+        }
+        if (occupied === this.occupied) return;
+        this.occupied = occupied;
+        for (const original of this.markerMaterials) {
+            const material = original.material;
+            material.opacity = original.opacity * (occupied ? 0.08 : 1);
+            material.depthWrite = occupied ? false : original.depthWrite;
+            const transparent = occupied || original.transparent;
+            if (material.transparent !== transparent) {
+                material.transparent = transparent;
+                material.needsUpdate = true;
+            }
+        }
+    },
+
     activate: function () {
         const movement = this.getMovement();
         if (!this.el.isConnected || !movement || !movement.canStartTeleport()) return false;
@@ -99,7 +137,7 @@ AFRAME.registerComponent('vrodos-teleport-point', {
         const movement = this.getMovement();
         const loader = scene.components['vrodos-scene-loader'];
         const ownPanel = scene.components['vrodos-teleport-destinations']?.panel;
-        const visible = Boolean((this.hovered || this.menuHovered) && scene.hasLoaded &&
+        const visible = Boolean(!this.occupied && (this.hovered || this.menuHovered) && scene.hasLoaded &&
             (!loader || loader.isReady) && movement && !movement.teleportTravel &&
             (!window.VRODOSRuntimeOverlay?.interactionLocked || (this.menuHovered && ownPanel)));
         if (visible && !this.pillar) {

@@ -677,6 +677,11 @@ AFRAME.registerComponent('custom-movement', {
             return false;
         }
 
+        // Walking and jump probes can resolve nearby floor layers differently.
+        // Preserve the current immersive view height against the exact takeoff support.
+        if (this.isImmersiveXrPresenting()) {
+            this.heightOffset = navigationPosition.y - supportGround.point.y;
+        }
         this.setResolvedGroundHit(supportGround, navigationPosition, this.lastGroundHit);
         this.rememberGroundedPosition(navigationPosition, this.lastGroundHit);
         this.jumpLaunchVelocity = Math.sqrt(2 * this.gravity * this.jumpHeight);
@@ -5160,6 +5165,8 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
+            this.measureImmersiveSmoothness(smoothnessFrame, 'rightStickTurnMs', this.applyRightThumbstickTurn, timeDelta);
+
             const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {
                 if (this.isAirborne()) {
@@ -5222,8 +5229,6 @@ AFRAME.registerComponent('custom-movement', {
                     if (smoothnessFrame) this.addImmersiveSmoothnessDuration(smoothnessFrame, 'externalMovementMs', this.getRuntimeNow() - measuredAt);
                 }
             }
-
-            this.measureImmersiveSmoothness(smoothnessFrame, 'rightStickTurnMs', this.applyRightThumbstickTurn, timeDelta);
 
             let inputX = 0;
             let inputY = 0;

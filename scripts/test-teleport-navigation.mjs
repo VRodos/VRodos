@@ -75,7 +75,7 @@ function fixture({ standard = false, mode = 'walk', collisions = false, disabled
     const nav = Object.create(definitions['custom-movement']);
     nav.el = player;
     nav.init();
-    nav.data = { movementSpeed: 2, thumbstickDeadzone: 0.08, maxStepHeight: 0.6, maxDropHeight: 1, maxSlope: 45 };
+    nav.data = { movementSpeed: 2, turnSpeed: 45, thumbstickDeadzone: 0.08, maxStepHeight: 0.6, maxDropHeight: 1, maxSlope: 45 };
     Object.assign(nav, { hasAuthoredNavigationMode: () => true, requestShadowMapRefresh: noop,
         beginImmersiveSmoothnessFrame: () => null, getActiveImmersiveSmoothnessFrame: () => null,
         finishImmersiveSmoothnessFrame: noop, beginImmersiveEntryPoseSettle: noop });
@@ -208,6 +208,55 @@ for (const standard of [false, true]) {
             f.scene.renderer.xr.isPresenting = false;
             f.nav.handleExitVr();
             near(f.nav.getNavigationWorldPosition(), point(0, floorY + desktopHeight, 0), 'VR exit restores the desktop minimum without floor or horizontal drift');
+        }
+    }
+}
+
+
+for (const disabled of [true, 'true', '1']) {
+    const f = fixture({ mode: 'walkable', collisions: true, disabled });
+    f.addMesh(floorGeometry.clone(), point(0, 0, 0), true);
+    f.nav.ensureNavigationStatePrimed();
+    f.enterVr();
+    f.nav.ensureImmersiveRuntimeHelpers = noop;
+    const start = f.nav.getNavigationWorldPosition().clone();
+    const head = f.cameraGroup.position.clone();
+    const rig = f.rig.position.clone();
+    const yaw = f.nav.immersiveRenderYaw;
+    f.nav.leftThumbInput.y = -1;
+    f.nav.keyboardInput.x = 1;
+    f.nav.rightThumbInput.x = 1;
+    f.nav.tick(0, 16);
+    assert(f.nav.immersiveRenderYaw > yaw, 'movement-disabled scenes retain right-stick turning');
+    near(f.nav.getNavigationWorldPosition(), start, 'movement-disabled turning keeps navigation fixed');
+    near(f.cameraGroup.position, head, 'turning leaves headset tracking untouched');
+    near(f.rig.position, rig, 'turning leaves the tracking rig untouched');
+    assert.equal(f.nav.requestJump('controller'), false, 'movement-disabled scenes still reject jumps');
+}
+
+for (const floorY of [0, 3]) {
+    for (const supportDelta of [-0.08, 0, 0.08]) {
+        const f = fixture({ mode: 'walkable', collisions: true, disabled: false });
+        f.settings.vrRuntimeProfile = 'headset';
+        f.addMesh(floorGeometry.clone(), point(0, floorY, 0), true);
+        f.nav.setNavigationWorldPosition(point(0, floorY + 1.6, 0));
+        f.nav.ensureNavigationStatePrimed();
+        f.enterVr();
+        f.nav.ensureImmersiveRuntimeHelpers = noop;
+        // A walking probe's accepted floor can differ slightly from exact jump support.
+        f.nav.setNavigationWorldPosition(point(0, floorY + 1.6 + supportDelta, 0));
+        f.nav.lastResolvedPosition.copy(f.nav.immersiveVirtualNavPosition);
+        const start = f.nav.getNavigationWorldPosition().clone();
+        const head = f.cameraGroup.position.clone();
+        const rig = f.rig.position.clone();
+        for (let jump = 0; jump < 3; jump++) {
+            assert(f.nav.requestJump('controller'), 'nearby exact support accepts the controller jump');
+            let frames = 0;
+            while (f.nav.isAirborne() && frames++ < 150) f.nav.tick(frames * 1000 / 72, 1000 / 72);
+            assert(!f.nav.isAirborne(), 'controller jump completes and lands');
+            near(f.nav.getNavigationWorldPosition(), start, 'first and repeated VR jumps preserve standing height');
+            near(f.cameraGroup.position, head, 'jump leaves headset tracking untouched');
+            near(f.rig.position, rig, 'jump leaves the tracking rig untouched');
         }
     }
 }
@@ -436,6 +485,31 @@ markerElement.object3D.updateWorldMatrix(true, true);
 const shadowTarget = shadow.localToWorld(point(0.82, 0, 0));
 raycaster.set(shadowTarget.clone().add(point(0, 4, 0)), point(0, -1, 0));
 assert.equal(raycaster.intersectObject(markerElement.object3D, true).length, 0, 'shadow cannot activate or select a teleport destination');
+
+markerNavigation.nav.setNavigationWorldPosition(point(3, 3.6, -4));
+markerComponent.updateOccupancy();
+assert(markerComponent.occupied, 'standing over a scaled teleport circle detects occupancy');
+assert(center.material.transparent && !center.material.depthWrite, 'occupied circle lets the floor show through');
+assert(center.material.opacity < 0.1 && shadow.material.opacity < 0.1, 'circle and shadow fade together');
+markerNavigation.nav.setNavigationWorldPosition(point(6, 3.6, -4));
+markerComponent.updateOccupancy();
+assert(!markerComponent.occupied, 'leaving the circle clears occupancy');
+assert.equal(center.material.opacity, 1, 'leaving restores the original circle opacity');
+assert.equal(center.material.depthWrite, true, 'leaving restores circle depth writes');
+assert.equal(shadow.material.opacity, 0.42, 'leaving restores the original shadow opacity');
+const occupiedPose = markerNavigation.enterVr();
+markerComponent.center.getWorldPosition(occupiedPose);
+occupiedPose.y += 1.6;
+markerComponent.updateOccupancy();
+assert(markerComponent.occupied, 'XR occupancy follows the physical headset over the rendered circle');
+occupiedPose.x += 4;
+markerComponent.updateOccupancy();
+assert(!markerComponent.occupied, 'room-scale movement off the circle restores opacity');
+markerNavigation.scene.renderer.xr.isPresenting = false;
+markerNavigation.nav.handleExitVr();
+markerNavigation.nav.setNavigationWorldPosition(point(0, 1.6, 0));
+markerNavigation.nav.lastResolvedPosition.set(0, 1.6, 0);
+
 markerListeners.get('mouseenter')();
 assertMarkerColors('5eead4', '14b8a6');
 markerComponent.showRejection();
