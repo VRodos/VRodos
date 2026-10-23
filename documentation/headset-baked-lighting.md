@@ -4,6 +4,8 @@
 
 Each GLB asset can have one optional **Baked version for VR headset**, added on its frontend asset editor or WordPress asset edit screen. The original GLB remains the desktop/editor/PCVR source. A separate per-asset enable checkbox is deliberately omitted: an uploaded, valid bake is available for selection.
 
+The frontend **Headset baked lighting** card shows the attached filename and Ready/Needs attention status. Add/Replace selects a file; Remove marks the attachment for removal. Both changes remain pending until Save, with Undo available. Technical model requirements are collapsed below the build instructions. Saving shows a headset-model progress step only for an existing attachment, a new upload or removal; the server reports validation/attachment/removal and includes the result in its completion message. Checking an already stale bake does not block unrelated asset edits, but the card and build validation continue to require a replacement.
+
 The build menu's **Use prepared baked models for VR headset** toggle selects available bakes only for the standalone headset variant. It is off by default and applies project-wide during compilation. Models without a prepared bake retain the normal derivative policy. Automatic builds can therefore publish original desktop/PCVR media and baked headset media in the same transaction.
 
 Prepared bakes must:

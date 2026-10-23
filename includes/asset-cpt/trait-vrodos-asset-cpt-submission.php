@@ -186,20 +186,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				// Baked variants remain subject to the same asset-edit permissions.
 				VRodos_Shared_Repository_Manager::make_shared( (int) $asset_id );
 			}
-			$baked_file = (array) ( $_FILES['headsetBakedGlbInput'] ?? [] );
-			try {
-				if ( (int) ( $baked_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE ) {
-					if ( $has_new_model_upload ) {
-						throw new RuntimeException( 'Save the original model and let its import complete before attaching a lighting bake.' );
-					}
-					VRodos_Headset_Baked_Asset::replace_upload( (int) $asset_id, $baked_file );
-				} elseif ( ! empty( $_POST['removeHeadsetBakedGlb'] ) ) {
-					VRodos_Headset_Baked_Asset::replace( (int) $asset_id, 0 );
-				}
-			} catch ( RuntimeException $error ) {
-				set_transient( 'vrodos_baked_frontend_error_' . get_current_user_id() . '_' . $asset_id, $error->getMessage(), MINUTE_IN_SECONDS );
-				self::redirect_with_frontend_notice( $redirect_url, 'baked-model-failed', $submission_buffer_level );
-			}
 			if ( VRodos_Immerse_Access_Manager::is_immerse_project( (int) $project_id ) ) {
 				update_post_meta( $asset_id, '_immerse_source', 'immerse' );
 			}
@@ -328,6 +314,39 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		// Audio: To add
+		$baked_file = (array) ( $_FILES['headsetBakedGlbInput'] ?? [] );
+		$has_baked_upload = (int) ( $baked_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE;
+		$remove_baked = ! empty( $_POST['removeHeadsetBakedGlb'] );
+		$has_baked = (bool) get_post_meta( $asset_id, VRodos_Headset_Baked_Asset::META, true );
+		$baked_summary = '';
+		if ( $has_baked_upload || $remove_baked || $has_baked ) {
+			self::update_frontend_asset_save_progress(
+				'baked',
+				$has_baked_upload ? 'Attaching the headset model…' : ( $remove_baked ? 'Removing the headset model…' : 'Checking the headset model…' ),
+				$has_baked_upload ? 'Validating the prepared GLB and linking it to this asset.' : 'The editor and desktop original stay unchanged.',
+				89
+			);
+			try {
+				if ( $has_baked_upload ) {
+					if ( $has_new_model_upload ) {
+						throw new RuntimeException( 'Save the original model and let its import complete before attaching a lighting bake.' );
+					}
+					VRodos_Headset_Baked_Asset::replace_upload( (int) $asset_id, $baked_file );
+				} elseif ( $remove_baked ) {
+					VRodos_Headset_Baked_Asset::replace( (int) $asset_id, 0 );
+				}
+				$baked_status = $remove_baked && ! $has_baked_upload ? 'Removed' : VRodos_Headset_Baked_Asset::status( (int) $asset_id );
+				$baked_summary = 'Ready' === $baked_status ? 'Headset model ready.' : ( 'Removed' === $baked_status ? 'Headset model removed.' : 'Headset model needs attention: ' . $baked_status );
+				$baked_detail = in_array( $baked_status, [ 'Ready', 'Removed' ], true ) ? 'Headset model check complete.' : 'Rebuild or replace this headset model before using it in a VR build.';
+				self::update_frontend_asset_save_progress( 'baked', $baked_summary, $baked_detail, 92 );
+			} catch ( RuntimeException $error ) {
+				set_transient( 'vrodos_baked_frontend_error_' . get_current_user_id() . '_' . $asset_id, $error->getMessage(), MINUTE_IN_SECONDS );
+				$baked_redirect = add_query_arg( 'vrodos_notice', 'baked-model-failed', $redirect_url );
+				self::update_frontend_asset_save_progress( 'baked', 'Headset model could not be saved', $error->getMessage(), 89, 'failed', $baked_redirect );
+				self::perform_frontend_redirect( $baked_redirect, $submission_buffer_level );
+			}
+		}
+
 		self::update_frontend_asset_save_progress(
 			'finalize',
 			'Finalizing asset…',
@@ -348,7 +367,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		self::update_frontend_asset_save_progress(
 			'complete',
 			'Asset saved',
-			$upload_message,
+			trim( $upload_message . ' ' . $baked_summary ),
 			100,
 			'complete',
 			$redirect_url

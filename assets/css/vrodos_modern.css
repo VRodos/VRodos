@@ -931,6 +931,52 @@ body.vrodos-manager-wrapper {
   left: -50% !important;
 }
 
+.vrodos-manager-wrapper #headsetBakedAssetCard [hidden],
+.vrodos-save-progress-step[hidden] {
+  display: none !important;
+}
+
+.vrodos-baked-file {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #f8fafc;
+}
+
+.vrodos-baked-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.vrodos-baked-status {
+  flex: none;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.vrodos-baked-status[data-state="ready"] {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.vrodos-baked-status[data-state="pending"],
+.vrodos-baked-status[data-state="attention"] {
+  background: #fffbeb;
+  color: #92400e;
+}
+
 .vrodos-save-progress-steps {
   display: grid !important;
   gap: 0.4rem !important;

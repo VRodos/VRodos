@@ -105,7 +105,45 @@ window.vrodos_set_asset_editor_submit_locked = vrodos_set_asset_editor_submit_lo
 let vrodosAssetSaveProgressPreviousFocus = null;
 let vrodosAssetSaveProgressStartedAt = 0;
 let vrodosAssetSaveProgressElapsedTimer = 0;
-const VRODOS_ASSET_SAVE_STAGES = ['upload', 'validate', 'record', 'media', 'finalize'];
+const VRODOS_ASSET_SAVE_STAGES = ['upload', 'validate', 'record', 'media', 'baked', 'finalize'];
+
+function vrodos_init_headset_baked_asset() {
+    const card = document.getElementById('headsetBakedAssetCard');
+    if (!card) return;
+    const file = document.getElementById('headsetBakedGlbInput');
+    const remove = document.getElementById('removeHeadsetBakedGlb');
+    const choose = document.getElementById('headsetBakedChoose');
+    const removeButton = document.getElementById('headsetBakedRemove');
+    const undo = document.getElementById('headsetBakedUndo');
+    const name = document.getElementById('headsetBakedFilename');
+    const hint = document.getElementById('headsetBakedHint');
+    const status = document.getElementById('headsetBakedStatus');
+    const attached = card.dataset.attached === 'true';
+    const original = { name: name.textContent, hint: hint.textContent, status: status.textContent, state: status.dataset.state };
+    const refresh = () => {
+        const pending = file.files[0];
+        name.textContent = pending ? pending.name : original.name;
+        hint.textContent = remove.checked ? 'Will be removed when you save this asset.' : pending
+            ? `${(pending.size / (1024 * 1024)).toFixed(1)} MB · Save to attach and validate this GLB.` : original.hint;
+        status.textContent = remove.checked ? 'Removal pending' : pending ? 'Ready to save' : original.status;
+        status.dataset.state = remove.checked || pending ? 'pending' : original.state;
+        choose.textContent = attached || pending ? 'Replace GLB' : 'Add baked GLB';
+        choose.hidden = remove.checked;
+        removeButton.hidden = !attached || remove.checked || Boolean(pending);
+        undo.hidden = !remove.checked && !pending;
+        const step = document.querySelector('[data-save-stage="baked"]');
+        if (step) {
+            step.hidden = !attached && !pending;
+            step.lastElementChild.textContent = remove.checked ? 'Remove headset model' : pending ? 'Attach headset model' : 'Check headset model';
+        }
+        vrodos_update_asset_save_steps('');
+    };
+    choose.addEventListener('click', () => file.click());
+    file.addEventListener('change', () => { remove.checked = false; refresh(); });
+    removeButton.addEventListener('click', () => { file.value = ''; remove.checked = true; refresh(); undo.focus(); });
+    undo.addEventListener('click', () => { file.value = ''; remove.checked = false; refresh(); choose.focus(); });
+    refresh();
+}
 
 function vrodos_update_asset_save_elapsed() {
     const elapsed = document.getElementById('assetSaveProgressElapsed');
@@ -117,6 +155,8 @@ function vrodos_update_asset_save_elapsed() {
 }
 
 function vrodos_update_asset_save_steps(stage) {
+    const steps = Array.from(document.querySelectorAll('[data-save-stage]')).filter(step => !step.hidden);
+    steps.forEach((step, index) => { step.querySelector('.vrodos-save-progress-marker').textContent = index + 1; });
     const normalizedStage = String(stage || '').toLowerCase();
     if (!normalizedStage) {
         return;
@@ -124,7 +164,7 @@ function vrodos_update_asset_save_steps(stage) {
 
     const activeIndex = VRODOS_ASSET_SAVE_STAGES.indexOf(normalizedStage);
     const completeAll = normalizedStage === 'complete';
-    document.querySelectorAll('[data-save-stage]').forEach((step) => {
+    steps.forEach((step) => {
         const stepIndex = VRODOS_ASSET_SAVE_STAGES.indexOf(step.dataset.saveStage || '');
         const isComplete = completeAll || (activeIndex >= 0 && stepIndex < activeIndex);
         const isActive = !completeAll && activeIndex >= 0 && stepIndex === activeIndex;
@@ -1657,4 +1697,5 @@ function vrodos_init_asset_import_status_polling() {
 }
 
 document.addEventListener('DOMContentLoaded', vrodos_init_model_upload_dropzones);
+document.addEventListener('DOMContentLoaded', vrodos_init_headset_baked_asset);
 document.addEventListener('DOMContentLoaded', vrodos_init_asset_import_status_polling);

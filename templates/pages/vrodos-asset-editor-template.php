@@ -199,8 +199,12 @@ else { ?>
                         <span class="vrodos-save-progress-marker" aria-hidden="true">4</span>
                         <span>Attach media and preview</span>
                     </li>
-                    <li class="vrodos-save-progress-step" data-save-stage="finalize">
+                    <li class="vrodos-save-progress-step" data-save-stage="baked" hidden>
                         <span class="vrodos-save-progress-marker" aria-hidden="true">5</span>
+                        <span>Check headset model</span>
+                    </li>
+                    <li class="vrodos-save-progress-step" data-save-stage="finalize">
+                        <span class="vrodos-save-progress-marker" aria-hidden="true">6</span>
                         <span>Finish and open asset</span>
                     </li>
                 </ol>
@@ -354,15 +358,37 @@ else { ?>
                         $baked_error_key = 'vrodos_baked_frontend_error_' . get_current_user_id() . '_' . $asset_id;
                         $baked_error = get_transient($baked_error_key);
                         delete_transient($baked_error_key);
+                        $baked_status = VRodos_Headset_Baked_Asset::status((int) $asset_id);
+                        $baked_path = $baked_id ? (string) get_attached_file($baked_id, true) : '';
+                        $baked_name = $baked_id ? wp_basename($baked_path) : 'No headset model added';
+                        $baked_label = !$baked_id ? 'Optional' : ($baked_status === 'Ready' ? 'Ready' : 'Needs attention');
                     ?>
-                    <section class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-3">
-                        <label for="headsetBakedGlbInput" class="tw-block tw-text-sm tw-font-bold tw-text-slate-800">Baked version for VR headset</label>
-                        <p class="tw-text-xs tw-text-slate-500">Optional GLB with baked lighting and no embedded lights. Keep the same scale, origin and walking geometry. Desktop and PCVR keep the original model.</p>
-                        <p class="tw-text-xs tw-font-bold"><?php echo esc_html(VRodos_Headset_Baked_Asset::status((int) $asset_id)); ?><?php echo $baked_id ? ' · ' . esc_html(get_the_title($baked_id)) : ''; ?></p>
+                    <section id="headsetBakedAssetCard" class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-4" aria-labelledby="headsetBakedTitle" data-attached="<?php echo $baked_id ? 'true' : 'false'; ?>">
+                        <div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+                            <h2 id="headsetBakedTitle" class="tw-text-sm tw-font-bold tw-text-slate-800">Headset baked lighting</h2>
+                            <span id="headsetBakedStatus" class="vrodos-baked-status" data-state="<?php echo $baked_id ? ($baked_status === 'Ready' ? 'ready' : 'attention') : 'optional'; ?>"><?php echo esc_html($baked_label); ?></span>
+                        </div>
+                        <p class="tw-text-xs tw-leading-relaxed tw-text-slate-500">A lighter model for standalone VR. The editor, desktop and PCVR keep your original.</p>
+                        <div class="vrodos-baked-file" aria-live="polite" aria-atomic="true">
+                            <span class="vrodos-baked-file-icon" aria-hidden="true"><i data-lucide="box" class="tw-w-5 tw-h-5"></i></span>
+                            <div class="tw-min-w-0">
+                                <p id="headsetBakedFilename" class="tw-text-xs tw-font-bold tw-text-slate-700 tw-break-words"><?php echo esc_html($baked_name); ?></p>
+                                <p id="headsetBakedHint" class="tw-text-xs tw-leading-relaxed tw-text-slate-500 tw-mt-1"><?php echo esc_html(!$baked_id ? 'Add a prepared GLB with lighting already baked in.' : ($baked_status === 'Ready' ? 'Attached to this asset · GLB' : $baked_status)); ?></p>
+                            </div>
+                        </div>
                         <?php if (is_string($baked_error) && $baked_error !== '') { ?><p class="tw-text-xs tw-text-red-700"><?php echo esc_html($baked_error); ?></p><?php } ?>
-                        <input id="headsetBakedGlbInput" type="file" name="headsetBakedGlbInput" accept=".glb" class="tw-file-input tw-file-input-bordered tw-file-input-sm tw-w-full" />
-                        <?php if ($baked_id) { ?><label class="tw-flex tw-items-center tw-gap-2 tw-text-xs"><input type="checkbox" name="removeHeadsetBakedGlb" value="1" class="tw-checkbox tw-checkbox-sm" /> Remove prepared bake</label><?php } ?>
-                        <p class="tw-text-xs tw-text-slate-500">Save the asset, then enable “Use prepared baked models for VR headset” in the build menu. Replacing the original model requires a new bake.</p>
+                        <input id="headsetBakedGlbInput" type="file" name="headsetBakedGlbInput" accept=".glb" hidden />
+                        <input id="removeHeadsetBakedGlb" type="checkbox" name="removeHeadsetBakedGlb" value="1" hidden />
+                        <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+                            <button id="headsetBakedChoose" type="button" class="tw-btn tw-btn-sm tw-btn-outline tw-rounded-xl"><?php echo $baked_id ? 'Replace GLB' : 'Add baked GLB'; ?></button>
+                            <button id="headsetBakedRemove" type="button" class="tw-btn tw-btn-sm tw-btn-ghost tw-text-red-700 tw-rounded-xl" <?php echo !$baked_id ? 'hidden' : ''; ?>>Remove</button>
+                            <button id="headsetBakedUndo" type="button" class="tw-btn tw-btn-sm tw-btn-ghost tw-rounded-xl" hidden>Undo change</button>
+                        </div>
+                        <p class="tw-text-xs tw-leading-relaxed tw-text-slate-500"><strong class="tw-text-slate-700">To use in VR:</strong> Save, enable “Use prepared baked models for VR headset” in Build, then recompile.</p>
+                        <details class="tw-text-xs tw-text-slate-500">
+                            <summary class="tw-cursor-pointer tw-font-semibold">Model requirements</summary>
+                            <p class="tw-mt-2 tw-leading-relaxed">Use the same scale, origin and walking geometry, with no embedded lights. Replacing the original model requires a new bake.</p>
+                        </details>
                     </section>
                     <?php } ?>
 
