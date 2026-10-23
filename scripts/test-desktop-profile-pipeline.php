@@ -10,9 +10,12 @@ $GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
 $GLOBALS['vrodos_desktop_test_source'] = [];
 $GLOBALS['vrodos_desktop_test_glb_meta'] = null;
 $GLOBALS['vrodos_desktop_test_progress_path'] = '';
+$GLOBALS['vrodos_desktop_test_options'] = [];
+$GLOBALS['vrodos_desktop_test_schedule_race'] = null;
 
 class WP_Error {
 	public function __construct( private string $code, private string $message ) {}
+	public function get_error_code(): string { return $this->code; }
 	public function get_error_message(): string {
 		return $this->message;
 	}
@@ -115,8 +118,11 @@ function wp_normalize_path( string $path ): string {
 
 function wp_schedule_single_event( int $timestamp, string $hook, array $args = [], bool $wp_error = false ) {
 	if ( $GLOBALS['vrodos_desktop_test_schedule_failure'] ) {
+		if ( is_callable( $GLOBALS['vrodos_desktop_test_schedule_race'] ) ) {
+			( $GLOBALS['vrodos_desktop_test_schedule_race'] )( $timestamp, $hook, $args );
+		}
 		return $wp_error
-			? new WP_Error( 'schedule_failed', 'The test scheduler rejected the event.' )
+			? new WP_Error( is_string( $GLOBALS['vrodos_desktop_test_schedule_failure'] ) ? $GLOBALS['vrodos_desktop_test_schedule_failure'] : 'schedule_failed', 'The test scheduler rejected the event.' )
 			: false;
 	}
 
@@ -136,6 +142,19 @@ function wp_unschedule_event( int $timestamp, string $hook, array $args = [], bo
 
 function wp_strip_all_tags( string $value ): string {
 	return strip_tags( $value );
+}
+
+function get_option( string $key, $default = false ) {
+	return $GLOBALS['vrodos_desktop_test_options'][ $key ] ?? $default;
+}
+
+function wp_cache_delete( string $key, string $group ): bool {
+	$GLOBALS['vrodos_desktop_test_cache_deletes'][] = [ $key, $group ];
+	if ( 'alloptions' === $key && isset( $GLOBALS['vrodos_desktop_test_persisted_events'] ) ) {
+		$GLOBALS['vrodos_desktop_test_events'] = $GLOBALS['vrodos_desktop_test_persisted_events'];
+		unset( $GLOBALS['vrodos_desktop_test_persisted_events'] );
+	}
+	return true;
 }
 
 function wp_get_post_terms( int $post_id, string $taxonomy, array $args = [] ): array {
@@ -158,6 +177,7 @@ final class VRodos_Desktop_Profile_Test_Harness {
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const SOURCE_META_KEY = '_vrodos_asset3d_glb_source_snapshot';
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
+	public const OPTIMIZER_LEASE_OPTION = 'vrodos_asset_optimizer_worker_lease';
 
 	private static function build_derivative_paths( int $asset_id, array $source, string $profile, string $job_key = '' ): array {
 		unset( $asset_id, $source, $profile, $job_key );
@@ -364,7 +384,31 @@ file_put_contents(
 VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'recent progress-file activity must keep a running job active' );
 
+$stalled_progress = json_decode( file_get_contents( $progress_path ), true );
+$stalled_progress['updatedAt'] = gmdate( 'Y-m-d H:i:s', time() - 900 );
+file_put_contents( $progress_path, json_encode( $stalled_progress ) );
+$lease_option = VRodos_Desktop_Profile_Test_Harness::OPTIMIZER_LEASE_OPTION;
+$GLOBALS['vrodos_desktop_test_options'][ $lease_option ] = [ 'owner' => 'web:' . $asset_id . ':' . $job_key, 'expiresAt' => time() + 600 ];
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+$held_record = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $job_key ];
+vrodos_desktop_assert( 'running' === $held_record['status'] && [] === $GLOBALS['vrodos_desktop_test_events'], 'a long stage with a matching active lease must remain running without another cron event' );
+vrodos_desktop_assert( json_encode( $stalled_progress ) === file_get_contents( $progress_path ), 'joining a leased job must preserve its progress evidence' );
 unlink( $progress_path );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+vrodos_desktop_assert( [] === $GLOBALS['vrodos_desktop_test_events'], 'a matching active lease must protect work even before a progress file exists' );
+
+$GLOBALS['vrodos_desktop_test_options'][ $lease_option ]['expiresAt'] = time() - 1;
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'an expired matching lease must permit stale-job recovery' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 900 ) );
+$GLOBALS['vrodos_desktop_test_options'][ $lease_option ] = [ 'owner' => 'web:' . $asset_id . ':another-profile-key', 'expiresAt' => time() + 600 ];
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'another profile lease on the same asset must not hide an abandoned job' );
+$GLOBALS['vrodos_desktop_test_options'] = [];
+$GLOBALS['vrodos_desktop_test_events'] = [];
+seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 900 ) );
+
 VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 $recovered = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $job_key ];
 vrodos_desktop_assert( 'queued' === $recovered['status'], 'a stale running job must return to the queue' );
@@ -413,6 +457,39 @@ $GLOBALS['vrodos_desktop_test_events'] = [];
 $failed_repeat = VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( is_wp_error( $failed_repeat ), 'a failed immutable job must require an explicit regeneration attempt' );
 vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'Build and status checks must not silently retry a failed job' );
+
+// WordPress reports both failed writes and identical concurrent writes as could_not_set.
+$external_event = 'external_hook:' . serialize( [ 456 ] );
+$GLOBALS['vrodos_desktop_test_persisted_events'] = [ $external_event => time() + 90 ];
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
+invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2 ] );
+vrodos_desktop_assert( isset( $GLOBALS['vrodos_desktop_test_events'][ $external_event ] ) && 2 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'scheduling from a stale cron cache must preserve work saved by another request' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = 'could_not_set';
+$GLOBALS['vrodos_desktop_test_schedule_race'] = static function ( int $at, string $hook, array $args ): void {
+	$GLOBALS['vrodos_desktop_test_events'][ $hook . ':' . serialize( $args ) ] = $at;
+};
+$GLOBALS['vrodos_desktop_test_cache_deletes'] = [];
+$race_result = invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2 ] );
+vrodos_desktop_assert( true === $race_result && 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'an identical event saved by another writer must be joined without failing or duplicating work' );
+vrodos_desktop_assert( [ [ 'cron', 'options' ], [ 'alloptions', 'options' ], [ 'cron', 'options' ], [ 'alloptions', 'options' ] ] === $GLOBALS['vrodos_desktop_test_cache_deletes'], 'scheduling and persistence verification must discard both option caches' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$race_result = invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2, 'build' ] );
+vrodos_desktop_assert( true === $race_result && 1 === array_values( $GLOBALS['vrodos_desktop_test_events'] )[0], 'concurrent build work must retain the priority timestamp' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$GLOBALS['vrodos_desktop_test_schedule_race'] = static function ( int $at, string $hook, array $args ): void {
+	$GLOBALS['vrodos_desktop_test_events'][ $hook . ':' . serialize( $args ) ] = time() + 600;
+};
+vrodos_desktop_assert( is_wp_error( invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2, 'build' ] ) ), 'a non-priority event must not count as successful build promotion' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$GLOBALS['vrodos_desktop_test_schedule_race'] = static function ( int $at, string $hook, array $args ): void {
+	$GLOBALS['vrodos_desktop_test_events'][ $hook . ':' . serialize( [ 999 ] ) ] = $at;
+};
+vrodos_desktop_assert( is_wp_error( invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2 ] ) ), 'another job event must not mask a cron persistence failure' );
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$GLOBALS['vrodos_desktop_test_schedule_race'] = null;
+vrodos_desktop_assert( is_wp_error( invoke_desktop_profile_method( 'schedule_optimizer_event', [ 'test_hook', [ 123 ], 2 ] ) ), 'a missing event after could_not_set must remain a real failure' );
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
 
 vrodos_desktop_assert( 'web-low' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'headset', 'headset', [] ] ), 'standalone headset must select Web Low' );
 foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $cap ) {

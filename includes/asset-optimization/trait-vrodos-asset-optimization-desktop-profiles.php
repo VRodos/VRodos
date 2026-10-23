@@ -809,6 +809,11 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	protected static function desktop_profile_job_is_stale( int $asset_id, string $profile, array $record, array $source, array $options ): bool {
+		// Compression reports whole stages. Do not reset a reserved job merely
+		// because one stage takes longer than the progress-warning threshold.
+		if ( self::optimizer_lease_is_active( 'web:' . $asset_id . ':' . (string) ( $record['jobKey'] ?? '' ) ) ) {
+			return false;
+		}
 		$latest_activity = strtotime( (string) ( $record['updatedAt'] ?? '' ) . ' UTC' );
 		$latest_activity = false === $latest_activity ? 0 : $latest_activity;
 		$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source, $options );

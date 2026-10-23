@@ -102,7 +102,10 @@ class VRodos_Background_Jobs_Read_Model {
 						}
 					}
 					if ( $updated > 0 && $now - $updated >= self::WEB_STALE_SECONDS ) {
-						$note = 'No progress for 12 minutes; this job may be stalled.';
+						$held = VRodos_Asset_Optimization_Service::optimizer_lease_is_active( 'web:' . $asset_id . ':' . (string) ( $variant['jobKey'] ?? '' ) );
+						$note = $held
+							? 'No stage completed for 12 minutes. The matching lease is active; a long compression stage may still be running.'
+							: 'No stage completed for 12 minutes and no matching active lease. Verify worker processes before retrying.';
 					}
 				}
 				$jobs[] = self::job(
