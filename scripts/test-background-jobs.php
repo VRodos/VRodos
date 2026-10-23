@@ -3,10 +3,13 @@
 define( 'ABSPATH', __DIR__ );
 define( 'MINUTE_IN_SECONDS', 60 );
 
+require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-queue.php';
+
 class VRodos_Asset_Import_Execution {
 	public const IMPORT_CRON_HOOK = 'vrodos_asset_import_process_job';
 }
 class VRodos_Asset_Optimization_Service {
+	use VRodos_Asset_Optimization_Queue;
 	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
 	public const OPTIMIZER_LEASE_OPTION = 'vrodos_asset_optimizer_worker_lease';
@@ -116,6 +119,16 @@ try {
 	check_jobs( [ 1, 3, 4, 4, 2 ] === array_column( $snapshot['active'], 'assetId' ), 'Running work must lead, then build-priority events and unscheduled queue records.' );
 	check_jobs( 100 === $snapshot['active'][1]['percent'] && str_contains( $snapshot['active'][1]['message'], 'awaiting WordPress finalization' ), 'A ready progress file with a running record must show finalization.' );
 	check_jobs( str_contains( $snapshot['active'][1]['note'], '12 minutes' ), 'A running Web job without recent progress must be flagged.' );
+	check_jobs( str_contains( $snapshot['active'][1]['note'], 'matching lease is active' ), 'A long stage must explain that its active lease does not prove encoder progress.' );
+	$active_lease = $GLOBALS['options'][ VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION ];
+	$GLOBALS['options'][ VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION ]['owner'] = 'web:3:another-key';
+	$orphan = VRodos_Background_Jobs_Read_Model::snapshot();
+	check_jobs( str_contains( $orphan['active'][1]['note'], 'no matching active lease' ), 'A lease for another profile must not claim to protect abandoned work.' );
+	$GLOBALS['options'][ VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION ] = $active_lease;
+	$GLOBALS['options'][ VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION ]['expiresAt'] = $now - 1;
+	$expired = VRodos_Background_Jobs_Read_Model::snapshot();
+	check_jobs( str_contains( $expired['active'][1]['note'], 'Verify worker processes' ), 'An expired lease must request process verification instead of declaring the worker dead.' );
+	$GLOBALS['options'][ VRodos_Asset_Optimization_Service::OPTIMIZER_LEASE_OPTION ] = $active_lease;
 	check_jobs( str_contains( $snapshot['active'][4]['note'], 'No cron event' ), 'Queued work with no scheduled event must be visible.' );
 	check_jobs( [ 5, 4, 4 ] === array_column( $snapshot['recent'], 'assetId' ), 'Recent outcomes must use status timestamps.' );
 	check_jobs( str_contains( $snapshot['recent'][2]['message'], 'private path' ), 'Failure details must not expose private source paths.' );

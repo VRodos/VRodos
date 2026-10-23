@@ -209,6 +209,9 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		$output = [];
 		$code   = 0;
 		exec( $command, $output, $code );
+		// Another request may have queued work while PHP waited for Node. Discard
+		// the old cron snapshot before continuations or WP-CLI's next unschedule.
+		self::refresh_optimizer_cron_cache();
 
 		if ( 0 !== $code ) {
 			$message = self::optimizer_failure_message( $paths['manifest'], $output );

@@ -47,6 +47,8 @@ function wp_parse_args( $args, $defaults = [] ): array {
 	return array_merge( (array) $defaults, (array) $args );
 }
 
+function wp_cache_delete( string $key, string $group ): bool { return true; }
+
 function wp_next_scheduled( string $hook, array $args = [] ) {
 	$key = $hook . ':' . implode( ',', $args );
 	return $GLOBALS['vrodos_test_events'][ $key ] ?? false;
