@@ -75,7 +75,7 @@ import { MSDF } from "@zappar/msdf-generator";
     const DIALOG_CLOSE_ICON_COLOR = "#ffffff";
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
-    const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
+    const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789áéíóúüñÁÉÍÓÚÜÑ¿¡àèòçïÀÈÒÇÏ·!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
     const SPATIAL_UI_ASSET_ROOT = "assets/vendor/";
@@ -88,6 +88,7 @@ import { MSDF } from "@zappar/msdf-generator";
 
     let activePanel = null;
     let controlsHint = null;
+    let teleportMenuHint = null;
     let assessmentProgress = null;
     let assessmentProgressText = "";
     let assessmentProgressIcon = "";
@@ -329,7 +330,7 @@ import { MSDF } from "@zappar/msdf-generator";
                     fontSize: SPATIAL_UI_FONT_SIZE,
                     textureSize: SPATIAL_UI_FONT_TEXTURE_SIZE
                 });
-                recordDiagnostic("debug", "Generated Greek-capable spatial UI font atlas.", {
+                recordDiagnostic("debug", "Generated multilingual spatial UI font atlas.", {
                     families: Object.keys(generated || {}),
                     charsetLength: charset.length
                 });
@@ -643,8 +644,8 @@ import { MSDF } from "@zappar/msdf-generator";
             timeStamp: typeof performance !== "undefined" && typeof performance.now === "function"
                 ? performance.now()
                 : Date.now(),
-            preventDefault: function () {},
-            stopPropagation: function () {}
+            preventDefault: function () { /* Synthetic events have no browser default action. */ },
+            stopPropagation: function () { /* Synthetic events have no DOM propagation path. */ }
         };
     }
 
@@ -2111,7 +2112,6 @@ import { MSDF } from "@zappar/msdf-generator";
 
         const baseScale = panelScaleForOptions(options);
         const width = Math.max(0.1, numberOrDefault(options && options.width, DEFAULT_WIDTH)) * baseScale;
-        const height = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * baseScale;
         const side = options && options.anchorSide === "left" ? -1 : 1;
         const horizontalOffset = numberOrDefault(options && options.anchorHorizontalOffset, (width * 0.5) + 0.45);
         const verticalOffset = numberOrDefault(options && options.verticalOffset, 0);
@@ -2368,6 +2368,9 @@ import { MSDF } from "@zappar/msdf-generator";
                 flexGrow: opts.flexGrow,
                 flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 0,
                 paddingY: opts.paddingY,
+                backgroundColor: opts.backgroundColor,
+                ...(opts.hoverBackgroundColor ? { hover: { backgroundColor: opts.hoverBackgroundColor } } : {}),
+                ...(opts.activeBackgroundColor ? { active: { backgroundColor: opts.activeBackgroundColor } } : {}),
                 pointerEvents: disabled ? "none" : "auto",
                 zIndex: opts.zIndex || 30,
                 onClick: disabled ? undefined : opts.onClick,
@@ -3060,6 +3063,45 @@ import { MSDF } from "@zappar/msdf-generator";
         disposeObject3D(progress.group);
     }
 
+    function hideTeleportMenuHint() {
+        if (!teleportMenuHint) return;
+        disposeComponentTree(teleportMenuHint.root);
+        disposeObject3D(teleportMenuHint.group);
+        teleportMenuHint = null;
+    }
+
+    function setTeleportMenuHint(iconContent) {
+        hideTeleportMenuHint();
+        if (!iconContent || activePanel || getPresentationMode() !== "immersive-xr" || !isAvailable()) return;
+        ensureAFrameHostComponent();
+        configureRenderer(getScene());
+        try {
+            teleportMenuHint = createPanelState({
+                id: "teleport-menu-hint", width: 0.12, height: 0.12,
+                designWidthPx: 200, distance: 1.95, horizontalOffset: 1.05,
+                verticalOffset: -0.82, centerAtEyeLevel: true,
+                background: "rgba(18,24,32,0.6)", borderRadius: 999,
+                pointerEvents: "none", trimControllerRays: false,
+                showRayHitDot: false, blockSceneRaycasts: false, lockInteraction: false
+            });
+            teleportMenuHint.group.name = "VRODOSTeleportMenuHint";
+            teleportMenuHint.root.setProperties(baseContainerProps({
+                // Dialog design widths have a larger minimum; keep this small HUD icon square.
+                width: teleportMenuHint.metrics.designHeightPx,
+                padding: 28, alignItems: "center", justifyContent: "center", pointerEvents: "none",
+                panelMaterialClass: getThreeRuntime().MeshBasicMaterial
+            }));
+            append(teleportMenuHint.root, new Svg(baseContainerProps({
+                content: iconContent, width: 140, height: 140,
+                color: "#ffffff", pointerEvents: "none"
+            })));
+            teleportMenuHint.root.update(0);
+        } catch (error) {
+            hideTeleportMenuHint();
+            recordDiagnostic("warn", "Could not show teleport menu hint.", { error: String(error) });
+        }
+    }
+
     function setAssessmentProgress(text, iconContent = assessmentProgressIcon) {
         assessmentProgressText = String(text || "");
         assessmentProgressIcon = iconContent;
@@ -3164,6 +3206,7 @@ import { MSDF } from "@zappar/msdf-generator";
     function openPanel(config) {
         hideControlsHint();
         hideAssessmentProgress();
+        if (teleportMenuHint) teleportMenuHint.group.visible = false;
         if (!isAvailable()) {
             recordDiagnostic("warn", "Spatial UI unavailable; no A-Frame fallback will be opened.", {
                 hasAFrame: Boolean(window.AFRAME),
@@ -3287,6 +3330,7 @@ import { MSDF } from "@zappar/msdf-generator";
         assessmentProgressIcon = "";
         hideControlsHint();
         hideAssessmentProgress();
+        hideTeleportMenuHint();
         closePanel("spatial-ui-dispose");
     }
 
@@ -3296,6 +3340,7 @@ import { MSDF } from "@zappar/msdf-generator";
         openPanel,
         showControlsHint,
         hideControlsHint,
+        setTeleportMenuHint,
         setAssessmentProgress,
         getAssessmentProgressGroup: function () {
             return assessmentProgress && assessmentProgress.group || null;
@@ -3315,6 +3360,16 @@ import { MSDF } from "@zappar/msdf-generator";
         },
         recordDiagnostic,
         __tick: function (deltaMs) {
+            if (teleportMenuHint) {
+                if (getPresentationMode() !== "immersive-xr") hideTeleportMenuHint();
+                else {
+                    teleportMenuHint.group.visible = !activePanel && !window.VRODOSRuntimeOverlay.interactionLocked;
+                    if (teleportMenuHint.group.visible) {
+                        refreshPanelAnchor(teleportMenuHint);
+                        teleportMenuHint.root.update(Math.max(0, Number(deltaMs) || 0));
+                    }
+                }
+            }
             if (assessmentProgress) {
                 if (getPresentationMode() !== "immersive-xr") hideAssessmentProgress();
                 else {

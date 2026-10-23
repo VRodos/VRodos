@@ -1461,7 +1461,7 @@
         return String(runtime.participantName || "").replace(/\s+/g, " ").trim();
       };
       runtime.canStart = function() {
-        if (!runtime.selectedLevel) {
+        if (!normalizeLevel(runtime.selectedLevel)) {
           return false;
         }
         return !runtime.requiresParticipantName() || Boolean(runtime.normalizedParticipantName());
@@ -1492,7 +1492,15 @@
         runtime.applyLevel(runtime.selectedLevel);
         runtime.hidePrompt();
       };
+      runtime.skipExperience = function() {
+        runtime.participantName = "";
+        runtime.applyLevel("ALL");
+        runtime.hidePrompt();
+      };
       runtime.matchesLevel = function(element, level) {
+        if (level === "ALL") {
+          return true;
+        }
         const levels = getElementLevels(element);
         if (!level) {
           return false;
@@ -1503,7 +1511,7 @@
         return levels.includes(level);
       };
       runtime.applyLevel = function(level) {
-        const normalizedLevel = normalizeLevel(level);
+        const normalizedLevel = level === "ALL" ? "ALL" : normalizeLevel(level);
         runtime.selectedLevel = normalizedLevel;
         if (!normalizedLevel) {
           return;
@@ -1610,6 +1618,7 @@
         footer.style.gap = "12px";
         const continueButton = document.createElement("button");
         continueButton.type = "button";
+        continueButton.disabled = true;
         continueButton.textContent = "Start experience";
         continueButton.style.border = "0";
         continueButton.style.borderRadius = "999px";
@@ -1623,6 +1632,20 @@
         continueButton.addEventListener("click", () => {
           runtime.startExperience();
         });
+        const skipButton = document.createElement("button");
+        skipButton.type = "button";
+        skipButton.textContent = "SKIP";
+        skipButton.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+        skipButton.style.borderRadius = "999px";
+        skipButton.style.padding = "12px 18px";
+        skipButton.style.fontWeight = "800";
+        skipButton.style.cursor = "pointer";
+        skipButton.style.background = "#ffffff";
+        skipButton.style.color = "#475569";
+        skipButton.addEventListener("click", () => {
+          runtime.skipExperience();
+        });
+        footer.appendChild(skipButton);
         footer.appendChild(continueButton);
         panel.appendChild(nameWrap);
         panel.appendChild(buttonRow);
@@ -1850,6 +1873,7 @@
         }
         const enabled = runtime.canStart();
         if (runtime.continueButton) {
+          runtime.continueButton.disabled = !enabled;
           runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
           runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
         }
@@ -1888,6 +1912,17 @@
           primary: runtime.vrStartButtonOptions()
         });
         runtime.vrStartButton = frame.primaryButton || null;
+        panelApi.button(frame.footer, {
+          label: "SKIP",
+          variant: "secondary",
+          width: 180,
+          height: 66,
+          textSize: VR_START_BUTTON_TEXT_SIZE,
+          fontWeight: 800,
+          onClick: function() {
+            runtime.skipExperience();
+          }
+        });
         panelApi.text(frame.content, {
           text: "CEFR Level",
           color: "#2563eb",
@@ -2225,7 +2260,7 @@
             scheduleVrOpenAttempts();
           });
           runtime.resources.listen(scene, "exit-vr", () => {
-            if (!runtime.levelApplied && runtime.vrPromptActive) {
+            if (!runtime.levelApplied && runtime.elements.length) {
               runtime.hidePrompt();
               runtime.resources.timeout(() => runtime.showPrompt(), 120);
             } else {
@@ -3441,31 +3476,6 @@
         color: "#075985",
         fontSize: INFO_TEXT_FONT_SIZE,
         lineHeight: "120%"
-      });
-    }
-    function buttonVariant(item, selectedFallback) {
-      if (item.variant) {
-        return item.variant;
-      }
-      if (item.selected || selectedFallback) {
-        return "positive";
-      }
-      if (item.negative) {
-        return "negative";
-      }
-      return item.secondary === false ? "primary" : "secondary";
-    }
-    function addButtonGrid(api, parent, items, options) {
-      const cfg = options || {};
-      api.grid(parent || api.content, items.map((item) => Object.assign({}, item, {
-        variant: buttonVariant(item),
-        textSize: item.textSize || cfg.textSize || 30,
-        minHeight: item.minHeight || cfg.itemHeight || 82
-      })), {
-        columns: cfg.columns || 2,
-        gapX: cfg.gapX || 22,
-        gapY: cfg.gapY || 22,
-        itemHeight: cfg.itemHeight || cfg.height || 84
       });
     }
     function resolveVrRendererKey(payload) {

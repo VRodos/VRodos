@@ -313,6 +313,7 @@ function ensureSceneAssetRolePropertiesSection() {
         '<option value="decoration">Decoration</option>' +
         '<option value="walkable-surface">Walkable Surface</option>' +
         '<option value="poi-imagetext">Image/Text POI</option>' +
+        '<option value="door">Door</option>' +
         '</select>' +
         '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">This changes only this placement in the current scene. The uploaded asset and its other placements stay unchanged.</div>' +
         '</div>';
@@ -355,7 +356,10 @@ function displaySceneAssetRoleProperties(object) {
 
     const select = document.getElementById('sceneAssetRoleSelect');
     if (select) {
-        select.querySelector('[value="poi-imagetext"]').hidden = VRODOS.utils.getSceneAssetSourceCategory(object) === 'primitive-plane';
+        const isPlane = VRODOS.utils.getSceneAssetSourceCategory(object) === 'primitive-plane';
+        ['poi-imagetext', 'door'].forEach((role) => {
+            select.querySelector(`[value="${role}"]`).hidden = isPlane;
+        });
         select.value = vrodosGetEffectiveObjectCategory(object);
     }
 

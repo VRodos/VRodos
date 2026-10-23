@@ -3046,7 +3046,7 @@ AFRAME.registerComponent('scene-settings', {
     updateAdaptiveShadowFit: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateAdaptiveShadowFit || vrodosRuntimeNoop,
     applyHorizonSkyPreset: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
     ensurePmndrsAtmosphereResources: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function () { return null; },
-    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function () {},
+    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || vrodosRuntimeNoop,
     getPmndrsAtmosphereConfig: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function () { return null; },
     getPmndrsTakramHorizonState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsTakramHorizonState || function () { return null; },
     getVrTakramLightsOnlyState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getVrTakramLightsOnlyState || function () { return null; },
@@ -3054,19 +3054,19 @@ AFRAME.registerComponent('scene-settings', {
     getPmndrsToneMappingMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsToneMappingMode || function () { return 'agx'; },
     getPmndrsReflectionIntensityScale: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsReflectionIntensityScale || function () { return 1; },
     updateReflectionEnvironmentIntensity: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
-    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function () {},
-    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function () {},
-    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function () {},
+    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || vrodosRuntimeNoop,
+    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || vrodosRuntimeNoop,
+    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || vrodosRuntimeNoop,
     isPmndrsDayNightCycleActive: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
     updatePmndrsDayNightCycleFrame: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
-    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function () {},
+    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || vrodosRuntimeNoop,
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function () { return false; },
-    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function () {},
+    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || vrodosRuntimeNoop,
     isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function () { return false; },
     syncPmndrsCloudShadowLengthToSkyMaterial: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsCloudShadowLengthToSkyMaterial || function () { return false; },
     usesVrTakramDirectSkyCalibration: VRODOSSceneSettingsMaster.SceneSettingsHelpers.usesVrTakramDirectSkyCalibration || function () { return true; },
     prepareVrTakramVisibleSkyForReveal: VRODOSSceneSettingsMaster.SceneSettingsHelpers.prepareVrTakramVisibleSkyForReveal || function () { return true; },
-    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function () {},
+    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || vrodosRuntimeNoop,
     initializeHardwareDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.initializeHardwareDiagnostics || vrodosRuntimeNoop,
     updateHardwarePerformanceDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateHardwarePerformanceDiagnostics || vrodosRuntimeNoop,
     getHardwareDiagnosticsState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getHardwareDiagnosticsState || function () {
@@ -3339,7 +3339,7 @@ AFRAME.registerComponent('scene-settings', {
             case "2":
                 clearGeneratedBackground();
 
-                if (this.data.presChoice == "ocean") {
+                if (this.data.presChoice === "ocean") {
                     const sky = document.createElement('a-sky');
                     sky.setAttribute("color", "#a4bede");
                     sky.setAttribute("data-vrodos-preset-sky", "true");
@@ -3364,7 +3364,7 @@ AFRAME.registerComponent('scene-settings', {
                     backgroundEl.setAttribute("environment", "shadow", "true");
                 }
                 break;
-            case "3":
+            case "3": {
                 clearGeneratedBackground();
                 const customImgAsset = document.querySelector('#custom_sky');
                 if (customImgAsset && customImgAsset.getAttribute("src")) {
@@ -3375,6 +3375,10 @@ AFRAME.registerComponent('scene-settings', {
                 } else {
                     backgroundEl.setAttribute("background", "color", "#ffffff");
                 }
+                break;
+            }
+            default:
+                // Unknown background choices leave the current background unchanged.
                 break;
         }
 

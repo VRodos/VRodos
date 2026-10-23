@@ -2932,6 +2932,7 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
+            // eslint-disable-next-line no-loop-func -- Three.js traversal is synchronous; visited counts both controllers.
             controllerEl.object3D.traverse((object) => {
                 visited += 1;
                 if ('castShadow' in object) {
@@ -3119,6 +3120,7 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
+            // eslint-disable-next-line no-loop-func -- Three.js traversal is synchronous; changed counts all overlay updates.
             el.object3D.traverse((object) => {
                 if ('castShadow' in object && object.castShadow) {
                     object.castShadow = false;

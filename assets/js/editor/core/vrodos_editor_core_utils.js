@@ -171,7 +171,7 @@ VRODOS.importer = VRODOS.importer || {};
         return sceneCategoryAliases[value] || value;
     }
 
-    const sceneAssetRoleValues = Object.freeze(['decoration', 'walkable-surface', 'poi-imagetext']);
+    const sceneAssetRoleValues = Object.freeze(['decoration', 'walkable-surface', 'poi-imagetext', 'door']);
     const sceneAssetRoleSet = new Set(sceneAssetRoleValues);
 
     function getSceneAssetSourceCategory(resource) {
@@ -226,7 +226,7 @@ VRODOS.importer = VRODOS.importer || {};
         const sourceCategory = getSceneAssetSourceCategory(resource);
         const normalizedRole = normalizeSceneAssetRole(selectedRole);
         const defaultRole = sourceCategory === 'primitive-plane' ? 'walkable-surface' : sourceCategory;
-        if (!isSceneAssetRoleEligible(resource) || (sourceCategory === 'primitive-plane' && normalizedRole === 'poi-imagetext') || !normalizedRole || normalizedRole === defaultRole) {
+        if (!isSceneAssetRoleEligible(resource) || (sourceCategory === 'primitive-plane' && !['decoration', 'walkable-surface'].includes(normalizedRole)) || !normalizedRole || normalizedRole === defaultRole) {
             return '';
         }
 

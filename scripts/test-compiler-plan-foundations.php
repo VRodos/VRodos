@@ -221,6 +221,14 @@ vrodos_foundation_assert(
 	'door' === $normalizer->effective_category( (object) [ 'category_slug' => 'door', 'sceneAssetRole' => 'walkable-surface' ] ),
 	'placement role on an ineligible category is ignored'
 );
+vrodos_foundation_assert(
+	'door' === $normalizer->effective_category( (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'door' ] ),
+	'decoration placement can resolve as a door'
+);
+vrodos_foundation_assert(
+	'primitive-plane' === $normalizer->effective_category( (object) [ 'category_slug' => 'primitive-plane', 'sceneAssetRole' => 'door' ] ),
+	'planes cannot use the GLB door role'
+);
 
 if ( class_exists( 'DOMDocument' ) ) {
 	$dom     = new DOMDocument( '1.0', 'UTF-8' );
@@ -955,9 +963,15 @@ foreach ( $automatic_files as $profile => $filename ) {
 	$door_scene->appendChild( $door_assets );
 	( new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), $plan_repository, static fn( $url ) => $url ) )->render_scene_objects( $door_dom, $door_scene, $door_assets, [ 'door' => (object) [
 		'category_slug' => 'door', 'sceneID_target' => 102, 'glb_path' => '/door.glb', 'position' => [ 0, 0, 0 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
+	], 'converted-door' => (object) [
+		'category_slug' => 'decoration', 'sceneAssetRole' => 'door', 'sceneID_target' => 102, 'glb_path' => '/decoration.glb', 'compiledCollisionEnabled' => false,
+		'position' => [ 1, 2, 3 ], 'rotation' => [ 0, 0, 0 ], 'scale' => [ 1, 1, 1 ],
 	] ], 9, 101, [ 'scene_settings' => $variant->settings, 'buildTarget' => 'automatic', 'container' => $door_scene ] );
-	$door = ( new DOMXPath( $door_dom ) )->query( '//*[@door-listener]' )->item( 0 );
-	vrodos_foundation_assert( $door instanceof DOMElement && $filename === $door->getAttribute( 'door-listener' ), 'door retains destination variant ' . $profile );
+	$doors = ( new DOMXPath( $door_dom ) )->query( '//*[@door-listener]' );
+	vrodos_foundation_assert( 2 === $doors->length, 'native and converted GLB doors are interactive ' . $profile );
+	foreach ( $doors as $door ) {
+		vrodos_foundation_assert( $filename === $door->getAttribute( 'door-listener' ), 'door retains destination variant ' . $profile );
+	}
 }
 $desktop_decoration = $automatic_plan->scenes[0]->scene_json->objects->decoration0;
 $headset_decoration = $automatic_plan->scenes[1]->scene_json->objects->decoration0;

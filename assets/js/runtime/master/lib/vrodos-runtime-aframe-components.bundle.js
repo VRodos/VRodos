@@ -4202,8 +4202,7 @@
     ensurePmndrsAtmosphereResources: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function() {
       return null;
     },
-    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function() {
-    },
+    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || vrodosRuntimeNoop,
     getPmndrsAtmosphereConfig: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
       return null;
     },
@@ -4223,21 +4222,16 @@
       return 1;
     },
     updateReflectionEnvironmentIntensity: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
-    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
-    },
-    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
-    },
-    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function() {
-    },
+    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || vrodosRuntimeNoop,
+    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || vrodosRuntimeNoop,
+    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || vrodosRuntimeNoop,
     isPmndrsDayNightCycleActive: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
     updatePmndrsDayNightCycleFrame: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
-    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function() {
-    },
+    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || vrodosRuntimeNoop,
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function() {
       return false;
     },
-    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function() {
-    },
+    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || vrodosRuntimeNoop,
     isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function() {
       return false;
     },
@@ -4250,8 +4244,7 @@
     prepareVrTakramVisibleSkyForReveal: VRODOSSceneSettingsMaster.SceneSettingsHelpers.prepareVrTakramVisibleSkyForReveal || function() {
       return true;
     },
-    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function() {
-    },
+    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || vrodosRuntimeNoop,
     initializeHardwareDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.initializeHardwareDiagnostics || vrodosRuntimeNoop,
     updateHardwarePerformanceDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateHardwarePerformanceDiagnostics || vrodosRuntimeNoop,
     getHardwareDiagnosticsState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getHardwareDiagnosticsState || function() {
@@ -4510,7 +4503,7 @@
           break;
         case "2":
           clearGeneratedBackground();
-          if (this.data.presChoice == "ocean") {
+          if (this.data.presChoice === "ocean") {
             const sky = document.createElement("a-sky");
             sky.setAttribute("color", "#a4bede");
             sky.setAttribute("data-vrodos-preset-sky", "true");
@@ -4535,7 +4528,7 @@
             backgroundEl.setAttribute("environment", "shadow", "true");
           }
           break;
-        case "3":
+        case "3": {
           clearGeneratedBackground();
           const customImgAsset = document.querySelector("#custom_sky");
           if (customImgAsset && customImgAsset.getAttribute("src")) {
@@ -4546,6 +4539,9 @@
           } else {
             backgroundEl.setAttribute("background", "color", "#ffffff");
           }
+          break;
+        }
+        default:
           break;
       }
       this.queueQualityRefresh(true);
@@ -9522,7 +9518,7 @@
           this.controllers.delete(el);
         }
       }
-      this.el.querySelectorAll("#oculusLeft, #oculusRight").forEach((el) => {
+      this.el.querySelectorAll("#oculusRight").forEach((el) => {
         if (this.controllers.has(el)) return;
         const resources = window.VRODOSMaster.RuntimeResources.createRegistry();
         resources.listen(el, "thumbstickdown", (event) => {
@@ -9676,7 +9672,7 @@
           distance: 2,
           centerAtEyeLevel: true,
           anchorRefreshFrames: 0,
-          background: "#18202b",
+          background: "rgba(242,242,242,0.55)",
           borderWidth: 0,
           render: (api) => this.renderPanel(api),
           cleanup: () => {
@@ -9697,6 +9693,7 @@
         title: "Destinations",
         titleSize: 32,
         headerHeight: 78,
+        headerColor: "rgba(39,39,39,0.7)",
         paddingX: 24,
         paddingY: 16,
         gapY: 10,
@@ -9706,11 +9703,11 @@
       this.spatialButtons = /* @__PURE__ */ new Map();
       this.orderedPoints.slice(this.page * 6, this.page * 6 + 6).forEach((point) => {
         const button = api.button(api.content, {
+          ...this.spatialButtonStyle(point),
           label: `${point.order}. ${point.label}`,
           width: "100%",
           height: 68,
           fontSize: 26,
-          variant: point === this.rejectedPoint ? "negative" : "secondary",
           onHoverChange: (hovered) => {
             if (hovered && this.panel === api) this.setPreviewPoint(point);
             else if (!hovered && this.previewPoint === point) this.setPreviewPoint(null);
@@ -9725,6 +9722,7 @@
       const pages = Math.ceil(this.points.size / 6);
       if (pages > 1) {
         api.button(api.footer, {
+          ...this.spatialButtonStyle(),
           label: "Previous",
           height: 48,
           fontSize: 22,
@@ -9736,6 +9734,7 @@
         });
         api.text(api.footer, { text: `${this.page + 1} / ${pages}`, color: "#fff", fontSize: 22 });
         api.button(api.footer, {
+          ...this.spatialButtonStyle(),
           label: "Next",
           height: 48,
           fontSize: 22,
@@ -9746,6 +9745,15 @@
           }
         });
       }
+    },
+    spatialButtonStyle: function(point) {
+      const rejected = Boolean(point && point === this.rejectedPoint);
+      return {
+        variant: rejected ? "negative" : "secondary",
+        backgroundColor: rejected ? "rgba(220,38,38,0.65)" : "rgba(255,255,255,0.35)",
+        hoverBackgroundColor: rejected ? "rgba(220,38,38,0.85)" : "rgba(255,255,255,0.6)",
+        activeBackgroundColor: rejected ? "rgba(185,28,28,0.85)" : "rgba(255,255,255,0.75)"
+      };
     },
     selectDestination: function(point) {
       if (!this.panel || !this.points.has(point)) return;
@@ -9777,7 +9785,7 @@
       });
       if (this.panel) {
         this.spatialButtons.forEach((button, point) => {
-          this.panel.updateButton(button, { variant: point === this.rejectedPoint ? "negative" : "secondary" });
+          this.panel.updateButton(button, this.spatialButtonStyle(point));
         });
       }
     },
@@ -9904,7 +9912,7 @@
           elem.emit("avatar-changed-animation", "idle", false);
         }
       });
-      this.resources.listen(document, "keyup", (event) => {
+      this.resources.listen(document, "keyup", () => {
         const cameraA = document.getElementById("cameraA");
         if (cameraA) {
           elem.emit("avatar-changed-animation", "stopped", false);
@@ -9994,7 +10002,7 @@
       }
       return this.el.getAttribute("position");
     },
-    tick: function(time, timeDelta) {
+    tick: function(time) {
       if (time - this.lastTextUpdate < 250) return;
       this.lastTextUpdate = time;
       if (this.positionShow) {

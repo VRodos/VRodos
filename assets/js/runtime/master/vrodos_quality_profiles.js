@@ -248,16 +248,16 @@
                 b: parseInt(normalized.slice(5, 7), 16)
             };
         }
-        function toHex(value) {
+        function channelToHex(value) {
             const clamped = Math.max(0, Math.min(255, Math.round(value)));
             return clamped.toString(16).padStart(2, '0');
         }
         const from = hexToRgb(fromHex);
         const to = hexToRgb(toHex);
         return `#${
-            toHex(lerpNumber(from.r, to.r, t))
-            }${toHex(lerpNumber(from.g, to.g, t))
-            }${toHex(lerpNumber(from.b, to.b, t))}`;
+            channelToHex(lerpNumber(from.r, to.r, t))
+            }${channelToHex(lerpNumber(from.g, to.g, t))
+            }${channelToHex(lerpNumber(from.b, to.b, t))}`;
     }
 
     function getPmndrsAtmosphereLookDefaults(preset, intensity) {
@@ -328,12 +328,10 @@
                 ].join(':')
             };
         }
-        const supportsFloatLinear = Boolean(renderer && renderer.extensions && renderer.extensions.get('OES_texture_float_linear'));
-        const canUseFloat = Boolean(renderer &&
-            renderer.capabilities &&
-            renderer.capabilities.isWebGL2 &&
-            typeof THREE.FloatType !== 'undefined' &&
-            supportsFloatLinear);
+        // Enable float-texture filtering; the selected profile owns texture precision.
+        if (renderer && renderer.extensions) {
+            renderer.extensions.get('OES_texture_float_linear');
+        }
         const wantsHighPrecision = quality === 'quality' || quality === 'cinematic' || quality === 'custom' || quality === 'balanced';
         const type = wantsHighPrecision ? THREE.FloatType : THREE.HalfFloatType;
         const higherOrderScattering = quality !== 'performance' || shouldUsePmndrsTakramHorizonPath(self);
@@ -733,7 +731,7 @@
 
         if (startupStateLogEnabled) {
             self._pmndrsHorizonStartupStateLogged = true;
-            const log = console.info || console.log || function () {};
+            const log = console.info || console.log || function () { /* Diagnostics are optional when console methods are unavailable. */ };
             log.call(console, `[VRodos] Compiled scene state: engine=pmndrs, owner=${  owner
                 }, reflection=${  reflectionSource
                 }, reflectionOcclusion=${  reflectionOcclusionMode
@@ -762,7 +760,7 @@
 
         self._pmndrsHorizonDiagSignatures[context] = signature;
         const logMethod = verboseDiagnosticsEnabled ? 'info' : 'debug';
-        const log = console[logMethod] || console.info || function () {};
+        const log = console[logMethod] || console.info || function () { /* Diagnostics are optional when console methods are unavailable. */ };
         log.call(console, `[VRodos] PMNDRS horizon diagnostic (${  context  }): owner=${  owner
             }, reflection=${  reflectionSource
             }, celestial=${  atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual'
@@ -1830,7 +1828,6 @@
     H.applyPostFXProfile = function () {
         const renderer = this.el.renderer;
         const canvas = this.el.canvas || (renderer ? renderer.domElement : null);
-        const postFxEnabled = this.shouldUsePostProcessing();
 
         if (!canvas) {
             return;

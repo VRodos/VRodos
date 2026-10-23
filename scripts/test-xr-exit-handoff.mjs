@@ -765,7 +765,7 @@ function testControllerRaySourceContracts() {
     assert(spatialSource.includes("SPATIAL_UI_IMMEDIATE_FONT_FAMILY"), "spatial UI must expose an immediate font path for CEFR");
     assert(spatialSource.includes("borderWidth: config.borderWidth !== undefined ? config.borderWidth : 0"), "spatial UI root panel must not default to a bright 1px border");
     assert(spatialSource.includes("borderColor: config.borderColor || \"transparent\""), "spatial UI root panel border must remain transparent unless authored");
-    assert(pmndrsPostFxSource.includes("getActiveSpatialUiPanelGroup"), "PMNDRS stereo renderer must detect the active spatial UI panel group");
+    assert(pmndrsPostFxSource.includes("const spatialUiPanel = getActiveSpatialUiPanelState(scene);"), "PMNDRS stereo renderer must resolve the active spatial UI panel state");
     assert(pmndrsPostFxSource.includes("renderSpatialUiPanelOverlay"), "PMNDRS stereo renderer must direct-render spatial UI after the scene composer");
     assert(pmndrsPostFxSource.includes("spatialUiGroup.visible = false"), "PMNDRS stereo renderer must hide spatial UI during the post-FX scene pass");
     assert(pmndrsPostFxSource.includes("collectSpatialUiRayOverlayObjects"), "PMNDRS stereo renderer must collect the active A-Frame ray visuals for UI overlay compositing");

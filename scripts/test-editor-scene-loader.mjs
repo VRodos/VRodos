@@ -142,6 +142,7 @@ class MockMesh extends MockObject3D {
 class MockGeometry {
     constructor(...args) {
         this.args = args;
+        this.attributes = {};
         this.disposeCount = 0;
     }
 

@@ -229,7 +229,13 @@ Use the aggregate runtime gate for changes that touch the compiler or compiled r
 npm run check:runtime
 ```
 
-It runs lint, syntax checks, runtime tests, compiler tests, the runtime bundle build, and `git diff --check`. Recompile representative clients after runtime changes. Browser/CDP smoke and real Quest validation remain required when a change affects generated-client behavior or immersive XR; the exact workflows live in the desktop and headset roadmaps.
+It runs test-catalog validation, lint, syntax checks, build-configuration checks, runtime tests, compiler tests, and `git diff --check`. It does not rebuild tracked bundles; run `npm run build:runtime` explicitly before verification when runtime sources change. Recompile representative clients after runtime changes. Browser/CDP smoke and real Quest validation remain required when a change affects generated-client behavior or immersive XR; the exact workflows live in the desktop and headset roadmaps.
+
+### JavaScript lint policy
+
+`npm run lint` checks authored editor and runtime JavaScript; generated bundles and vendored code are excluded. Correctness checks such as undefined names and duplicate declarations are errors. WordPress-injected globals are declared only where used; classic master-runtime namespace initialization is allowed while duplicate local declarations still fail.
+
+Syntax preferences for templates, arrow callbacks/bodies, multiple assignment, and explicit coercion are disabled. `no-var` and `prefer-const` remain advisory. Keep intentional shared-variable callbacks narrowly documented, and review remaining warnings for behavior changes before applying fixes. Prettier remains a separate formatting command; do not use it for a repository-wide lint cleanup.
 
 ## Upload Limits
 

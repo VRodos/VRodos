@@ -35,7 +35,7 @@ function element(tagName = 'DIV') {
 function fixture({ variants, hasLoaded = true } = {}) {
     let mode = 'inline', definition, load = Promise.resolve(true), collisions = true;
     const timers = new Map();
-    let timerId = 0, vrShows = 0, vrVisible = false, modal = false;
+    let timerId = 0, vrShows = 0, vrVisible = false, modal = false, teleportHint = '';
     const settings = { movement_disabled: false, navigationMode: 'walkable', vrRuntimeProfile: 'desktop' };
     const movement = { getNavigationMode: () => settings.navigationMode, areCollisionsEnabled: () => collisions };
     const scene = events({ hasLoaded, components: {},
@@ -55,6 +55,7 @@ function fixture({ variants, hasLoaded = true } = {}) {
         VRODOSRuntimeOverlay: { getPresentationMode: () => mode, ensureSpatialUiRuntime: () => load, recordDiagnostic() {} },
         VRODOSSpatialUI: { prewarm: async () => true,
             showControlsHint(items) { if (modal) return false; vrShows++; vrVisible = true; assert(items.some(item => item.input === 'Point + right trigger (RT)')); return true; },
+            setTeleportMenuHint(icon) { teleportHint = icon; },
             hideControlsHint() { vrVisible = false; }
         }
     });
@@ -68,11 +69,42 @@ function fixture({ variants, hasLoaded = true } = {}) {
         collisions(value) { collisions = value; },
         delayLoad() { let resolve; load = new Promise(done => { resolve = done; }); return resolve; },
         modal(value) { modal = value; },
-        get vrShows() { return vrShows; }, get vrVisible() { return vrVisible; }
+        get vrShows() { return vrShows; }, get vrVisible() { return vrVisible; }, get teleportHint() { return teleportHint; }
     };
 }
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 const actions = items => Array.from(items, item => item.action);
+
+const corners = fixture();
+let teleportAvailable = true;
+const destinations = { points: new Set([{}]), canActivate: () => teleportAvailable };
+corners.scene.components['vrodos-teleport-destinations'] = destinations;
+corners.mode('immersive-xr');
+await flush();
+assert.match(corners.teleportHint, /<svg/, 'Teleport scenes show a persistent physical-controller icon');
+assert.match(corners.teleportHint, /M31 0h4v10h5l-7 8-7-8h5Z/, 'The right-stick icon includes a downward press arrow');
+assert(!corners.teleportHint.includes('<text'), 'The shortcut overlay has no text label');
+for (const callback of [...corners.timers.values()]) callback();
+assert.equal(corners.vrVisible, false);
+assert(corners.teleportHint, 'The menu shortcut icon survives temporary help expiry');
+teleportAvailable = false;
+corners.component.tick();
+assert.equal(corners.teleportHint, '', 'Travel or another modal hides the shortcut icon');
+teleportAvailable = true;
+corners.component.tick();
+assert(corners.teleportHint, 'The icon returns when scene interactions resume');
+destinations.points.clear();
+corners.component.tick();
+assert.equal(corners.teleportHint, '', 'Scenes without teleport points have no shortcut overlay');
+destinations.points.add({});
+corners.component.tick();
+assert(corners.teleportHint);
+corners.mode('inline');
+assert.equal(corners.teleportHint, '', 'XR exit removes the spatial shortcut icon');
+corners.mode('immersive-xr');
+await flush();
+corners.component.remove();
+assert.equal(corners.teleportHint, '', 'Owner removal releases the persistent shortcut icon');
 
 const automatic = fixture({ hasLoaded: false, variants: { desktop: 'Master_Client_101.html', headset: 'Master_Client_101_headset.html', 'pc-rendered-vr': 'Master_Client_101_pc-rendered-vr.html' } });
 assert.equal(automatic.document.body.children.length, 0, 'Device controls wait for scene readiness');
@@ -178,7 +210,7 @@ assert.equal(vr.timers.size, 1);
 assert.deepEqual(Array.from(vr.component.getItems(true), item => item.input), ['Left stick', 'Right stick', 'Point + right trigger (RT)', 'A / X', 'B / Y']);
 assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['left-stick', 'right-stick', 'right-trigger', 'jump-buttons', 'reset-buttons']);
 vr.scene.components['vrodos-teleport-destinations'] = { points: new Set([{}]) };
-assert.equal(vr.component.getItems(true).at(-1).input, 'Press either stick', 'VR hints expose the destination shortcut');
+assert(!actions(vr.component.getItems(true)).includes('Destinations'), 'The persistent icon replaces extra teleport text in temporary help');
 delete vr.scene.components['vrodos-teleport-destinations'];
 assert.deepEqual(Array.from(vr.component.getItems(false), item => item.icon?.name), [undefined, 'mouse-drag', 'mouse-click', undefined]);
 assert(!actions(vr.component.getItems(true)).includes('Look'), 'Headset look is implicit in VR');

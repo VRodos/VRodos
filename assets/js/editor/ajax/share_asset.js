@@ -9,6 +9,7 @@
         let pending = false;
 
         for (const button of document.querySelectorAll('[data-vrodos-share-asset]')) {
+            // eslint-disable-next-line no-loop-func -- All buttons intentionally share the pending request gate.
             button.addEventListener('click', async () => {
                 if (pending) return;
                 const error = button.parentElement.querySelector('[data-vrodos-share-error]');

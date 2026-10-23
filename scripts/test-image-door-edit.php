@@ -51,7 +51,12 @@ function wp_get_post_terms(): array { return [ new WP_Term() ]; }
 function esc_attr( string $value ): string { return $value; }
 function get_current_user_id(): int { return 7; }
 function set_transient( string $key, $value, int $ttl ): void { $GLOBALS['door_notice'] = $value; }
-class VRodos_Shared_Repository_Manager { public static function all_slugs(): array { return []; } }
+class VRodos_Shared_Repository_Manager {
+	public const SHARED_META = '_vrodos_asset_is_shared';
+	public static function all_slugs(): array { return []; }
+	// All image doors in this fixture are project-owned.
+	public static function is_shared_asset( int $asset_id ): bool { return false; }
+}
 class VRodos_Immerse_Access_Manager {
 	public static function is_restricted_user(): bool { return false; }
 	public static function is_immerse_project(): bool { return false; }

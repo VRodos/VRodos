@@ -878,7 +878,6 @@
       return null;
     }
     function sceneRayFeedbackAllowed() {
-      const overlayApi = window.VRODOSRuntimeOverlay || null;
       return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true && getPresentationMode() === "immersive-xr" && !hasSpatialModalOpen();
     }
     function sceneRayHitPoint(hit) {
@@ -1073,7 +1072,7 @@
           bridge.lastClickTarget = target || null;
           bridge.lastClickAt = performance.now();
         };
-        const handleDown = (event) => {
+        const handleDown = () => {
           const hit = currentControllerIntersection(controllerEl);
           controllerEl.__vrodosControllerClickBridge.downTarget = hit && hit.target || null;
           controllerEl.__vrodosControllerClickBridge.downAt = performance.now();
@@ -1139,7 +1138,7 @@
           bridge.lastClickTarget = target || null;
           bridge.lastClickAt = performance.now();
         };
-        const handleDown = (event) => {
+        const handleDown = () => {
           if (hasSpatialModalOpen()) {
             bridge.downTarget = null;
             return;
@@ -1340,9 +1339,11 @@
     const badge = '<path fill-rule="evenodd" d="M52 39a11 11 0 1 1 0 22 11 11 0 0 1 0-22Zm0 2.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"/>';
     const mouse = '<path fill-rule="evenodd" d="M32 6c-10 0-16 6-16 16v20c0 10 6 16 16 16s16-6 16-16V22C48 12 42 6 32 6Zm0 3c8 0 13 5 13 13v20c0 8-5 13-13 13s-13-5-13-13V22c0-8 5-13 13-13Z"/><path d="M31 9h2v18h-2ZM19 26h26v2H19ZM29 11c-6 .8-9 4.8-9 11v1h9Z"/>';
     const svg = (body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white" aria-hidden="true" focusable="false">${body}</svg>`;
+    const rightStick = `<g transform="translate(53 0) scale(-1 1)">${controller}${stick}</g>${badge}<path fill-rule="evenodd" d="M47 44h6c6 0 6 7 2 8l3 4h-3l-3-4h-2v4h-3Zm3 2.5v3h3c2 0 2-3 0-3Z"/>`;
     const controlsIcons = Object.fromEntries(Object.entries({
       "left-stick": `${controller}${stick}${badge}<path d="M48 44h2.5v9h6v2.5H48Z"/>`,
-      "right-stick": `<g transform="translate(53 0) scale(-1 1)">${controller}${stick}</g>${badge}<path fill-rule="evenodd" d="M47 44h6c6 0 6 7 2 8l3 4h-3l-3-4h-2v4h-3Zm3 2.5v3h3c2 0 2-3 0-3Z"/>`,
+      "right-stick": rightStick,
+      "right-stick-press": `${rightStick}<path d="M31 0h4v10h5l-7 8-7-8h5Z"/>`,
       "right-trigger": '<path fill-rule="evenodd" d="M15 10h34c5 0 8 4 9 9l4 24c1 6-3 11-9 11H11C5 54 1 49 2 43l4-24c1-5 4-9 9-9Zm0 3c-3 0-5 3-6 7L5 44c-.5 4 2 7 6 7h42c4 0 6.5-3 6-7l-4-24c-1-4-3-7-6-7Z"/><path fill-rule="evenodd" d="M15 21h9c12 0 12 13 4 15l7 9h-5l-7-9h-4v9h-4Zm4 4v7h5c6 0 6-7 0-7Z"/><path d="M35 21h18v4h-7v20h-4V25h-7Z"/>',
       "jump-buttons": '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path fill-rule="evenodd" d="M15 24h4l7 16h-4l-1.5-4h-7L12 40H8Zm2 4-2.5 5h5ZM39 24h4l4 5.5 4-5.5h4l-6 8 6 8h-4l-4-5.5-4 5.5h-4l6-8Z"/>',
       "reset-buttons": '<path fill-rule="evenodd" d="M17 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24ZM47 17a15 15 0 1 1 0 30 15 15 0 0 1 0-30Zm0 3a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z"/><path d="M11 25h7c7 0 9 7 4 9 6 3 3 9-4 9h-7Zm4 3v4h3c3 0 3-4 0-4Zm0 7v5h3c4 0 4-5 0-5ZM37 25h4l6 8 6-8h4l-8 11v7h-4v-7Z"/>',
@@ -1388,7 +1389,7 @@
         canvas.requestFullscreen = this.requestSceneFullscreen;
       },
       getItems: function(immersive) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         const movement = (_b = (_a = this.el.querySelector("[custom-movement]")) == null ? void 0 : _a.components) == null ? void 0 : _b["custom-movement"];
         const settings = this.el.getAttribute("scene-settings");
         const disabled = [true, "true", "1"].includes(settings == null ? void 0 : settings.movement_disabled);
@@ -1405,9 +1406,6 @@
           add(immersive ? "A / X" : "Space", "Jump", immersive ? "jump-buttons" : void 0);
         }
         if (immersive && movement) add("B / Y", "Reset height", "reset-buttons");
-        if (immersive && ((_e = this.el.components["vrodos-teleport-destinations"]) == null ? void 0 : _e.points.size)) {
-          add("Press either stick", "Destinations", "left-stick");
-        }
         return items;
       },
       syncPresentation: function() {
@@ -1442,10 +1440,23 @@
           if (!available || generation !== this.generation || this.removed) return;
           const spatial = window.VRODOSSpatialUI;
           if (!await spatial.prewarm() || generation !== this.generation || this.removed) return;
+          this.spatialReady = true;
+          this.syncTeleportMenuHint();
           if (spatial.showControlsHint(this.getItems(true))) this.startTimer();
         } catch (error) {
           window.VRODOSRuntimeOverlay.recordDiagnostic("warn", "Could not show VR controls hint.", { error: String(error) });
         }
+      },
+      tick: function() {
+        this.syncTeleportMenuHint();
+      },
+      syncTeleportMenuHint: function() {
+        if (!this.spatialReady) return;
+        const destinations = this.el.components["vrodos-teleport-destinations"];
+        const visible = Boolean(this.mode === "immersive-xr" && !this.removed && (destinations == null ? void 0 : destinations.points.size) && !destinations.opening && destinations.canActivate());
+        if (visible === this.teleportHintVisible) return;
+        this.teleportHintVisible = visible;
+        window.VRODOSSpatialUI.setTeleportMenuHint(visible ? controlsIcons["right-stick-press"].content : "");
       },
       startTimer: function() {
         if (this.timeout) this.timeout();
@@ -1573,7 +1584,11 @@
         (_a = window.VRODOSSpatialUI) == null ? void 0 : _a.hideControlsHint();
       },
       hide: function() {
+        var _a;
         this.hideHints();
+        this.spatialReady = false;
+        this.teleportHintVisible = false;
+        (_a = window.VRODOSSpatialUI) == null ? void 0 : _a.setTeleportMenuHint("");
         this.setViewMenuOpen(false);
         if (this.viewMenu) this.viewMenu.hidden = true;
       },
@@ -1624,7 +1639,7 @@
         }
       });
     },
-    onMouseEnter: function(evt) {
+    onMouseEnter: function() {
       this.mouseHovering = true;
       this.applyHighlight();
     },
@@ -1662,7 +1677,7 @@
         }
       });
     },
-    onMouseLeave: function(evt) {
+    onMouseLeave: function() {
       this.mouseHovering = false;
       if (this.hoverSources.size === 0) {
         this.clearHighlight();
@@ -1709,7 +1724,7 @@
         }
       });
     },
-    onBackgroundClick: function(evt) {
+    onBackgroundClick: function() {
       this.clearHighlight();
     },
     reset: function() {

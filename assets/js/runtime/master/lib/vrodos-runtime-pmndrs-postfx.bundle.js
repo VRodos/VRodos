@@ -2248,10 +2248,6 @@ ${uniform}`
       }
       return panel;
     }
-    function getActiveSpatialUiPanelGroup(scene) {
-      const panel = getActiveSpatialUiPanelState(scene);
-      return panel && panel.group ? panel.group : null;
-    }
     function collectSpatialUiRayOverlayObjects(panel) {
       const objects = [];
       const seen = /* @__PURE__ */ new Set();
@@ -2989,7 +2985,6 @@ ${uniform}`
       let overlayPass;
       let overrides;
       let seen;
-      let alphaTestTarget;
       let uuid;
       let entry;
       if (!self) {
