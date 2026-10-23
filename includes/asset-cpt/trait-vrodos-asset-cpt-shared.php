@@ -293,6 +293,8 @@ trait VRodos_Asset_CPT_Shared {
 			case 'model-too-large':
 				return 'The selected model package is larger than the current upload limit (' . $max_upload_label . '). Please upload a smaller file or increase PHP upload_max_filesize/post_max_size.';
 			case 'glb-upload-failed':
+			case 'baked-model-failed':
+				return 'The prepared headset bake could not be attached. Check its GLB format, embedded lights and textures; the previous bake is unchanged.';
 			case 'model-upload-failed':
 				return 'The model upload failed before the asset could be saved. Please try again, or reduce the file size if this package is especially large.';
 			case 'door-image-failed':

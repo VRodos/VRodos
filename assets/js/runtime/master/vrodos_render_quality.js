@@ -191,6 +191,7 @@
                 }
 
                 const overrides = vrodosGetExplicitMaterialOverrides(entityEl);
+                overrides.vrodosBakedLighting = entityEl.getAttribute('data-vrodos-baked-lighting') === 'true';
                 if (getEntityShadowRole(entityEl) !== 'none') {
                     overrides.vrodosShadowReceiver = true;
                 }

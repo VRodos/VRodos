@@ -1497,6 +1497,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 		if ( ! $is_collision_proxy ) {
 			$entity->setAttribute( 'data-vrodos-material-role', $this->resolve_object_material_role( $obj ) );
+			if ( ! empty( $obj->vrodosBakedLighting ) ) {
+				$entity->setAttribute( 'data-vrodos-baked-lighting', 'true' );
+			}
 		}
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 

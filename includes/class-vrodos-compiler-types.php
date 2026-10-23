@@ -19,8 +19,9 @@ final readonly class VRodos_Compile_Request {
 	public bool $show_pawn_positions;
 	public string $build_id;
 	public string $vr_headset_asset_quality;
+	public bool $vr_headset_baked_lighting_enabled;
 
-	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $build_target, bool $show_pawn_positions, string $build_id = '', string $vr_headset_asset_quality = 'low' ) {
+	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $build_target, bool $show_pawn_positions, string $build_id = '', string $vr_headset_asset_quality = 'low', bool $vr_headset_baked_lighting_enabled = false ) {
 		$this->project_id          = max( 0, $project_id );
 		$this->selected_scene_id   = max( 0, $selected_scene_id );
 		$this->scene_ids           = array_values( array_unique( array_filter( array_map( 'intval', $scene_ids ), static fn ( int $scene_id ): bool => $scene_id > 0 ) ) );
@@ -32,6 +33,7 @@ final readonly class VRodos_Compile_Request {
 		$this->show_pawn_positions = $show_pawn_positions;
 		$this->build_id            = VRodos_Compiler_Build_State::normalize_build_id( $build_id );
 		$this->vr_headset_asset_quality = VRodos_Compiler_Asset_Policy::validate_headset_quality( $vr_headset_asset_quality );
+		$this->vr_headset_baked_lighting_enabled = $vr_headset_baked_lighting_enabled;
 	}
 
 	public function show_pawn_positions_attr(): string {

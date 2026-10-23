@@ -3,6 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+require_once dirname( __DIR__ ) . '/class-vrodos-headset-baked-asset.php';
 
 trait VRodos_Asset_CPT_Metabox_Admin {
 	public function vrodos_set_custom_vrodos_asset3d_columns( $columns ): array {
@@ -33,6 +34,7 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 			'vrodos_asset3d_screenimage',
 			VRodos_Image_Door::IMAGE_META,
 			'vrodos_asset3d_glb',
+			VRodos_Headset_Baked_Asset::META,
 		];
 
 		if ( in_array( $meta_key, $hidden_asset_meta_keys, true ) ) {
@@ -96,6 +98,12 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 			echo '<div class="notice notice-error"><p>' . esc_html( $door_error ) . '</p></div>';
 			delete_transient( $door_error_key );
 		}
+		$baked_error_key = 'vrodos_baked_error_' . get_current_user_id() . '_' . $post->ID;
+		$baked_error = get_transient( $baked_error_key );
+		if ( is_string( $baked_error ) && '' !== $baked_error ) {
+			echo '<div class="notice notice-error"><p>' . esc_html( $baked_error ) . '</p></div>';
+			delete_transient( $baked_error_key );
+		}
 		?>
 		<input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce( self::NONCE_BASENAME ); ?>" />
 		<table class="form-table" id="vrodos-custom-fields-table">
@@ -134,6 +142,16 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 						$preview_id      = 'vrodos_asset3d_' . $extension . '_preview';
 						$preview_content = $post_meta_id ? '3D object too big to show here' : $extension . ' is not defined.';
 						switch ( $field['id'] ) {
+							case VRodos_Headset_Baked_Asset::META:
+								$baked_status = VRodos_Headset_Baked_Asset::status( (int) $post->ID );
+								?>
+								<input type="text" readonly name="<?php echo esc_attr( $field['id'] ); ?>" id="<?php echo esc_attr( $field['id'] ); ?>" value="<?php echo esc_attr( $post_meta_id ); ?>" />
+								<button type="button" id="vrodos-headset-baked-select">Add / replace baked GLB</button>
+								<button type="button" id="vrodos-headset-baked-remove">Remove</button>
+								<p><strong><?php echo esc_html( $baked_status ); ?></strong> <?php echo $post_meta_id ? esc_html( get_the_title( (int) $post_meta_id ) ) : ''; ?></p>
+								<p>Optional prepared model with baked lighting and no embedded lights. Keep the original scale, origin and walking geometry. Enable "Use prepared baked models for VR headset" in the build menu to use it. Desktop and PCVR keep the original model.</p>
+								<?php
+								break;
 							case 'vrodos_asset3d_audio_playback_mode':
 								$playback_mode = in_array( (string) $post_meta_id, [ 'autoplay', 'interact' ], true ) ? (string) $post_meta_id : 'interact';
 								?>
@@ -443,6 +461,8 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 				let set_to_post_id = <?php echo $post->ID; ?>;
 
 				document.getElementById('vrodos_asset3d_glb_btn').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_glb', 'model/gltf-binary', 'GLB'); });
+				document.getElementById('vrodos-headset-baked-select').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_headset_baked_glb', 'model/gltf-binary', 'Baked headset GLB'); });
+				document.getElementById('vrodos-headset-baked-remove').addEventListener('click', function() { document.getElementById('vrodos_asset3d_headset_baked_glb').value = '0'; });
 				document.getElementById('vrodos_asset3d_audio_btn').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_audio', 'audio', 'Audio'); });
 				document.getElementById('vrodos_asset3d_screenimage_btn').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image'); });
 				document.getElementById('vrodos-select-asset3d-cat-dropdown').addEventListener('change', vrodos_hidecfields_asset3d);
@@ -513,6 +533,13 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 					continue;
 				}
 				switch ( $field['id'] ) {
+					case VRodos_Headset_Baked_Asset::META:
+						try {
+							VRodos_Headset_Baked_Asset::replace( (int) $post_id, absint( $new ) );
+						} catch ( RuntimeException $error ) {
+							set_transient( 'vrodos_baked_error_' . get_current_user_id() . '_' . $post_id, $error->getMessage() . ' The previous baked model is unchanged.', MINUTE_IN_SECONDS );
+						}
+						continue 2;
 					case 'vrodos_asset3d_audio_playback_mode':
 						$new = sanitize_key( (string) $new );
 						if ( ! in_array( $new, [ 'autoplay', 'interact' ], true ) ) {

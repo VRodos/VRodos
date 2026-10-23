@@ -305,6 +305,9 @@ VRodosCompileUI.General = (function () {
         if (controls.vrHeadsetAssetQuality) {
             VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality = controls.vrHeadsetAssetQuality.value;
         }
+        if (controls.vrHeadsetBakedLighting) {
+            VRODOS.editor.envir.scene.aframeVrHeadsetBakedLightingEnabled = controls.vrHeadsetBakedLighting.checked;
+        }
         VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled = isHeadsetStereoPostFxAuthored(controls);
 
         VRODOS.editor.envir.scene.aframeRenderQuality = normalizeRenderQuality(controls.renderQuality.value);

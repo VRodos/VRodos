@@ -125,6 +125,11 @@
 					</div>
 					<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 						<label class="tw-form-control">
+							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Baked lighting</span>
+							<span class="tw-flex tw-items-center tw-gap-2 tw-mt-2"><input id="compileVrHeadsetBakedLightingToggle" type="checkbox" class="tw-toggle tw-toggle-success tw-toggle-sm"> Use prepared baked models for VR headset</span>
+							<span class="tw-text-xs tw-leading-relaxed tw-text-emerald-700/80 tw-mt-1">Add a prepared headset GLB on each asset's edit page. Models with one use it in standalone VR; other models retain their normal version. Desktop and PC-rendered VR keep the originals.</span>
+						</label>
+						<label class="tw-form-control">
 							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Object quality</span>
 							<select id="compileVrHeadsetAssetQualitySelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
 								<option value="low">Low — 1024px textures</option>

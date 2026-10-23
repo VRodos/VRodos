@@ -35,6 +35,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	private string $runtime_profile = 'desktop';
 	private string $vr_asset_profile = 'web-low';
 	private bool $desktop_profiles_enabled = false;
+	private bool $headset_baked_lighting_enabled = false;
 	private array $desktop_profile_slots = [];
 	private array $desktop_profile_recipes = [];
 	private array $desktop_profile_definitions = [];
@@ -54,6 +55,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
 		$this->build_target = $plan->request->build_target;
+		$this->headset_baked_lighting_enabled = $plan->request->vr_headset_baked_lighting_enabled;
 		$this->entrypoints = [];
 		$this->variants = [];
 		foreach ( $plan->targets as $target ) {
@@ -289,6 +291,12 @@ final class VRodos_Compiler_Resource_Publisher {
 				$meta = get_post_thumbnail_id( $asset_id );
 			}
 			if ( 'glb_path' === $property ) {
+				$baked = VRodos_Headset_Baked_Asset::selected_path( $asset_id, $this->runtime_profile, $this->headset_baked_lighting_enabled, $this->runtime_profile_texture_cap( $this->vr_asset_profile ) );
+				$object->vrodosBakedLighting = '' !== $baked;
+				if ( '' !== $baked ) {
+					$object->{$property} = $this->publish_file( $baked, 'asset-' . $asset_id . '-headset-baked' );
+					continue;
+				}
 				if ( is_string( $meta ) && '' !== $meta && $meta === VRodos_Core_Manager::get_builtin_audio_marker_url() ) {
 					$object->{$property} = $this->publish_file( VRodos_Path_Manager::asset_path( 'models/runtime/speaker.glb' ), 'asset-' . $asset_id . '-audio-marker', 0, 'glb' );
 					continue;

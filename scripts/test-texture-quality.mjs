@@ -135,3 +135,11 @@ context.vrodosEnhanceMeshMaterial(opaquePhysical, {}, { ...quality, headsetProfi
 assert.equal(opaquePhysical.transparent, false, 'opaque PBR materials remain opaque on headset');
 assert.equal(opaquePhysical.opacity, 1);
 console.log('Texture quality tests passed.');
+for (const strength of [0.5, 1, 4]) {
+    const baked = new Three.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: strength });
+    baked.emissiveMap = new Three.Texture();
+    context.vrodosEnhanceMeshMaterial(baked, { vrodosBakedLighting: true, vrodosShadowReceiver: true }, { ...quality, headsetProfile: true });
+    assert.equal(baked.emissiveIntensity, strength, 'prepared lighting must not be dimmed by the shadow-receiver policy');
+    context.vrodosEnhanceMeshMaterial(baked, { vrodosBakedLighting: true }, { ...quality, headsetProfile: true });
+    assert.equal(baked.emissiveIntensity, strength, 'quality refresh must preserve baked HDR intensity');
+}

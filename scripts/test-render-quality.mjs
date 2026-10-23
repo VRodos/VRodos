@@ -108,7 +108,11 @@ hidden.userData.hidden = true;
 const geometry = new THREE.BoxGeometry();
 const root = new THREE.Group();
 root.add(new THREE.Mesh(geometry, [shared, hidden]), new THREE.Mesh(geometry, shared));
-const media = { media: true, getObject3D: () => root };
+const media = {
+  media: true,
+  getObject3D: () => root,
+  getAttribute: name => name === 'data-vrodos-baked-lighting' ? 'true' : null
+};
 scene.add(root, new THREE.Mesh(geometry, [shared, other]));
 self.getCachedSceneQuery = () => [media, null, { getObject3D: () => null }];
 reflectionOwner._vrodosReflectionEnvironmentIntensityScale = 0.9;
@@ -118,6 +122,7 @@ assert.equal(calls[0].material, shared);
 assert.equal(calls[0].overrides.roughness, 0.25, 'explicit entity overrides win over scene traversal');
 assert.equal(calls[0].overrides.vrodosReadableMedia, true);
 assert.equal(calls[0].overrides.vrodosShadowReceiver, true);
+assert.equal(calls[0].overrides.vrodosBakedLighting, true, 'prepared bakes retain authored light intensity');
 assert.equal(calls[1].overrides.vrodosReadableMedia, undefined);
 assert.equal(calls[0].options.maxAnisotropy, 16);
 assert.equal(calls[0].options.headsetProfile, false);

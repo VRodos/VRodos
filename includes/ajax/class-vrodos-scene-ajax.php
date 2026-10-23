@@ -475,7 +475,8 @@ class VRodos_Scene_AJAX {
 			$build_target,
 			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false ),
 			VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) ),
-			$headset_quality
+			$headset_quality,
+			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['vrHeadsetBakedLightingEnabled'] ?? 'false' ), false )
 		);
 		try {
 			$result = ( new VRodos_Compiler_Manager() )->compile( $request );

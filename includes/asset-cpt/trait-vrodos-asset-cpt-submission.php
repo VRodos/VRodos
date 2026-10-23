@@ -3,6 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+require_once dirname( __DIR__ ) . '/class-vrodos-headset-baked-asset.php';
 
 trait VRodos_Asset_CPT_Submission_Controller {
 	public function handle_asset_frontend_submission(): void {
@@ -182,7 +183,22 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			}
 
 			if ( $is_shared ) {
+				// Baked variants remain subject to the same asset-edit permissions.
 				VRodos_Shared_Repository_Manager::make_shared( (int) $asset_id );
+			}
+			$baked_file = (array) ( $_FILES['headsetBakedGlbInput'] ?? [] );
+			try {
+				if ( (int) ( $baked_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE ) {
+					if ( $has_new_model_upload ) {
+						throw new RuntimeException( 'Save the original model and let its import complete before attaching a lighting bake.' );
+					}
+					VRodos_Headset_Baked_Asset::replace_upload( (int) $asset_id, $baked_file );
+				} elseif ( ! empty( $_POST['removeHeadsetBakedGlb'] ) ) {
+					VRodos_Headset_Baked_Asset::replace( (int) $asset_id, 0 );
+				}
+			} catch ( RuntimeException $error ) {
+				set_transient( 'vrodos_baked_frontend_error_' . get_current_user_id() . '_' . $asset_id, $error->getMessage(), MINUTE_IN_SECONDS );
+				self::redirect_with_frontend_notice( $redirect_url, 'baked-model-failed', $submission_buffer_level );
 			}
 			if ( VRodos_Immerse_Access_Manager::is_immerse_project( (int) $project_id ) ) {
 				update_post_meta( $asset_id, '_immerse_source', 'immerse' );

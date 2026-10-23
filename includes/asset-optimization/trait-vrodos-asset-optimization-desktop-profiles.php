@@ -43,6 +43,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					: [ 'textureMaxSize' => self::runtime_derivative_texture_cap( $slot_profiles[ $slot ] ) ];
 			}
 			foreach ( $current_scene_assets as $asset_id => $asset ) {
+				if ( '' !== VRodos_Headset_Baked_Asset::selected_path( (int) $asset_id, $runtime_profile, $plan->request->vr_headset_baked_lighting_enabled, self::runtime_derivative_texture_cap( VRodos_Compiler_Asset_Policy::vr_profile( $runtime_profile, $plan->request->vr_headset_asset_quality ) ) ) ) {
+					continue;
+				}
 				$assets[ $asset_id ] = [
 					'protections' => array_values( array_unique( array_merge( $asset['protections'], $assets[ $asset_id ]['protections'] ?? [] ), SORT_REGULAR ) ),
 					'protectGeometry' => ! empty( $asset['protectGeometry'] ) || ! empty( $assets[ $asset_id ]['protectGeometry'] ),

@@ -9,6 +9,7 @@ require_once __DIR__ . '/asset-cpt/trait-vrodos-asset-cpt-submission.php';
 require_once __DIR__ . '/asset-cpt/trait-vrodos-asset-cpt-taxonomy-admin.php';
 require_once __DIR__ . '/asset-cpt/trait-vrodos-asset-cpt-metabox-admin.php';
 require_once __DIR__ . '/asset-cpt/class-vrodos-asset-cpt-admin-controller.php';
+require_once __DIR__ . '/class-vrodos-headset-baked-asset.php';
 
 /**
  * Thin hook registrar and compatibility facade for the VRodos Asset CPT admin.
@@ -29,6 +30,7 @@ class VRodos_Asset_CPT_Manager {
       // Short , full, id, type, default, single, show_in_rest
       ['Door image', 'Picture used by this image-based door', 'vrodos_asset3d_door_image', 'integer', 0, true, false],
       ['GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string', '', true, true],
+      ['Baked version for VR headset', 'Optional prepared baked GLB; desktop keeps the original', VRodos_Headset_Baked_Asset::META, 'integer', 0, true, false],
       ['Audio File', 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true],
       ['Audio Playback Mode', 'Audio playback mode', 'vrodos_asset3d_audio_playback_mode', 'string', 'interact', true, true],
       ['Audio Loop', 'Audio loop enabled', 'vrodos_asset3d_audio_loop', 'string', '0', true, true],

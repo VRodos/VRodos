@@ -55,6 +55,7 @@ final class VRodos_Compiler_Plan_Resolver {
 				$metadata->{$profile_key}     = $runtime_profile;
 				$quality_key = VRodos_Runtime_Settings_Contract::metadata_key( 'vrHeadsetAssetQuality' );
 				$metadata->{$quality_key} = $request->vr_headset_asset_quality;
+				$metadata->aframeVrHeadsetBakedLightingEnabled = $request->vr_headset_baked_lighting_enabled;
 
 				// Full headset rendering is a build policy, never a saved UI override.
 				$headset_baseline = 'headset' === $runtime_profile ? [

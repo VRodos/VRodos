@@ -237,7 +237,7 @@ final class VRodos_Storage_Manager {
 		}
 
 		$parts = [];
-		if ( 'asset' === $entity_type && in_array( $role, [ 'source', 'previews', 'derivatives' ], true ) ) {
+		if ( 'asset' === $entity_type && in_array( $role, [ 'source', 'previews', 'derivatives', 'headset-baked' ], true ) ) {
 			$parts = [ 'assets', (string) $entity_id, $role ];
 			if ( 'derivatives' === $role ) {
 				$profile = sanitize_key( $profile );
@@ -940,6 +940,7 @@ final class VRodos_Storage_Manager {
 			: [
 				'_thumbnail_id',
 				'vrodos_asset3d_glb',
+				'vrodos_asset3d_headset_baked_glb',
 				'vrodos_asset3d_audio',
 				'vrodos_asset3d_video',
 				'vrodos_asset3d_image',

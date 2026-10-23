@@ -349,6 +349,23 @@ else { ?>
                     <?php
     }?>
 
+                    <?php if (($isOwner || $isUserAdmin) && !empty($asset_id) && absint(get_post_meta((int) $asset_id, 'vrodos_asset3d_glb', true))) {
+                        $baked_id = absint(get_post_meta((int) $asset_id, VRodos_Headset_Baked_Asset::META, true));
+                        $baked_error_key = 'vrodos_baked_frontend_error_' . get_current_user_id() . '_' . $asset_id;
+                        $baked_error = get_transient($baked_error_key);
+                        delete_transient($baked_error_key);
+                    ?>
+                    <section class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-3">
+                        <label for="headsetBakedGlbInput" class="tw-block tw-text-sm tw-font-bold tw-text-slate-800">Baked version for VR headset</label>
+                        <p class="tw-text-xs tw-text-slate-500">Optional GLB with baked lighting and no embedded lights. Keep the same scale, origin and walking geometry. Desktop and PCVR keep the original model.</p>
+                        <p class="tw-text-xs tw-font-bold"><?php echo esc_html(VRodos_Headset_Baked_Asset::status((int) $asset_id)); ?><?php echo $baked_id ? ' · ' . esc_html(get_the_title($baked_id)) : ''; ?></p>
+                        <?php if (is_string($baked_error) && $baked_error !== '') { ?><p class="tw-text-xs tw-text-red-700"><?php echo esc_html($baked_error); ?></p><?php } ?>
+                        <input id="headsetBakedGlbInput" type="file" name="headsetBakedGlbInput" accept=".glb" class="tw-file-input tw-file-input-bordered tw-file-input-sm tw-w-full" />
+                        <?php if ($baked_id) { ?><label class="tw-flex tw-items-center tw-gap-2 tw-text-xs"><input type="checkbox" name="removeHeadsetBakedGlb" value="1" class="tw-checkbox tw-checkbox-sm" /> Remove prepared bake</label><?php } ?>
+                        <p class="tw-text-xs tw-text-slate-500">Save the asset, then enable “Use prepared baked models for VR headset” in the build menu. Replacing the original model requires a new bake.</p>
+                    </section>
+                    <?php } ?>
+
                     <!-- Image Asset Preview (shown instead of 3D preview for image category) -->
                     <div id="image_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3] tw-flex tw-items-center tw-justify-center" style="display:none;">
                         <img id="imageFlatPreviewSidebar"

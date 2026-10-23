@@ -77,6 +77,7 @@ export const testGroups = Object.freeze({
     "scripts/test-standalone-export.php",
     "scripts/test-standalone-server.mjs",
     "scripts/test-decoration-collision-policy.php",
+    "scripts/test-headset-baked-assets.php",
     "scripts/test-asset-analysis-admin-action.php",
     "scripts/test-asset-readiness-settings.php",
     "scripts/test-background-jobs.php",

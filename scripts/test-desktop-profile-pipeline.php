@@ -375,7 +375,7 @@ $GLOBALS['vrodos_desktop_test_events'] = [];
 // Automatic shares Web High across PC/PCVR and deduplicates repeated scene assets.
 foreach ( [ 'custom', 'adaptive' ] as $build_mode ) {
 	$automatic = new VRodos_Project_Compile_Plan();
-	$automatic->request = (object) [ 'build_target' => 'automatic', 'vr_headset_asset_quality' => 'high' ];
+	$automatic->request = (object) [ 'build_target' => 'automatic', 'vr_headset_baked_lighting_enabled' => false, 'vr_headset_asset_quality' => 'high' ];
 	$automatic->scenes = [];
 	foreach ( [ 60, 61 ] as $scene_id ) {
 		foreach ( [ 'desktop', 'headset', 'pc-rendered-vr' ] as $target ) {
@@ -514,7 +514,7 @@ vrodos_desktop_assert( 'queued' === $regenerated['status'] && 2 === $regenerated
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $ordered_plan = new VRodos_Project_Compile_Plan();
-$ordered_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_asset_quality' => 'low' ];
+$ordered_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_baked_lighting_enabled' => false, 'vr_headset_asset_quality' => 'low' ];
 $ordered_plan->scenes = [
 	(object) [
 		'scene_id' => 46,
@@ -540,7 +540,7 @@ $GLOBALS['vrodos_desktop_test_meta'][ $family_progress_asset_id ][ VRodos_Deskto
 	'queuePriority'     => 'build',
 ];
 $family_progress_plan = new VRodos_Project_Compile_Plan();
-$family_progress_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_asset_quality' => 'low' ];
+$family_progress_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_baked_lighting_enabled' => false, 'vr_headset_asset_quality' => 'low' ];
 $family_progress_plan->scenes = [
 	(object) [
 		'scene_id' => 47,
@@ -592,7 +592,7 @@ foreach ( [ false, true ] as $category_protected ) {
 
 foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $cap ) {
 	$quality_plan = clone $ordered_plan;
-	$quality_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_asset_quality' => $quality ];
+	$quality_plan->request = (object) [ 'build_target' => 'headset', 'vr_headset_baked_lighting_enabled' => false, 'vr_headset_asset_quality' => $quality ];
 	$quality_asset_id = 100 + $cap;
 	$GLOBALS['vrodos_desktop_test_terms'][ $quality_asset_id ] = [ 'decoration' ];
 	$quality_plan->scenes = [ (object) [ 'scene_id' => 50, 'scene_json' => (object) [ 'asset_id' => $quality_asset_id ], 'settings' => [ 'vrRuntimeProfile' => 'headset' ], 'desktop_profiles' => [] ] ];
@@ -610,7 +610,7 @@ foreach ( [ 'low' => 1024, 'medium' => 2048, 'high' => 4096 ] as $quality => $ca
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 
 $plan = new VRodos_Project_Compile_Plan();
-$plan->request = (object) [ 'build_target' => 'desktop', 'vr_headset_asset_quality' => 'low' ];
+$plan->request = (object) [ 'build_target' => 'desktop', 'vr_headset_baked_lighting_enabled' => false, 'vr_headset_asset_quality' => 'low' ];
 $plan->scenes = [
 	(object) [
 		'scene_id'        => 45,

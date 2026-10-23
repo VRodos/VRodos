@@ -30,6 +30,7 @@ window.addEventListener('DOMContentLoaded', () => {
             vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
             vrHeadsetSkyTime: document.getElementById('compileVrHeadsetSkyTimeSelect'),
             vrHeadsetAssetQuality: document.getElementById('compileVrHeadsetAssetQualitySelect'),
+            vrHeadsetBakedLighting: document.getElementById('compileVrHeadsetBakedLightingToggle'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
@@ -581,6 +582,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.vrHeadsetAssetQuality) {
             controls.vrHeadsetAssetQuality.value = VRODOS.editor.envir.scene.aframeVrHeadsetAssetQuality;
         }
+        if (controls.vrHeadsetBakedLighting) {
+            controls.vrHeadsetBakedLighting.checked = VRODOS.editor.envir.scene.aframeVrHeadsetBakedLightingEnabled === true;
+        }
         controls.renderQuality.value = VRODOS.editor.envir.scene.aframeRenderQuality || 'standard';
         controls.shadowQuality.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeShadowQuality
             ? VRODOS.editor.envir.scene.aframeShadowQuality
@@ -995,6 +999,9 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.vrHeadsetAssetQuality.addEventListener('change', () => {
             VRodosCompileUI.General.syncToScene(controls);
         });
+    }
+    if (controls.vrHeadsetBakedLighting) {
+        controls.vrHeadsetBakedLighting.addEventListener('change', () => VRodosCompileUI.General.syncToScene(controls));
     }
     if (controls.vrHeadsetExposure) {
         const syncHeadsetExposure = () => {

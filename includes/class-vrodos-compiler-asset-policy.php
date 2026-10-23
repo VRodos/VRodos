@@ -3,6 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+require_once __DIR__ . '/class-vrodos-headset-baked-asset.php';
 
 /** Shared GLB selection policy for build preparation and publication. */
 final class VRodos_Compiler_Asset_Policy {

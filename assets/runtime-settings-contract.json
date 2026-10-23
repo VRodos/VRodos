@@ -243,6 +243,14 @@
       "allowed": ["low", "medium", "high"],
       "wireKey": "vrHeadsetAssetQuality"
     },
+    "vrHeadsetBakedLightingEnabled": {
+      "metadataKey": "aframeVrHeadsetBakedLightingEnabled",
+      "type": "boolean",
+      "default": false,
+      "wireKey": "vrHeadsetBakedLightingEnabled",
+      "wireFormat": "true-false",
+      "wireEnabled": false
+    },
     "vrHeadsetStereoPostFxEnabled": {
       "metadataKey": "aframeVrHeadsetStereoPostFxEnabled",
       "type": "boolean",
