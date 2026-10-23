@@ -1,6 +1,6 @@
 # VRodos Compiled Headset Roadmap
 
-Status date: 2026-07-26.
+Status date: 2026-10-23.
 
 This is the single active policy, validation, and backlog document for both standalone headset rendering and the parked PC-rendered VR profile. Current renderer mechanics belong in `../RENDERING_PIPELINE.md`; immersive dialog ownership belongs in `vrodos-compiled-scene-framework-integration.md`.
 
@@ -65,6 +65,18 @@ Diagnostic smoke pass on 2026-07-02:
 - A visible half-second movement pause was traced to DevTools polling with `--include-frames-each-sample`, not the locomotion path. Use summary-only captures for smoothness acceptance.
 
 ## Active Standalone Validation
+
+### Retired headset performance experiments (2026-10-23)
+
+The gated adaptive-foveation, visual-LOD and benchmark prototype was removed at the user's request after device trials. Compiler, renderer, navigation, capture tooling, generated bundles and asset recipes retain the established implementation. No experiment gates, replacement geometry or experimental runtime owners remain. Native Layers/multiview was never activated: Takram's custom single-eye camera uniforms remain a source-audit compatibility blocker, not an observed device rendering failure.
+
+Tested **Quest 2**, serial 1WMHHA68H91516, Quest Browser 154.1.0.26.54.1096616420. Quest 3 is unavailable and unvalidated. Trials used actual 72 Hz, visible non-emulated XR, native XRWebGLLayer, scale 1.0, antialiasing enabled and fixed foveation 0.5 unless stated. Actual MSAA sample count remains unvalidated. Missed-cadence indicators are intervals above 1.5 refresh periods, not compositor-dropped-frame counts. JavaScript render-submission duration is not GPU time.
+
+Independent fixed-foveation 0.7 trials improved mean frame intervals by about 2.0% at the dense viewpoint and 1.3% at the sparse viewpoint relative to bracketing 0.5 references. Both remained near 100% missed-cadence indicators. A separate distant-view visual-LOD sequence reduced mean intervals from the bracketing-reference average of 26.45 ms to 21.50 ms (18.7%), with 30.9% fewer stereo triangle submissions, but still 70.27% missed-cadence indicators. References retained the same preloaded resources. The conservative LOD bound retained full detail near the temple. An earlier sequence was rejected for cross-trial headset movement. These are separate stationary viewpoints; do not combine their gains or treat them as sustained 72 Hz acceptance.
+
+The prototype preloaded 37.16 MiB of geometry typed arrays, excluding BVHs and driver allocations. Teardown released all 78 replacement geometries and both temporary collision roots. Wearer visual acceptance, matched walking/turning and interaction checks, total process-memory impact and a ten-minute warmed acceptance session were not completed. No experiments were promoted or deployed to production.
+
+The isolated local fixture remains project **10584**, Acropolis scene **10601** and linked White Tower **10585**, imported from production project 1098 / scene 1099 with new IDs. Existing local projects and production content were preserved. The local fixture is recompiled with the established runtime after prototype removal. The scoped backup, raw trials and archived prototype are outside the repository at C:/Users/tasos/.codex/visualizations/2026/10/22/01a16485-387e-7900-9e9e-6b5a01e991e8, in acropolis-backup-2026-10-23, acropolis-trials-2026-10-23, acropolis-lod-trials-2026-10-23 and retired-headset-experiments-2026-10-23. The archived roadmap retains full measurements and historical reproduction details; those experiment commands no longer apply to the current runtime.
 
 - [Quest 2 Acropolis performance audit, 2026-09-16](quest-acropolis-performance-audit-2026-09-16.md) records the resolution/shimmer comparison, separate shadow artifact, live CPU/render counters, asset inventory, and prioritized optimization work. It is an initial audit, not performance acceptance; its baseline retained temporarily disabled shadow reception.
 
