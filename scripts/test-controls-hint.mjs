@@ -228,8 +228,8 @@ await flush();
 assert.equal(vr.timers.size, 0, 'An active dialog must prevent the hint');
 
 vr.settings.movement_disabled = 'true';
-assert.deepEqual(actions(vr.component.getItems(true)), ['Select', 'Reset height']);
-assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['right-trigger', 'reset-buttons']);
+assert.deepEqual(actions(vr.component.getItems(true)), ['Turn', 'Select', 'Reset height']);
+assert.deepEqual(Array.from(vr.component.getItems(true), item => item.icon?.name), ['right-stick', 'right-trigger', 'reset-buttons']);
 vr.settings.movement_disabled = false;
 vr.settings.navigationMode = 'fly';
 assert(!actions(vr.component.getItems(false)).includes('Jump'));
