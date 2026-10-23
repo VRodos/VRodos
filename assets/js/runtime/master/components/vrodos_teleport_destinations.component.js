@@ -215,9 +215,9 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
             if (!await window.VRODOSSpatialUI.prewarm()) return;
             if (generation !== this.generation || !this.canActivate() || !this.isImmersive() || !this.points.size) return;
             this.panel = window.VRODOSSpatialUI.openPanel({
-                id: 'teleport-destinations', width: 0.85, height: 0.8, designWidthPx: 650,
+                id: 'teleport-destinations', width: 1.1, height: this.points.size > 6 ? 1.16 : 1, designWidthPx: 800,
                 distance: 2, centerAtEyeLevel: true, anchorRefreshFrames: 0,
-                background: 'rgba(242,242,242,0.55)', borderWidth: 0,
+                background: '#1b1f24', borderWidth: 0, borderRadius: 24,
                 render: api => this.renderPanel(api),
                 cleanup: () => { this.setPreviewPoint(null); this.panel = null; this.spatialButtons = null; }
             });
@@ -230,39 +230,74 @@ AFRAME.registerComponent('vrodos-teleport-destinations', {
 
     renderPanel: function (api) {
         this.setPreviewPoint(null);
-        api.frame({ title: 'Destinations', titleSize: 32, headerHeight: 78, headerColor: 'rgba(39,39,39,0.7)',
-            paddingX: 24, paddingY: 16, gapY: 10, footerHeight: 64, footerPaddingBottom: 16 });
+        // Horizon's themed panel material ignores the authored background colour.
+        api.root.setProperties({ panelMaterialClass: AFRAME.THREE.MeshBasicMaterial, backgroundOpacity: 0.96 });
+        api.frame({ showHeader: false, showFooter: false, scrollContent: false,
+            paddingX: 24, paddingY: 16, gapY: 16 });
+        const header = api.row(api.content, { width: '100%', height: 104, flexShrink: 0, gapColumn: 16 });
+        const heading = api.column(header, { flexGrow: 1, flexShrink: 1, flexBasis: 0,
+            minWidth: 0, justifyContent: 'center', gapRow: 4 });
+        api.text(heading, { text: 'Destinations', fontSize: 48, fontWeight: 600, color: '#ffffff' });
+        api.text(heading, { text: 'Point to preview · Trigger to teleport', fontSize: 24,
+            color: '#e2e8f0' });
+        api.button(header, { ...this.spatialButtonStyle(), label: 'Close', width: 150, height: 104,
+            fontSize: 30, onClick: () => this.closePanel('close') });
         this.spatialButtons = new Map();
-        this.orderedPoints.slice(this.page * 6, this.page * 6 + 6).forEach(point => {
-            const button = api.button(api.content, { ...this.spatialButtonStyle(point), label: `${point.order}. ${point.label}`, width: '100%',
-                height: 68, fontSize: 26,
-                onHoverChange: hovered => {
-                    if (hovered && this.panel === api) this.setPreviewPoint(point);
-                    else if (!hovered && this.previewPoint === point) this.setPreviewPoint(null);
-                },
-                onClick: event => {
-                    event?.stopPropagation();
-                    this.selectDestination(point);
-                } });
-            this.spatialButtons.set(point, button);
-        });
+        const points = this.orderedPoints.slice(this.page * 6, this.page * 6 + 6);
+        for (let index = 0; index < points.length; index += 2) {
+            const rowPoints = points.slice(index, index + 2);
+            const row = api.row(api.content, { width: '100%', height: 160, flexShrink: 0,
+                gapColumn: 16, alignItems: 'stretch' });
+            rowPoints.forEach(point => {
+                const button = api.button(row, { ...this.spatialButtonStyle(point), label: `${point.order}. ${point.label}`,
+                    width: rowPoints.length === 1 ? '100%' : 368, height: 160,
+                    renderContent: tile => {
+                        const content = api.column(tile, { width: '100%', height: '100%',
+                            justifyContent: 'center', paddingX: 24, gapRow: 6, pointerEvents: 'none', zIndex: 31 });
+                        api.text(content, { text: String(point.order), fontSize: 52, fontWeight: 600,
+                            color: '#ffffff', height: 64, flexShrink: 0, pointerEvents: 'none', zIndex: 32 });
+                        api.text(content, { text: point.label, fontSize: 30, fontWeight: 600,
+                            color: '#ffffff', lineHeight: '118%', wordBreak: 'break-word',
+                            maxLines: 2, maxCharsPerLine: rowPoints.length === 1 ? 36 : 14,
+                            maxHeight: 72, overflow: 'hidden',
+                            width: '100%', flexShrink: 0, pointerEvents: 'none', zIndex: 32 });
+                    },
+                    onHoverChange: hovered => {
+                        if (hovered && this.panel === api) this.setPreviewPoint(point);
+                        else if (!hovered && this.previewPoint === point) this.setPreviewPoint(null);
+                    },
+                    onClick: event => {
+                        event?.stopPropagation();
+                        this.selectDestination(point);
+                    } });
+                this.spatialButtons.set(point, button);
+            });
+        }
         const pages = Math.ceil(this.points.size / 6);
         if (pages > 1) {
-            api.button(api.footer, { ...this.spatialButtonStyle(), label: 'Previous', height: 48, fontSize: 22, disabled: this.page === 0,
+            const paging = api.row(api.content, { width: '100%', height: 104, flexShrink: 0,
+                justifyContent: 'space-between', gapColumn: 16 });
+            api.button(paging, { ...this.spatialButtonStyle(), label: 'Previous', width: 240, height: 104, fontSize: 30, disabled: this.page === 0,
                 onClick: () => { this.page--; this.renderPanel(api); } });
-            api.text(api.footer, { text: `${this.page + 1} / ${pages}`, color: '#fff', fontSize: 22 });
-            api.button(api.footer, { ...this.spatialButtonStyle(), label: 'Next', height: 48, fontSize: 22, disabled: this.page + 1 >= pages,
+            api.text(paging, { text: `${this.page + 1} / ${pages}`, color: '#ffffff', fontSize: 28 });
+            api.button(paging, { ...this.spatialButtonStyle(), label: 'Next', width: 240, height: 104, fontSize: 30, disabled: this.page + 1 >= pages,
                 onClick: () => { this.page++; this.renderPanel(api); } });
         }
+        api.text(api.content, { text: 'Right thumbstick: open / close', fontSize: 22,
+            color: '#e2e8f0', height: 28, flexShrink: 0, textAlign: 'center', width: '100%' });
     },
 
     spatialButtonStyle: function (point) {
         const rejected = Boolean(point && point === this.rejectedPoint);
         return {
             variant: rejected ? 'negative' : 'secondary',
-            backgroundColor: rejected ? 'rgba(220,38,38,0.65)' : 'rgba(255,255,255,0.35)',
-            hoverBackgroundColor: rejected ? 'rgba(220,38,38,0.85)' : 'rgba(255,255,255,0.6)',
-            activeBackgroundColor: rejected ? 'rgba(185,28,28,0.85)' : 'rgba(255,255,255,0.75)'
+            backgroundColor: rejected ? '#991b1b' : '#383e46',
+            hoverBackgroundColor: rejected ? '#b91c1c' : '#07545c',
+            activeBackgroundColor: rejected ? '#7f1d1d' : '#0e7078',
+            borderWidth: 2, borderRadius: 16, paddingX: 0, paddingY: 0,
+            borderColor: rejected ? '#fca5a5' : '#626b76',
+            hoverBorderColor: rejected ? '#fecaca' : '#2de2e6',
+            textColor: '#ffffff'
         };
     },
 

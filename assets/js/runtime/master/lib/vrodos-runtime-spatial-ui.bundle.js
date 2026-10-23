@@ -18213,8 +18213,15 @@
           flexGrow: opts.flexGrow,
           flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 0,
           paddingY: opts.paddingY,
+          paddingX: opts.paddingX,
+          borderRadius: opts.borderRadius,
+          borderWidth: opts.borderWidth,
+          borderColor: opts.borderColor,
           backgroundColor: opts.backgroundColor,
-          ...opts.hoverBackgroundColor ? { hover: { backgroundColor: opts.hoverBackgroundColor } } : {},
+          ...opts.hoverBackgroundColor || opts.hoverBorderColor ? { hover: {
+            backgroundColor: opts.hoverBackgroundColor,
+            borderColor: opts.hoverBorderColor
+          } } : {},
           ...opts.activeBackgroundColor ? { active: { backgroundColor: opts.activeBackgroundColor } } : {},
           pointerEvents: disabled ? "none" : "auto",
           zIndex: opts.zIndex || 30,
@@ -18300,8 +18307,9 @@
         },
         text: function(parent, options) {
           const opts = withPanelFontDefaults(options);
+          const value = opts.text !== void 0 ? opts.text : opts.value || "";
           const text = new Text(baseContainerProps(Object.assign({
-            text: normalizeSpatialText(opts.text !== void 0 ? opts.text : opts.value || ""),
+            text: normalizeSpatialText(opts.maxLines ? clampTextToApproximateLines(value, opts.maxLines, opts.maxCharsPerLine) : value),
             color: opts.color || "#272727",
             fontSize: px(opts.fontSize, opts.size || 34),
             lineHeight: opts.lineHeight || "120%",
@@ -18311,6 +18319,8 @@
             width: opts.width,
             height: opts.height,
             minHeight: opts.minHeight,
+            maxHeight: opts.maxHeight,
+            overflow: opts.overflow,
             maxWidth: opts.maxWidth,
             flexGrow: opts.flexGrow,
             flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 1,
@@ -18390,7 +18400,9 @@
           button.userData = button.userData || {};
           button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
           button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
-          if (IconComponent) {
+          if (typeof opts.renderContent === "function") {
+            opts.renderContent(button);
+          } else if (IconComponent) {
             const iconHost = new ButtonIcon(baseContainerProps({
               justifyContent: "center",
               alignItems: "center",

@@ -62,8 +62,10 @@ function fixture() {
     window.VRODOSSpatialUI = { prewarm: async () => true, openPanel(config) {
         window.VRODOSRuntimeOverlay.interactionLocked = true;
         movement.teleportPaused = true;
-        const panel = { config, entries: [], footer: {}, content: {}, frame() { this.entries = []; },
-            button(parent, options) { const button = { parent, ...options }; this.entries.push(button); return button; },
+        const panel = { config, entries: [], rows: [], root: { setProperties() {} }, footer: {}, content: {}, frame(options) { this.entries = []; this.rows = []; this.frameOptions = options; },
+            row(parent, options) { const row = { parent, ...options }; this.rows.push(row); return row; },
+            column(parent, options) { return { parent, ...options }; },
+            button(parent, options) { const button = { parent, ...options }; this.entries.push(button); options.renderContent?.(button); return button; },
             text() {}, updateButton(button, options) { Object.assign(button, options); },
             close() {
                 window.VRODOSRuntimeOverlay.interactionLocked = false;
@@ -76,7 +78,7 @@ function fixture() {
         return panel;
     } };
     const context = vm.createContext({ window, document, THREE, console,
-        AFRAME: { registerComponent: (name, definition) => { definitions[name] = definition; } } });
+        AFRAME: { THREE, registerComponent: (name, definition) => { definitions[name] = definition; } } });
     for (const file of ['vrodos_runtime_resources.js', 'vrodos_teleport.js',
         'components/vrodos_teleport_point.component.js', 'components/vrodos_teleport_destinations.component.js']) {
         vm.runInContext(readFileSync(new URL(`../assets/js/runtime/master/${file}`, import.meta.url), 'utf8'), context);
@@ -100,6 +102,27 @@ function fixture() {
         block: value => { blocked = value; }, mode: value => { mode = value; selector.syncPresentation(); } };
 }
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
+for (const count of [1, 2, 3, 4, 5, 6]) {
+    const grid = fixture();
+    for (let order = 1; order <= count; order++) grid.addPoint(order);
+    grid.mode('immersive-xr');
+    await grid.selector.togglePanel();
+    const panel = grid.selector.panel;
+    const tiles = [...grid.selector.spatialButtons.values()];
+    assert.equal(tiles.length, count, 'every destination up to six is visible without paging');
+    assert(!panel.entries.some(entry => ['Next', 'Previous'].includes(entry.label)));
+    assert.equal(panel.frameOptions.scrollContent, false, 'the grid never needs a scrollbar');
+    assert.equal(panel.rows.filter(row => row.height === 160).length, Math.ceil(count / 2));
+    const pixelSize = panel.config.width / panel.config.designWidthPx;
+    assert(tiles.every(tile => tile.height * pixelSize >= 0.21), 'tiles stay large in physical metres');
+    assert(panel.entries.find(entry => entry.label === 'Close').height * pixelSize >= 0.14);
+    assert.equal(tiles.at(-1).width, count % 2 ? '100%' : 368, 'an odd final tile fills its row');
+    if (count > 1) assert.equal(tiles[0].parent, tiles[1].parent, 'destinations share a two-column row');
+    panel.entries.find(entry => entry.label === 'Close').onClick();
+    assert.equal(grid.selector.panel, null);
+    assert.equal(grid.window.VRODOSRuntimeOverlay.interactionLocked, false, 'Close releases the modal lock');
+    grid.selector.remove();
+}
 const f = fixture();
 assert.equal(f.selector.desktop, undefined, 'no destinations produce no selector');
 const temple = f.addPoint(2, 'Temple & gallery');
@@ -151,9 +174,9 @@ await f.selector.togglePanel();
 const panel = f.selector.panel;
 assert.equal(panel.config.anchorRefreshFrames, 0, 'the menu stays stationary after initial placement');
 assert.equal(panel.config.distance, 2);
-assert.equal(panel.entries.filter(entry => entry.parent === panel.content).length, 6);
+assert.equal(f.selector.spatialButtons.size, 6);
 panel.entries.find(entry => entry.label === 'Next').onClick();
-assert.deepEqual(panel.entries.filter(entry => entry.parent === panel.content).map(entry => entry.label), ['7. Destination 7', '8. Destination 8']);
+assert.deepEqual([...f.selector.spatialButtons.values()].map(entry => entry.label), ['7. Destination 7', '8. Destination 8']);
 const seventh = f.selector.orderedPoints[6];
 panel.entries.find(entry => entry.label.startsWith('7.')).onHoverChange(true);
 assert(seventh.pillar.visible, 'controller panel hover previews a destination despite its own modal lock');
