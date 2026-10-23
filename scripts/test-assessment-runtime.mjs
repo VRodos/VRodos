@@ -34,7 +34,6 @@ function createSpatialApi() {
         refreshed: 0,
         updatedButtons: 0,
         updatedTexts: 0,
-        scrollRequests: [],
 
         clear() {
             this.frames = [];
@@ -75,10 +74,6 @@ function createSpatialApi() {
                 parent.children.push(node);
             }
             return node;
-        },
-
-        scrollPage(target, direction) {
-            this.scrollRequests.push({ target, direction });
         },
 
         scroll(parent, options) {
@@ -139,6 +134,16 @@ function createSpatialApi() {
             }
             this.updatedButtons += 1;
             return button;
+        },
+
+        selectionCard(parent, options) {
+            const card = this.button(parent, options);
+            card.kind = "selection-card";
+            return card;
+        },
+
+        updateSelectionCard(card, options) {
+            card.setProperties(options);
         },
 
         grid(parent, items, options) {
@@ -345,17 +350,8 @@ fixtures.forEach((fixture) => {
     assert(activePanel.api.refreshed > 0, `${fixture.name}: spatial targets were not refreshed`);
 
     const scrollFrame = activePanel.api.frames.at(-1);
-    const scrollParent = scrollFrame.contentOuter;
-    const controls = scrollParent.children.find((node) => node.children.some((child) => child.options.label === "Scroll down"));
-    assert(controls && controls.options.flexShrink === 0, `${fixture.name}: fixed scroll controls are missing`);
-    const beforeScroll = runtime.renderCount;
-    controls.children.find((node) => node.options.label === "Scroll down").options.onClick();
-    controls.children.find((node) => node.options.label === "Scroll up").options.onClick();
-    const requests = activePanel.api.scrollRequests;
-    assert(requests.length === 2 && requests[0].direction === 1 && requests[1].direction === -1, `${fixture.name}: scroll buttons did not dispatch both directions`);
-    assert(requests[0].target === requests[1].target, `${fixture.name}: scroll directions target different containers`);
-    assert(requests[0].target === scrollFrame.content, `${fixture.name}: scroll controls target the wrong content`);
-    assert(runtime.renderCount === beforeScroll, `${fixture.name}: scrolling rebuilt the assessment`);
+    assert(scrollFrame.options.scrollContent === true, `${fixture.name}: assessment must allow overflow scrolling`);
+    assert(!activePanel.api.buttons.some(button => /^Scroll (up|down)$/.test(button.label)), `${fixture.name}: scroll buttons must not take assessment space`);
 
     const genericUnsupported = activePanel.api.texts.some((entry) =>
         String(entry.text || "").includes("This assessment type is not interactive in VRodos yet")
@@ -1048,10 +1044,14 @@ function renderedFillGapPassage() {
     const frame = activePanel.api.frames.at(-1);
     const renderCount = runtime.renderCount;
     const vrButton = (label) => activePanel.api.buttons.findLast((button) => button.label === label);
+    const verseCards = frame.content.children.filter(node => node.kind === "selection-card");
+    assert(verseCards.length === verses.length, "VR highlight: each verse needs a separate reading card");
+    assert(verseCards.every((card, index) => card.options.selected === false && card.options.label === verses[index].text), "VR highlight: verse text or neutral initial selection changed");
     const lastResult = runtime.lastResult;
     vrButton("Submit").onClick();
     assert(runtime.lastResult === lastResult, "VR highlight: empty submission accepted");
     for (const index of [0, 2, 1]) vrButton(verses[index].text).onClick();
+    assert(verseCards[0].options.selected && verseCards[2].options.selected, "VR highlight: selection indicators did not update");
     vrButton(verses[1].text).onClick();
     vrButton(verses[1].text).onClick();
     assert(runtime.renderCount === renderCount && activePanel.api.frames.at(-1) === frame, "VR highlight: verse selection replaced controller targets");

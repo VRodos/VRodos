@@ -18072,6 +18072,116 @@
         input.input.input.setProperties(inputTextProps);
       }
     }
+    function createScrollContainer(api2, parent, options) {
+      const opts = options || {};
+      const trackWidth = 44;
+      const thumbWidth = 28;
+      const shell = api2.row(parent, {
+        width: opts.width || "100%",
+        flexGrow: opts.flexGrow !== void 0 ? opts.flexGrow : 1,
+        flexShrink: 1,
+        minHeight: 0,
+        gapColumn: 12,
+        alignItems: "stretch"
+      });
+      const scroll2 = api2.container(shell, Object.assign({
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "flex-start",
+        flexGrow: 1,
+        flexShrink: 1,
+        flexBasis: 0,
+        minWidth: 0,
+        minHeight: 0,
+        overflow: "scroll",
+        gapRow: 24,
+        pointerEvents: "listener",
+        zIndex: 8
+      }, opts, { width: void 0, scrollbarWidth: 0 }));
+      scroll2.name = "VRODOSSpatialUIScrollContent";
+      let drag = null;
+      let metrics = { max: 0, height: 0, thumbHeight: 0, top: 0 };
+      const stopDrag = () => {
+        if (!drag) return;
+        const previous = drag;
+        drag = null;
+        previous.object.releasePointerCapture(previous.id);
+        scroll2.scrollVelocity.set(0, 0);
+      };
+      const pointerY = (event) => (0.5 - track.worldToLocal(event.point.clone()).y) * metrics.height;
+      const move = (event) => {
+        if (!drag || drag.id !== event.pointerId) return;
+        event.stopImmediatePropagation();
+        const travel = metrics.height - metrics.thumbHeight;
+        const y2 = travel > 0 ? clamp2((pointerY(event) - drag.offset) / travel, 0, 1) * metrics.max : 0;
+        scroll2.scrollVelocity.set(0, 0);
+        scroll2.scrollPosition.value = [scroll2.scrollPosition.value[0], y2];
+      };
+      const track = api2.container(shell, {
+        width: trackWidth,
+        flexShrink: 0,
+        height: "100%",
+        display: "none",
+        backgroundColor: "#e2e8f0",
+        borderRadius: 22,
+        pointerEvents: "auto",
+        zIndex: 35,
+        onPointerDown: (event) => {
+          if (drag || event.pointerId == null || metrics.max <= 1) return;
+          event.stopImmediatePropagation();
+          const y2 = pointerY(event);
+          const offset = y2 >= metrics.top && y2 <= metrics.top + metrics.thumbHeight ? y2 - metrics.top : metrics.thumbHeight / 2;
+          event.object.setPointerCapture(event.pointerId);
+          drag = { id: event.pointerId, object: event.object, offset };
+          move(event);
+        },
+        onPointerMove: move,
+        onPointerUp: (event) => {
+          if (drag && drag.id === event.pointerId) {
+            event.stopImmediatePropagation();
+            stopDrag();
+          }
+        },
+        onPointerCancel: (event) => {
+          if (drag && drag.id === event.pointerId) stopDrag();
+        }
+      });
+      track.name = "VRODOSSpatialUIScrollbar";
+      track.userData.vrodosSpatialActionable = true;
+      const thumb = api2.container(track, {
+        positionType: "absolute",
+        positionLeft: (trackWidth - thumbWidth) / 2,
+        positionTop: 0,
+        width: thumbWidth,
+        height: 44,
+        backgroundColor: "#475569",
+        borderRadius: 14,
+        pointerEvents: "none"
+      });
+      thumb.name = "VRODOSSpatialUIScrollbarThumb";
+      let visible = false;
+      const update = () => {
+        const max = scroll2.maxScrollPosition.value[1] || 0;
+        const viewport = scroll2.size.value ? scroll2.size.value[1] : 0;
+        const height = track.size.value ? track.size.value[1] : 0;
+        const show = max > 1 && viewport > 0;
+        if (visible !== show) {
+          visible = show;
+          track.setProperties({ display: show ? "flex" : "none" });
+          if (!show) stopDrag();
+        }
+        const thumbHeight = Math.min(height, Math.max(44, height * viewport / (viewport + max || 1)));
+        const top = max > 0 ? clamp2(scroll2.scrollPosition.value[1] / max, 0, 1) * (height - thumbHeight) : 0;
+        metrics = { max, height, thumbHeight, top };
+        thumb.setProperties({ positionTop: top, height: thumbHeight });
+      };
+      const unsubscribe = [scroll2.maxScrollPosition, scroll2.size, scroll2.scrollPosition, track.size].map((signal) => signal.subscribe(update));
+      scroll2.abortSignal.addEventListener("abort", () => {
+        stopDrag();
+        unsubscribe.forEach((dispose2) => dispose2());
+      }, { once: true });
+      return scroll2;
+    }
     function createPanelApi(panelState) {
       function withPanelFontDefaults(options) {
         const opts = options || {};
@@ -18186,28 +18296,7 @@
           }, options || {}));
         },
         scroll: function(parent, options) {
-          return this.container(parent, Object.assign({
-            flexDirection: "column",
-            alignItems: "stretch",
-            justifyContent: "flex-start",
-            flexGrow: 1,
-            width: "100%",
-            overflow: "scroll",
-            scrollbarWidth: 12,
-            scrollbarColor: "rgba(39,39,39,0.38)",
-            scrollbarBorderRadius: 999,
-            gapRow: 24,
-            pointerEvents: "listener",
-            zIndex: 8
-          }, options || {}));
-        },
-        scrollPage: function(container, direction) {
-          const [x2, y2] = container.scrollPosition.value;
-          const maxY = container.maxScrollPosition.value[1] || 0;
-          const height = container.size.value ? container.size.value[1] : 0;
-          const nextY = clamp2(y2 + direction * height * 0.75, 0, maxY);
-          container.scrollVelocity.set(0, 0);
-          container.scrollPosition.value = [x2, nextY];
+          return createScrollContainer(this, parent || this.content || this.root, options);
         },
         text: function(parent, options) {
           const opts = withPanelFontDefaults(options);
@@ -18360,6 +18449,56 @@
           }
           return button;
         },
+        selectionCard: function(parent, options) {
+          const opts = options || {};
+          const card = this.row(parent, {
+            width: "100%",
+            height: "auto",
+            minHeight: 100,
+            flexShrink: 0,
+            alignItems: "flex-start",
+            gapColumn: 20,
+            padding: 22,
+            borderRadius: 16,
+            borderWidth: 2,
+            pointerEvents: "auto",
+            zIndex: 18,
+            onClick: opts.onClick
+          });
+          card.name = "VRODOSSpatialUISelectionCard";
+          card.userData.vrodosSpatialActionable = true;
+          const check = this.container(card, {
+            width: 36,
+            height: 36,
+            flexShrink: 0,
+            borderRadius: 8,
+            borderWidth: 2,
+            alignItems: "center",
+            justifyContent: "center"
+          });
+          const icon = append(check, new Check(baseContainerProps({ width: 28, height: 28, color: "#ffffff", pointerEvents: "none" })));
+          const body = this.column(card, { flexGrow: 1, flexBasis: 0, minWidth: 0, gapRow: 8 });
+          this.text(body, { text: opts.caption || "", fontSize: 21, color: "#64748b", fontWeight: 600 });
+          this.text(body, {
+            text: opts.label || "",
+            fontSize: 30,
+            lineHeight: "140%",
+            whiteSpace: "pre-line",
+            width: "100%",
+            flexShrink: 0,
+            color: "#0f172a"
+          });
+          card.userData.vrodosSpatialSelection = { check, icon };
+          this.updateSelectionCard(card, { selected: opts.selected === true });
+          return card;
+        },
+        updateSelectionCard: function(card, options) {
+          const selected = options.selected === true;
+          const { check, icon } = card.userData.vrodosSpatialSelection;
+          card.setProperties({ backgroundColor: selected ? "#eff6ff" : "#ffffff", borderColor: selected ? "#2563eb" : "#cbd5e1" });
+          check.setProperties({ backgroundColor: selected ? "#2563eb" : "#ffffff", borderColor: selected ? "#2563eb" : "#94a3b8" });
+          icon.setProperties({ visibility: selected ? "visible" : "hidden" });
+        },
         image: function(parent, options) {
           const opts = options || {};
           const image = new Image(baseContainerProps({
@@ -18422,6 +18561,7 @@
             borderBottomRightRadius: opts.showContent === false && opts.showFooter === false ? panelRadius : 0,
             paddingX: opts.headerPaddingX !== void 0 ? opts.headerPaddingX : DIALOG_HEADER_PADDING_X,
             height: opts.headerHeight || DIALOG_HEADER_HEIGHT,
+            flexShrink: 0,
             width: "100%",
             gapColumn: opts.headerGapColumn !== void 0 ? opts.headerGapColumn : DIALOG_HEADER_GAP_COLUMN,
             pointerEvents: "none",
@@ -18470,6 +18610,8 @@
             alignItems: "stretch",
             justifyContent: "flex-start",
             flexGrow: 1,
+            flexShrink: 1,
+            minHeight: 0,
             paddingX: opts.paddingX !== void 0 ? opts.paddingX : DIALOG_CONTENT_PADDING_X,
             paddingY: opts.paddingY !== void 0 ? opts.paddingY : DIALOG_CONTENT_PADDING_Y,
             paddingTop: opts.paddingTop,
@@ -18478,23 +18620,16 @@
             pointerEvents: "none",
             zIndex: 5
           }));
-          const contentHost = opts.scrollContent === true ? new Container(baseContainerProps({
+          const contentHost = opts.showContent !== false && opts.scrollContent !== false ? this.scroll(content5, {
             flexDirection: "column",
             alignItems: "stretch",
             justifyContent: "flex-start",
             flexGrow: 1,
             width: "100%",
             overflow: "scroll",
-            scrollbarWidth: opts.scrollbarWidth || 12,
-            scrollbarColor: opts.scrollbarColor || "rgba(39,39,39,0.38)",
-            scrollbarBorderRadius: opts.scrollbarBorderRadius || 999,
             gapRow: opts.scrollGapY !== void 0 ? opts.scrollGapY : opts.gapY !== void 0 ? opts.gapY : DIALOG_CONTENT_GAP_Y,
-            pointerEvents: "listener",
             zIndex: 8
-          })) : content5;
-          if (contentHost !== content5) {
-            content5.add(contentHost);
-          }
+          }) : content5;
           const footer = new Container(baseContainerProps({
             flexDirection: "row",
             alignItems: "center",
@@ -18503,6 +18638,7 @@
             paddingBottom: opts.footerPaddingBottom !== void 0 ? opts.footerPaddingBottom : DIALOG_FOOTER_PADDING_BOTTOM,
             gapColumn: 28,
             height: opts.footerHeight || DIALOG_FOOTER_HEIGHT,
+            flexShrink: 0,
             pointerEvents: "none",
             zIndex: 5
           }));

@@ -89,25 +89,7 @@
             },
             primary
         }, options || {});
-        const frame = api.frame(frameOptions);
-        if (frameOptions.scrollContent) {
-            addScrollControls(api, frame.contentOuter, frame.content);
-        }
-        return frame;
-    }
-
-    function addScrollControls(api, parent, scrollTarget) {
-        const controls = api.row(parent, {
-            width: "100%", height: 60, flexShrink: 0, gapColumn: 18,
-            justifyContent: "center"
-        });
-        [-1, 1].forEach((direction) => api.button(controls, {
-            label: direction < 0 ? "Scroll up" : "Scroll down",
-            variant: "secondary", width: 240, height: 60, textSize: 28,
-            onClick: function () {
-                api.scrollPage(scrollTarget, direction);
-            }
-        }));
+        return api.frame(frameOptions);
     }
 
     function addInfo(api, frame, message) {
@@ -1220,6 +1202,11 @@
         updateView();
     }
 
+    function highlightSelectionStatus(state) {
+        const count = state.selectedIds.size;
+        return count + (count === 1 ? " verse selected" : " verses selected");
+    }
+
     function renderHighlight(runtime) {
         const state = runtime.state;
         if (!state.verses.length || !state.annotations.length) {
@@ -1227,7 +1214,7 @@
             return;
         }
         const api = runtime.api;
-        const frame = createFrame(runtime, "Selected " + state.selectedIds.size + " verses", {
+        const frame = createFrame(runtime, highlightSelectionStatus(state), {
             label: "Submit",
             disabled: !namespace.canSubmitHighlight(state),
             onClick: function () {
@@ -1236,21 +1223,23 @@
                 runtime.finish(result.response, result.extra);
             }
         });
-        addInfo(api, frame, "Select all verses you think are correct, then submit. An empty line separates verses.");
-        state.verses.forEach((verse) => {
-            const button = api.button(frame.content, {
+        api.text(frame.content, {
+            text: "Select all verses you think are correct, then Submit.",
+            fontSize: INFO_TEXT_FONT_SIZE, color: "#475569", lineHeight: "125%", flexShrink: 0
+        });
+        state.verses.forEach((verse, index) => {
+            const card = api.selectionCard(frame.content, {
                 label: verse.text,
-                width: "100%", minHeight: 80, height: "auto", flexShrink: 0,
-                textSize: 28, textAlign: "left", whiteSpace: "pre-line",
-                variant: state.selectedIds.has(verse.id) ? "primary" : "secondary",
+                caption: "Verse " + (index + 1),
+                selected: state.selectedIds.has(verse.id),
                 onClick: function () {
                     if (state.selectedIds.has(verse.id)) {
                         state.selectedIds.delete(verse.id);
                     } else {
                         state.selectedIds.add(verse.id);
                     }
-                    api.updateButton(button, { variant: state.selectedIds.has(verse.id) ? "primary" : "secondary" });
-                    api.updateText(frame.statusText, { text: "Selected " + state.selectedIds.size + " verses" });
+                    api.updateSelectionCard(card, { selected: state.selectedIds.has(verse.id) });
+                    api.updateText(frame.statusText, { text: highlightSelectionStatus(state) });
                     api.updateButton(frame.primaryButton, { disabled: !namespace.canSubmitHighlight(state) });
                 }
             });
