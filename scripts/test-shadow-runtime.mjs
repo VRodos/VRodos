@@ -101,6 +101,10 @@ assert.equal(runtime.getObjectShadowRole(roles.mesh), 'caster-receiver');
 flags.clear(); sceneSettings.data.flatMediaShadowCasting = '1';
 assert.equal(runtime.isShadowEligibleMaterial({ transparent: true, opacity: 0.5 }), false);
 assert.equal(runtime.isShadowEligibleMaterial({ transparent: true, opacity: 0.5, alphaTest: 0.1 }), true);
+assert.equal(runtime.isShadowEligibleMaterial({
+    transmission: 0, transparent: true, opacity: 0.12, alphaTest: 0.5,
+    userData: { vrodosHeadsetGlassSource: { transmission: 1 } }
+}), false, 'headset clear-glass approximation must still let sunlight through');
 assert.equal(runtime.isHiddenNavmeshMaterial([{ userData: { vrodosHiddenNavmeshMaterial: true } }]), true);
 
 // Terrain depth material is tracked once and restores the authored material when disabled.

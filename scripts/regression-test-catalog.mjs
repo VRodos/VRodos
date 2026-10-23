@@ -6,6 +6,7 @@ export const testGroups = Object.freeze({
     "scripts/test-selection-bvh.mjs",
     "scripts/test-decoration-collision.mjs",
     "scripts/test-texture-quality.mjs",
+    "scripts/test-ktx2-texture-cap.mjs",
     "scripts/test-render-quality.mjs",
     "scripts/test-sun-occlusion.mjs",
     "scripts/test-sun-sprite.mjs",

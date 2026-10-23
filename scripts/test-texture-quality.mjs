@@ -92,4 +92,46 @@ for (const strength of [0, 0.35, 1]) {
         }
     }
 }
+// Standalone glass must leave Three's transmissive queue, while desktop/PCVR
+// retain the original refraction and repeated refreshes do not compound alpha.
+for (const transmission of [0.2, 1]) {
+    const glass = new Three.MeshPhysicalMaterial({
+        transmission, thickness: 0.4, opacity: transmission === 1 ? 1 : 0.8,
+        transparent: transmission !== 1, side: Three.DoubleSide,
+        color: '#aaccff', roughness: 0.15, map: new Three.Texture()
+    });
+    context.vrodosEnhanceMeshMaterial(glass, {}, quality);
+    const source = {
+        transmission: glass.transmission, thickness: glass.thickness, opacity: glass.opacity,
+        transparent: glass.transparent, depthWrite: glass.depthWrite,
+        forceSinglePass: glass.forceSinglePass, alphaTest: glass.alphaTest
+    };
+    const map = glass.map, color = glass.color.clone();
+    const desktopVersion = glass.version;
+    context.vrodosEnhanceMeshMaterial(glass, {}, quality);
+    assert.equal(glass.version, desktopVersion, 'desktop glass is unchanged');
+    const headset = { ...quality, headsetProfile: true };
+    context.vrodosEnhanceMeshMaterial(glass, {}, headset);
+    assert.equal(glass.transmission, 0, 'standalone glass must not require transmission captures');
+    assert.equal(glass.thickness, 0);
+    assert.equal(glass.transparent, true);
+    assert.equal(glass.depthWrite, false, 'transparent glass must not occlude objects behind it');
+    assert.equal(glass.forceSinglePass, true, 'double-sided glass must not add a back-face draw');
+    assert.ok(glass.opacity > 0 && glass.opacity < 1, 'fully transmissive glass stays visibly translucent');
+    assert.equal(glass.map, map);
+    assert.ok(glass.color.equals(color), 'headset approximation preserves authored tint');
+    const alpha = glass.opacity, version = glass.version;
+    context.vrodosEnhanceMeshMaterial(glass, {}, headset);
+    assert.equal(glass.opacity, alpha, 'shared/revisited glass keeps a stable alpha');
+    assert.equal(glass.version, version, 'stable headset glass does not invalidate shaders');
+    context.vrodosEnhanceMeshMaterial(glass, {}, { ...quality, headsetProfile: false });
+    for (const [key, value] of Object.entries(source)) assert.equal(glass[key], value, `desktop/PCVR restores ${key}`);
+    const restoredVersion = glass.version;
+    context.vrodosEnhanceMeshMaterial(glass, {}, quality);
+    assert.equal(glass.version, restoredVersion, 'restored desktop glass stays stable');
+}
+const opaquePhysical = new Three.MeshPhysicalMaterial({ transmission: 0, opacity: 1 });
+context.vrodosEnhanceMeshMaterial(opaquePhysical, {}, { ...quality, headsetProfile: true });
+assert.equal(opaquePhysical.transparent, false, 'opaque PBR materials remain opaque on headset');
+assert.equal(opaquePhysical.opacity, 1);
 console.log('Texture quality tests passed.');

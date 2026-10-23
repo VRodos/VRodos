@@ -242,7 +242,7 @@
                 }
                 // Clear glTF transmission glass has opacity 1. It must not become
                 // an opaque blocker in the direct-light map or sun visibility rays.
-                if (entry.transmission >= 0.95 && !entry.transmissionMap) {
+                if ((entry.userData?.vrodosHeadsetGlassSource?.transmission ?? entry.transmission) >= 0.95 && !entry.transmissionMap) {
                     return false;
                 }
                 return !entry.transparent || opacity >= 0.98 || alphaTest >= 0.1;

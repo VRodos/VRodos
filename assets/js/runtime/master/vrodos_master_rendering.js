@@ -676,7 +676,7 @@ function vrodosHasStrongAuthoredPbrIntent(material) {
         (typeof roughness === 'number' && roughness < 0.28) ||
         (typeof envMapIntensity === 'number' && envMapIntensity > 1.25) ||
         (typeof material.clearcoat === 'number' && material.clearcoat > 0.15) ||
-        (typeof material.transmission === 'number' && material.transmission > 0.05);
+        ((material.userData.vrodosHeadsetGlassSource?.transmission ?? material.transmission) > 0.05);
 }
 
 function vrodosResolveMaterialRole(material, overrides) {
@@ -1072,6 +1072,42 @@ if (typeof window !== 'undefined') {
     window.vrodosGetTargetEnvMapIntensity = vrodosGetTargetEnvMapIntensity;
 }
 
+function vrodosApplyHeadsetGlass(material, headsetProfile) {
+    let source = material.userData.vrodosHeadsetGlassSource;
+    if (!source && (!headsetProfile || !(material.transmission > 0))) return;
+
+    if (!source) {
+        source = material.userData.vrodosHeadsetGlassSource = {
+            transmission: material.transmission,
+            thickness: material.thickness,
+            opacity: material.opacity,
+            transparent: material.transparent,
+            depthWrite: material.depthWrite,
+            forceSinglePass: material.forceSinglePass,
+            alphaTest: material.alphaTest
+        };
+    }
+    const transmission = material.transmission;
+    const transparent = material.transparent;
+    const alphaTest = material.alphaTest;
+    if (headsetProfile) {
+        // Alpha-blended PBR glass retains tint/reflections without Three's
+        // full-resolution, multisampled transmission capture for each XR eye.
+        material.transmission = 0;
+        material.thickness = 0;
+        material.opacity = source.opacity * Math.max(0.12, 1 - source.transmission);
+        material.transparent = true;
+        material.depthWrite = false;
+        material.forceSinglePass = true;
+    } else {
+        Object.assign(material, source);
+        delete material.userData.vrodosHeadsetGlassSource;
+    }
+    if (material.transmission !== transmission || material.transparent !== transparent || material.alphaTest !== alphaTest) {
+        material.needsUpdate = true;
+    }
+}
+
 function vrodosEnhanceMeshMaterial(material, overrides, options) {
     if (!material) {
         return;
@@ -1087,6 +1123,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
     const materialRole = vrodosResolveMaterialRole(material, overrides || {});
     const isTerrainMatte = materialRole === 'terrain-matte';
     material.userData = material.userData || {};
+    vrodosApplyHeadsetGlass(material, options.headsetProfile === true);
 
     vrodosApplyTextureQuality(material.map, options, true);
     vrodosApplyTextureQuality(material.emissiveMap, options, true);

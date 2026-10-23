@@ -13,6 +13,7 @@ import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { dedup, draco, meshopt, textureCompress } from '@gltf-transform/functions';
 import { prepareAssetMaterials } from './prepare-asset-materials.mjs';
+import { prepareOversizedKtx2Textures } from './prepare-asset-textures.mjs';
 import { simplifyAssetGeometry } from './asset-geometry-policy.mjs';
 import { Mode, toktx } from '@gltf-transform/cli';
 import draco3d from 'draco3dgltf';
@@ -989,6 +990,11 @@ async function optimizeAsset(asset, index, options) {
         const jobs = record.profileOptions.ktxJobs;
         operations.push({ id: 'normalize-textures', label: 'Normalizing source textures', run: () => normalizeUnsupportedTextures(document) });
         operations.push({
+            id: 'resize-ktx2',
+            label: 'Resizing oversized compressed textures',
+            run: async () => { record.resizedKtx2Textures = await prepareOversizedKtx2Textures(document, textureMaxSize); }
+        });
+        operations.push({
             id: 'uastc',
             label: 'Compressing material textures (UASTC)',
             run: () => document.transform(toktx({
@@ -1119,6 +1125,12 @@ async function optimizeAsset(asset, index, options) {
             record.runtimeNotes.push(`Geometry simplification did not reach the placement budget (${record.geometrySimplification.placedAfter} / ${record.geometrySimplification.target} triangles); preserved borders, small parts, and the error limit may require source optimization or authored LODs.`);
         }
         record.derivative.textureMemory = await estimateTextureMemory(parsedDerivative.gltf, parsedDerivative.binary);
+        if (isWebProfile(options.profile) && document.getRoot().listTextures().some((texture) => {
+            const size = texture.getSize();
+            return !size || Math.max(...size) > record.profileOptions.textureMaxSize;
+        })) {
+            throw new Error(`Web derivative contains a texture exceeding the ${record.profileOptions.textureMaxSize}px cap or with unknown dimensions.`);
+        }
         const hasSourceTextures = Number(record.original?.counts?.images || 0) > 0;
         const uncompressedTextures = document.getRoot().listTextures().filter((texture) => texture.getMimeType() !== 'image/ktx2').length;
         record.runtimeSubstitutionReady = record.derivative.extensions.hasDraco &&
