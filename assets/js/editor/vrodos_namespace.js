@@ -433,7 +433,8 @@ VRODOS.utils.sceneObjectDuplicateKey = function(resource) {
             ''
         ).trim();
         if (assessmentSource) {
-            return `assessment|${assessmentSource}`;
+            const placement = String(resource.immerse_layout_placement || '').trim();
+            return `assessment|${assessmentSource}${placement ? `|placement:${placement}` : ''}`;
         }
     }
 

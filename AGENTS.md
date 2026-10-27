@@ -68,6 +68,8 @@ Asset sharing is one-way: `_vrodos_asset_is_shared` owns existing-asset visibili
 
 The connector's `vrodos_immerse_environments` capability grants Immerse Users access to both VR Environments tabs and environment uploads, including thumbnail generation for their own uploads. Replacement, deletion, mappings, and scene sync remain administrator-only. Environment-library uploads and existing-library repair use the shared promotion/cache API.
 
+Immerse layout-copy imports tag deliberate assessment instances with `immerse_layout_placement`. Preserve this marker through editor loading/saving and include it in assessment duplicate keys; different placements share assessment results but must remain distinct scene objects.
+
 ## Runtime And Rendering
 
 TXT, RTF and DOCX attachments render as generated `3d-text` slabs without a GLB. Detect text attachments by filename/URL or MIME type even when Immerse supplies no category; DOCX takes precedence over its ZIP container MIME type. `VRodos_Text_Asset_Helper` owns extraction and the shared 2,000-character limit. DOCX extraction reads only bounded `word/document.xml` content through PHP ZIP/DOM and rejects DTDs.
