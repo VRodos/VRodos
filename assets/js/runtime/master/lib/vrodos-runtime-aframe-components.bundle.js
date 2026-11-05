@@ -4571,7 +4571,7 @@
     }
   });
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
-  var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
+  const VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
     maxStepHeight: 0.6,
     maxDropHeight: 1,
     maxSlope: 45

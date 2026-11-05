@@ -201,7 +201,7 @@ AFRAME.registerComponent('audio-source-controls', {
     },
 
     resolveAudioAssetElement: function () {
-        var assetId = this.el.getAttribute('data-audio-asset-id');
+        const assetId = this.el.getAttribute('data-audio-asset-id');
         if (assetId) {
             return document.getElementById(assetId);
         }
@@ -343,7 +343,7 @@ AFRAME.registerComponent('audio-source-controls', {
             console.debug('[Audio] currentTime reset failed:', e);
         }
 
-        var playPromise = this.audioAsset.play();
+        const playPromise = this.audioAsset.play();
         this.fallbackPlaybackActive = true;
         this.syncVisualState(true);
 
@@ -379,7 +379,7 @@ AFRAME.registerComponent('audio-source-controls', {
     },
 
     resumeAudioContexts: function (sound) {
-        var contexts = [];
+        const contexts = [];
 
         if (typeof THREE !== 'undefined' && THREE.AudioContext && typeof THREE.AudioContext.getContext === 'function') {
             contexts.push(THREE.AudioContext.getContext());
@@ -393,7 +393,7 @@ AFRAME.registerComponent('audio-source-controls', {
             });
         }
 
-        var seen = [];
+        const seen = [];
         contexts.forEach(function (context) {
             if (!context || seen.indexOf(context) !== -1) {
                 return;

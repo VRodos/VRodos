@@ -1154,6 +1154,7 @@
         } finally {
           this.postProcessingRendering = false;
         }
+        return void 0;
       }.bind(this);
       this.postProcessingRender = render;
       renderer.render = render;

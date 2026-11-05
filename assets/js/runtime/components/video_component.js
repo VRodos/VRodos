@@ -275,13 +275,13 @@ AFRAME.registerComponent('video-controls', {
     },
 
     ensureVideoElement: function () {
-        var existingVideo = document.getElementById(this.videoElementId);
+        const existingVideo = document.getElementById(this.videoElementId);
         if (existingVideo) {
             this.prepareVideoElement(existingVideo);
             return existingVideo;
         }
 
-        var videoEl = document.createElement("video");
+        const videoEl = document.createElement("video");
         this.ownedVideo = videoEl;
         videoEl.id = this.videoElementId;
         videoEl.setAttribute("crossorigin", "anonymous");
@@ -295,14 +295,14 @@ AFRAME.registerComponent('video-controls', {
 
     resolvePosterUrl: function () {
         if (!this.videoPosterSelector || this.videoPosterSelector.charAt(0) !== "#") return "";
-        var posterAsset = document.querySelector(this.videoPosterSelector);
+        const posterAsset = document.querySelector(this.videoPosterSelector);
         return posterAsset ? (posterAsset.getAttribute("src") || "") : "";
     },
 
     shouldUseFlatVideoMaterial: function () {
         if (!this.videoDisplay) return false;
 
-        var material = this.videoDisplay.getAttribute("material");
+        const material = this.videoDisplay.getAttribute("material");
         if (typeof material === "string" && /(?:^|;)\s*shader\s*:\s*flat(?:\s*;|$)/i.test(material)) {
             return true;
         }
@@ -310,17 +310,17 @@ AFRAME.registerComponent('video-controls', {
             return true;
         }
 
-        var sceneEl = document.querySelector("a-scene");
-        var settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
-        var settingsData = settings && settings.data
+        const sceneEl = document.querySelector("a-scene");
+        const settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
+        const settingsData = settings && settings.data
             ? settings.data
             : (sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null);
-        var profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
+        const profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
         return profile !== "desktop" && profile !== "pc-rendered-vr";
     },
 
     getWorldVideoMaterial: function (src) {
-        var material = this.useFlatMediaMaterial
+        let material = this.useFlatMediaMaterial
             ? "shader: flat; side: front; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true"
             : "side: front; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
         if (src) material += "; src: " + src;
@@ -334,7 +334,7 @@ AFRAME.registerComponent('video-controls', {
 
     setVideoDisplayShadowState: function (enabled) {
         if (!this.videoDisplay || !this.videoDisplay.getObject3D) return;
-        var mesh = this.videoDisplay.getObject3D("mesh");
+        const mesh = this.videoDisplay.getObject3D("mesh");
         if (!mesh) return;
         mesh.traverse(function (node) {
             if (!node || !node.isMesh) return;
@@ -345,7 +345,7 @@ AFRAME.registerComponent('video-controls', {
 
     requestSceneLightingRefresh: function () {
         if (!this.backgroundEl || !this.backgroundEl.components) return;
-        var settings = this.backgroundEl.components["scene-settings"];
+        const settings = this.backgroundEl.components["scene-settings"];
         if (!settings) return;
         if (typeof settings.markSceneCollectionsDirty === "function") settings.markSceneCollectionsDirty();
         if (typeof settings.queueQualityRefresh === "function") settings.queueQualityRefresh(false);
@@ -353,7 +353,7 @@ AFRAME.registerComponent('video-controls', {
 
     applyWorldVideoMaterial: function () {
         if (!this.videoDisplay) return;
-        var source = this.getInlineVideoMaterialSource();
+        const source = this.getInlineVideoMaterialSource();
         if (source) this.videoDisplay.setAttribute("src", source);
         this.videoDisplay.setAttribute("material", this.getWorldVideoMaterial(source));
         this.videoDisplay.setAttribute("data-vrodos-world-lighting", "true");
@@ -385,7 +385,7 @@ AFRAME.registerComponent('video-controls', {
     },
 
     updateInlinePlayHint: function () {
-        var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
+        const shouldShow = !this.videoPrimed || !this.video || this.video.paused;
         this.playHintEls.forEach((hint) => {
             hint.setAttribute("visible", shouldShow ? "true" : "false");
             hint.classList.toggle("raycastable", shouldShow);
@@ -394,10 +394,10 @@ AFRAME.registerComponent('video-controls', {
 
     tuneVideoTexture: function () {
         if (!this.videoDisplay || !this.videoDisplay.getObject3D || typeof THREE === "undefined") return;
-        var mesh = this.videoDisplay.getObject3D("mesh");
+        const mesh = this.videoDisplay.getObject3D("mesh");
         if (!mesh || !mesh.material || !mesh.material.map) return;
 
-        var map = mesh.material.map;
+        const map = mesh.material.map;
         if (typeof THREE.LinearFilter !== "undefined") {
             map.minFilter = THREE.LinearFilter;
             map.magFilter = THREE.LinearFilter;
@@ -464,14 +464,14 @@ AFRAME.registerComponent('video-controls', {
     },
 
     prepareDialogPlayback: function () {
-        var videoElement = this.dialogVideo || document.getElementById("video-panel-video");
+        const videoElement = this.dialogVideo || document.getElementById("video-panel-video");
         if (!videoElement) return null;
 
         this.dialogVideo = videoElement;
         this.configureDialogVideoElement(videoElement);
 
-        var desiredUrl = this.video.currentSrc || this.video.getAttribute("src") || this.videoSourceUrl;
-        var currentUrl = videoElement.currentSrc || videoElement.getAttribute("src") || "";
+        const desiredUrl = this.video.currentSrc || this.video.getAttribute("src") || this.videoSourceUrl;
+        const currentUrl = videoElement.currentSrc || videoElement.getAttribute("src") || "";
 
         if (desiredUrl && currentUrl !== desiredUrl) {
             videoElement.pause();
@@ -506,7 +506,7 @@ AFRAME.registerComponent('video-controls', {
             this.video.pause();
         }
 
-        var playPromise = videoElement.play();
+        const playPromise = videoElement.play();
         if (playPromise && typeof playPromise.catch === "function") {
             playPromise.catch(error => console.warn("Dialog video playback prevented:", error));
         }
@@ -559,15 +559,15 @@ AFRAME.registerComponent('video-controls', {
             return;
         }
 
-        let video_element = this.prepareDialogPlayback();
+        const video_element = this.prepareDialogPlayback();
         if (!video_element) return;
 
-        let videoDialog = document.querySelector('#video-controls-dialog');
-        let videoTitleEl = document.querySelector('#video-controls-dialog-title');
-        let videoHeaderContent = videoTitleEl ? videoTitleEl.closest('.tw-flex.tw-items-center.tw-gap-3') : null;
+        const videoDialog = document.querySelector('#video-controls-dialog');
+        const videoTitleEl = document.querySelector('#video-controls-dialog-title');
+        const videoHeaderContent = videoTitleEl ? videoTitleEl.closest('.tw-flex.tw-items-center.tw-gap-3') : null;
 
         if (videoTitleEl) {
-            let titleVal = this.videoTitle || "";
+            const titleVal = this.videoTitle || "";
             if (titleVal && titleVal.trim() !== '' && !["video-title", "Video Viewer"].includes(titleVal)) {
                 videoTitleEl.innerText = titleVal;
                 if (videoHeaderContent) videoHeaderContent.classList.remove('tw-hidden');

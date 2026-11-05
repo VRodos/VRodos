@@ -3305,19 +3305,16 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function shouldRefreshPmndrsSceneSelections(self) {
-        let loader;
-        let now;
-
         if (!self || !self._pmndrsSceneSelectionsDirty || !self.el) {
             return false;
         }
 
-        loader = self.el.components && self.el.components['vrodos-scene-loader'];
+        const loader = self.el.components && self.el.components['vrodos-scene-loader'];
         if (self.el.hasAttribute && self.el.hasAttribute('vrodos-scene-loader') && (!loader || loader.isReady !== true)) {
             return false;
         }
 
-        now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+        const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
             ? performance.now()
             : Date.now();
         return now >= (Number(self._pmndrsSceneSelectionRefreshAfterMs) || 0);
@@ -3332,14 +3329,13 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function refreshPmndrsCloudLightingMaskSelection(self, scene) {
-        let maskPass;
         let selectedCount = 0;
 
         if (!self || !scene) {
             return 0;
         }
 
-        maskPass = self.pmndrsCloudLightingMaskPass;
+        const maskPass = self.pmndrsCloudLightingMaskPass;
         if (!maskPass || !maskPass.selection) {
             self._pmndrsCloudLightingMaskSelectedCount = 0;
             return 0;
@@ -3446,8 +3442,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function isPmndrsHorizonFoliageOverlayCandidateMaterial(material) {
-        let materialName;
-
         if (!material || material.visible === false || material.colorWrite === false) {
             return false;
         }
@@ -3464,7 +3458,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return true;
         }
 
-        materialName = (typeof material.name === 'string') ? material.name.toLowerCase() : '';
+        const materialName = (typeof material.name === 'string') ? material.name.toLowerCase() : '';
         if ((material.map || material.alphaMap) && /leaf|leaves|palm|frond|tree|bush|plant|foliage|vegetation/.test(materialName)) {
             return true;
         }
@@ -3473,14 +3467,11 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function createPmndrsHorizonCutoutMaterial(material, cacheTag) {
-        let clone;
-        let prevOnBeforeCompile;
-
         if (!material || typeof material.clone !== 'function') {
             return material;
         }
 
-        clone = material.clone();
+        const clone = material.clone();
         clone.transparent = false;
         clone.opacity = 1;
         clone.alphaTest = Math.max(material.alphaTest || 0, getPmndrsHorizonFoliageAlphaTestTarget());
@@ -3505,7 +3496,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (typeof clone.premultipliedAlpha !== 'undefined') {
             clone.premultipliedAlpha = false;
         }
-        prevOnBeforeCompile = clone.onBeforeCompile;
+        const prevOnBeforeCompile = clone.onBeforeCompile;
         clone.onBeforeCompile = function (shader, renderer) {
             if (typeof prevOnBeforeCompile === 'function') {
                 prevOnBeforeCompile.call(this, shader, renderer);
@@ -3529,7 +3520,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function restoreAllPmndrsHorizonFoliageMaterials(self) {
-        let overrides;
         let uuid;
         let entry;
 
@@ -3537,7 +3527,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return;
         }
 
-        overrides = self._pmndrsHorizonFoliageObjectOverrides;
+        const overrides = self._pmndrsHorizonFoliageObjectOverrides;
         for (uuid in overrides) {
             if (!Object.prototype.hasOwnProperty.call(overrides, uuid)) {
                 continue;
@@ -3562,9 +3552,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function applyPmndrsHorizonFoliageMaterialNormalization(self) {
-        let overlayPass;
-        let overrides;
-        let seen;
         let uuid;
         let entry;
 
@@ -3572,30 +3559,27 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return;
         }
 
-        overlayPass = self.pmndrsHorizonFoliageOverlayPass;
+        const overlayPass = self.pmndrsHorizonFoliageOverlayPass;
         if (!overlayPass || !overlayPass.selection) {
             restoreAllPmndrsHorizonFoliageMaterials(self);
             return;
         }
 
-        overrides = self._pmndrsHorizonFoliageObjectOverrides = self._pmndrsHorizonFoliageObjectOverrides || {};
-        seen = {};
+        const overrides = self._pmndrsHorizonFoliageObjectOverrides = self._pmndrsHorizonFoliageObjectOverrides || {};
+        const seen = {};
 
         overlayPass.selection.forEach((object) => {
-            let materials;
             let i;
             let material;
-            let normalizedMaterials;
-            let objectKey;
 
             if (!object || !object.material) {
                 return;
             }
 
-            objectKey = object.uuid || String(Math.random());
+            const objectKey = object.uuid || String(Math.random());
             seen[objectKey] = true;
-            materials = Array.isArray(object.material) ? object.material : [object.material];
-            normalizedMaterials = [];
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            const normalizedMaterials = [];
             for (i = 0; i < materials.length; i++) {
                 material = materials[i];
                 if (!isPmndrsHorizonFoliageOverlayCandidateMaterial(material)) {
@@ -3648,8 +3632,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function isPmndrsHorizonFoliageOverlayCandidateMesh(node) {
-        let materials;
-        let nodeName;
         let i;
 
         if (!node || !node.isMesh || node.visible === false || !node.material) {
@@ -3664,12 +3646,12 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return false;
         }
 
-        nodeName = (typeof node.name === 'string') ? node.name.toLowerCase() : '';
+        const nodeName = (typeof node.name === 'string') ? node.name.toLowerCase() : '';
         if (/leaf|leaves|palm|frond|tree|bush|plant|foliage|vegetation/.test(nodeName)) {
             return true;
         }
 
-        materials = Array.isArray(node.material) ? node.material : [node.material];
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
         for (i = 0; i < materials.length; i++) {
             if (isPmndrsHorizonFoliageOverlayCandidateMaterial(materials[i])) {
                 return true;
@@ -3680,7 +3662,6 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     }
 
     function refreshPmndrsHorizonFoliageOverlaySelection(self, scene) {
-        let overlayPass;
         let selectedCount = 0;
         const diagnosticsEnabled =
             hasPmndrsDebugFlag('pmndrsHorizonDiagnostics', 'vrodos_debug_pmndrs_horizon') ||
@@ -3691,7 +3672,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
             return 0;
         }
 
-        overlayPass = self.pmndrsHorizonFoliageOverlayPass;
+        const overlayPass = self.pmndrsHorizonFoliageOverlayPass;
         if (!overlayPass || !overlayPass.selection) {
             return 0;
         }
@@ -3788,15 +3769,13 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.getOverlayMaterial = function (material) {
-        let cacheKey;
         let overlayMaterial;
-        let prevOnBeforeCompile;
 
         if (!material || typeof material.clone !== 'function') {
             return material;
         }
 
-        cacheKey = material.uuid || material.id || String(Math.random());
+        const cacheKey = material.uuid || material.id || String(Math.random());
         overlayMaterial = this._overlayMaterialCache[cacheKey];
         if (overlayMaterial && overlayMaterial.userData && overlayMaterial.userData.vrodosOverlaySourceVersion === material.version) {
             return overlayMaterial;
@@ -3833,7 +3812,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         if (typeof overlayMaterial.alphaToCoverage !== 'undefined') {
             overlayMaterial.alphaToCoverage = false;
         }
-        prevOnBeforeCompile = overlayMaterial.onBeforeCompile;
+        const prevOnBeforeCompile = overlayMaterial.onBeforeCompile;
         overlayMaterial.onBeforeCompile = function (shader, renderer) {
             if (typeof prevOnBeforeCompile === 'function') {
                 prevOnBeforeCompile.call(this, shader, renderer);
@@ -3868,14 +3847,13 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         }
 
         this.selection.forEach((object) => {
-            let originalMaterial;
             let overlayMaterial;
 
             if (!object || !object.material) {
                 return;
             }
 
-            originalMaterial = object.material;
+            const originalMaterial = object.material;
             if (Array.isArray(originalMaterial)) {
                 overlayMaterial = originalMaterial.map((material) => self.getOverlayMaterial(material));
             } else {
@@ -4000,22 +3978,17 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
 
     function updatePmndrsAADebugOverlay(self) {
         const overlay = ensurePmndrsAADebugOverlay(self);
-        let renderer;
-        let requestedMsaa;
-        let appliedMsaa;
-        let maxSamples;
-        let lines;
 
         if (!overlay) {
             return;
         }
 
-        renderer = self && self.el ? self.el.renderer : null;
-        requestedMsaa = (self && typeof self._pmndrsRequestedMultisampling === 'number') ? self._pmndrsRequestedMultisampling : getPmndrsRequestedMultisampling(self, renderer);
-        appliedMsaa = (self && typeof self._pmndrsAppliedMultisampling === 'number') ? self._pmndrsAppliedMultisampling : 0;
-        maxSamples = (renderer && renderer.capabilities && !isNaN(parseInt(renderer.capabilities.maxSamples, 10))) ? parseInt(renderer.capabilities.maxSamples, 10) : 0;
+        const renderer = self && self.el ? self.el.renderer : null;
+        const requestedMsaa = (self && typeof self._pmndrsRequestedMultisampling === 'number') ? self._pmndrsRequestedMultisampling : getPmndrsRequestedMultisampling(self, renderer);
+        const appliedMsaa = (self && typeof self._pmndrsAppliedMultisampling === 'number') ? self._pmndrsAppliedMultisampling : 0;
+        const maxSamples = (renderer && renderer.capabilities && !isNaN(parseInt(renderer.capabilities.maxSamples, 10))) ? parseInt(renderer.capabilities.maxSamples, 10) : 0;
 
-        lines = [
+        const lines = [
             'PMNDRS AA DEBUG',
             `mode: ${  getPmndrsAAMode(self)}`,
             `preset: ${  getPmndrsAAPreset(self)}`,
@@ -5262,6 +5235,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
                 self.pmndrsRendering = false;
                 updatePmndrsAADebugOverlay(self);
             }
+            return undefined;
         };
     };
 

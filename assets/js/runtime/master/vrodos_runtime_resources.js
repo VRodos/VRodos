@@ -82,7 +82,7 @@ window.VRODOSMaster = window.VRODOSMaster || {};
             },
             listen: function (target, type, handler, options) {
                 if (released || !target || typeof target.addEventListener !== 'function') {
-                    return;
+                    return undefined;
                 }
                 target.addEventListener(type, handler, options);
                 return cleanup(() => target.removeEventListener(type, handler, options));

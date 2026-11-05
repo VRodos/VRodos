@@ -526,6 +526,7 @@
             } finally {
                 this.postProcessingRendering = false;
             }
+            return undefined;
         }.bind(this);
         this.postProcessingRender = render;
         renderer.render = render;

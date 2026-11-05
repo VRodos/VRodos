@@ -17876,7 +17876,7 @@
       } else {
         towardCamera.normalize();
       }
-      let right = new THREE.Vector3(0, 1, 0).cross(towardCamera);
+      const right = new THREE.Vector3(0, 1, 0).cross(towardCamera);
       if (right.lengthSq() < 1e-6) {
         right.set(1, 0, 0);
       } else {
