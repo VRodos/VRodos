@@ -52338,7 +52338,7 @@ void main() {
     WebGLExtension: () => WebGLExtension,
     version: () => version
   });
-  var version = "6.39.5";
+  var version = "6.39.6";
   var Disposable = class {
     /**
      * Frees internal resources.
@@ -64361,9 +64361,9 @@ vUv2=(uvTransform*vec3(uv,1.0)).xy;
       const defines = this.defines;
       if (prevTexture !== value) {
         uniforms.get("map").value = value;
-        uniforms.get("uvTransform").value = value.matrix;
         defines.delete("TEXTURE_PRECISION_HIGH");
         if (value !== null) {
+          uniforms.get("uvTransform").value = value.matrix;
           if (value.matrixAutoUpdate) {
             defines.set("UV_TRANSFORM", "1");
             this.setVertexShader(texture_default2);
@@ -64377,6 +64377,10 @@ vUv2=(uvTransform*vec3(uv,1.0)).xy;
           if (prevTexture === null || prevTexture.type !== value.type || prevTexture.encoding !== value.encoding) {
             this.setChanged();
           }
+        } else {
+          uniforms.get("uvTransform").value = null;
+          defines.delete("UV_TRANSFORM");
+          this.setVertexShader(null);
         }
       }
     }

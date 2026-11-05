@@ -491,21 +491,6 @@
     }
     return splitDimIdx;
   }
-  function copyBounds(source, target) {
-    target.set(source);
-  }
-  function unionBounds(a, b, target) {
-    let aVal, bVal;
-    for (let d = 0; d < 3; d++) {
-      const d3 = d + 3;
-      aVal = a[d];
-      bVal = b[d];
-      target[d] = aVal < bVal ? aVal : bVal;
-      aVal = a[d3];
-      bVal = b[d3];
-      target[d3] = aVal > bVal ? aVal : bVal;
-    }
-  }
   function expandByPrimitiveBounds(startIndex, primitiveBounds, bounds) {
     for (let d = 0; d < 3; d++) {
       const tCenter = primitiveBounds[startIndex + 2 * d];
@@ -528,24 +513,24 @@
   }
 
   // node_modules/three-mesh-bvh/src/core/utils/nodeBufferUtils.js
-  function IS_LEAF(n16, uint16Array2) {
-    return uint16Array2[n16 + 15] === IS_LEAFNODE_FLAG;
+  function IS_LEAF(n16, uint16Array) {
+    return uint16Array[n16 + 15] === IS_LEAFNODE_FLAG;
   }
-  function OFFSET(n32, uint32Array2) {
-    return uint32Array2[n32 + 6];
+  function OFFSET(n32, uint32Array) {
+    return uint32Array[n32 + 6];
   }
-  function COUNT(n16, uint16Array2) {
-    return uint16Array2[n16 + 14];
+  function COUNT(n16, uint16Array) {
+    return uint16Array[n16 + 14];
   }
   function LEFT_NODE(n32) {
     return n32 + UINT32_PER_NODE;
   }
-  function RIGHT_NODE(n32, uint32Array2) {
-    const relativeOffset = uint32Array2[n32 + 6];
+  function RIGHT_NODE(n32, uint32Array) {
+    const relativeOffset = uint32Array[n32 + 6];
     return n32 + relativeOffset * UINT32_PER_NODE;
   }
-  function SPLIT_AXIS(n32, uint32Array2) {
-    return uint32Array2[n32 + 7];
+  function SPLIT_AXIS(n32, uint32Array) {
+    return uint32Array[n32 + 7];
   }
   function BOUNDING_DATA_INDEX(n32) {
     return n32;
@@ -607,18 +592,31 @@
   }
 
   // node_modules/three-mesh-bvh/src/core/build/splitUtils.js
-  var BIN_COUNT = 32;
-  var binsSort = (a, b) => a.candidate - b.candidate;
-  var sahBins = /* @__PURE__ */ new Array(BIN_COUNT).fill().map(() => {
-    return {
-      count: 0,
-      bounds: new Float32Array(6),
-      rightCacheBounds: new Float32Array(6),
-      leftCacheBounds: new Float32Array(6),
-      candidate: 0
-    };
-  });
+  var BIN_COUNT = 8;
+  var SWEEP_COUNT = 8;
+  var binCounts = /* @__PURE__ */ new Int32Array(BIN_COUNT);
+  var binBounds = /* @__PURE__ */ new Float32Array(BIN_COUNT * 6);
+  var binRightBounds = /* @__PURE__ */ new Float32Array(BIN_COUNT * 6);
   var leftBounds = /* @__PURE__ */ new Float32Array(6);
+  var rightBounds = /* @__PURE__ */ new Float32Array(6);
+  var sweepOrder = /* @__PURE__ */ new Int32Array(SWEEP_COUNT);
+  var sweepRightBounds = /* @__PURE__ */ new Float32Array(SWEEP_COUNT * 6);
+  function expandBoundsAt(startIndex, primitiveBounds, bounds, offset) {
+    for (let d = 0; d < 3; d++) {
+      const center = primitiveBounds[startIndex + 2 * d];
+      const half = primitiveBounds[startIndex + 2 * d + 1];
+      const min = center - half;
+      const max = center + half;
+      if (min < bounds[offset + d]) bounds[offset + d] = min;
+      if (max > bounds[offset + d + 3]) bounds[offset + d + 3] = max;
+    }
+  }
+  function computeSurfaceAreaAt(array, offset) {
+    const d0 = array[offset + 3] - array[offset];
+    const d1 = array[offset + 4] - array[offset + 1];
+    const d2 = array[offset + 5] - array[offset + 2];
+    return 2 * (d0 * d1 + d1 * d2 + d2 * d0);
+  }
   function getOptimalSplit(nodeBoundingData, centroidBoundingData, primitiveBounds, offset, count, strategy) {
     let axis = -1;
     let pos = 0;
@@ -643,80 +641,50 @@
         const axisRight = centroidBoundingData[a + 3];
         const axisLength = axisRight - axisLeft;
         const binWidth = axisLength / BIN_COUNT;
-        if (count < BIN_COUNT / 4) {
-          const truncatedBins = [...sahBins];
-          truncatedBins.length = count;
-          let b = 0;
-          for (let c = cStart; c < cEnd; c += 6, b++) {
-            const bin = truncatedBins[b];
-            bin.candidate = primitiveBounds[c + 2 * a];
-            bin.count = 0;
-            const {
-              bounds,
-              leftCacheBounds,
-              rightCacheBounds
-            } = bin;
-            for (let d = 0; d < 3; d++) {
-              rightCacheBounds[d] = Infinity;
-              rightCacheBounds[d + 3] = -Infinity;
-              leftCacheBounds[d] = Infinity;
-              leftCacheBounds[d + 3] = -Infinity;
-              bounds[d] = Infinity;
-              bounds[d + 3] = -Infinity;
-            }
-            expandByPrimitiveBounds(c, primitiveBounds, bounds);
-          }
-          truncatedBins.sort(binsSort);
-          let splitCount = count;
-          for (let bi = 0; bi < splitCount; bi++) {
-            const bin = truncatedBins[bi];
-            while (bi + 1 < splitCount && truncatedBins[bi + 1].candidate === bin.candidate) {
-              truncatedBins.splice(bi + 1, 1);
-              splitCount--;
-            }
-          }
-          for (let c = cStart; c < cEnd; c += 6) {
+        if (count < SWEEP_COUNT) {
+          for (let i = 0; i < count; i++) {
+            const c = cStart + i * 6;
             const center = primitiveBounds[c + 2 * a];
-            for (let bi = 0; bi < splitCount; bi++) {
-              const bin = truncatedBins[bi];
-              if (center >= bin.candidate) {
-                expandByPrimitiveBounds(c, primitiveBounds, bin.rightCacheBounds);
-              } else {
-                expandByPrimitiveBounds(c, primitiveBounds, bin.leftCacheBounds);
-                bin.count++;
-              }
+            let j = i;
+            while (j > 0 && primitiveBounds[sweepOrder[j - 1] + 2 * a] > center) {
+              sweepOrder[j] = sweepOrder[j - 1];
+              j--;
             }
+            sweepOrder[j] = c;
           }
-          for (let bi = 0; bi < splitCount; bi++) {
-            const bin = truncatedBins[bi];
-            const leftCount = bin.count;
-            const rightCount = count - bin.count;
-            const leftBounds2 = bin.leftCacheBounds;
-            const rightBounds = bin.rightCacheBounds;
-            let leftProb = 0;
-            if (leftCount !== 0) {
-              leftProb = computeSurfaceArea(leftBounds2) / rootSurfaceArea;
+          for (let d = 0; d < 3; d++) {
+            leftBounds[d] = Infinity;
+            leftBounds[d + 3] = -Infinity;
+            rightBounds[d] = Infinity;
+            rightBounds[d + 3] = -Infinity;
+          }
+          for (let i = count - 1; i >= 0; i--) {
+            expandByPrimitiveBounds(sweepOrder[i], primitiveBounds, rightBounds);
+            sweepRightBounds.set(rightBounds, i * 6);
+          }
+          for (let i = 0; i < count - 1; i++) {
+            expandByPrimitiveBounds(sweepOrder[i], primitiveBounds, leftBounds);
+            const candidate = primitiveBounds[sweepOrder[i + 1] + 2 * a];
+            if (primitiveBounds[sweepOrder[i] + 2 * a] === candidate) {
+              continue;
             }
-            let rightProb = 0;
-            if (rightCount !== 0) {
-              rightProb = computeSurfaceArea(rightBounds) / rootSurfaceArea;
-            }
+            const leftCount = i + 1;
+            const rightCount = count - leftCount;
+            const leftProb = computeSurfaceArea(leftBounds) / rootSurfaceArea;
+            const rightProb = computeSurfaceAreaAt(sweepRightBounds, leftCount * 6) / rootSurfaceArea;
             const cost = TRAVERSAL_COST + PRIMITIVE_INTERSECT_COST * (leftProb * leftCount + rightProb * rightCount);
             if (cost < bestCost) {
               axis = a;
               bestCost = cost;
-              pos = bin.candidate;
+              pos = candidate;
             }
           }
         } else {
           for (let i = 0; i < BIN_COUNT; i++) {
-            const bin = sahBins[i];
-            bin.count = 0;
-            bin.candidate = axisLeft + binWidth + i * binWidth;
-            const bounds = bin.bounds;
+            binCounts[i] = 0;
             for (let d = 0; d < 3; d++) {
-              bounds[d] = Infinity;
-              bounds[d + 3] = -Infinity;
+              binBounds[i * 6 + d] = Infinity;
+              binBounds[i * 6 + d + 3] = -Infinity;
             }
           }
           for (let c = cStart; c < cEnd; c += 6) {
@@ -724,29 +692,34 @@
             const relativeCenter = triCenter - axisLeft;
             let binIndex = ~~(relativeCenter / binWidth);
             if (binIndex >= BIN_COUNT) binIndex = BIN_COUNT - 1;
-            const bin = sahBins[binIndex];
-            bin.count++;
-            expandByPrimitiveBounds(c, primitiveBounds, bin.bounds);
+            binCounts[binIndex]++;
+            expandBoundsAt(c, primitiveBounds, binBounds, binIndex * 6);
           }
-          const lastBin = sahBins[BIN_COUNT - 1];
-          copyBounds(lastBin.bounds, lastBin.rightCacheBounds);
+          const last = (BIN_COUNT - 1) * 6;
+          for (let d = 0; d < 6; d++) {
+            binRightBounds[last + d] = binBounds[last + d];
+          }
           for (let i = BIN_COUNT - 2; i >= 0; i--) {
-            const bin = sahBins[i];
-            const nextBin = sahBins[i + 1];
-            unionBounds(bin.bounds, nextBin.rightCacheBounds, bin.rightCacheBounds);
+            const o = i * 6;
+            const next = o + 6;
+            for (let d = 0; d < 3; d++) {
+              binRightBounds[o + d] = Math.min(binBounds[o + d], binRightBounds[next + d]);
+              binRightBounds[o + d + 3] = Math.max(binBounds[o + d + 3], binRightBounds[next + d + 3]);
+            }
           }
           let leftCount = 0;
           for (let i = 0; i < BIN_COUNT - 1; i++) {
-            const bin = sahBins[i];
-            const binCount = bin.count;
-            const bounds = bin.bounds;
-            const nextBin = sahBins[i + 1];
-            const rightBounds = nextBin.rightCacheBounds;
+            const o = i * 6;
+            const binCount = binCounts[i];
             if (binCount !== 0) {
-              if (leftCount === 0) {
-                copyBounds(bounds, leftBounds);
-              } else {
-                unionBounds(bounds, leftBounds, leftBounds);
+              for (let d = 0; d < 3; d++) {
+                if (leftCount === 0) {
+                  leftBounds[d] = binBounds[o + d];
+                  leftBounds[d + 3] = binBounds[o + d + 3];
+                } else {
+                  leftBounds[d] = Math.min(leftBounds[d], binBounds[o + d]);
+                  leftBounds[d + 3] = Math.max(leftBounds[d + 3], binBounds[o + d + 3]);
+                }
               }
             }
             leftCount += binCount;
@@ -757,13 +730,13 @@
             }
             const rightCount = count - leftCount;
             if (rightCount !== 0) {
-              rightProb = computeSurfaceArea(rightBounds) / rootSurfaceArea;
+              rightProb = computeSurfaceAreaAt(binRightBounds, o + 6) / rootSurfaceArea;
             }
             const cost = TRAVERSAL_COST + PRIMITIVE_INTERSECT_COST * (leftProb * leftCount + rightProb * rightCount);
             if (cost < bestCost) {
               axis = a;
               bestCost = cost;
-              pos = bin.candidate;
+              pos = axisLeft + binWidth + i * binWidth;
             }
           }
         }
@@ -781,13 +754,6 @@
     }
     return avg / count;
   }
-
-  // node_modules/three-mesh-bvh/src/core/BVHNode.js
-  var BVHNode = class {
-    constructor() {
-      this.boundingData = new Float32Array(6);
-    }
-  };
 
   // node_modules/three-mesh-bvh/src/core/build/sortUtils.js
   function partition(buffer, stride, primitiveBounds, offset, count, split) {
@@ -824,61 +790,10 @@
     }
   }
 
-  // node_modules/three-mesh-bvh/src/core/build/buildUtils.js
-  var float32Array;
-  var uint32Array;
-  var uint16Array;
-  var uint8Array;
-  var MAX_POINTER = Math.pow(2, 32);
-  function countNodes(node) {
-    if ("count" in node) {
-      return 1;
-    } else {
-      return 1 + countNodes(node.left) + countNodes(node.right);
-    }
-  }
-  function populateBuffer(byteOffset, node, buffer) {
-    float32Array = new Float32Array(buffer);
-    uint32Array = new Uint32Array(buffer);
-    uint16Array = new Uint16Array(buffer);
-    uint8Array = new Uint8Array(buffer);
-    return _populateBuffer(byteOffset, node);
-  }
-  function _populateBuffer(byteOffset, node) {
-    const node32Index = byteOffset / 4;
-    const node16Index = byteOffset / 2;
-    const isLeaf = "count" in node;
-    const boundingData = node.boundingData;
-    for (let i = 0; i < 6; i++) {
-      float32Array[node32Index + i] = boundingData[i];
-    }
-    if (isLeaf) {
-      if (node.buffer) {
-        uint8Array.set(new Uint8Array(node.buffer), byteOffset);
-        return byteOffset + node.buffer.byteLength;
-      } else {
-        uint32Array[node32Index + 6] = node.offset;
-        uint16Array[node16Index + 14] = node.count;
-        uint16Array[node16Index + 15] = IS_LEAFNODE_FLAG;
-        return byteOffset + BYTES_PER_NODE;
-      }
-    } else {
-      const { left, right, splitAxis } = node;
-      const leftByteOffset = byteOffset + BYTES_PER_NODE;
-      let rightByteOffset = _populateBuffer(leftByteOffset, left);
-      const currentNodeIndex = byteOffset / BYTES_PER_NODE;
-      const rightNodeIndex = rightByteOffset / BYTES_PER_NODE;
-      const relativeRightIndex = rightNodeIndex - currentNodeIndex;
-      if (relativeRightIndex > MAX_POINTER) {
-        throw new Error("MeshBVH: Cannot store relative child node offset greater than 32 bits.");
-      }
-      uint32Array[node32Index + 6] = relativeRightIndex;
-      uint32Array[node32Index + 7] = splitAxis;
-      return _populateBuffer(rightByteOffset, right);
-    }
-  }
-
   // node_modules/three-mesh-bvh/src/core/build/buildTree.js
+  var MAX_POINTER = Math.pow(2, 32);
+  var _nodeBounds = /* @__PURE__ */ new Float32Array(6);
+  var _centroidBounds = /* @__PURE__ */ new Float32Array(6);
   function buildTree(bvh, primitiveBounds, offset, count, options, loadRange) {
     const {
       maxDepth,
@@ -886,22 +801,37 @@
       targetLeafSize,
       _strictLeafSize = Infinity,
       strategy,
-      onProgress
+      onProgress,
+      useSharedArrayBuffer = false
     } = options;
     const partitionBuffer = bvh.primitiveBuffer;
     const partitionStride = bvh.primitiveBufferStride;
-    const cacheCentroidBoundingData = new Float32Array(6);
+    const BufferConstructor = useSharedArrayBuffer ? SharedArrayBuffer : ArrayBuffer;
+    const buffer = new BufferConstructor(BYTES_PER_NODE * Math.max(1, 2 * Math.ceil(count) - 1));
+    const float32Array = new Float32Array(buffer);
+    const uint32Array = new Uint32Array(buffer);
+    const uint16Array = new Uint16Array(buffer);
+    let nodeCount = 0;
     let reachedMaxDepth = false;
-    const root = new BVHNode();
-    getBounds(primitiveBounds, offset, count, root.boundingData, cacheCentroidBoundingData);
-    splitNode(root, offset, count, cacheCentroidBoundingData);
-    return root;
+    getBounds(primitiveBounds, offset, count, _nodeBounds, _centroidBounds);
+    splitNode(offset, count, 0);
+    return buffer.slice(0, nodeCount * BYTES_PER_NODE);
     function triggerProgress(primitivesProcessed) {
       if (onProgress) {
         onProgress((primitivesProcessed - loadRange.offset) / loadRange.count);
       }
     }
-    function splitNode(node, offset2, count2, centroidBoundingData = null, depth = 0) {
+    function writeLeaf(node32, offset2, count2) {
+      const node16 = node32 * 2;
+      uint32Array[node32 + 6] = offset2;
+      uint16Array[node16 + 14] = count2;
+      uint16Array[node16 + 15] = IS_LEAFNODE_FLAG;
+      triggerProgress(offset2 + count2);
+    }
+    function splitNode(offset2, count2, depth) {
+      const nodeIndex = nodeCount++;
+      const node32 = nodeIndex * UINT32_PER_NODE;
+      float32Array.set(_nodeBounds, node32);
       if (!reachedMaxDepth && depth >= maxDepth) {
         reachedMaxDepth = true;
         if (verbose) {
@@ -910,41 +840,34 @@
       }
       const mustSplit = count2 > _strictLeafSize;
       if (count2 <= targetLeafSize && !mustSplit || depth >= maxDepth) {
-        triggerProgress(offset2 + count2);
-        node.offset = offset2;
-        node.count = count2;
-        return node;
+        writeLeaf(node32, offset2, count2);
+        return;
       }
-      const split = getOptimalSplit(node.boundingData, centroidBoundingData, primitiveBounds, offset2, count2, strategy);
+      const split = getOptimalSplit(_nodeBounds, _centroidBounds, primitiveBounds, offset2, count2, strategy);
       let splitOffset = split.axis === -1 ? -1 : partition(partitionBuffer, partitionStride, primitiveBounds, offset2, count2, split);
       if (split.axis === -1 || splitOffset === offset2 || splitOffset === offset2 + count2) {
         if (!mustSplit) {
-          triggerProgress(offset2 + count2);
-          node.offset = offset2;
-          node.count = count2;
-          return node;
+          writeLeaf(node32, offset2, count2);
+          return;
         }
-        split.axis = Math.max(0, getLongestEdgeIndex(node.boundingData));
+        split.axis = Math.max(0, getLongestEdgeIndex(_nodeBounds));
         splitOffset = offset2 + Math.max(1, Math.floor(count2 / 2));
       }
-      node.splitAxis = split.axis;
-      const left = new BVHNode();
-      const lstart = offset2;
-      const lcount = splitOffset - offset2;
-      node.left = left;
-      getBounds(primitiveBounds, lstart, lcount, left.boundingData, cacheCentroidBoundingData);
-      splitNode(left, lstart, lcount, cacheCentroidBoundingData, depth + 1);
-      const right = new BVHNode();
-      const rstart = splitOffset;
-      const rcount = count2 - lcount;
-      node.right = right;
-      getBounds(primitiveBounds, rstart, rcount, right.boundingData, cacheCentroidBoundingData);
-      splitNode(right, rstart, rcount, cacheCentroidBoundingData, depth + 1);
-      return node;
+      uint32Array[node32 + 7] = split.axis;
+      const leftCount = splitOffset - offset2;
+      getBounds(primitiveBounds, offset2, leftCount, _nodeBounds, _centroidBounds);
+      splitNode(offset2, leftCount, depth + 1);
+      const relativeRightIndex = nodeCount - nodeIndex;
+      if (relativeRightIndex > MAX_POINTER) {
+        throw new Error("MeshBVH: Cannot store relative child node offset greater than 32 bits.");
+      }
+      uint32Array[node32 + 6] = relativeRightIndex;
+      const rightCount = count2 - leftCount;
+      getBounds(primitiveBounds, splitOffset, rightCount, _nodeBounds, _centroidBounds);
+      splitNode(splitOffset, rightCount, depth + 1);
     }
   }
   function buildPackedTree(bvh, options) {
-    const BufferConstructor = options.useSharedArrayBuffer ? SharedArrayBuffer : ArrayBuffer;
     const rootRanges = bvh.getRootRanges(options.range);
     const firstRange = rootRanges[0];
     const lastRange = rootRanges[rootRanges.length - 1];
@@ -956,11 +879,7 @@
     primitiveBounds.offset = fullRange.offset;
     bvh.computePrimitiveBounds(fullRange.offset, fullRange.count, primitiveBounds);
     bvh._roots = rootRanges.map((range) => {
-      const root = buildTree(bvh, primitiveBounds, range.offset, range.count, options, fullRange);
-      const nodeCount = countNodes(root);
-      const buffer = new BufferConstructor(BYTES_PER_NODE * nodeCount);
-      populateBuffer(0, root, buffer);
-      return buffer;
+      return buildTree(bvh, primitiveBounds, range.offset, range.count, options, fullRange);
     });
   }
 
@@ -1037,34 +956,34 @@
     return result;
   }
   function shapecastTraverse(nodeIndex32, geometry, intersectsBoundsFunc, intersectsRangeFunc, nodeScoreFunc = null, nodeIndexOffset = 0, depth = 0) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     let nodeIndex16 = nodeIndex32 * 2;
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
-      arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array2, _box1);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
+      arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array, _box1);
       return intersectsRangeFunc(offset, count, false, depth, nodeIndexOffset + nodeIndex32 / UINT32_PER_NODE, _box1);
     } else {
       let getLeftOffset = function(nodeIndex322) {
-        const { uint16Array: uint16Array3, uint32Array: uint32Array3 } = BufferStack;
+        const { uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
         let nodeIndex162 = nodeIndex322 * 2;
-        while (!IS_LEAF(nodeIndex162, uint16Array3)) {
+        while (!IS_LEAF(nodeIndex162, uint16Array2)) {
           nodeIndex322 = LEFT_NODE(nodeIndex322);
           nodeIndex162 = nodeIndex322 * 2;
         }
-        return OFFSET(nodeIndex322, uint32Array3);
+        return OFFSET(nodeIndex322, uint32Array2);
       }, getRightEndOffset = function(nodeIndex322) {
-        const { uint16Array: uint16Array3, uint32Array: uint32Array3 } = BufferStack;
+        const { uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
         let nodeIndex162 = nodeIndex322 * 2;
-        while (!IS_LEAF(nodeIndex162, uint16Array3)) {
-          nodeIndex322 = RIGHT_NODE(nodeIndex322, uint32Array3);
+        while (!IS_LEAF(nodeIndex162, uint16Array2)) {
+          nodeIndex322 = RIGHT_NODE(nodeIndex322, uint32Array2);
           nodeIndex162 = nodeIndex322 * 2;
         }
-        return OFFSET(nodeIndex322, uint32Array3) + COUNT(nodeIndex162, uint16Array3);
+        return OFFSET(nodeIndex322, uint32Array2) + COUNT(nodeIndex162, uint16Array2);
       };
       const left = LEFT_NODE(nodeIndex32);
-      const right = RIGHT_NODE(nodeIndex32, uint32Array2);
+      const right = RIGHT_NODE(nodeIndex32, uint32Array);
       let c1 = left;
       let c2 = right;
       let score1, score2;
@@ -1072,8 +991,8 @@
       if (nodeScoreFunc) {
         box1 = _box1;
         box2 = _box2;
-        arrayToBox(BOUNDING_DATA_INDEX(c1), float32Array2, box1);
-        arrayToBox(BOUNDING_DATA_INDEX(c2), float32Array2, box2);
+        arrayToBox(BOUNDING_DATA_INDEX(c1), float32Array, box1);
+        arrayToBox(BOUNDING_DATA_INDEX(c2), float32Array, box2);
         score1 = nodeScoreFunc(box1);
         score2 = nodeScoreFunc(box2);
         if (score2 < score1) {
@@ -1087,9 +1006,9 @@
       }
       if (!box1) {
         box1 = _box1;
-        arrayToBox(BOUNDING_DATA_INDEX(c1), float32Array2, box1);
+        arrayToBox(BOUNDING_DATA_INDEX(c1), float32Array, box1);
       }
-      const isC1Leaf = IS_LEAF(c1 * 2, uint16Array2);
+      const isC1Leaf = IS_LEAF(c1 * 2, uint16Array);
       const c1Intersection = intersectsBoundsFunc(box1, isC1Leaf, score1, depth + 1, nodeIndexOffset + c1 / UINT32_PER_NODE);
       let c1StopTraversal;
       if (c1Intersection === CONTAINED) {
@@ -1110,8 +1029,8 @@
       }
       if (c1StopTraversal) return true;
       box2 = _box2;
-      arrayToBox(BOUNDING_DATA_INDEX(c2), float32Array2, box2);
-      const isC2Leaf = IS_LEAF(c2 * 2, uint16Array2);
+      arrayToBox(BOUNDING_DATA_INDEX(c2), float32Array, box2);
+      const isC2Leaf = IS_LEAF(c2 * 2, uint16Array);
       const c2Intersection = intersectsBoundsFunc(box2, isC2Leaf, score2, depth + 1, nodeIndexOffset + c2 / UINT32_PER_NODE);
       let c2StopTraversal;
       if (c2Intersection === CONTAINED) {
@@ -1410,8 +1329,8 @@
   var BVHTraversalHelper = new class {
     constructor() {
       let buffer = null;
-      let uint32Array2 = null;
-      let uint16Array2 = null;
+      let uint32Array = null;
+      let uint16Array = null;
       let traversing = false;
       this.root = null;
       this.buffer = null;
@@ -1423,38 +1342,38 @@
         }
         this.root = root;
         this.buffer = buffer = bvh._roots[root];
-        this.uint16Array = uint16Array2 = new Uint16Array(buffer);
-        this.uint32Array = uint32Array2 = new Uint32Array(buffer);
+        this.uint16Array = uint16Array = new Uint16Array(buffer);
+        this.uint32Array = uint32Array = new Uint32Array(buffer);
       };
       this.reset = () => {
         this.root = null;
         this.buffer = buffer = null;
-        this.uint16Array = uint16Array2 = null;
-        this.uint32Array = uint32Array2 = null;
+        this.uint16Array = uint16Array = null;
+        this.uint32Array = uint32Array = null;
       };
       this.getRangeStart = (node32Index) => {
         let node16Index = node32Index * 2;
-        while (!IS_LEAF(node16Index, uint16Array2)) {
+        while (!IS_LEAF(node16Index, uint16Array)) {
           node32Index = LEFT_NODE(node32Index);
           node16Index = node32Index * 2;
         }
-        return OFFSET(node32Index, uint32Array2);
+        return OFFSET(node32Index, uint32Array);
       };
       this.getRangeEnd = (node32Index) => {
         let node16Index = node32Index * 2;
-        while (!IS_LEAF(node16Index, uint16Array2)) {
-          node32Index = RIGHT_NODE(node32Index, uint32Array2);
+        while (!IS_LEAF(node16Index, uint16Array)) {
+          node32Index = RIGHT_NODE(node32Index, uint32Array);
           node16Index = node32Index * 2;
         }
-        return OFFSET(node32Index, uint32Array2) + COUNT(node16Index, uint16Array2);
+        return OFFSET(node32Index, uint32Array) + COUNT(node16Index, uint16Array);
       };
       const walk = (callback, node32Index, depth) => {
         const node16Index = node32Index * 2;
-        const isLeaf = IS_LEAF(node16Index, uint16Array2);
+        const isLeaf = IS_LEAF(node16Index, uint16Array);
         const stopTraversal = callback(depth, isLeaf, node32Index);
         if (!stopTraversal && !isLeaf) {
           const left = LEFT_NODE(node32Index);
-          const right = RIGHT_NODE(node32Index, uint32Array2);
+          const right = RIGHT_NODE(node32Index, uint32Array);
           walk(callback, left, depth + 1);
           walk(callback, right, depth + 1);
         }
@@ -1474,11 +1393,11 @@
         this.traverseBuffer((depth, isLeaf, node32Index) => {
           if (isLeaf) {
             const node16Index = node32Index * 2;
-            const offset = uint32Array2[node32Index + 6];
-            const count = uint16Array2[node16Index + 14];
+            const offset = uint32Array[node32Index + 6];
+            const count = uint16Array[node16Index + 14];
             return callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), offset, count);
           } else {
-            const splitAxis = SPLIT_AXIS(node32Index, uint32Array2);
+            const splitAxis = SPLIT_AXIS(node32Index, uint32Array);
             return callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), splitAxis);
           }
         });
@@ -1580,14 +1499,14 @@
         const roots = this._roots;
         for (let rootIndex = 0; rootIndex < roots.length; rootIndex++) {
           const root = roots[rootIndex];
-          const uint32Array2 = new Uint32Array(root);
-          const uint16Array2 = new Uint16Array(root);
+          const uint32Array = new Uint32Array(root);
+          const uint16Array = new Uint16Array(root);
           const totalNodes = root.byteLength / BYTES_PER_NODE;
           for (let node = 0; node < totalNodes; node++) {
             const node32Index = UINT32_PER_NODE * node;
             const node16Index = 2 * node32Index;
-            if (IS_LEAF(node16Index, uint16Array2)) {
-              uint32Array2[node32Index + 6] += offset;
+            if (IS_LEAF(node16Index, uint16Array)) {
+              uint32Array[node32Index + 6] += offset;
             }
           }
         }
@@ -1616,29 +1535,29 @@
       const roots = this._roots;
       for (let rootIndex = 0, rootCount = roots.length; rootIndex < rootCount; rootIndex++) {
         const buffer = roots[rootIndex];
-        const uint32Array2 = new Uint32Array(buffer);
-        const uint16Array2 = new Uint16Array(buffer);
-        const float32Array2 = new Float32Array(buffer);
+        const uint32Array = new Uint32Array(buffer);
+        const uint16Array = new Uint16Array(buffer);
+        const float32Array = new Float32Array(buffer);
         const totalNodes = buffer.byteLength / BYTES_PER_NODE;
         for (let nodeIndex = totalNodes - 1; nodeIndex >= 0; nodeIndex--) {
           const nodeIndex32 = nodeIndex * UINT32_PER_NODE;
           const nodeIndex16 = nodeIndex32 * 2;
-          const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+          const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
           if (isLeaf) {
-            const offset = OFFSET(nodeIndex32, uint32Array2);
-            const count = COUNT(nodeIndex16, uint16Array2);
+            const offset = OFFSET(nodeIndex32, uint32Array);
+            const count = COUNT(nodeIndex16, uint16Array);
             this.writePrimitiveRangeBounds(offset, count, _tempBuffer, 0);
-            float32Array2.set(_tempBuffer, nodeIndex32);
+            float32Array.set(_tempBuffer, nodeIndex32);
           } else {
             const left = LEFT_NODE(nodeIndex32);
-            const right = RIGHT_NODE(nodeIndex32, uint32Array2);
+            const right = RIGHT_NODE(nodeIndex32, uint32Array);
             for (let i = 0; i < 3; i++) {
-              const leftMin = float32Array2[left + i];
-              const leftMax = float32Array2[left + i + 3];
-              const rightMin = float32Array2[right + i];
-              const rightMax = float32Array2[right + i + 3];
-              float32Array2[nodeIndex32 + i] = leftMin < rightMin ? leftMin : rightMin;
-              float32Array2[nodeIndex32 + i + 3] = leftMax > rightMax ? leftMax : rightMax;
+              const leftMin = float32Array[left + i];
+              const leftMax = float32Array[left + i + 3];
+              const rightMin = float32Array[right + i];
+              const rightMax = float32Array[right + i + 3];
+              float32Array[nodeIndex32 + i] = leftMin < rightMin ? leftMin : rightMin;
+              float32Array[nodeIndex32 + i + 3] = leftMax > rightMax ? leftMax : rightMax;
             }
           }
         }
@@ -2175,10 +2094,20 @@
     const point2 = /* @__PURE__ */ new Vector3();
     const edge = /* @__PURE__ */ new Line3();
     return function distanceToSegment(segment, target1 = null, target2 = null) {
+      if (this.needsUpdate) {
+        this.update();
+      }
       const { start, end } = segment;
       const points = this.points;
       let distSq;
       let closestDistanceSq = Infinity;
+      const startDist = this.plane.distanceToPoint(start);
+      const endDist = this.plane.distanceToPoint(end);
+      if (startDist * endDist < 0 && this.plane.intersectLine(segment, point1) !== null && this.containsPoint(point1)) {
+        if (target1) target1.copy(point1);
+        if (target2) target2.copy(point1);
+        return 0;
+      }
       for (let i = 0; i < 3; i++) {
         const nexti = (i + 1) % 3;
         edge.start.copy(points[i]);
@@ -2796,10 +2725,10 @@
             const end = line2.end;
             start[f1] = min[f1];
             start[f2] = i1 ? min[f2] : max[f2];
-            start[f3] = i2 ? min[f3] : max[f2];
+            start[f3] = i2 ? min[f3] : max[f3];
             end[f1] = max[f1];
             end[f2] = i1 ? min[f2] : max[f2];
-            end[f3] = i2 ? min[f3] : max[f2];
+            end[f3] = i2 ? min[f3] : max[f3];
             count++;
           }
         }
@@ -3094,22 +3023,22 @@
     const geometry = bvh.geometry;
     const indexArr = geometry.index ? geometry.index.array : null;
     const posAttr = geometry.attributes.position;
-    let buffer, uint32Array2, uint16Array2, float32Array2;
+    let buffer, uint32Array, uint16Array, float32Array;
     let byteOffset = 0;
     const roots = bvh._roots;
     for (let i = 0, l = roots.length; i < l; i++) {
       buffer = roots[i];
-      uint32Array2 = new Uint32Array(buffer);
-      uint16Array2 = new Uint16Array(buffer);
-      float32Array2 = new Float32Array(buffer);
+      uint32Array = new Uint32Array(buffer);
+      uint16Array = new Uint16Array(buffer);
+      float32Array = new Float32Array(buffer);
       _traverse2(0, byteOffset);
       byteOffset += buffer.byteLength;
     }
     function _traverse2(nodeIndex32, byteOffset2, force = false) {
       const nodeIndex16 = nodeIndex32 * 2;
-      if (IS_LEAF(nodeIndex16, uint16Array2)) {
-        const offset = OFFSET(nodeIndex32, uint32Array2);
-        const count = COUNT(nodeIndex16, uint16Array2);
+      if (IS_LEAF(nodeIndex16, uint16Array)) {
+        const offset = OFFSET(nodeIndex32, uint32Array);
+        const count = COUNT(nodeIndex16, uint16Array);
         let minx = Infinity;
         let miny = Infinity;
         let minz = Infinity;
@@ -3128,20 +3057,20 @@
           if (z < minz) minz = z;
           if (z > maxz) maxz = z;
         }
-        if (float32Array2[nodeIndex32 + 0] !== minx || float32Array2[nodeIndex32 + 1] !== miny || float32Array2[nodeIndex32 + 2] !== minz || float32Array2[nodeIndex32 + 3] !== maxx || float32Array2[nodeIndex32 + 4] !== maxy || float32Array2[nodeIndex32 + 5] !== maxz) {
-          float32Array2[nodeIndex32 + 0] = minx;
-          float32Array2[nodeIndex32 + 1] = miny;
-          float32Array2[nodeIndex32 + 2] = minz;
-          float32Array2[nodeIndex32 + 3] = maxx;
-          float32Array2[nodeIndex32 + 4] = maxy;
-          float32Array2[nodeIndex32 + 5] = maxz;
+        if (float32Array[nodeIndex32 + 0] !== minx || float32Array[nodeIndex32 + 1] !== miny || float32Array[nodeIndex32 + 2] !== minz || float32Array[nodeIndex32 + 3] !== maxx || float32Array[nodeIndex32 + 4] !== maxy || float32Array[nodeIndex32 + 5] !== maxz) {
+          float32Array[nodeIndex32 + 0] = minx;
+          float32Array[nodeIndex32 + 1] = miny;
+          float32Array[nodeIndex32 + 2] = minz;
+          float32Array[nodeIndex32 + 3] = maxx;
+          float32Array[nodeIndex32 + 4] = maxy;
+          float32Array[nodeIndex32 + 5] = maxz;
           return true;
         } else {
           return false;
         }
       } else {
         const left = LEFT_NODE(nodeIndex32);
-        const right = RIGHT_NODE(nodeIndex32, uint32Array2);
+        const right = RIGHT_NODE(nodeIndex32, uint32Array);
         let forceChildren = force;
         let includesLeft = false;
         let includesRight = false;
@@ -3172,12 +3101,12 @@
           for (let i = 0; i < 3; i++) {
             const left_i = left + i;
             const right_i = right + i;
-            const minLeftValue = float32Array2[left_i];
-            const maxLeftValue = float32Array2[left_i + 3];
-            const minRightValue = float32Array2[right_i];
-            const maxRightValue = float32Array2[right_i + 3];
-            float32Array2[nodeIndex32 + i] = minLeftValue < minRightValue ? minLeftValue : minRightValue;
-            float32Array2[nodeIndex32 + i + 3] = maxLeftValue > maxRightValue ? maxLeftValue : maxRightValue;
+            const minLeftValue = float32Array[left_i];
+            const maxLeftValue = float32Array[left_i + 3];
+            const minRightValue = float32Array[right_i];
+            const maxRightValue = float32Array[right_i + 3];
+            float32Array[nodeIndex32 + i] = minLeftValue < minRightValue ? minLeftValue : minRightValue;
+            float32Array[nodeIndex32 + i + 3] = maxLeftValue > maxRightValue ? maxLeftValue : maxRightValue;
           }
         }
         return didChange;
@@ -3269,24 +3198,26 @@
   // node_modules/three-mesh-bvh/src/core/cast/raycast.generated.js
   function raycast(bvh, root, materialOrSide, ray, intersects, near, far) {
     BufferStack.setBuffer(bvh._roots[root]);
-    _raycast(0, bvh, materialOrSide, ray, intersects, near, far);
+    if (intersectsNodeBounds(0, BufferStack.float32Array, ray, near, far)) {
+      _raycast(0, bvh, materialOrSide, ray, intersects, near, far);
+    }
     BufferStack.clearBuffer();
   }
   function _raycast(nodeIndex32, bvh, materialOrSide, ray, intersects, near, far) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     const nodeIndex16 = nodeIndex32 * 2;
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       intersectTris(bvh, materialOrSide, ray, offset, count, intersects, near, far);
     } else {
       const leftIndex = LEFT_NODE(nodeIndex32);
-      if (intersectsNodeBounds(leftIndex, float32Array2, ray, near, far)) {
+      if (intersectsNodeBounds(leftIndex, float32Array, ray, near, far)) {
         _raycast(leftIndex, bvh, materialOrSide, ray, intersects, near, far);
       }
-      const rightIndex = RIGHT_NODE(nodeIndex32, uint32Array2);
-      if (intersectsNodeBounds(rightIndex, float32Array2, ray, near, far)) {
+      const rightIndex = RIGHT_NODE(nodeIndex32, uint32Array);
+      if (intersectsNodeBounds(rightIndex, float32Array, ray, near, far)) {
         _raycast(rightIndex, bvh, materialOrSide, ray, intersects, near, far);
       }
     }
@@ -3296,44 +3227,47 @@
   var _xyzFields = ["x", "y", "z"];
   function raycastFirst(bvh, root, materialOrSide, ray, near, far) {
     BufferStack.setBuffer(bvh._roots[root]);
-    const result = _raycastFirst(0, bvh, materialOrSide, ray, near, far);
+    let result = null;
+    if (intersectsNodeBounds(0, BufferStack.float32Array, ray, near, far)) {
+      result = _raycastFirst(0, bvh, materialOrSide, ray, near, far);
+    }
     BufferStack.clearBuffer();
     return result;
   }
   function _raycastFirst(nodeIndex32, bvh, materialOrSide, ray, near, far) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     let nodeIndex16 = nodeIndex32 * 2;
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       return intersectClosestTri(bvh, materialOrSide, ray, offset, count, near, far);
     } else {
-      const splitAxis = SPLIT_AXIS(nodeIndex32, uint32Array2);
+      const splitAxis = SPLIT_AXIS(nodeIndex32, uint32Array);
       const xyzAxis = _xyzFields[splitAxis];
       const rayDir = ray.direction[xyzAxis];
       const leftToRight = rayDir >= 0;
       let c1, c2;
       if (leftToRight) {
         c1 = LEFT_NODE(nodeIndex32);
-        c2 = RIGHT_NODE(nodeIndex32, uint32Array2);
+        c2 = RIGHT_NODE(nodeIndex32, uint32Array);
       } else {
-        c1 = RIGHT_NODE(nodeIndex32, uint32Array2);
+        c1 = RIGHT_NODE(nodeIndex32, uint32Array);
         c2 = LEFT_NODE(nodeIndex32);
       }
-      const c1Intersection = intersectsNodeBounds(c1, float32Array2, ray, near, far);
+      const c1Intersection = intersectsNodeBounds(c1, float32Array, ray, near, far);
       const c1Result = c1Intersection ? _raycastFirst(c1, bvh, materialOrSide, ray, near, far) : null;
       if (c1Result) {
         const point = c1Result.point[xyzAxis];
-        const isOutside = leftToRight ? point <= float32Array2[c2 + splitAxis] : (
+        const isOutside = leftToRight ? point <= float32Array[c2 + splitAxis] : (
           // min bounding data
-          point >= float32Array2[c2 + splitAxis + 3]
+          point >= float32Array[c2 + splitAxis + 3]
         );
         if (isOutside) {
           return c1Result;
         }
       }
-      const c2Intersection = intersectsNodeBounds(c2, float32Array2, ray, near, far);
+      const c2Intersection = intersectsNodeBounds(c2, float32Array, ray, near, far);
       const c2Result = c2Intersection ? _raycastFirst(c2, bvh, materialOrSide, ray, near, far) : null;
       if (c1Result && c2Result) {
         return c1Result.distance <= c2Result.distance ? c1Result : c2Result;
@@ -3357,7 +3291,7 @@
     return result;
   }
   function _intersectsGeometry(nodeIndex32, bvh, otherGeometry, geometryToBvh, cachedObb = null) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     let nodeIndex16 = nodeIndex32 * 2;
     if (cachedObb === null) {
       if (!otherGeometry.boundingBox) {
@@ -3366,18 +3300,18 @@
       obb.set(otherGeometry.boundingBox.min, otherGeometry.boundingBox.max, geometryToBvh);
       cachedObb = obb;
     }
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
       const thisGeometry = bvh.geometry;
       const thisIndex = thisGeometry.index;
       const thisPos = thisGeometry.attributes.position;
       const otherIndex = otherGeometry.index;
       const otherPos = otherGeometry.attributes.position;
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       invertedMat.copy(geometryToBvh).invert();
       if (otherGeometry.boundsTree) {
-        arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array2, obb2);
+        arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array, obb2);
         obb2.matrix.copy(invertedMat);
         obb2.needsUpdate = true;
         const res = otherGeometry.boundsTree.shapecast({
@@ -3417,11 +3351,11 @@
       }
     } else {
       const left = LEFT_NODE(nodeIndex32);
-      const right = RIGHT_NODE(nodeIndex32, uint32Array2);
-      arrayToBox(BOUNDING_DATA_INDEX(left), float32Array2, boundingBox);
+      const right = RIGHT_NODE(nodeIndex32, uint32Array);
+      arrayToBox(BOUNDING_DATA_INDEX(left), float32Array, boundingBox);
       const leftIntersection = cachedObb.intersectsBox(boundingBox) && _intersectsGeometry(left, bvh, otherGeometry, geometryToBvh, cachedObb);
       if (leftIntersection) return true;
-      arrayToBox(BOUNDING_DATA_INDEX(right), float32Array2, boundingBox);
+      arrayToBox(BOUNDING_DATA_INDEX(right), float32Array, boundingBox);
       const rightIntersection = cachedObb.intersectsBox(boundingBox) && _intersectsGeometry(right, bvh, otherGeometry, geometryToBvh, cachedObb);
       if (rightIntersection) return true;
       return false;
@@ -3575,22 +3509,22 @@
     const geometry = bvh.geometry;
     const indexArr = geometry.index ? geometry.index.array : null;
     const posAttr = geometry.attributes.position;
-    let buffer, uint32Array2, uint16Array2, float32Array2;
+    let buffer, uint32Array, uint16Array, float32Array;
     let byteOffset = 0;
     const roots = bvh._roots;
     for (let i = 0, l = roots.length; i < l; i++) {
       buffer = roots[i];
-      uint32Array2 = new Uint32Array(buffer);
-      uint16Array2 = new Uint16Array(buffer);
-      float32Array2 = new Float32Array(buffer);
+      uint32Array = new Uint32Array(buffer);
+      uint16Array = new Uint16Array(buffer);
+      float32Array = new Float32Array(buffer);
       _traverse2(0, byteOffset);
       byteOffset += buffer.byteLength;
     }
     function _traverse2(nodeIndex32, byteOffset2, force = false) {
       const nodeIndex16 = nodeIndex32 * 2;
-      if (IS_LEAF(nodeIndex16, uint16Array2)) {
-        const offset = OFFSET(nodeIndex32, uint32Array2);
-        const count = COUNT(nodeIndex16, uint16Array2);
+      if (IS_LEAF(nodeIndex16, uint16Array)) {
+        const offset = OFFSET(nodeIndex32, uint32Array);
+        const count = COUNT(nodeIndex16, uint16Array);
         let minx = Infinity;
         let miny = Infinity;
         let minz = Infinity;
@@ -3613,20 +3547,20 @@
             if (z > maxz) maxz = z;
           }
         }
-        if (float32Array2[nodeIndex32 + 0] !== minx || float32Array2[nodeIndex32 + 1] !== miny || float32Array2[nodeIndex32 + 2] !== minz || float32Array2[nodeIndex32 + 3] !== maxx || float32Array2[nodeIndex32 + 4] !== maxy || float32Array2[nodeIndex32 + 5] !== maxz) {
-          float32Array2[nodeIndex32 + 0] = minx;
-          float32Array2[nodeIndex32 + 1] = miny;
-          float32Array2[nodeIndex32 + 2] = minz;
-          float32Array2[nodeIndex32 + 3] = maxx;
-          float32Array2[nodeIndex32 + 4] = maxy;
-          float32Array2[nodeIndex32 + 5] = maxz;
+        if (float32Array[nodeIndex32 + 0] !== minx || float32Array[nodeIndex32 + 1] !== miny || float32Array[nodeIndex32 + 2] !== minz || float32Array[nodeIndex32 + 3] !== maxx || float32Array[nodeIndex32 + 4] !== maxy || float32Array[nodeIndex32 + 5] !== maxz) {
+          float32Array[nodeIndex32 + 0] = minx;
+          float32Array[nodeIndex32 + 1] = miny;
+          float32Array[nodeIndex32 + 2] = minz;
+          float32Array[nodeIndex32 + 3] = maxx;
+          float32Array[nodeIndex32 + 4] = maxy;
+          float32Array[nodeIndex32 + 5] = maxz;
           return true;
         } else {
           return false;
         }
       } else {
         const left = LEFT_NODE(nodeIndex32);
-        const right = RIGHT_NODE(nodeIndex32, uint32Array2);
+        const right = RIGHT_NODE(nodeIndex32, uint32Array);
         let forceChildren = force;
         let includesLeft = false;
         let includesRight = false;
@@ -3657,12 +3591,12 @@
           for (let i = 0; i < 3; i++) {
             const left_i = left + i;
             const right_i = right + i;
-            const minLeftValue = float32Array2[left_i];
-            const maxLeftValue = float32Array2[left_i + 3];
-            const minRightValue = float32Array2[right_i];
-            const maxRightValue = float32Array2[right_i + 3];
-            float32Array2[nodeIndex32 + i] = minLeftValue < minRightValue ? minLeftValue : minRightValue;
-            float32Array2[nodeIndex32 + i + 3] = maxLeftValue > maxRightValue ? maxLeftValue : maxRightValue;
+            const minLeftValue = float32Array[left_i];
+            const maxLeftValue = float32Array[left_i + 3];
+            const minRightValue = float32Array[right_i];
+            const maxRightValue = float32Array[right_i + 3];
+            float32Array[nodeIndex32 + i] = minLeftValue < minRightValue ? minLeftValue : minRightValue;
+            float32Array[nodeIndex32 + i + 3] = maxLeftValue > maxRightValue ? maxLeftValue : maxRightValue;
           }
         }
         return didChange;
@@ -3673,24 +3607,26 @@
   // node_modules/three-mesh-bvh/src/core/cast/raycast_indirect.generated.js
   function raycast_indirect(bvh, root, materialOrSide, ray, intersects, near, far) {
     BufferStack.setBuffer(bvh._roots[root]);
-    _raycast2(0, bvh, materialOrSide, ray, intersects, near, far);
+    if (intersectsNodeBounds(0, BufferStack.float32Array, ray, near, far)) {
+      _raycast2(0, bvh, materialOrSide, ray, intersects, near, far);
+    }
     BufferStack.clearBuffer();
   }
   function _raycast2(nodeIndex32, bvh, materialOrSide, ray, intersects, near, far) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     const nodeIndex16 = nodeIndex32 * 2;
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       intersectTris_indirect(bvh, materialOrSide, ray, offset, count, intersects, near, far);
     } else {
       const leftIndex = LEFT_NODE(nodeIndex32);
-      if (intersectsNodeBounds(leftIndex, float32Array2, ray, near, far)) {
+      if (intersectsNodeBounds(leftIndex, float32Array, ray, near, far)) {
         _raycast2(leftIndex, bvh, materialOrSide, ray, intersects, near, far);
       }
-      const rightIndex = RIGHT_NODE(nodeIndex32, uint32Array2);
-      if (intersectsNodeBounds(rightIndex, float32Array2, ray, near, far)) {
+      const rightIndex = RIGHT_NODE(nodeIndex32, uint32Array);
+      if (intersectsNodeBounds(rightIndex, float32Array, ray, near, far)) {
         _raycast2(rightIndex, bvh, materialOrSide, ray, intersects, near, far);
       }
     }
@@ -3700,44 +3636,47 @@
   var _xyzFields2 = ["x", "y", "z"];
   function raycastFirst_indirect(bvh, root, materialOrSide, ray, near, far) {
     BufferStack.setBuffer(bvh._roots[root]);
-    const result = _raycastFirst2(0, bvh, materialOrSide, ray, near, far);
+    let result = null;
+    if (intersectsNodeBounds(0, BufferStack.float32Array, ray, near, far)) {
+      result = _raycastFirst2(0, bvh, materialOrSide, ray, near, far);
+    }
     BufferStack.clearBuffer();
     return result;
   }
   function _raycastFirst2(nodeIndex32, bvh, materialOrSide, ray, near, far) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     let nodeIndex16 = nodeIndex32 * 2;
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       return intersectClosestTri_indirect(bvh, materialOrSide, ray, offset, count, near, far);
     } else {
-      const splitAxis = SPLIT_AXIS(nodeIndex32, uint32Array2);
+      const splitAxis = SPLIT_AXIS(nodeIndex32, uint32Array);
       const xyzAxis = _xyzFields2[splitAxis];
       const rayDir = ray.direction[xyzAxis];
       const leftToRight = rayDir >= 0;
       let c1, c2;
       if (leftToRight) {
         c1 = LEFT_NODE(nodeIndex32);
-        c2 = RIGHT_NODE(nodeIndex32, uint32Array2);
+        c2 = RIGHT_NODE(nodeIndex32, uint32Array);
       } else {
-        c1 = RIGHT_NODE(nodeIndex32, uint32Array2);
+        c1 = RIGHT_NODE(nodeIndex32, uint32Array);
         c2 = LEFT_NODE(nodeIndex32);
       }
-      const c1Intersection = intersectsNodeBounds(c1, float32Array2, ray, near, far);
+      const c1Intersection = intersectsNodeBounds(c1, float32Array, ray, near, far);
       const c1Result = c1Intersection ? _raycastFirst2(c1, bvh, materialOrSide, ray, near, far) : null;
       if (c1Result) {
         const point = c1Result.point[xyzAxis];
-        const isOutside = leftToRight ? point <= float32Array2[c2 + splitAxis] : (
+        const isOutside = leftToRight ? point <= float32Array[c2 + splitAxis] : (
           // min bounding data
-          point >= float32Array2[c2 + splitAxis + 3]
+          point >= float32Array[c2 + splitAxis + 3]
         );
         if (isOutside) {
           return c1Result;
         }
       }
-      const c2Intersection = intersectsNodeBounds(c2, float32Array2, ray, near, far);
+      const c2Intersection = intersectsNodeBounds(c2, float32Array, ray, near, far);
       const c2Result = c2Intersection ? _raycastFirst2(c2, bvh, materialOrSide, ray, near, far) : null;
       if (c1Result && c2Result) {
         return c1Result.distance <= c2Result.distance ? c1Result : c2Result;
@@ -3761,7 +3700,7 @@
     return result;
   }
   function _intersectsGeometry2(nodeIndex32, bvh, otherGeometry, geometryToBvh, cachedObb = null) {
-    const { float32Array: float32Array2, uint16Array: uint16Array2, uint32Array: uint32Array2 } = BufferStack;
+    const { float32Array, uint16Array, uint32Array } = BufferStack;
     let nodeIndex16 = nodeIndex32 * 2;
     if (cachedObb === null) {
       if (!otherGeometry.boundingBox) {
@@ -3770,18 +3709,18 @@
       obb4.set(otherGeometry.boundingBox.min, otherGeometry.boundingBox.max, geometryToBvh);
       cachedObb = obb4;
     }
-    const isLeaf = IS_LEAF(nodeIndex16, uint16Array2);
+    const isLeaf = IS_LEAF(nodeIndex16, uint16Array);
     if (isLeaf) {
       const thisGeometry = bvh.geometry;
       const thisIndex = thisGeometry.index;
       const thisPos = thisGeometry.attributes.position;
       const otherIndex = otherGeometry.index;
       const otherPos = otherGeometry.attributes.position;
-      const offset = OFFSET(nodeIndex32, uint32Array2);
-      const count = COUNT(nodeIndex16, uint16Array2);
+      const offset = OFFSET(nodeIndex32, uint32Array);
+      const count = COUNT(nodeIndex16, uint16Array);
       invertedMat2.copy(geometryToBvh).invert();
       if (otherGeometry.boundsTree) {
-        arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array2, obb23);
+        arrayToBox(BOUNDING_DATA_INDEX(nodeIndex32), float32Array, obb23);
         obb23.matrix.copy(invertedMat2);
         obb23.needsUpdate = true;
         const res = otherGeometry.boundsTree.shapecast({
@@ -3822,11 +3761,11 @@
       }
     } else {
       const left = LEFT_NODE(nodeIndex32);
-      const right = RIGHT_NODE(nodeIndex32, uint32Array2);
-      arrayToBox(BOUNDING_DATA_INDEX(left), float32Array2, boundingBox2);
+      const right = RIGHT_NODE(nodeIndex32, uint32Array);
+      arrayToBox(BOUNDING_DATA_INDEX(left), float32Array, boundingBox2);
       const leftIntersection = cachedObb.intersectsBox(boundingBox2) && _intersectsGeometry2(left, bvh, otherGeometry, geometryToBvh, cachedObb);
       if (leftIntersection) return true;
-      arrayToBox(BOUNDING_DATA_INDEX(right), float32Array2, boundingBox2);
+      arrayToBox(BOUNDING_DATA_INDEX(right), float32Array, boundingBox2);
       const rightIntersection = cachedObb.intersectsBox(boundingBox2) && _intersectsGeometry2(right, bvh, otherGeometry, geometryToBvh, cachedObb);
       if (rightIntersection) return true;
       return false;
@@ -4079,13 +4018,13 @@
       function fixupVersion0(roots2) {
         for (let rootIndex = 0; rootIndex < roots2.length; rootIndex++) {
           const root = roots2[rootIndex];
-          const uint32Array2 = new Uint32Array(root);
-          const uint16Array2 = new Uint16Array(root);
+          const uint32Array = new Uint32Array(root);
+          const uint16Array = new Uint16Array(root);
           for (let node = 0, l = root.byteLength / BYTES_PER_NODE; node < l; node++) {
             const node32Index = UINT32_PER_NODE * node;
             const node16Index = 2 * node32Index;
-            if (!IS_LEAF(node16Index, uint16Array2)) {
-              uint32Array2[node32Index + 6] = uint32Array2[node32Index + 6] / UINT32_PER_NODE - node;
+            if (!IS_LEAF(node16Index, uint16Array)) {
+              uint32Array[node32Index + 6] = uint32Array[node32Index + 6] / UINT32_PER_NODE - node;
             }
           }
         }
@@ -4501,8 +4440,8 @@
      * `getTriangleHitPointInfo` to obtain more information like UV coordinates, triangle normal
      * and materialIndex.
      *
-     * _Note that this function can be very slow if `geometry` does not have a
-     * `geometry.boundsTree` computed._
+     * @note This function can be very slow if `geometry` does not have a `geometry.boundsTree`
+     * computed.
      *
      * @param {BufferGeometry} otherGeometry
      * @param {Matrix4} geometryToBvh - Transform of `otherGeometry` into the local space of
