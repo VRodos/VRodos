@@ -998,21 +998,9 @@
     }
 
     function assignFillGapWord(state, wordId, blankId) {
-        const word = state.wordsById[wordId];
-        if (!word || !blankId) {
-            return;
+        if (namespace.assignFillGapWord(state, state.wordsById[wordId], blankId, false)) {
+            state.dragWordId = "";
         }
-
-        Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
-            if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
-                delete state.assignmentsByBlank[existingBlankId];
-            }
-        });
-
-        state.assignmentsByBlank[blankId] = wordId;
-        state.values[blankId] = word.text;
-        state.selectedWordId = "";
-        state.dragWordId = "";
     }
 
     function createTextRenderer() {
@@ -1175,8 +1163,7 @@
                 event.stopPropagation();
                 const blankId = button.getAttribute("data-clear-blank-id") || "";
                 const wordId = state.assignmentsByBlank[blankId] || "";
-                delete state.assignmentsByBlank[blankId];
-                state.values[blankId] = "";
+                namespace.clearFillGapAnswer(state, blankId);
                 if (state.selectedWordId === wordId) {
                     state.selectedWordId = "";
                 }

@@ -146,4 +146,81 @@ presentation.dispose();
 assert.equal(basic.toneMapped, false);
 assert.equal(listeners.size, 0);
 assert.equal(self.pmndrsNativeHeadsetDiagnostics.active, false);
+
+// A desktop camera switch and a stereo draw must keep geometry and effects on the same camera.
+{
+    const helpers = {};
+    const noOp = () => {};
+    let stereo = false;
+    const eyeCameras = [0, 400].map(x => {
+        const camera = new THREE.PerspectiveCamera();
+        camera.viewport = new THREE.Vector4(x, 0, 400, 300);
+        return camera;
+    });
+    const xrTarget = { viewport: new THREE.Vector4(0, 0, 800, 300), scissor: new THREE.Vector4(0, 0, 800, 300), scissorTest: false };
+    const renderer = { xr: { enabled: true, getRenderTarget: () => xrTarget }, render: noOp };
+    const rendering = vm.createContext({
+        window: { THREE, POSTPROCESSING: {} }, H: helpers, console,
+        createNativeHeadsetPresentation: () => ({ sync: noOp }),
+        shouldUsePmndrsNativeHeadset: () => false,
+        isPmndrsCloudsRequested: () => false,
+        shouldBypassPmndrsComposerForVr: () => false,
+        isPmndrsXrStereoComposerActive: () => stereo,
+        getPmndrsComposerSignature: () => 'fixture',
+        ensurePmndrsAADebugOverlay: noOp, updatePmndrsAADebugOverlay: noOp,
+        syncPmndrsCloudsEffect: noOp, syncPmndrsAerialPerspectiveEffect: noOp,
+        shouldRefreshPmndrsSceneSelections: () => false,
+        getPmndrsXrStereoCamera: () => ({ cameras: eyeCameras }),
+        getActiveSpatialUiPanelState: () => null,
+        setSpatialUiOverlayObjectsVisible: noOp, restoreSpatialUiOverlayObjectVisibility: noOp
+    });
+    vm.runInContext(source.slice(source.indexOf('    function syncPmndrsComposerCamera('),
+        source.indexOf('    function getPmndrsRequestedMultisampling(')), rendering);
+    vm.runInContext(source.slice(source.indexOf('    H.enablePmndrsPostProcessing ='),
+        source.indexOf('    H.updatePmndrsPostProcessingSize =')), rendering);
+
+    const scene = new THREE.Scene();
+    const initialCamera = new THREE.PerspectiveCamera();
+    const desktopCamera = new THREE.PerspectiveCamera();
+    const renderedCameras = [];
+    const assignedCameras = [];
+    let normalCamera = initialCamera;
+    const host = {
+        el: { renderer, object3D: scene }, shouldUsePostProcessing: () => true,
+        updatePmndrsPostProcessingSize: noOp, _pmndrsComposerSignature: 'fixture',
+        pmndrsRenderPass: { mainCamera: initialCamera },
+        pmndrsNativeNormalPass: {
+            get mainCamera() { return normalCamera; },
+            set mainCamera(value) { normalCamera = value; assignedCameras.push(value); }
+        },
+        pmndrsAoPass: { mainCamera: initialCamera },
+        pmndrsEffectPass: { mainCamera: initialCamera },
+        pmndrsComposer: { render() {
+            const camera = host.pmndrsRenderPass.mainCamera;
+            assert.equal(host.pmndrsNativeNormalPass.mainCamera, camera);
+            assert.equal(host.pmndrsAoPass.mainCamera, camera);
+            assert.equal(host.pmndrsEffectPass.mainCamera, camera);
+            renderedCameras.push(camera);
+        } }
+    };
+    helpers.enablePmndrsPostProcessing.call(host);
+    renderer.render(scene, initialCamera);
+    renderer.render(scene, desktopCamera);
+    renderer.render(scene, desktopCamera);
+    assert.deepEqual(assignedCameras, [desktopCamera], 'A steady desktop frame skips pass camera setters');
+
+    stereo = true;
+    renderer.render(scene, desktopCamera);
+    assert.deepEqual(renderedCameras.slice(-2), eyeCameras, 'The stereo composer draws each eye using its matching passes');
+    assert.equal(host.pmndrsRenderPass.mainCamera, desktopCamera);
+    assert.equal(host.pmndrsAoPass.mainCamera, desktopCamera);
+    assert.equal(renderer.xr.enabled, true);
+    assert.deepEqual(xrTarget.viewport.toArray(), [0, 0, 800, 300]);
+    assert.equal(xrTarget.scissorTest, false);
+
+    stereo = false;
+    renderer.render(scene, desktopCamera);
+    assert.equal(renderedCameras.at(-1), desktopCamera);
+    assert.deepEqual(assignedCameras, [desktopCamera, ...eyeCameras, desktopCamera], 'Stereo restores the desktop camera before the next inline frame');
+}
 console.log('Native headset presentation acceptance checks passed.');

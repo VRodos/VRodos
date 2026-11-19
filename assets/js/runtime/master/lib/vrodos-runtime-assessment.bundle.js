@@ -604,6 +604,27 @@
     namespace.canSubmitHighlight = canSubmitHighlight;
     namespace.buildHighlightResult = buildHighlightResult;
     namespace.buildHighlightSelections = buildHighlightSelections;
+    function clearFillGapAnswer(state, blankId) {
+      delete state.assignmentsByBlank[blankId];
+      state.values[blankId] = "";
+    }
+    function assignFillGapWord(state, word, blankId, clearDisplacedValues) {
+      if (!word || !blankId) {
+        return false;
+      }
+      Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
+        if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === word.id) {
+          delete state.assignmentsByBlank[existingBlankId];
+          if (clearDisplacedValues) {
+            state.values[existingBlankId] = "";
+          }
+        }
+      });
+      state.assignmentsByBlank[blankId] = word.id;
+      state.values[blankId] = word.text;
+      state.selectedWordId = "";
+      return true;
+    }
     function buildFillGapAnswers(state) {
       return state.annotations.map((annotation, index) => {
         const enteredValue = state.values[annotation.id] || "";
@@ -618,6 +639,8 @@
         };
       });
     }
+    namespace.clearFillGapAnswer = clearFillGapAnswer;
+    namespace.assignFillGapWord = assignFillGapWord;
     namespace.buildFillGapAnswers = buildFillGapAnswers;
     namespace.gradeResponses = function(responses, key = "isCorrect", ignoreUngraded = false) {
       const graded = ignoreUngraded ? responses.filter((response) => response[key] !== null) : responses;
@@ -3138,19 +3161,9 @@
       return text.replace(/^[\s\S]*?\n\s*\n/, "");
     }
     function assignFillGapWord(state, wordId, blankId) {
-      const word = state.wordsById[wordId];
-      if (!word || !blankId) {
-        return;
+      if (namespace.assignFillGapWord(state, state.wordsById[wordId], blankId, false)) {
+        state.dragWordId = "";
       }
-      Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
-        if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
-          delete state.assignmentsByBlank[existingBlankId];
-        }
-      });
-      state.assignmentsByBlank[blankId] = wordId;
-      state.values[blankId] = word.text;
-      state.selectedWordId = "";
-      state.dragWordId = "";
     }
     function createTextRenderer() {
       return {
@@ -3292,8 +3305,7 @@
           event.stopPropagation();
           const blankId = button.getAttribute("data-clear-blank-id") || "";
           const wordId = state.assignmentsByBlank[blankId] || "";
-          delete state.assignmentsByBlank[blankId];
-          state.values[blankId] = "";
+          namespace.clearFillGapAnswer(state, blankId);
           if (state.selectedWordId === wordId) {
             state.selectedWordId = "";
           }
@@ -4346,21 +4358,6 @@
         text: decodeDisplayText(word).replace(/correct\s+word\s*:/i, "").replace(/_+/g, "").trim()
       })).filter((word) => word.text);
     }
-    function assignFillGapWord(state, wordId, blankId) {
-      const word = (state.wordBank || []).find((entry) => entry.id === wordId);
-      if (!word || !blankId) {
-        return;
-      }
-      Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
-        if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
-          delete state.assignmentsByBlank[existingBlankId];
-          state.values[existingBlankId] = "";
-        }
-      });
-      state.assignmentsByBlank[blankId] = wordId;
-      state.values[blankId] = word.text;
-      state.selectedWordId = "";
-    }
     function renderFillGaps(runtime) {
       const state = runtime.state;
       if (!state.annotations.length || !state.wordBank.length) {
@@ -4449,10 +4446,10 @@
           variant: "secondary",
           onClick: function() {
             if (state.selectedWordId) {
-              assignFillGapWord(state, state.selectedWordId, annotation.id);
+              const word = state.wordBank.find((entry) => entry.id === state.selectedWordId);
+              namespace.assignFillGapWord(state, word, annotation.id, true);
             } else {
-              delete state.assignmentsByBlank[annotation.id];
-              state.values[annotation.id] = "";
+              namespace.clearFillGapAnswer(state, annotation.id);
             }
             updateView();
           }

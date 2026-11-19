@@ -80,6 +80,7 @@ export const testGroups = Object.freeze({
     "scripts/test-headset-baked-assets.php",
     "scripts/test-asset-analysis-admin-action.php",
     "scripts/test-asset-readiness-settings.php",
+    "scripts/test-asset-list-media-parity.php",
     "scripts/test-background-jobs.php",
     "scripts/test-import-execution.php",
     "scripts/test-import-session.php",

@@ -4389,40 +4389,7 @@ ${selectedSummaries.join("\n")}`);
           }
         }
         if (self.pmndrsRenderPass && self.pmndrsRenderPass.mainCamera !== camera) {
-          self.pmndrsRenderPass.mainCamera = camera;
-          if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== "undefined") {
-            self.pmndrsEffectPass.mainCamera = camera;
-          }
-          if (self.pmndrsAtmospherePass && typeof self.pmndrsAtmospherePass.mainCamera !== "undefined") {
-            self.pmndrsAtmospherePass.mainCamera = camera;
-          }
-          if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== "undefined") {
-            self.pmndrsChromaticAberrationPass.mainCamera = camera;
-          }
-          if (self.pmndrsSmaaPass && typeof self.pmndrsSmaaPass.mainCamera !== "undefined") {
-            self.pmndrsSmaaPass.mainCamera = camera;
-          }
-          if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== "undefined") {
-            self.pmndrsLensFlarePass.mainCamera = camera;
-          }
-          if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.mainCamera !== "undefined") {
-            self.pmndrsNativeNormalPass.mainCamera = camera;
-          }
-          if (self.pmndrsCloudLightingMaskPass && typeof self.pmndrsCloudLightingMaskPass.mainCamera !== "undefined") {
-            self.pmndrsCloudLightingMaskPass.mainCamera = camera;
-          }
-          if (self.pmndrsAoPass && typeof self.pmndrsAoPass.mainCamera !== "undefined") {
-            self.pmndrsAoPass.mainCamera = camera;
-          }
-          if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== "undefined") {
-            self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
-          }
-          if (self.pmndrsCloudsEffect && typeof self.pmndrsCloudsEffect.mainCamera !== "undefined") {
-            self.pmndrsCloudsEffect.mainCamera = camera;
-          }
-          if (self.pmndrsHorizonFoliageOverlayPass && typeof self.pmndrsHorizonFoliageOverlayPass.mainCamera !== "undefined") {
-            self.pmndrsHorizonFoliageOverlayPass.mainCamera = camera;
-          }
+          syncPmndrsComposerCamera(self, camera);
         }
         syncPmndrsCloudsEffect(self, camera, atmosphereConfig);
         syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig);

@@ -195,6 +195,71 @@ class VRodos_Core_Manager {
 		return is_string( $json ) && $json !== '' ? base64_encode( $json ) : '';
 	}
 
+	private static function resolve_asset_screenshot_url( $screenshot_id ): string {
+		if ( ! $screenshot_id ) {
+			return '';
+		}
+
+		$url = self::resolve_media_meta_url( $screenshot_id );
+		if ( $url && is_numeric( $screenshot_id ) ) {
+			$modified = get_post_modified_time( 'U', false, (int) $screenshot_id );
+			return add_query_arg( 't', $modified ?: time(), $url );
+		}
+		return $url;
+	}
+
+	private static function add_asset_list_category_data( array &$data_arr, int $asset_id ): void {
+		switch ( $data_arr['category_slug'] ) {
+			case 'audio':
+				$data_arr['audio_id']             = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
+				$data_arr['audio_path']           = self::resolve_media_meta_url( $data_arr['audio_id'] );
+				$data_arr['audio_playback_mode']  = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: 'interact';
+				$data_arr['audio_loop']           = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true );
+				$data_arr['audio_volume']         = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: '1';
+				$data_arr['audio_ref_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: '2';
+				$data_arr['audio_max_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: '20';
+				$data_arr['audio_rolloff_factor'] = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: '1';
+				$data_arr['audio_distance_model'] = 'inverse';
+				$data_arr['screenshot_path']      = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
+				break;
+			case 'video':
+				$data_arr['video_id']       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
+				$data_arr['video_path']     = self::resolve_media_meta_url( $data_arr['video_id'] );
+				$data_arr['video_title']    = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
+				$data_arr['video_autoplay'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true );
+				$data_arr['video_loop']     = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
+				break;
+			case 'poi-imagetext':
+				$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
+				$data_arr['poi_img_path']    = self::resolve_media_meta_url( $data_arr['poi_img_id'] );
+				$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
+				$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
+				break;
+			case 'image':
+				$data_arr += VRodos_Image_Dialog::asset_defaults( $asset_id );
+				$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
+				$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
+				break;
+			case '3d-text':
+				$text_content = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
+				$data_arr['text_content_b64'] = base64_encode( $text_content );
+				$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
+				$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
+				break;
+			case 'assessment':
+				$data_arr = self::add_assessment_asset_browser_data( $data_arr, $asset_id );
+				break;
+			case 'poi-link':
+				$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
+				break;
+			case 'chat':
+				$data_arr['poi_chat_title']        = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chattxt_title', true );
+				$data_arr['poi_chat_participants'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatnum_people', true );
+				$data_arr['poi_chat_indicators']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true );
+				break;
+		}
+	}
+
 	private static function add_assessment_asset_browser_data( array $data_arr, int $asset_id ): array {
 		$assessment_type   = (string) get_post_meta( $asset_id, 'vrodos_asset3d_assessment_type', true );
 		$assessment_group  = (string) get_post_meta( $asset_id, 'vrodos_asset3d_assessment_group', true );
@@ -546,18 +611,7 @@ class VRodos_Core_Manager {
 				$glbPath = self::resolve_media_meta_url( $glbID );                  // GLB PATH
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID or remote URL
-				$sshotPath = '';
-				if ( $sshotID ) {
-					$sshotUrl = self::resolve_media_meta_url( $sshotID );
-					if ( $sshotUrl ) {
-						if ( is_numeric( $sshotID ) ) {
-							$cache     = get_post_modified_time( 'U', false, (int) $sshotID );
-							$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
-						} else {
-							$sshotPath = $sshotUrl;
-						}
-					}
-				}
+				$sshotPath = self::resolve_asset_screenshot_url( $sshotID );
 
 				$owner_project_id = VRodos_Immerse_Access_Manager::resolve_parent_project_id( $asset_id );
 				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ), 'is_immerse' => VRodos_Immerse_Access_Manager::is_immerse_asset( $asset_id ), 'owner_project_id' => $owner_project_id, 'can_edit' => VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ), 'author_id' => (int) get_post_field( 'post_author', $asset_id )];
@@ -576,61 +630,9 @@ class VRodos_Core_Manager {
 					$data_arr['immerse_cefr_levels'] = $immerse_cefr_levels;
 				}
 
-				switch ( $asset_cat_arr[0]->slug ) {
-					case 'audio':
-						$data_arr['audio_id']                = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
-						$data_arr['audio_path']              = self::resolve_media_meta_url( $data_arr['audio_id'] );
-						$data_arr['audio_playback_mode']     = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: 'interact';
-						$data_arr['audio_loop']              = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true );
-						$data_arr['audio_volume']            = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: '1';
-						$data_arr['audio_ref_distance']      = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: '2';
-						$data_arr['audio_max_distance']      = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: '20';
-						$data_arr['audio_rolloff_factor']    = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: '1';
-						$data_arr['audio_distance_model']    = 'inverse';
-						$data_arr['screenshot_path']         = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
-						break;
-					case 'video':
-						$data_arr['video_id']       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']     = self::resolve_media_meta_url( $data_arr['video_id'] );
-						$data_arr['video_title']    = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
-						$data_arr['video_autoplay'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true );
-						$data_arr['video_loop']     = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
-						break;
-					case 'poi-imagetext':
-						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
-						$data_arr['poi_img_path']    = self::resolve_media_meta_url( $data_arr['poi_img_id'] );
-						$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
-						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
-						break;
-					/*
-						case 'chat':
-							$data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
-							break;*/
-					case 'image':
-						$data_arr += VRodos_Image_Dialog::asset_defaults( (int) $asset_id );
-						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
-						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
-						break;
-					case '3d-text':
-						$text_content = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
-						$data_arr['text_content_b64'] = base64_encode( $text_content );
-						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
-						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
-						break;
-					case 'assessment':
-						$data_arr = self::add_assessment_asset_browser_data( $data_arr, $asset_id );
-						break;
-					case 'poi-link':
-						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
-						break;
-					case 'door':
-						$data_arr['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
-						break;
-					case 'chat':
-						$data_arr['poi_chat_title']        = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chattxt_title', true );
-						$data_arr['poi_chat_participants'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatnum_people', true );
-						$data_arr['poi_chat_indicators']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true );
-						break;
+				self::add_asset_list_category_data( $data_arr, $asset_id );
+				if ( 'door' === $data_arr['category_slug'] ) {
+					$data_arr['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
 				}
 
 				// Immerse connector integration: allow external plugins to enrich or hide
@@ -792,18 +794,7 @@ class VRodos_Core_Manager {
 				$glbPath = self::resolve_media_meta_url( $glbID );
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
-				$sshotPath = '';
-				if ( $sshotID ) {
-					$sshotUrl = self::resolve_media_meta_url( $sshotID );
-					if ( $sshotUrl ) {
-						if ( is_numeric( $sshotID ) ) {
-							$cache     = get_post_modified_time( 'U', false, (int) $sshotID );
-							$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
-						} else {
-							$sshotPath = $sshotUrl;
-						}
-					}
-				}
+				$sshotPath = self::resolve_asset_screenshot_url( $sshotID );
 
 				$author_id          = get_post_field( 'post_author', $asset_id );
 				$author_displayname = get_the_author_meta( 'display_name', $author_id );
@@ -843,55 +834,7 @@ class VRodos_Core_Manager {
 					$data_arr['vrodosAssetOriginMode'] = $origin_mode;
 				}
 
-				switch ( $asset_cat_arr[0]->slug ) {
-					case 'audio':
-						$data_arr['audio_id']             = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
-						$data_arr['audio_path']           = self::resolve_media_meta_url( $data_arr['audio_id'] );
-						$data_arr['audio_playback_mode']  = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: 'interact';
-						$data_arr['audio_loop']           = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true );
-						$data_arr['audio_volume']         = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: '1';
-						$data_arr['audio_ref_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: '2';
-						$data_arr['audio_max_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: '20';
-						$data_arr['audio_rolloff_factor'] = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: '1';
-						$data_arr['audio_distance_model'] = 'inverse';
-						$data_arr['screenshot_path']      = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
-						break;
-					case 'video':
-						$data_arr['video_id']       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']     = self::resolve_media_meta_url( $data_arr['video_id'] );
-						$data_arr['video_title']    = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
-						$data_arr['video_autoplay'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoplay', true );
-						$data_arr['video_loop']     = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
-						break;
-					case 'poi-imagetext':
-						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
-						$data_arr['poi_img_path']    = self::resolve_media_meta_url( $data_arr['poi_img_id'] );
-						$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
-						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
-						break;
-					case 'image':
-						$data_arr += VRodos_Image_Dialog::asset_defaults( (int) $asset_id );
-						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
-						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
-						break;
-					case '3d-text':
-						$text_content = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
-						$data_arr['text_content_b64'] = base64_encode( $text_content );
-						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
-						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
-						break;
-					case 'assessment':
-						$data_arr = self::add_assessment_asset_browser_data( $data_arr, $asset_id );
-						break;
-					case 'poi-link':
-						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
-						break;
-					case 'chat':
-						$data_arr['poi_chat_title']        = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chattxt_title', true );
-						$data_arr['poi_chat_participants'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatnum_people', true );
-						$data_arr['poi_chat_indicators']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true );
-						break;
-				}
+				self::add_asset_list_category_data( $data_arr, $asset_id );
 				$allAssets[] = $data_arr;
 			}
 		}

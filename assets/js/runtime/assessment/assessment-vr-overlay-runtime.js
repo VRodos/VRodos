@@ -1093,22 +1093,6 @@
         })).filter((word) => word.text);
     }
 
-    function assignFillGapWord(state, wordId, blankId) {
-        const word = (state.wordBank || []).find((entry) => entry.id === wordId);
-        if (!word || !blankId) {
-            return;
-        }
-        Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
-            if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
-                delete state.assignmentsByBlank[existingBlankId];
-                state.values[existingBlankId] = "";
-            }
-        });
-        state.assignmentsByBlank[blankId] = wordId;
-        state.values[blankId] = word.text;
-        state.selectedWordId = "";
-    }
-
     function renderFillGaps(runtime) {
         const state = runtime.state;
         if (!state.annotations.length || !state.wordBank.length) {
@@ -1172,10 +1156,10 @@
                 textSize: 28, variant: "secondary",
                 onClick: function () {
                     if (state.selectedWordId) {
-                        assignFillGapWord(state, state.selectedWordId, annotation.id);
+                        const word = state.wordBank.find((entry) => entry.id === state.selectedWordId);
+                        namespace.assignFillGapWord(state, word, annotation.id, true);
                     } else {
-                        delete state.assignmentsByBlank[annotation.id];
-                        state.values[annotation.id] = "";
+                        namespace.clearFillGapAnswer(state, annotation.id);
                     }
                     updateView();
                 }

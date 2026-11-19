@@ -12,6 +12,23 @@ require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
 final class VRodos_Desktop_Performance_Profiles {
 	private const CONTRACT_RELATIVE_PATH = 'assets/desktop-performance-profiles.json';
 	private const METADATA_KEY = 'desktopPerformanceProfiles';
+	private const TIER_QUALITY_ORDERS = [
+		'shadowQuality'           => [ 'off', 'medium', 'high' ],
+		'shadowUpdateMode'        => [ 'static', 'dynamic' ],
+		'aaQuality'               => [ 'off', 'balanced', 'high', 'ultra' ],
+		'ambientOcclusionPreset'  => [ 'off', 'soft', 'balanced', 'strong' ],
+		'contactShadowPreset'     => [ 'off', 'soft', 'balanced', 'strong' ],
+		'postFXSSRStrength'       => [ 'off', 'subtle', 'balanced', 'strong' ],
+		'bloomStrength'           => [ 'off', 'soft', 'medium' ],
+		'reflectionProfile'       => [ 'soft', 'balanced', 'enhanced' ],
+		'reflectionSource'        => [ 'hdr', 'takram-sky', 'scene-probe' ],
+		'sceneProbeResolution'    => [ '64', '128', '256' ],
+		'sceneProbeUpdateMode'    => [ 'static', 'slow-dynamic' ],
+		'pmndrsAAMode'            => [ 'none', 'smaa', 'msaa' ],
+		'pmndrsAAPreset'          => [ 'low', 'medium', 'high', 'ultra' ],
+		'pmndrsAtmosphereQuality' => [ 'performance', 'balanced', 'quality', 'cinematic' ],
+		'pmndrsCloudsQuality'     => [ 'low', 'medium', 'high', 'ultra' ],
+	];
 	private static ?array $contract = null;
 
 	public static function contract(): array {
@@ -216,24 +233,7 @@ final class VRodos_Desktop_Performance_Profiles {
 		$medium = (array) ( $profiles['medium']['settings'] ?? [] );
 		$high = (array) ( $profiles['high']['settings'] ?? [] );
 		$errors = array_merge( (array) ( $resolved['validationErrors'] ?? [] ), self::validate_allowed_values( $profiles ) );
-		$orders = [
-			'renderQuality'            => [ 'performance', 'standard', 'high' ],
-			'shadowQuality'            => [ 'off', 'medium', 'high' ],
-			'shadowUpdateMode'         => [ 'static', 'dynamic' ],
-			'aaQuality'                => [ 'off', 'balanced', 'high', 'ultra' ],
-			'ambientOcclusionPreset'   => [ 'off', 'soft', 'balanced', 'strong' ],
-			'contactShadowPreset'      => [ 'off', 'soft', 'balanced', 'strong' ],
-			'postFXSSRStrength'        => [ 'off', 'subtle', 'balanced', 'strong' ],
-			'bloomStrength'            => [ 'off', 'soft', 'medium' ],
-			'reflectionProfile'        => [ 'soft', 'balanced', 'enhanced' ],
-			'reflectionSource'         => [ 'hdr', 'takram-sky', 'scene-probe' ],
-			'sceneProbeResolution'     => [ '64', '128', '256' ],
-			'sceneProbeUpdateMode'     => [ 'static', 'slow-dynamic' ],
-			'pmndrsAAMode'             => [ 'none', 'smaa', 'msaa' ],
-			'pmndrsAAPreset'           => [ 'low', 'medium', 'high', 'ultra' ],
-			'pmndrsAtmosphereQuality'  => [ 'performance', 'balanced', 'quality', 'cinematic' ],
-			'pmndrsCloudsQuality'      => [ 'low', 'medium', 'high', 'ultra' ],
-		];
+		$orders = [ 'renderQuality' => [ 'performance', 'standard', 'high' ] ] + self::TIER_QUALITY_ORDERS;
 
 		foreach ( $orders as $key => $order ) {
 			$low_cost = self::ordered_cost( $key, $low, $order );
@@ -366,23 +366,6 @@ final class VRodos_Desktop_Performance_Profiles {
 
 	private static function apply_adaptive_tier_caps( array &$profiles ): void {
 		$high = &$profiles['high']['settings'];
-		$orders = [
-			'shadowQuality'           => [ 'off', 'medium', 'high' ],
-			'shadowUpdateMode'        => [ 'static', 'dynamic' ],
-			'aaQuality'               => [ 'off', 'balanced', 'high', 'ultra' ],
-			'ambientOcclusionPreset'  => [ 'off', 'soft', 'balanced', 'strong' ],
-			'contactShadowPreset'     => [ 'off', 'soft', 'balanced', 'strong' ],
-			'postFXSSRStrength'       => [ 'off', 'subtle', 'balanced', 'strong' ],
-			'bloomStrength'           => [ 'off', 'soft', 'medium' ],
-			'reflectionProfile'       => [ 'soft', 'balanced', 'enhanced' ],
-			'reflectionSource'        => [ 'hdr', 'takram-sky', 'scene-probe' ],
-			'sceneProbeResolution'    => [ '64', '128', '256' ],
-			'sceneProbeUpdateMode'    => [ 'static', 'slow-dynamic' ],
-			'pmndrsAAMode'            => [ 'none', 'smaa', 'msaa' ],
-			'pmndrsAAPreset'          => [ 'low', 'medium', 'high', 'ultra' ],
-			'pmndrsAtmosphereQuality' => [ 'performance', 'balanced', 'quality', 'cinematic' ],
-			'pmndrsCloudsQuality'     => [ 'low', 'medium', 'high', 'ultra' ],
-		];
 		$boolean_keys = [
 			'flatMediaShadowCasting', 'postFXEnabled', 'postFXBloomEnabled', 'postFXEdgeAAEnabled',
 			'postFXTAAEnabled', 'postFXSSREnabled', 'pmndrsLensFlareEnabled', 'pmndrsLutEnabled',
@@ -391,7 +374,7 @@ final class VRodos_Desktop_Performance_Profiles {
 		];
 		foreach ( [ 'low', 'medium' ] as $profile_id ) {
 			$settings = &$profiles[ $profile_id ]['settings'];
-			foreach ( $orders as $key => $order ) {
+			foreach ( self::TIER_QUALITY_ORDERS as $key => $order ) {
 				$high_cost = self::ordered_cost( $key, $high, $order );
 				$cost = self::ordered_cost( $key, $settings, $order );
 				if ( false !== $high_cost && false !== $cost && $cost > $high_cost ) {

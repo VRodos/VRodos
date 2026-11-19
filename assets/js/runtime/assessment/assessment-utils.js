@@ -777,6 +777,30 @@
     namespace.buildHighlightResult = buildHighlightResult;
     namespace.buildHighlightSelections = buildHighlightSelections;
 
+    function clearFillGapAnswer(state, blankId) {
+        delete state.assignmentsByBlank[blankId];
+        state.values[blankId] = "";
+    }
+
+    function assignFillGapWord(state, word, blankId, clearDisplacedValues) {
+        if (!word || !blankId) {
+            return false;
+        }
+
+        Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
+            if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === word.id) {
+                delete state.assignmentsByBlank[existingBlankId];
+                if (clearDisplacedValues) {
+                    state.values[existingBlankId] = "";
+                }
+            }
+        });
+        state.assignmentsByBlank[blankId] = word.id;
+        state.values[blankId] = word.text;
+        state.selectedWordId = "";
+        return true;
+    }
+
     function buildFillGapAnswers(state) {
         return state.annotations.map((annotation, index) => {
             const enteredValue = state.values[annotation.id] || "";
@@ -793,6 +817,8 @@
             };
         });
     }
+    namespace.clearFillGapAnswer = clearFillGapAnswer;
+    namespace.assignFillGapWord = assignFillGapWord;
     namespace.buildFillGapAnswers = buildFillGapAnswers;
 
     namespace.gradeResponses = function (responses, key = "isCorrect", ignoreUngraded = false) {
