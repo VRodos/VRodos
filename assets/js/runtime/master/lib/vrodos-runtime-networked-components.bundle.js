@@ -552,15 +552,15 @@
         return;
       }
       this.element.object3D.updateMatrixWorld(true);
-      let bbox = new THREE.Box3().setFromObject(this.element.object3D);
-      let worldPos = new THREE.Vector3();
+      const bbox = new THREE.Box3().setFromObject(this.element.object3D);
+      const worldPos = new THREE.Vector3();
       this.element.object3D.getWorldPosition(worldPos);
       if (bbox.isEmpty()) {
         bbox.min.copy(worldPos);
         bbox.max.copy(worldPos);
       }
-      let targetWorldPos = new THREE.Vector3(worldPos.x, bbox.max.y + 0.5, worldPos.z);
-      let localPos = targetWorldPos.clone();
+      const targetWorldPos = new THREE.Vector3(worldPos.x, bbox.max.y + 0.5, worldPos.z);
+      const localPos = targetWorldPos.clone();
       this.element.object3D.worldToLocal(localPos);
       this.checkIndicatorEntity.object3D.position.copy(localPos);
       this.xIndicatorEntity.object3D.position.copy(localPos);
@@ -578,8 +578,8 @@
       this.xIndicatorEntity.setAttribute("visible", state === "full");
     },
     updateAvailability: function() {
-      let occupancy = this.getPrivateChatOccupancy();
-      let isFull = this.maxParticipants !== Number.MAX_SAFE_INTEGER && occupancy >= this.maxParticipants;
+      const occupancy = this.getPrivateChatOccupancy();
+      const isFull = this.maxParticipants !== Number.MAX_SAFE_INTEGER && occupancy >= this.maxParticipants;
       this.setAvailabilityState(isFull ? "full" : "available");
     },
     faceCamera: function() {

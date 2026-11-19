@@ -341,7 +341,7 @@ AFRAME.registerComponent('info-panel', {
         }
         if (dialogBox) dialogBox.style.maxWidth = title && !description && !hasImage ? "min(92vw, 30rem)" : "";
 
-        let imageDialog = document.querySelector('#poi-img-dialog');
+        const imageDialog = document.querySelector('#poi-img-dialog');
         if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
             window.VRODOSMasterUI.showDialog(imageDialog);
         } else if (imageDialog && typeof imageDialog.showModal === 'function') {

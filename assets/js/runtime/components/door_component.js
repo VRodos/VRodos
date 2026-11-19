@@ -47,8 +47,8 @@ AFRAME.registerComponent('vrodos-door-indicator', {
             return;
         }
 
-        var geometry = new THREE.OctahedronGeometry(this.data.radius, 0);
-        var material = new THREE.MeshStandardMaterial({
+        const geometry = new THREE.OctahedronGeometry(this.data.radius, 0);
+        const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(this.data.color),
             emissive: new THREE.Color(this.data.emissive),
             emissiveIntensity: 0.65,
@@ -72,7 +72,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
         }
 
         this.el.object3D.updateMatrixWorld(true);
-        var box = new THREE.Box3();
+        const box = new THREE.Box3();
         this.expandBoxByObject(box, this.el.object3D);
 
         if (box.isEmpty()) {
@@ -81,16 +81,16 @@ AFRAME.registerComponent('vrodos-door-indicator', {
             return;
         }
 
-        var targetWorld = new THREE.Vector3(
+        const targetWorld = new THREE.Vector3(
             (box.min.x + box.max.x) / 2,
             box.max.y + this.data.heightOffset,
             (box.min.z + box.max.z) / 2
         );
-        var targetLocal = this.el.object3D.worldToLocal(targetWorld.clone());
+        const targetLocal = this.el.object3D.worldToLocal(targetWorld.clone());
         this.marker.position.copy(targetLocal);
         this.basePosition = targetLocal.clone();
 
-        var worldScale = this.worldScale;
+        const worldScale = this.worldScale;
         this.el.object3D.getWorldScale(worldScale);
         this.marker.scale.set(
             worldScale.x !== 0 ? 1 / Math.abs(worldScale.x) : 1,
@@ -113,7 +113,7 @@ AFRAME.registerComponent('vrodos-door-indicator', {
             }
         }
 
-        for (var i = 0; i < object.children.length; i++) {
+        for (let i = 0; i < object.children.length; i++) {
             this.expandBoxByObject(box, object.children[i]);
         }
     },
@@ -123,10 +123,10 @@ AFRAME.registerComponent('vrodos-door-indicator', {
             return;
         }
 
-        var seconds = time / 1000;
-        var worldScale = this.worldScale;
+        const seconds = time / 1000;
+        const worldScale = this.worldScale;
         this.el.object3D.getWorldScale(worldScale);
-        var yScale = worldScale.y !== 0 ? Math.abs(worldScale.y) : 1;
+        const yScale = worldScale.y !== 0 ? Math.abs(worldScale.y) : 1;
 
         this.marker.position.y = this.basePosition.y + (
             Math.sin((seconds * this.data.bobSpeed) + this.offset) * this.data.bobAmplitude / yScale

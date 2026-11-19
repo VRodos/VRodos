@@ -1010,4 +1010,12 @@ assert(glbLoaderSource.includes("managedAsset ? '' : canonicalUrl"), "managed as
 assert(!sceneLifecycleSource.includes("hasPreviewActions"), "independent preparation messages must not keep the loading indicator visible");
 assert(threeVendorSource.includes("SkeletonUtils"), "the Three.js vendor bundle must export SkeletonUtils for skinned clones");
 
+const layoutNamespaceContext = { console };
+layoutNamespaceContext.window = layoutNamespaceContext;
+vm.runInNewContext(editorNamespaceSource, layoutNamespaceContext);
+const layoutDuplicateKey = layoutNamespaceContext.VRODOS.utils.sceneObjectDuplicateKey;
+const assessmentPlacement = { category_slug: "assessment", assessment_source_id: "same-quiz", immerse_layout_placement: "first" };
+assert(layoutDuplicateKey(assessmentPlacement) !== layoutDuplicateKey({ ...assessmentPlacement, immerse_layout_placement: "second" }), "deliberate layout assessment placements must stay distinct");
+assert(layoutDuplicateKey({ category_slug: "assessment", assessment_source_id: "same-quiz" }) === "assessment|same-quiz", "ordinary assessment deduplication must remain unchanged");
+
 console.log("Editor scene loader tests passed.");

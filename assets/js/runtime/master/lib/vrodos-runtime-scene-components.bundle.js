@@ -74,7 +74,7 @@
         },
         listen: function(target, type, handler, options) {
           if (released || !target || typeof target.addEventListener !== "function") {
-            return;
+            return void 0;
           }
           target.addEventListener(type, handler, options);
           return cleanup(() => target.removeEventListener(type, handler, options));
@@ -2043,7 +2043,7 @@
         contentArea.style.padding = title && !description ? "1.5rem 4.5rem 1.5rem 2rem" : "";
       }
       if (dialogBox) dialogBox.style.maxWidth = title && !description && !hasImage ? "min(92vw, 30rem)" : "";
-      let imageDialog = document.querySelector("#poi-img-dialog");
+      const imageDialog = document.querySelector("#poi-img-dialog");
       if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === "function") {
         window.VRODOSMasterUI.showDialog(imageDialog);
       } else if (imageDialog && typeof imageDialog.showModal === "function") {
@@ -2121,8 +2121,8 @@
       if (this.marker || typeof THREE === "undefined") {
         return;
       }
-      var geometry = new THREE.OctahedronGeometry(this.data.radius, 0);
-      var material = new THREE.MeshStandardMaterial({
+      const geometry = new THREE.OctahedronGeometry(this.data.radius, 0);
+      const material = new THREE.MeshStandardMaterial({
         color: new THREE.Color(this.data.color),
         emissive: new THREE.Color(this.data.emissive),
         emissiveIntensity: 0.65,
@@ -2143,22 +2143,22 @@
         return;
       }
       this.el.object3D.updateMatrixWorld(true);
-      var box = new THREE.Box3();
+      const box = new THREE.Box3();
       this.expandBoxByObject(box, this.el.object3D);
       if (box.isEmpty()) {
         this.marker.position.set(0, 1 + this.data.heightOffset, 0);
         this.basePosition = this.marker.position.clone();
         return;
       }
-      var targetWorld = new THREE.Vector3(
+      const targetWorld = new THREE.Vector3(
         (box.min.x + box.max.x) / 2,
         box.max.y + this.data.heightOffset,
         (box.min.z + box.max.z) / 2
       );
-      var targetLocal = this.el.object3D.worldToLocal(targetWorld.clone());
+      const targetLocal = this.el.object3D.worldToLocal(targetWorld.clone());
       this.marker.position.copy(targetLocal);
       this.basePosition = targetLocal.clone();
-      var worldScale = this.worldScale;
+      const worldScale = this.worldScale;
       this.el.object3D.getWorldScale(worldScale);
       this.marker.scale.set(
         worldScale.x !== 0 ? 1 / Math.abs(worldScale.x) : 1,
@@ -2178,7 +2178,7 @@
           box.union(object.geometry.boundingBox.clone().applyMatrix4(object.matrixWorld));
         }
       }
-      for (var i = 0; i < object.children.length; i++) {
+      for (let i = 0; i < object.children.length; i++) {
         this.expandBoxByObject(box, object.children[i]);
       }
     },
@@ -2186,10 +2186,10 @@
       if (!this.marker || !this.basePosition) {
         return;
       }
-      var seconds = time / 1e3;
-      var worldScale = this.worldScale;
+      const seconds = time / 1e3;
+      const worldScale = this.worldScale;
       this.el.object3D.getWorldScale(worldScale);
-      var yScale = worldScale.y !== 0 ? Math.abs(worldScale.y) : 1;
+      const yScale = worldScale.y !== 0 ? Math.abs(worldScale.y) : 1;
       this.marker.position.y = this.basePosition.y + Math.sin(seconds * this.data.bobSpeed + this.offset) * this.data.bobAmplitude / yScale;
       this.marker.rotation.x = 0;
       this.marker.rotation.y = seconds * this.data.rotateSpeed;
@@ -2379,7 +2379,7 @@
       return !!(sound && sound.isPlaying);
     },
     resolveAudioAssetElement: function() {
-      var assetId = this.el.getAttribute("data-audio-asset-id");
+      const assetId = this.el.getAttribute("data-audio-asset-id");
       if (assetId) {
         return document.getElementById(assetId);
       }
@@ -2495,7 +2495,7 @@
       } catch (e) {
         console.debug("[Audio] currentTime reset failed:", e);
       }
-      var playPromise = this.audioAsset.play();
+      const playPromise = this.audioAsset.play();
       this.fallbackPlaybackActive = true;
       this.syncVisualState(true);
       if (playPromise && typeof playPromise.catch === "function") {
@@ -2525,7 +2525,7 @@
       );
     },
     resumeAudioContexts: function(sound) {
-      var contexts = [];
+      const contexts = [];
       if (typeof THREE !== "undefined" && THREE.AudioContext && typeof THREE.AudioContext.getContext === "function") {
         contexts.push(THREE.AudioContext.getContext());
       }
@@ -2536,7 +2536,7 @@
           }
         });
       }
-      var seen = [];
+      const seen = [];
       contexts.forEach(function(context) {
         if (!context || seen.indexOf(context) !== -1) {
           return;
@@ -2833,12 +2833,12 @@
       }
     },
     ensureVideoElement: function() {
-      var existingVideo = document.getElementById(this.videoElementId);
+      const existingVideo = document.getElementById(this.videoElementId);
       if (existingVideo) {
         this.prepareVideoElement(existingVideo);
         return existingVideo;
       }
-      var videoEl = document.createElement("video");
+      const videoEl = document.createElement("video");
       this.ownedVideo = videoEl;
       videoEl.id = this.videoElementId;
       videoEl.setAttribute("crossorigin", "anonymous");
@@ -2851,26 +2851,26 @@
     },
     resolvePosterUrl: function() {
       if (!this.videoPosterSelector || this.videoPosterSelector.charAt(0) !== "#") return "";
-      var posterAsset = document.querySelector(this.videoPosterSelector);
+      const posterAsset = document.querySelector(this.videoPosterSelector);
       return posterAsset ? posterAsset.getAttribute("src") || "" : "";
     },
     shouldUseFlatVideoMaterial: function() {
       if (!this.videoDisplay) return false;
-      var material = this.videoDisplay.getAttribute("material");
+      const material = this.videoDisplay.getAttribute("material");
       if (typeof material === "string" && /(?:^|;)\s*shader\s*:\s*flat(?:\s*;|$)/i.test(material)) {
         return true;
       }
       if (material && typeof material === "object" && material.shader === "flat") {
         return true;
       }
-      var sceneEl = document.querySelector("a-scene");
-      var settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
-      var settingsData = settings && settings.data ? settings.data : sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null;
-      var profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
+      const sceneEl = document.querySelector("a-scene");
+      const settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
+      const settingsData = settings && settings.data ? settings.data : sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null;
+      const profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
       return profile !== "desktop" && profile !== "pc-rendered-vr";
     },
     getWorldVideoMaterial: function(src) {
-      var material = this.useFlatMediaMaterial ? "shader: flat; side: front; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true" : "side: front; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+      let material = this.useFlatMediaMaterial ? "shader: flat; side: front; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true" : "side: front; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
       if (src) material += "; src: " + src;
       return material;
     },
@@ -2880,7 +2880,7 @@
     },
     setVideoDisplayShadowState: function(enabled) {
       if (!this.videoDisplay || !this.videoDisplay.getObject3D) return;
-      var mesh = this.videoDisplay.getObject3D("mesh");
+      const mesh = this.videoDisplay.getObject3D("mesh");
       if (!mesh) return;
       mesh.traverse(function(node) {
         if (!node || !node.isMesh) return;
@@ -2890,14 +2890,14 @@
     },
     requestSceneLightingRefresh: function() {
       if (!this.backgroundEl || !this.backgroundEl.components) return;
-      var settings = this.backgroundEl.components["scene-settings"];
+      const settings = this.backgroundEl.components["scene-settings"];
       if (!settings) return;
       if (typeof settings.markSceneCollectionsDirty === "function") settings.markSceneCollectionsDirty();
       if (typeof settings.queueQualityRefresh === "function") settings.queueQualityRefresh(false);
     },
     applyWorldVideoMaterial: function() {
       if (!this.videoDisplay) return;
-      var source = this.getInlineVideoMaterialSource();
+      const source = this.getInlineVideoMaterialSource();
       if (source) this.videoDisplay.setAttribute("src", source);
       this.videoDisplay.setAttribute("material", this.getWorldVideoMaterial(source));
       this.videoDisplay.setAttribute("data-vrodos-world-lighting", "true");
@@ -2926,7 +2926,7 @@
       else videoEl.removeAttribute("poster");
     },
     updateInlinePlayHint: function() {
-      var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
+      const shouldShow = !this.videoPrimed || !this.video || this.video.paused;
       this.playHintEls.forEach((hint) => {
         hint.setAttribute("visible", shouldShow ? "true" : "false");
         hint.classList.toggle("raycastable", shouldShow);
@@ -2934,9 +2934,9 @@
     },
     tuneVideoTexture: function() {
       if (!this.videoDisplay || !this.videoDisplay.getObject3D || typeof THREE === "undefined") return;
-      var mesh = this.videoDisplay.getObject3D("mesh");
+      const mesh = this.videoDisplay.getObject3D("mesh");
       if (!mesh || !mesh.material || !mesh.material.map) return;
-      var map = mesh.material.map;
+      const map = mesh.material.map;
       if (typeof THREE.LinearFilter !== "undefined") {
         map.minFilter = THREE.LinearFilter;
         map.magFilter = THREE.LinearFilter;
@@ -2994,12 +2994,12 @@
       this.updateInlinePlayHint();
     },
     prepareDialogPlayback: function() {
-      var videoElement = this.dialogVideo || document.getElementById("video-panel-video");
+      const videoElement = this.dialogVideo || document.getElementById("video-panel-video");
       if (!videoElement) return null;
       this.dialogVideo = videoElement;
       this.configureDialogVideoElement(videoElement);
-      var desiredUrl = this.video.currentSrc || this.video.getAttribute("src") || this.videoSourceUrl;
-      var currentUrl = videoElement.currentSrc || videoElement.getAttribute("src") || "";
+      const desiredUrl = this.video.currentSrc || this.video.getAttribute("src") || this.videoSourceUrl;
+      const currentUrl = videoElement.currentSrc || videoElement.getAttribute("src") || "";
       if (desiredUrl && currentUrl !== desiredUrl) {
         videoElement.pause();
         videoElement.setAttribute("src", desiredUrl);
@@ -3025,7 +3025,7 @@
       if (this.video && !this.video.paused) {
         this.video.pause();
       }
-      var playPromise = videoElement.play();
+      const playPromise = videoElement.play();
       if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch((error) => console.warn("Dialog video playback prevented:", error));
       }
@@ -3071,13 +3071,13 @@
         this.playVideo();
         return;
       }
-      let video_element = this.prepareDialogPlayback();
+      const video_element = this.prepareDialogPlayback();
       if (!video_element) return;
-      let videoDialog = document.querySelector("#video-controls-dialog");
-      let videoTitleEl = document.querySelector("#video-controls-dialog-title");
-      let videoHeaderContent = videoTitleEl ? videoTitleEl.closest(".tw-flex.tw-items-center.tw-gap-3") : null;
+      const videoDialog = document.querySelector("#video-controls-dialog");
+      const videoTitleEl = document.querySelector("#video-controls-dialog-title");
+      const videoHeaderContent = videoTitleEl ? videoTitleEl.closest(".tw-flex.tw-items-center.tw-gap-3") : null;
       if (videoTitleEl) {
-        let titleVal = this.videoTitle || "";
+        const titleVal = this.videoTitle || "";
         if (titleVal && titleVal.trim() !== "" && !["video-title", "Video Viewer"].includes(titleVal)) {
           videoTitleEl.innerText = titleVal;
           if (videoHeaderContent) videoHeaderContent.classList.remove("tw-hidden");

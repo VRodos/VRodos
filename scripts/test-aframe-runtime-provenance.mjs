@@ -60,8 +60,11 @@ assert(assetManager.includes("$browser_library_versions['lucide']"), "Lucide reg
 
 assert(lockedThree?.version === "0.185.0", "package-lock.json must lock super-three 0.185.0");
 assert(packageJson.devDependencies?.three === "npm:super-three@0.185.0", "package.json must declare exact super-three 0.185.0");
-assert(packageJson.dependencies?.["@pmndrs/msdfonts"] === "1.0.76", "Direct MSDF import must have exact package ownership");
-assert(packageJson.dependencies?.["@takram/three-geospatial"] === "0.9.1", "Direct Takram geospatial import must have exact package ownership");
+for (const packageName of ["@pmndrs/msdfonts", "@takram/three-geospatial"]) {
+    const lockedVersion = packageLock.packages?.[`node_modules/${packageName}`]?.version;
+    assert(lockedVersion && packageJson.dependencies?.[packageName] === lockedVersion,
+        `Direct import ${packageName} must be pinned to its exact locked version`);
+}
 for (const packageName of [
     "aframe-extras",
     "aframe-environment-component",

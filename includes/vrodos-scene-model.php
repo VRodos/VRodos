@@ -193,7 +193,8 @@ class Vrodos_Scene_Model {
 
 	private function assessment_duplicate_key( object $object ): string {
 		$source = $this->first_non_empty_string( $object, [ 'assessment_source_id', 'asset_id', 'asset_slug' ] );
-		return $source !== '' ? 'assessment|' . $source : '';
+		$placement = $this->first_non_empty_string( $object, [ 'immerse_layout_placement' ] );
+		return $source !== '' ? 'assessment|' . $source . ( $placement !== '' ? '|placement:' . $placement : '' ) : '';
 	}
 
 	private function assessment_metadata_score( object $object ): int {

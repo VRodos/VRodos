@@ -519,28 +519,28 @@
         while (void 0 !== i3) {
           var t3 = i3.S;
           if (t3.v === i3.v) {
-            for (var n3 = t3.t; void 0 !== n3; n3 = n3.x) if (n3.i === i3.i) n3.i = t3.i;
+            for (var r3 = t3.t; void 0 !== r3; r3 = r3.x) if (r3.i === i3.i) r3.i = t3.i;
           }
           i3 = i3.o;
         }
       })();
       while (void 0 !== h) {
-        var n2 = h;
+        var r2 = h;
         h = void 0;
         s++;
-        while (void 0 !== n2) {
-          var r2 = n2.u;
-          n2.u = void 0;
-          n2.f &= -3;
-          if (!(8 & n2.f) && w(n2)) try {
-            n2.c();
-          } catch (n3) {
+        while (void 0 !== r2) {
+          var n2 = r2.u;
+          r2.u = void 0;
+          r2.f &= -3;
+          if (!(8 & r2.f) && w(r2)) try {
+            r2.c();
+          } catch (r3) {
             if (!t2) {
-              i2 = n3;
+              i2 = r3;
               t2 = true;
             }
           }
-          n2 = r2;
+          r2 = n2;
         }
       }
       s = 0;
@@ -548,9 +548,9 @@
       if (t2) throw i2;
     } else v--;
   }
-  function n(i2) {
+  function r(i2) {
     if (v > 0) return i2();
-    e = ++u;
+    u = ++e;
     v++;
     try {
       return i2();
@@ -558,27 +558,27 @@
       t();
     }
   }
-  var r;
+  var n;
   var o = void 0;
   function f(i2) {
-    var t2 = o, n2 = r;
+    var t2 = o, r2 = n;
     o = void 0;
-    r = void 0;
+    n = void 0;
     try {
       return i2();
     } finally {
       o = t2;
-      r = n2;
+      n = r2;
     }
   }
   var h = void 0;
   var v = 0;
   var s = 0;
-  var u = 0;
   var e = 0;
+  var u = 0;
   var c = void 0;
-  var d = 0;
-  function a(i2) {
+  var a = 0;
+  function d(i2) {
     if (void 0 !== o) {
       var t2 = i2.n;
       if (void 0 === t2 || t2.t !== o) {
@@ -617,11 +617,11 @@
     return true;
   };
   l.prototype.S = function(i2) {
-    var t2 = this, n2 = this.t;
-    if (n2 !== i2 && void 0 === i2.e) {
-      i2.x = n2;
+    var t2 = this, r2 = this.t;
+    if (r2 !== i2 && void 0 === i2.e) {
+      i2.x = r2;
       this.t = i2;
-      if (void 0 !== n2) n2.e = i2;
+      if (void 0 !== r2) r2.e = i2;
       else f(function() {
         var i3;
         null == (i3 = t2.W) || i3.call(t2);
@@ -631,18 +631,18 @@
   l.prototype.U = function(i2) {
     var t2 = this;
     if (void 0 !== this.t) {
-      var n2 = i2.e, r2 = i2.x;
-      if (void 0 !== n2) {
-        n2.x = r2;
+      var r2 = i2.e, n2 = i2.x;
+      if (void 0 !== r2) {
+        r2.x = n2;
         i2.e = void 0;
       }
-      if (void 0 !== r2) {
-        r2.e = n2;
+      if (void 0 !== n2) {
+        n2.e = r2;
         i2.x = void 0;
       }
       if (i2 === this.t) {
-        this.t = r2;
-        if (void 0 === r2) f(function() {
+        this.t = n2;
+        if (void 0 === n2) f(function() {
           var i3;
           null == (i3 = t2.Z) || i3.call(t2);
         });
@@ -651,10 +651,10 @@
   };
   l.prototype.subscribe = function(i2) {
     var t2 = this;
-    return j(function() {
-      var n2 = t2.value;
+    return x(function() {
+      var r2 = t2.value;
       f(function() {
-        return i2(n2);
+        return i2(r2);
       });
     }, { name: "sub" });
   };
@@ -674,7 +674,7 @@
     });
   };
   Object.defineProperty(l.prototype, "value", { get: function() {
-    var i2 = a(this);
+    var i2 = d(this);
     if (void 0 !== i2) i2.i = this.i;
     return this.v;
   }, set: function(i2) {
@@ -682,18 +682,18 @@
       if (s > 100) throw new Error("Cycle detected");
       !(function(i3) {
         if (0 !== v && 0 === s) {
-          if (i3.l !== e) {
-            i3.l = e;
+          if (i3.l !== u) {
+            i3.l = u;
             c = { S: i3, v: i3.v, i: i3.i, o: c };
           }
         }
       })(this);
       this.v = i2;
       this.i++;
-      d++;
+      a++;
       v++;
       try {
-        for (var n2 = this.t; void 0 !== n2; n2 = n2.x) n2.t.N();
+        for (var r2 = this.t; void 0 !== r2; r2 = r2.x) r2.t.N();
       } finally {
         t();
       }
@@ -706,10 +706,10 @@
     for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) if (t2.S.i !== t2.i || !t2.S.h() || t2.S.i !== t2.i) return true;
     return false;
   }
-  function _(i2) {
+  function b(i2) {
     for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) {
-      var n2 = t2.S.n;
-      if (void 0 !== n2) t2.r = n2;
+      var r2 = t2.S.n;
+      if (void 0 !== r2) t2.r = r2;
       t2.S.n = t2;
       t2.i = -1;
       if (void 0 === t2.n) {
@@ -718,36 +718,36 @@
       }
     }
   }
-  function b(i2) {
-    var t2 = i2.s, n2 = void 0;
+  function _(i2) {
+    var t2 = i2.s, r2 = void 0;
     while (void 0 !== t2) {
-      var r2 = t2.p;
+      var n2 = t2.p;
       if (-1 === t2.i) {
         t2.S.U(t2);
-        if (void 0 !== r2) r2.n = t2.n;
-        if (void 0 !== t2.n) t2.n.p = r2;
-      } else n2 = t2;
+        if (void 0 !== n2) n2.n = t2.n;
+        if (void 0 !== t2.n) t2.n.p = n2;
+      } else r2 = t2;
       t2.S.n = t2.r;
       if (void 0 !== t2.r) t2.r = void 0;
-      t2 = r2;
+      t2 = n2;
     }
-    i2.s = n2;
+    i2.s = r2;
   }
-  function p(i2, t2) {
+  function j(i2, t2) {
     l.call(this, void 0, t2);
     this.x = i2;
     this.s = void 0;
-    this.g = d - 1;
+    this.g = a - 1;
     this.f = 4;
   }
-  p.prototype = new l();
-  p.prototype.h = function() {
+  j.prototype = new l();
+  j.prototype.h = function() {
     this.f &= -3;
     if (1 & this.f) return false;
     if (32 == (36 & this.f)) return true;
     this.f &= -5;
-    if (this.g === d) return true;
-    this.g = d;
+    if (this.g === a) return true;
+    this.g = a;
     this.f |= 1;
     if (this.i > 0 && !w(this)) {
       this.f &= -2;
@@ -755,7 +755,7 @@
     }
     var i2 = o;
     try {
-      _(this);
+      b(this);
       o = this;
       var t2 = this.x();
       if (16 & this.f || this.v !== t2 || 0 === this.i) {
@@ -769,18 +769,18 @@
       this.i++;
     }
     o = i2;
-    b(this);
+    _(this);
     this.f &= -2;
     return true;
   };
-  p.prototype.S = function(i2) {
+  j.prototype.S = function(i2) {
     if (void 0 === this.t) {
       this.f |= 36;
       for (var t2 = this.s; void 0 !== t2; t2 = t2.n) t2.S.S(t2);
     }
     l.prototype.S.call(this, i2);
   };
-  p.prototype.U = function(i2) {
+  j.prototype.U = function(i2) {
     if (void 0 !== this.t) {
       l.prototype.U.call(this, i2);
       if (void 0 === this.t) {
@@ -789,113 +789,116 @@
       }
     }
   };
-  p.prototype.N = function() {
+  j.prototype.N = function() {
     if (!(2 & this.f)) {
       this.f |= 6;
       for (var i2 = this.t; void 0 !== i2; i2 = i2.x) i2.t.N();
     }
   };
-  Object.defineProperty(p.prototype, "value", { get: function() {
+  Object.defineProperty(j.prototype, "value", { get: function() {
     if (1 & this.f) throw new Error("Cycle detected");
-    var i2 = a(this);
+    var i2 = d(this);
     this.h();
     if (void 0 !== i2) i2.i = this.i;
     if (16 & this.f) throw this.v;
     return this.v;
   } });
-  function g(i2, t2) {
-    return new p(i2, t2);
+  function O(i2, t2) {
+    return new j(i2, t2);
   }
-  function S(i2) {
-    var n2 = i2.m;
-    i2.m = void 0;
-    if ("function" == typeof n2) {
+  function p(i2) {
+    var r2 = i2.j;
+    i2.j = void 0;
+    if ("function" == typeof r2) {
       v++;
-      var r2 = o;
+      var n2 = o;
       o = void 0;
       try {
-        n2();
+        r2();
       } catch (t2) {
         i2.f &= -2;
         i2.f |= 8;
-        m(i2);
+        g(i2);
         throw t2;
       } finally {
-        o = r2;
+        o = n2;
         t();
       }
     }
   }
-  function m(i2) {
+  function g(i2) {
     for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) t2.S.U(t2);
     i2.x = void 0;
     i2.s = void 0;
-    S(i2);
+    p(i2);
   }
-  function x(i2) {
+  function S(i2) {
     if (o !== this) throw new Error("Out-of-order effect");
-    b(this);
+    _(this);
     o = i2;
     this.f &= -2;
-    if (8 & this.f) m(this);
-    t();
+    try {
+      if (8 & this.f) g(this);
+    } finally {
+      t();
+    }
   }
-  function E(i2, t2) {
+  function m(i2, t2) {
     this.x = i2;
-    this.m = void 0;
+    this.j = void 0;
     this.s = void 0;
     this.u = void 0;
     this.f = 32;
     this.name = null == t2 ? void 0 : t2.name;
-    if (r) r.push(this);
+    if (n) n.push(this);
   }
-  E.prototype.c = function() {
+  m.prototype.c = function() {
     var i2 = this.S();
     try {
       if (8 & this.f) return;
       if (void 0 === this.x) return;
       var t2 = this.x();
-      if ("function" == typeof t2) this.m = t2;
+      if ("function" == typeof t2) this.j = t2;
     } finally {
       i2();
     }
   };
-  E.prototype.S = function() {
+  m.prototype.S = function() {
     if (1 & this.f) throw new Error("Cycle detected");
     this.f |= 1;
     this.f &= -9;
-    S(this);
-    _(this);
+    p(this);
+    b(this);
     v++;
     var i2 = o;
     o = this;
-    return x.bind(this, i2);
+    return S.bind(this, i2);
   };
-  E.prototype.N = function() {
+  m.prototype.N = function() {
     if (!(2 & this.f)) {
       this.f |= 2;
       this.u = h;
       h = this;
     }
   };
-  E.prototype.d = function() {
+  m.prototype.d = function() {
     this.f |= 8;
-    if (!(1 & this.f)) m(this);
+    if (!(1 & this.f)) g(this);
   };
-  E.prototype.dispose = function() {
+  m.prototype.dispose = function() {
     this.d();
   };
-  function j(i2, t2) {
-    var n2 = new E(i2, t2);
+  function x(i2, t2) {
+    var r2 = new m(i2, t2);
     try {
-      n2.c();
+      r2.c();
     } catch (i3) {
-      n2.d();
+      r2.d();
       throw i3;
     }
-    var r2 = n2.d.bind(n2);
-    r2[Symbol.dispose] = r2;
-    return r2;
+    var n2 = r2.d.bind(r2);
+    n2[Symbol.dispose] = n2;
+    return n2;
   }
 
   // node_modules/@pmndrs/uikit/dist/active.js
@@ -1485,13 +1488,6 @@
     };
   }
 
-  // node_modules/three/src/math/MathUtils.js
-  var DEG2RAD = Math.PI / 180;
-  var RAD2DEG = 180 / Math.PI;
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
   // node_modules/@pmndrs/uikit/dist/panel/interaction/spherecast.js
   var sphereHelper = new Sphere();
   var vectorHelper = new Vector3();
@@ -1507,8 +1503,8 @@
       }
       object.updateMatrixWorld(true);
       vectorHelper.copy(sphere.center).applyMatrix4(matrixHelper.copy(object.matrixWorld).invert());
-      vectorHelper.x = clamp(vectorHelper.x, -0.5, 0.5);
-      vectorHelper.y = clamp(vectorHelper.y, -0.5, 0.5);
+      vectorHelper.x = MathUtils.clamp(vectorHelper.x, -0.5, 0.5);
+      vectorHelper.y = MathUtils.clamp(vectorHelper.y, -0.5, 0.5);
       vectorHelper.z = 0;
       const uv = new Vector2(vectorHelper.x, vectorHelper.y);
       vectorHelper.applyMatrix4(object.matrixWorld);
@@ -2366,7 +2362,7 @@
   // node_modules/@pmndrs/uikit/dist/panel/instance/matrix.js
   var matrixHelper2 = new Matrix4();
   function computedPanelMatrix(properties, matrixSignal, sizeSignal, offsetSignal) {
-    return g(() => {
+    return O(() => {
       const size = sizeSignal.value;
       const matrix = matrixSignal.value;
       if (size == null || matrix == null) {
@@ -2426,7 +2422,7 @@
         }
         return d2;
       }
-      var ia, ja, A, C, ka, D, E2, la, ma;
+      var ia, ja, A, C, ka, D, E, la, ma;
       function na() {
         var a2 = fa.buffer;
         ia = a2;
@@ -2435,7 +2431,7 @@
         h2.HEAP32 = D = new Int32Array(a2);
         h2.HEAPU8 = A = new Uint8Array(a2);
         h2.HEAPU16 = ka = new Uint16Array(a2);
-        h2.HEAPU32 = E2 = new Uint32Array(a2);
+        h2.HEAPU32 = E = new Uint32Array(a2);
         h2.HEAPF32 = la = new Float32Array(a2);
         h2.HEAPF64 = ma = new Float64Array(a2);
       }
@@ -2549,10 +2545,10 @@
         for (var b2 = ""; A[a2]; ) b2 += Ga[A[a2++]];
         return b2;
       }
-      var O = [];
+      var O2 = [];
       function Ha() {
-        for (; O.length; ) {
-          var a2 = O.pop();
+        for (; O2.length; ) {
+          var a2 = O2.pop();
           a2.M.$ = false;
           a2["delete"]();
         }
@@ -2827,7 +2823,7 @@
         };
       }
       function pb(a2, b2) {
-        for (var c2 = [], d2 = 0; d2 < a2; d2++) c2.push(E2[b2 + 4 * d2 >> 2]);
+        for (var c2 = [], d2 = 0; d2 < a2; d2++) c2.push(E[b2 + 4 * d2 >> 2]);
         return c2;
       }
       function qb(a2) {
@@ -2870,7 +2866,7 @@
             return c2 ? function(d2) {
               return D[d2 >> 2];
             } : function(d2) {
-              return E2[d2 >> 2];
+              return E[d2 >> 2];
             };
           default:
             throw new TypeError("Unknown integer type: " + a2);
@@ -2944,7 +2940,7 @@
         return b2;
       }
       function Db(a2, b2) {
-        for (var c2 = Array(a2), d2 = 0; d2 < a2; ++d2) c2[d2] = La(E2[b2 + 4 * d2 >> 2], "parameter " + d2);
+        for (var c2 = Array(a2), d2 = 0; d2 < a2; ++d2) c2[d2] = La(E[b2 + 4 * d2 >> 2], "parameter " + d2);
         return c2;
       }
       var Eb = [], Fb = [null, [], []];
@@ -2971,7 +2967,7 @@
       h2.flushPendingDeletes = Ha;
       h2.setDelayFunction = function(a2) {
         P = a2;
-        O.length && P && P(Ha);
+        O2.length && P && P(Ha);
       };
       Sa = h2.InternalError = Da("InternalError");
       X2.prototype.isAliasOf = function(a2) {
@@ -3003,8 +2999,8 @@
       X2.prototype.deleteLater = function() {
         this.M.O || $a(this);
         this.M.$ && !this.M.aa && L("Object already scheduled for deletion");
-        O.push(this);
-        1 === O.length && P && P(Ha);
+        O2.push(this);
+        1 === O2.length && P && P(Ha);
         this.M.$ = true;
         return this;
       };
@@ -3297,7 +3293,7 @@
         b: function(a2, b2, c2) {
           function d2(f2) {
             f2 >>= 2;
-            var g2 = E2;
+            var g2 = E;
             return new e2(ia, g2[f2 + 1], g2[f2]);
           }
           var e2 = [Int8Array, Uint8Array, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array][b2];
@@ -3308,7 +3304,7 @@
           b2 = N(b2);
           var c2 = "std::string" === b2;
           W(a2, { name: b2, fromWireType: function(d2) {
-            var e2 = E2[d2 >> 2], f2 = d2 + 4;
+            var e2 = E[d2 >> 2], f2 = d2 + 4;
             if (c2) for (var g2 = f2, k = 0; k <= e2; ++k) {
               var m2 = f2 + k;
               if (k == e2 || 0 == A[m2]) {
@@ -3339,7 +3335,7 @@
             } else f2 = e2.length;
             k = Ib(4 + f2 + 1);
             m2 = k + 4;
-            E2[k >> 2] = f2;
+            E[k >> 2] = f2;
             if (c2 && g2) {
               if (g2 = m2, m2 = f2 + 1, f2 = A, 0 < m2) {
                 m2 = g2 + m2 - 1;
@@ -3388,9 +3384,9 @@
             var f2 = vb;
             var g2 = () => ka;
             var k = 1;
-          } else 4 === b2 && (d2 = wb, e2 = xb, f2 = yb, g2 = () => E2, k = 2);
+          } else 4 === b2 && (d2 = wb, e2 = xb, f2 = yb, g2 = () => E, k = 2);
           W(a2, { name: c2, fromWireType: function(m2) {
-            for (var l2 = E2[m2 >> 2], n2 = g2(), p2, r2 = m2 + 4, u2 = 0; u2 <= l2; ++u2) {
+            for (var l2 = E[m2 >> 2], n2 = g2(), p2, r2 = m2 + 4, u2 = 0; u2 <= l2; ++u2) {
               var t2 = m2 + 4 + u2 * b2;
               if (u2 == l2 || 0 == n2[t2 >> k]) r2 = d2(r2, t2 - r2), void 0 === p2 ? p2 = r2 : (p2 += String.fromCharCode(0), p2 += r2), r2 = t2 + b2;
             }
@@ -3399,7 +3395,7 @@
           }, toWireType: function(m2, l2) {
             "string" != typeof l2 && L("Cannot pass non-string to C++ string type " + c2);
             var n2 = f2(l2), p2 = Ib(4 + n2 + b2);
-            E2[p2 >> 2] = n2 >> k;
+            E[p2 >> 2] = n2 >> k;
             e2(l2, p2 + 4, n2 + b2);
             null !== m2 && m2.push(S2, p2);
             return p2;
@@ -3430,7 +3426,7 @@
           b2 = M(b2);
           c2 = Ab(c2);
           var f2 = [];
-          E2[d2 >> 2] = Ea(f2);
+          E[d2 >> 2] = Ea(f2);
           return a2(b2, c2, f2, e2);
         },
         t: function(a2, b2, c2, d2) {
@@ -3505,7 +3501,7 @@
         },
         y: function(a2, b2, c2, d2) {
           for (var e2 = 0, f2 = 0; f2 < c2; f2++) {
-            var g2 = E2[b2 >> 2], k = E2[b2 + 4 >> 2];
+            var g2 = E[b2 >> 2], k = E[b2 + 4 >> 2];
             b2 += 8;
             for (var m2 = 0; m2 < k; m2++) {
               var l2 = A[g2 + m2], n2 = Fb[a2];
@@ -3513,7 +3509,7 @@
             }
             e2 += k;
           }
-          E2[d2 >> 2] = e2;
+          E[d2 >> 2] = e2;
           return 0;
         }
       };
@@ -4000,7 +3996,7 @@
     [-0.5, 0.5]
   ];
   function computedIsClipped(parent, globalMatrix, size, pixelSizeSignal) {
-    return g(() => {
+    return O(() => {
       const parentValue = parent.value;
       if (parentValue == null) {
         return false;
@@ -4039,7 +4035,7 @@
     });
   }
   function computedClippingRect(globalMatrix, { overflow, borderInset, size }, pixelSizeSignal, parentClippingRect) {
-    return g(() => {
+    return O(() => {
       const global = globalMatrix.value;
       const parentClippingRectValue = parentClippingRect == null ? void 0 : parentClippingRect.value;
       if (global == null || overflow.value === Overflow.Visible) {
@@ -4323,7 +4319,7 @@
 
   // node_modules/@pmndrs/uikit/dist/panel/instance/properties.js
   function computedPanelGroupDependencies(properties) {
-    return g(() => {
+    return O(() => {
       var _a4, _b;
       return {
         panelMaterialClass: resolvePanelMaterialClassProperty(properties.value.panelMaterialClass),
@@ -4443,7 +4439,7 @@
     return from + (value - currentValue) * x2;
   }
   function setBorderRadius(data, indexInData, indexInFloat, value, height) {
-    data[indexInData] = setComponentInFloat(data[indexInData], indexInFloat, height === 0 ? 0 : clamp(Math.ceil((value != null ? value : 0) / height * 100), 0, 49));
+    data[indexInData] = setComponentInFloat(data[indexInData], indexInFloat, height === 0 ? 0 : MathUtils.clamp(Math.ceil((value != null ? value : 0) / height * 100), 0, 49));
   }
 
   // node_modules/@pmndrs/uikit/dist/panel/material/config.js
@@ -4486,7 +4482,7 @@
       defaultData,
       setters,
       computedIsVisibile: (properties, borderInset, size, isVisible) => {
-        return g(() => {
+        return O(() => {
           var _a4, _b, _c;
           const borderInsetValue = borderInset.value;
           const sizeValue = size.value;
@@ -4842,7 +4838,7 @@
       }
       this.commit(this.yogaNode.getFlexDirection());
       this.yogaNode.calculateLayout(void 0, void 0);
-      n(() => this.updateMeasurements(true, void 0, void 0));
+      r(() => this.updateMeasurements(true, void 0, void 0));
     }
     addChild(node) {
       this.children.push(node);
@@ -5121,7 +5117,7 @@
   var symstemIsDarkMode = y((_a = queryList == null ? void 0 : queryList.matches) != null ? _a : false);
   queryList == null ? void 0 : queryList.addEventListener("change", (event) => symstemIsDarkMode.value = event.matches);
   var preferredColorScheme = y("system");
-  var isDarkMode = g(() => {
+  var isDarkMode = O(() => {
     switch (preferredColorScheme.value) {
       case "system":
         return symstemIsDarkMode.value;
@@ -5216,6 +5212,7 @@
       __publicField(this, "peekProxy", new Proxy({}, { get: (_target, key) => this.peekValue(key) }));
       __publicField(this, "propertyStateMap", {});
       __publicField(this, "propertiesLayers", /* @__PURE__ */ new Map());
+      __publicField(this, "sortedLayerIndices");
       __publicField(this, "propertyKeys");
       __publicField(this, "propertyKeySubscriptions", /* @__PURE__ */ new Set());
       this.apply = apply;
@@ -5225,6 +5222,10 @@
     }
     peek() {
       return this.peekProxy;
+    }
+    getSortedLayerIndices() {
+      var _a4;
+      return (_a4 = this.sortedLayerIndices) != null ? _a4 : this.sortedLayerIndices = Array.from(this.propertiesLayers.keys()).sort((a2, b2) => a2 - b2);
     }
     subscribePropertyKeys(callback) {
       for (const key of this.propertyKeys) {
@@ -5236,6 +5237,7 @@
     clearProvidedLayer(layer, index) {
       var _a4;
       this.propertiesLayers.delete(index);
+      this.sortedLayerIndices = void 0;
       for (const key in layer) {
         const value = layer[key];
         if (value === void 0) {
@@ -5257,7 +5259,7 @@
       var _a4;
       let layer = this.propertiesLayers.get(index);
       const isNewLayer = layer == null;
-      n(() => {
+      r(() => {
         if (layer != null) {
           this.clearProvidedLayer(layer, index);
         }
@@ -5265,6 +5267,7 @@
           return;
         }
         this.propertiesLayers.set(index, layer = {});
+        this.sortedLayerIndices = void 0;
         const entries = Object.entries(value);
         for (const [key, value2] of entries) {
           this.apply(key, value2, this.setProperty.bind(this, layer, index), index);
@@ -5293,7 +5296,7 @@
         return propertyState.signal.peek();
       }
       const defaultValue = (_a4 = this.defaults) == null ? void 0 : _a4[key];
-      const layerIndices = Array.from(this.propertiesLayers.keys()).sort((a2, b2) => a2 - b2);
+      const layerIndices = this.getSortedLayerIndices();
       const [result] = f(() => selectLayerValue(0, layerIndices, this.propertiesLayers, key, defaultValue));
       return result;
     }
@@ -5301,6 +5304,7 @@
       let propertiesLayer = this.propertiesLayers.get(layerIndex);
       if (propertiesLayer == null) {
         this.propertiesLayers.set(layerIndex, propertiesLayer = {});
+        this.sortedLayerIndices = void 0;
       }
       this.apply(key, value, this.setProperty.bind(this, propertiesLayer, layerIndex), layerIndex);
     }
@@ -5334,8 +5338,8 @@
       const defaultValue = (_b = this.defaults) == null ? void 0 : _b[key];
       let result;
       if (this.enabled.peek()) {
-        result = selectLayerValue(0, Array.from(this.propertiesLayers.keys()).sort((a2, b2) => a2 - b2), this.propertiesLayers, key, defaultValue, (layerIndex) => target.cleanup = j(() => {
-          const [value2, index2] = selectLayerValue(layerIndex, Array.from(this.propertiesLayers.keys()).sort((a2, b2) => a2 - b2), this.propertiesLayers, key, defaultValue);
+        result = selectLayerValue(0, this.getSortedLayerIndices(), this.propertiesLayers, key, defaultValue, (layerIndex) => target.cleanup = x(() => {
+          const [value2, index2] = selectLayerValue(layerIndex, this.getSortedLayerIndices(), this.propertiesLayers, key, defaultValue);
           target.signal.value = value2;
           target.layerIndex = index2;
         }));
@@ -5524,7 +5528,7 @@
     }
   };
   function computedFontFamilies(properties, parent) {
-    return g(() => {
+    return O(() => {
       var _a4;
       const currentFontFamilies = properties.value.fontFamilies;
       const inheritedFontFamilies = (_a4 = parent.value) == null ? void 0 : _a4.fontFamilies.value;
@@ -5542,7 +5546,7 @@
   }
   function computedFont(properties, fontFamiliesSignal) {
     const result = y(void 0);
-    j(() => {
+    x(() => {
       var _a4;
       if (!properties.enabled.value) {
         return;
@@ -5703,7 +5707,7 @@
       this.conditionals = conditionals;
     }
     setLayersWithConditionals(layerInSectionIdentifier, properties) {
-      n(() => {
+      r(() => {
         this.setLayer(getLayerIndex({ ...layerInSectionIdentifier, section: "base" }), properties);
         for (const layerSection of SpecialLayerSections) {
           const layerIndex = getLayerIndex({ ...layerInSectionIdentifier, section: layerSection });
@@ -5716,7 +5720,7 @@
           if (getConditional != null) {
             conditionalProperties = Object.fromEntries(Object.entries(conditionalProperties).map(([key, value]) => [
               key,
-              g(() => getConditional() ? value instanceof l ? value.value : value : void 0)
+              O(() => getConditional() ? value instanceof l ? value.value : value : void 0)
             ]));
           }
           this.setLayer(layerIndex, conditionalProperties);
@@ -5748,7 +5752,7 @@
   var defaultTransformOriginX = "center";
   var defaultTransformOriginY = "center";
   function computedTransformMatrix({ relativeCenter, size, properties, root }) {
-    return g(() => {
+    return O(() => {
       var _a4, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
       const relativeCenterValue = relativeCenter.value;
       if (relativeCenterValue == null) {
@@ -5836,7 +5840,7 @@
       }
     }
     add(...classes) {
-      n(() => {
+      r(() => {
         for (const classRef of classes) {
           let classIndex = 0;
           while (this.list[classIndex] != null) {
@@ -5851,7 +5855,7 @@
       });
     }
     remove(...classes) {
-      n(() => {
+      r(() => {
         for (const classRef of classes) {
           const classIndex = this.list.indexOf(classRef);
           if (classIndex === -1) {
@@ -6023,7 +6027,7 @@
   };
   var lineHelper = {};
   function computedCustomLayouting(layoutPropertiesSignal) {
-    return g(() => {
+    return O(() => {
       const layoutProperties = layoutPropertiesSignal.value;
       if (layoutProperties == null) {
         return void 0;
@@ -6172,7 +6176,7 @@
   var preLineCollapseLinefeedRegex = /[\t ]*\n[\t ]*/gm;
   var preLineTrimNonLinefeedWhitespaceRegex = /^[ \t]+|[ \t]+$/g;
   function computedGlyphOutProperties(properties, fontSignal) {
-    return g(() => {
+    return O(() => {
       const font = fontSignal.value;
       if (font == null) {
         return void 0;
@@ -6211,7 +6215,7 @@
   var IdentityScale = new Vector3(1, 1, 1);
   var textMatrixPosition = new Vector3();
   function computedGlobalTextMatrix(target) {
-    return g(() => {
+    return O(() => {
       var _a4;
       const paddingInset = target.paddingInset.value;
       const borderInset = target.borderInset.value;
@@ -6347,7 +6351,7 @@
   function setupTextLayout(target) {
     const layoutProperties = computedGlyphOutProperties(target.properties, target.fontSignal);
     const customLayouting = computedCustomLayouting(layoutProperties);
-    const layout = g(() => {
+    const layout = O(() => {
       const properties = layoutProperties.value;
       const { size: { value: size }, paddingInset: { value: paddingInset }, borderInset: { value: borderInset } } = target;
       if (properties == null || size == null || paddingInset == null || borderInset == null) {
@@ -6507,7 +6511,7 @@
   var helperMatrix1 = new Matrix4();
   var helperMatrix2 = new Matrix4();
   function computedGylphGroupDependencies(fontSignal) {
-    return g(() => ({ font: fontSignal.value }));
+    return O(() => ({ font: fontSignal.value }));
   }
   var InstancedGlyph = class {
     constructor(group, baseMatrix, color, opacity, clippingRect) {
@@ -6910,7 +6914,7 @@
       this.matrix = matrix;
       this.parentClippingRect = parentClippingRect;
       this.unsubscribeInitialList = [
-        j(() => {
+        x(() => {
           if (!isVisible.value || toAbsoluteNumber(this.properties.value.opacity, () => 1) < 0.01) {
             this.hide();
             return;
@@ -6924,21 +6928,21 @@
         return;
       }
       traverseGlyphs(this.glyphLines, (glyph) => glyph.show());
-      this.unsubscribeShowList.push(j(() => {
+      this.unsubscribeShowList.push(x(() => {
         const matrix = this.matrix.value;
         if (matrix == null) {
           return;
         }
         traverseGlyphs(this.glyphLines, (glyph) => glyph.updateBaseMatrix(matrix));
-      }), j(() => {
+      }), x(() => {
         var _a4;
         const clippingRect = (_a4 = this.parentClippingRect) == null ? void 0 : _a4.value;
         traverseGlyphs(this.glyphLines, (glyph) => glyph.updateClippingRect(clippingRect));
-      }), j(() => {
+      }), x(() => {
         const color = this.properties.value.color;
         const opacity = toAbsoluteNumber(this.properties.value.opacity, () => 1);
         traverseGlyphs(this.glyphLines, (glyph) => glyph.updateColor(color != null ? color : 0, opacity));
-      }), j(() => {
+      }), x(() => {
         var _a4, _b;
         const layout = this.layoutSignal.value;
         if (layout == null) {
@@ -7062,7 +7066,7 @@
       return () => clearInterval(ref);
     }, abortSignal);
     const borderInset = computedBorderInset(properties, caretBorderKeys);
-    const panelSize = g(() => {
+    const panelSize = O(() => {
       var _a4, _b;
       const height = (_a4 = blinkingCaretTransformation.value) == null ? void 0 : _a4.height;
       if (height == null) {
@@ -7070,7 +7074,7 @@
       }
       return [parseAbsoluteLengthValue((_b = properties.value.caretWidth) != null ? _b : 0), height];
     });
-    const panelOffset = g(() => {
+    const panelOffset = O(() => {
       var _a4, _b;
       const position = (_a4 = blinkingCaretTransformation.value) == null ? void 0 : _a4.position;
       if (position == null) {
@@ -7255,7 +7259,7 @@
 
   // node_modules/@pmndrs/uikit/dist/context.js
   function buildRootContext(component, renderContext) {
-    const root = g(() => component.parentContainer.value == null ? createRootContext(component, renderContext) : component.parentContainer.value.root.value);
+    const root = O(() => component.parentContainer.value == null ? createRootContext(component, renderContext) : component.parentContainer.value.root.value);
     abortableEffect(() => {
       const rootValue = root.value;
       if (rootValue.component != component || !component.isAttached.value) {
@@ -7418,7 +7422,7 @@
       __publicField(this, "root");
       __publicField(this, "parentContainer", y(void 0));
       __publicField(this, "isAttached", y(false));
-      __publicField(this, "isRootAttached", g(() => {
+      __publicField(this, "isRootAttached", O(() => {
         var _a4, _b;
         return (_b = (_a4 = this.parentContainer.value) == null ? void 0 : _a4.isRootAttached.value) != null ? _b : this.isAttached.value;
       }));
@@ -7435,7 +7439,7 @@
       this.initialClasses = initialClasses;
       this.matrixAutoUpdate = false;
       const updateParentState = () => {
-        n(() => {
+        r(() => {
           const isAttached = this.parent != null;
           this.parentContainer.value = this.parent instanceof _Component ? this.parent : void 0;
           this.isAttached.value = isAttached;
@@ -7447,14 +7451,14 @@
       const conditionals = createConditionals(this.root, this.hoveredList, this.activeList, config == null ? void 0 : config.hasFocus, config == null ? void 0 : config.isPlaceholder);
       this.properties = new PropertiesImplementation2(allAliases, conditionals, (_a4 = config == null ? void 0 : config.defaults) != null ? _a4 : componentDefaults);
       this.properties.setLayersWithConditionals({ type: "default-overrides" }, {
-        width: g(() => {
+        width: O(() => {
           const sizeX = this.properties.value.sizeX;
           if (sizeX == null) {
             return void 0;
           }
           return parseAbsoluteLengthValue(sizeX) / parseNumberValue(this.properties.value.pixelSize);
         }),
-        height: g(() => {
+        height: O(() => {
           const sizeY = this.properties.value.sizeY;
           if (sizeY == null) {
             return void 0;
@@ -7525,11 +7529,11 @@
         return () => this.classList.remove(idClassName);
       }, this.abortSignal);
       this.node = new FlexNode(this);
-      this.globalMatrix = computedGlobalMatrix(g(() => {
+      this.globalMatrix = computedGlobalMatrix(O(() => {
         var _a5, _b2;
         return (_b2 = (_a5 = this.parentContainer.value) == null ? void 0 : _a5.childrenMatrix.value) != null ? _b2 : buildRootMatrix(this.properties, this.size);
       }), computedTransformMatrix(this));
-      const pixelSize = g(() => parseNumberValue(this.properties.value.pixelSize));
+      const pixelSize = O(() => parseNumberValue(this.properties.value.pixelSize));
       this.isClipped = computedIsClipped(this.parentContainer, this.globalMatrix, this.size, pixelSize);
       this.isVisible = computedIsVisible(this, this.isClipped, this.properties);
       this.handlers = computedHandlers(this.properties, this.starProperties, this.hoveredList, this.activeList, config == null ? void 0 : config.dynamicHandlers);
@@ -7541,7 +7545,7 @@
       setupBoundingSphere(this.boundingSphere, pixelSize, this.globalMatrix, this.size, this.abortSignal);
       const hasNonUikitChildren = (_b = config == null ? void 0 : config.hasNonUikitChildren) != null ? _b : true;
       const isRenderless = (_c = config == null ? void 0 : config.isRenderless) != null ? _c : false;
-      this.needsRenderTraversal = g(() => !isRenderless || this.parentContainer.value == null || this.renderTraversalChildCount.value > 0);
+      this.needsRenderTraversal = O(() => !isRenderless || this.parentContainer.value == null || this.renderTraversalChildCount.value > 0);
       abortableEffect(() => {
         const parent = this.parentContainer.value;
         if (parent == null || !this.needsRenderTraversal.value) {
@@ -7702,7 +7706,7 @@
 
   // node_modules/@pmndrs/uikit/dist/utils.js
   function computedGlobalMatrix(parentMatrix, localMatrix) {
-    return g(() => {
+    return O(() => {
       const local = localMatrix.value;
       const parent = parentMatrix.value;
       if (local == null || parent == null) {
@@ -7712,7 +7716,7 @@
     });
   }
   function computedIsVisible(component, isClipped, properties) {
-    return g(() => component.displayed.value && (isClipped == null || !(isClipped == null ? void 0 : isClipped.value)) && properties.value.visibility === "visible");
+    return O(() => component.displayed.value && (isClipped == null || !(isClipped == null ? void 0 : isClipped.value)) && properties.value.visibility === "visible");
   }
   function loadResourceWithParams(target, fn, cleanup, abortSignal, param, ...additionals) {
     abortableEffect(() => {
@@ -7746,7 +7750,7 @@
     "onWheel"
   ];
   function computedHandlers(properties, starProperties, hoveredSignal, activeSignal, dynamicHandlers) {
-    return g(() => {
+    return O(() => {
       if (!properties.enabled.value) {
         return {};
       }
@@ -7764,7 +7768,7 @@
     });
   }
   function computedAncestorsHaveListeners(parent, handlers) {
-    return g(() => {
+    return O(() => {
       var _a4, _b;
       return ((_b = (_a4 = parent.value) == null ? void 0 : _a4.ancestorsHaveListenersSignal.value) != null ? _b : false) || Object.keys(handlers.value).length > 0;
     });
@@ -7844,7 +7848,7 @@
     if (abortSignal.aborted) {
       return;
     }
-    const unsubscribe = j(fn);
+    const unsubscribe = x(fn);
     abortSignal.addEventListener("abort", unsubscribe);
   }
   var alignmentXMap = { left: 0.5, center: 0, middle: 0, right: -0.5 };
@@ -7858,13 +7862,13 @@
     return value;
   }
   function computedBorderInset(properties, keys) {
-    return g(() => keys.map((key) => {
+    return O(() => keys.map((key) => {
       const value = properties.value[key];
       return value == null ? 0 : parseAbsoluteLengthValue(value);
     }));
   }
   function withOpacity(value, opacity) {
-    return g(() => {
+    return O(() => {
       const result = [0, 0, 0, 0];
       writeColor(result, 0, readReactive(value), readReactive(opacity));
       return result;
@@ -8000,7 +8004,7 @@
   var distanceHelper = new Vector3();
   var localPointHelper = new Vector3();
   function computedGlobalScrollMatrix(properties, scrollPosition, globalMatrix) {
-    return g(() => {
+    return O(() => {
       const global = globalMatrix.value;
       if (global == null) {
         return void 0;
@@ -8011,7 +8015,7 @@
     });
   }
   function computedAnyAncestorScrollable(parentSignal) {
-    return g(() => {
+    return O(() => {
       var _a4, _b, _c;
       const parent = parentSignal.value;
       const [ancestorX, ancestorY] = (_b = (_a4 = parent == null ? void 0 : parent.anyAncestorScrollable) == null ? void 0 : _a4.value) != null ? _b : [false, false];
@@ -8020,7 +8024,7 @@
     });
   }
   function setupScrollHandlers(target, container, abortSignal, updateScrollFrame) {
-    const isScrollable = g(() => {
+    const isScrollable = O(() => {
       var _a4;
       return (_a4 = container.scrollable.value.some((scrollable) => scrollable)) != null ? _a4 : false;
     });
@@ -8219,7 +8223,7 @@
     if (enableRubberBand && maxPosition != null) {
       return newPosition;
     }
-    return clamp(newPosition, 0, maxPosition != null ? maxPosition : 0);
+    return MathUtils.clamp(newPosition, 0, maxPosition != null ? maxPosition : 0);
   }
   function sign(value) {
     return value >= 0;
@@ -8262,15 +8266,15 @@
     return scrollbarMaterialConfig;
   }
   function setupScrollbar(container, primaryIndex, parentClippingRect, orderInfo, groupDeps, borderSize) {
-    const scrollbarTransformation = g(() => {
+    const scrollbarTransformation = O(() => {
       var _a4;
       return computeScrollbarTransformation(primaryIndex, parseAbsoluteLengthValue((_a4 = container.properties.value.scrollbarWidth) != null ? _a4 : 0), container.size.value, container.maxScrollPosition.value, container.borderInset.value, container.scrollPosition.value);
     });
-    const scrollbarPosition = g(() => {
+    const scrollbarPosition = O(() => {
       var _a4, _b;
       return (_b = (_a4 = scrollbarTransformation.value) == null ? void 0 : _a4.slice(0, 2)) != null ? _b : [0, 0];
     });
-    const scrollbarSize = g(() => {
+    const scrollbarSize = O(() => {
       var _a4, _b;
       return (_b = (_a4 = scrollbarTransformation.value) == null ? void 0 : _a4.slice(2, 4)) != null ? _b : [0, 0];
     });
@@ -8292,7 +8296,7 @@
     const primaryMaxScrollbarPosition = primarySizeWithoutBorder - primaryScrollbarSize;
     const primaryScrollPosition = scrollPosition[primaryAxisIndex];
     const invertedIndex = 1 - primaryAxisIndex;
-    result[primaryAxisIndex] = size[primaryAxisIndex] * 0.5 - primaryScrollbarSize * 0.5 - borderInset[(primaryAxisIndex + 3) % 4] - primaryMaxScrollbarPosition * clamp(primaryScrollPosition / primaryMaxScrollPosition, 0, 1);
+    result[primaryAxisIndex] = size[primaryAxisIndex] * 0.5 - primaryScrollbarSize * 0.5 - borderInset[(primaryAxisIndex + 3) % 4] - primaryMaxScrollbarPosition * MathUtils.clamp(primaryScrollPosition / primaryMaxScrollPosition, 0, 1);
     result[invertedIndex] = size[invertedIndex] * 0.5 - secondaryScrollbarSize * 0.5 - borderInset[invertedIndex + 1];
     if (primaryAxisIndex === 0) {
       result[0] *= -1;
@@ -8368,15 +8372,15 @@
       const updateScrollFrame = setupScroll(this);
       setupScrollHandlers(scrollHandlers, this, this.abortSignal, updateScrollFrame);
       this.childrenMatrix = computedGlobalScrollMatrix(this.properties, this.scrollPosition, this.globalMatrix);
-      const parentClippingRect = g(() => {
+      const parentClippingRect = O(() => {
         var _a4;
         return (_a4 = this.parentContainer.value) == null ? void 0 : _a4.clippingRect.value;
       });
       this.fontFamilies = computedFontFamilies(this.properties, this.parentContainer);
-      this.clippingRect = computedClippingRect(this.globalMatrix, this, g(() => parseNumberValue(this.properties.value.pixelSize)), parentClippingRect);
+      this.clippingRect = computedClippingRect(this.globalMatrix, this, O(() => parseNumberValue(this.properties.value.pixelSize)), parentClippingRect);
       this.anyAncestorScrollable = computedAnyAncestorScrollable(this.parentContainer);
       const panelGroupDeps = computedPanelGroupDependencies(this.properties);
-      setupOrderInfo(this.orderInfo, this.properties, "zIndex", ElementType.Panel, panelGroupDeps, g(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
+      setupOrderInfo(this.orderInfo, this.properties, "zIndex", ElementType.Panel, panelGroupDeps, O(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
       setupInstancedPanel(this.properties, this.root, this.orderInfo, panelGroupDeps, this.globalPanelMatrix, this.size, this.borderInset, parentClippingRect, this.isVisible, getDefaultPanelMaterialConfig(), this.abortSignal);
       setupScrollbars(this, parentClippingRect, this.orderInfo, panelGroupDeps);
     }
@@ -8406,14 +8410,14 @@
       __publicField(this, "inputConfig");
       __publicField(this, "texture", y(void 0));
       this.inputConfig = inputConfig;
-      setupOrderInfo(this.orderInfo, this.properties, "zIndex", ElementType.Image, void 0, g(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
+      setupOrderInfo(this.orderInfo, this.properties, "zIndex", ElementType.Image, void 0, O(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
       this.frustumCulled = false;
       setupRenderOrder(this, this.root, this.orderInfo);
       if ((_a4 = inputConfig == null ? void 0 : inputConfig.loadTexture) != null ? _a4 : true) {
         loadResourceWithParams(this.texture, loadTextureImpl, cleanupTexture, this.abortSignal, this.properties.signal.src);
       }
       const clippingPlanes = createGlobalClippingPlanes(this);
-      const isMeshVisible = getImageMaterialConfig().computedIsVisibile(this.properties, this.borderInset, this.size, g(() => this.isVisible.value && this.texture.value != null));
+      const isMeshVisible = getImageMaterialConfig().computedIsVisibile(this.properties, this.borderInset, this.size, O(() => this.isVisible.value && this.texture.value != null));
       const data = new Float32Array(16);
       const info = { data, type: "normal" };
       this.customDepthMaterial = new PanelDepthMaterial(info);
@@ -8469,13 +8473,13 @@
           return;
         }
         data.set(imageMaterialConfig2.defaultData);
-        const cleanupSizeEffect = j(() => {
+        const cleanupSizeEffect = x(() => {
           const size = this.size.value;
           if (size != null) {
             data.set(size, 14);
           }
         });
-        const cleanupBorderEffect = j(() => {
+        const cleanupBorderEffect = x(() => {
           const borderInset = this.borderInset.value;
           if (borderInset != null) {
             data.set(borderInset, 0);
@@ -8532,9 +8536,9 @@
         const [top, right, bottom, left] = borderInset;
         const boundsRatioValue = (width - left - right) / (height - top - bottom);
         if (textureRatio > boundsRatioValue) {
-          texture.matrix.translate(-(0.5 * (boundsRatioValue - textureRatio)) / boundsRatioValue, 0).scale(boundsRatioValue / textureRatio, 1);
+          texture.matrix.premultiply(helperMatrix.makeTranslation(-(0.5 * (boundsRatioValue - textureRatio)) / boundsRatioValue, 0)).premultiply(helperMatrix.makeScale(boundsRatioValue / textureRatio, 1));
         } else {
-          texture.matrix.translate(0, -(0.5 * (textureRatio - boundsRatioValue)) / textureRatio).scale(1, textureRatio / boundsRatioValue);
+          texture.matrix.premultiply(helperMatrix.makeTranslation(0, -(0.5 * (textureRatio - boundsRatioValue)) / textureRatio)).premultiply(helperMatrix.makeScale(1, textureRatio / boundsRatioValue));
         }
         transformInsideBorder(borderInset, size, texture);
       }, this.abortSignal);
@@ -8569,12 +8573,13 @@
       throw new Error(`the image component can not have any children`);
     }
   };
+  var helperMatrix = new Matrix3();
   function transformInsideBorder(borderInset, size, texture) {
     const [outerWidth, outerHeight] = size;
     const [top, right, bottom, left] = borderInset;
     const width = outerWidth - left - right;
     const height = outerHeight - top - bottom;
-    texture.matrix.translate(-1 + (left + width) / outerWidth, -1 + (top + height) / outerHeight).scale(outerWidth / width, outerHeight / height);
+    texture.matrix.premultiply(helperMatrix.makeTranslation(-1 + (left + width) / outerWidth, -1 + (top + height) / outerHeight)).premultiply(helperMatrix.makeScale(outerWidth / width, outerHeight / height));
   }
   var textureLoader2 = new TextureLoader();
   function cleanupTexture(texture) {
@@ -8632,13 +8637,13 @@
       __publicField(this, "globalTextMatrix");
       this.inputConfig = inputConfig;
       this.material.visible = false;
-      const parentClippingRect = g(() => {
+      const parentClippingRect = O(() => {
         var _a4;
         return (_a4 = this.parentContainer.value) == null ? void 0 : _a4.clippingRect.value;
       });
       this.backgroundGroupDeps = computedPanelGroupDependencies(this.properties);
       this.globalTextMatrix = computedGlobalTextMatrix(this);
-      setupOrderInfo(this.backgroundOrderInfo, this.properties, "zIndex", ElementType.Panel, this.backgroundGroupDeps, g(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
+      setupOrderInfo(this.backgroundOrderInfo, this.properties, "zIndex", ElementType.Panel, this.backgroundGroupDeps, O(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
       const fontFamilies = computedFontFamilies(this.properties, this.parentContainer);
       this.fontSignal = computedFont(this.properties, fontFamilies);
       setupOrderInfo(this.orderInfo, this.properties, "zIndex", ElementType.Text, computedGylphGroupDependencies(this.fontSignal), this.backgroundOrderInfo, this.abortSignal);
@@ -8705,8 +8710,8 @@
       this.material.visible = false;
       const panelGroupDeps = computedPanelGroupDependencies(this.properties);
       const backgroundOrderInfo = y();
-      setupOrderInfo(backgroundOrderInfo, this.properties, "zIndex", ElementType.Panel, panelGroupDeps, g(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
-      setupInstancedPanel(this.properties, this.root, backgroundOrderInfo, panelGroupDeps, this.globalPanelMatrix, this.size, this.borderInset, g(() => {
+      setupOrderInfo(backgroundOrderInfo, this.properties, "zIndex", ElementType.Panel, panelGroupDeps, O(() => this.parentContainer.value == null ? null : this.parentContainer.value.orderInfo.value), this.abortSignal);
+      setupInstancedPanel(this.properties, this.root, backgroundOrderInfo, panelGroupDeps, this.globalPanelMatrix, this.size, this.borderInset, O(() => {
         var _a5;
         return (_a5 = this.parentContainer.value) == null ? void 0 : _a5.clippingRect.value;
       }), this.isVisible, getDefaultPanelMaterialConfig(), this.abortSignal);
@@ -9600,18 +9605,18 @@
           if (stylesheetStyles[jsName]) style[jsName] = adjustFunction(stylesheetStyles[jsName]);
           if (node.style && node.style[svgName] !== "") style[jsName] = adjustFunction(node.style[svgName]);
         }
-        function clamp2(v2) {
+        function clamp(v2) {
           return Math.max(0, Math.min(1, parseFloatWithUnits(v2)));
         }
         function positive(v2) {
           return Math.max(0, parseFloatWithUnits(v2));
         }
         addStyle("fill", "fill");
-        addStyle("fill-opacity", "fillOpacity", clamp2);
+        addStyle("fill-opacity", "fillOpacity", clamp);
         addStyle("fill-rule", "fillRule");
-        addStyle("opacity", "opacity", clamp2);
+        addStyle("opacity", "opacity", clamp);
         addStyle("stroke", "stroke");
-        addStyle("stroke-opacity", "strokeOpacity", clamp2);
+        addStyle("stroke-opacity", "strokeOpacity", clamp);
         addStyle("stroke-width", "strokeWidth", positive);
         addStyle("stroke-linejoin", "strokeLineJoin");
         addStyle("stroke-linecap", "strokeLineCap");
@@ -10863,7 +10868,7 @@
       __publicField(this, "inputConfig");
       this.inputConfig = inputConfig;
       const svgResult = y(void 0);
-      loadResourceWithParams(svgResult, loadSvg, disposeSvg, this.abortSignal, g(() => ({
+      loadResourceWithParams(svgResult, loadSvg, disposeSvg, this.abortSignal, O(() => ({
         src: this.properties.value.src,
         content: this.properties.value.content
       })));
@@ -10892,6 +10897,7 @@
   };
   var svgCache = /* @__PURE__ */ new Map();
   var loader = new SVGLoader();
+  var isRevision185OrNewer = Number.parseInt(REVISION, 10) >= 185;
   async function loadSvg({ src, content: content5 }) {
     var _a4;
     if (src == null && content5 == null) {
@@ -10909,7 +10915,7 @@
     }
     const meshes = [];
     for (const path of result.paths) {
-      const shapes = SVGLoader.createShapes(path);
+      const shapes = isRevision185OrNewer ? path.toShapes() : SVGLoader.createShapes(path);
       const material = new MeshBasicMaterial({ color: path.color, toneMapped: false });
       for (const shape of shapes) {
         const mesh = new Mesh(new ShapeGeometry(shape), material);
@@ -11014,7 +11020,7 @@
       const htmlSelectionRange = y(void 0);
       const updateSelectionRange = () => updateHtmlSelectionRange(htmlSelectionRange, element);
       const hasFocus = y(false);
-      const selectionRange = g(() => {
+      const selectionRange = O(() => {
         if (!hasFocus.value) {
           return void 0;
         }
@@ -11024,12 +11030,12 @@
         defaults: inputDefaults,
         dynamicHandlers: selectionHandlers,
         hasFocus,
-        isPlaceholder: g(() => this.currentSignal.value.length === 0),
+        isPlaceholder: O(() => this.currentSignal.value.length === 0),
         ...inputConfig,
         defaultOverrides: {
           cursor: "text",
           ...{
-            text: g(() => {
+            text: O(() => {
               var _a5;
               return this.currentSignal.value.length === 0 ? this.properties.value.placeholder : this.properties.value.type === "password" ? "*".repeat((_a5 = this.currentSignal.value.length) != null ? _a5 : 0) : this.currentSignal.value;
             })
@@ -11045,7 +11051,7 @@
       __publicField(this, "updateSelectionRange", () => {
       });
       __publicField(this, "uncontrolledSignal", y(void 0));
-      __publicField(this, "currentSignal", g(() => {
+      __publicField(this, "currentSignal", O(() => {
         var _a4, _b, _c;
         return (_c = (_b = (_a4 = this.properties.value.value) != null ? _a4 : this.uncontrolledSignal.value) != null ? _b : this.properties.value.defaultValue) != null ? _c : "";
       }));
@@ -11057,10 +11063,10 @@
         caretColor.value = this.properties.value.color;
       }, this.abortSignal);
       setupSelectionHandlers(selectionHandlers, this.properties, this.currentSignal, this, this.textLayout, this.focus.bind(this), this.abortSignal);
-      const textSelection = g(() => getSelectionTransformations(this.textLayout.value, selectionRange.value));
-      const caretTransformation = g(() => textSelection.value.caret);
-      const selectionTransformations = g(() => textSelection.value.selections);
-      const parentClippingRect = g(() => {
+      const textSelection = O(() => getSelectionTransformations(this.textLayout.value, selectionRange.value));
+      const caretTransformation = O(() => textSelection.value.caret);
+      const selectionTransformations = O(() => textSelection.value.selections);
+      const parentClippingRect = O(() => {
         var _a5;
         return (_a5 = this.parentContainer.value) == null ? void 0 : _a5.clippingRect.value;
       });
@@ -14014,7 +14020,7 @@
     const isSignal = (v2) => v2 instanceof l;
     const isPlainObject = (v2) => v2 != null && typeof v2 === "object" && !isSignal(v2);
     if (!isPlainObject(light) || !isPlainObject(dark)) {
-      return g(() => {
+      return O(() => {
         const l2 = isSignal(light) ? light.value : light;
         const d2 = isSignal(dark) ? dark.value : dark;
         return isDarkMode.value ? d2 : l2;
@@ -14032,7 +14038,7 @@
   // node_modules/@pmndrs/uikit-horizon/dist/button/icon.js
   var ButtonIcon = class extends Container {
     constructor(inputProperties, initialClasses, config) {
-      const size = g(() => {
+      const size = O(() => {
         var _a4;
         const btn = this.parentContainer.value;
         if (!(btn instanceof Button)) {
@@ -14169,59 +14175,59 @@
   var buttonSizes = _buttonSizes;
   var Button = class extends Container {
     constructor(inputProperties, initialClasses, config) {
-      const height = g(() => {
+      const height = O(() => {
         var _a4;
         return buttonSizes[(_a4 = this.properties.value.size) != null ? _a4 : "lg"].height;
       });
       super(inputProperties, initialClasses, {
         ...config,
         defaultOverrides: {
-          color: g(() => {
+          color: O(() => {
             var _a4, _b;
             return (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].color) == null ? void 0 : _b.value;
           }),
-          backgroundColor: g(() => {
+          backgroundColor: O(() => {
             var _a4, _b;
             return (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].backgroundColor) == null ? void 0 : _b.value;
           }),
           hover: {
-            color: g(() => {
+            color: O(() => {
               var _a4, _b, _c;
               return (_c = (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].hover) == null ? void 0 : _b.color) == null ? void 0 : _c.value;
             }),
-            backgroundColor: g(() => {
+            backgroundColor: O(() => {
               var _a4, _b, _c;
               return (_c = (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].hover) == null ? void 0 : _b.backgroundColor) == null ? void 0 : _c.value;
             })
           },
           active: {
-            color: g(() => {
+            color: O(() => {
               var _a4, _b, _c;
               return (_c = (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].active) == null ? void 0 : _b.color) == null ? void 0 : _c.value;
             }),
-            backgroundColor: g(() => {
+            backgroundColor: O(() => {
               var _a4, _b, _c;
               return (_c = (_b = buttonVariants[(_a4 = this.properties.value.variant) != null ? _a4 : "primary"].active) == null ? void 0 : _b.backgroundColor) == null ? void 0 : _c.value;
             })
           },
           important: {
-            backgroundColor: g(() => this.properties.value.disabled === true ? theme.component.button.negative.background.fill.disabled.value : void 0),
-            color: g(() => this.properties.value.disabled === true ? theme.component.button.negative.label.disabled.value : void 0)
+            backgroundColor: O(() => this.properties.value.disabled === true ? theme.component.button.negative.background.fill.disabled.value : void 0),
+            color: O(() => this.properties.value.disabled === true ? theme.component.button.negative.label.disabled.value : void 0)
           },
           height,
-          fontSize: g(() => {
+          fontSize: O(() => {
             var _a4;
             return buttonSizes[(_a4 = this.properties.value.size) != null ? _a4 : "lg"].fontSize;
           }),
-          lineHeight: g(() => {
+          lineHeight: O(() => {
             var _a4;
             return buttonSizes[(_a4 = this.properties.value.size) != null ? _a4 : "lg"].lineHeight;
           }),
-          minWidth: g(() => {
+          minWidth: O(() => {
             var _a4;
             return buttonSizes[(_a4 = this.properties.value.size) != null ? _a4 : "lg"].minWidth;
           }),
-          width: g(() => {
+          width: O(() => {
             var _a4;
             return ((_a4 = this.properties.value.icon) != null ? _a4 : false) ? height.value : void 0;
           }),
@@ -14334,7 +14340,7 @@
           height: 12,
           borderRadius: 1e3,
           backgroundColor: theme.component.progressBar.determinate.fill.fill.value,
-          width: g(() => formatProgressWidth(this.properties.value.value)),
+          width: O(() => formatProgressWidth(this.properties.value.value)),
           minWidth: 12
         }
       }));
@@ -14365,7 +14371,7 @@
   var Input2 = class extends Container {
     constructor(inputProperties, initialClasses, config) {
       var _a4;
-      const hovered = (_a4 = config == null ? void 0 : config.hovered) != null ? _a4 : g(() => this.hoveredList.value.length > 0);
+      const hovered = (_a4 = config == null ? void 0 : config.hovered) != null ? _a4 : O(() => this.hoveredList.value.length > 0);
       super(inputProperties, initialClasses, {
         ...config,
         defaultOverrides: {
@@ -14376,26 +14382,26 @@
           gap: 12,
           flexDirection: "row",
           alignItems: "center",
-          fontSize: g(() => {
+          fontSize: O(() => {
             var _a5;
             return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].fontSize;
           }),
-          lineHeight: g(() => {
+          lineHeight: O(() => {
             var _a5;
             return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].lineHeight;
           }),
           fontWeight: 500,
-          color: g(() => {
+          color: O(() => {
             var _a5;
             return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "text" ? theme.component.textInput.label.default.value : theme.component.search.label.value;
           }),
           paddingX: 16,
-          height: g(() => {
+          height: O(() => {
             var _a5;
             return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].height;
           }),
           borderRadius: 8,
-          backgroundColor: g(() => {
+          backgroundColor: O(() => {
             if (this.input.hasFocus.value) {
               return theme.component.textInput.background.typing.value;
             }
@@ -14413,7 +14419,7 @@
       __publicField(this, "rightIconPlaceholder");
       __publicField(this, "rightIcon");
       this.addEventListener("click", () => this.input.focus());
-      const iconSize = g(() => {
+      const iconSize = O(() => {
         var _a5, _b;
         return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "search" && ((_b = this.properties.value.size) != null ? _b : "lg") === "lg" ? 24 : 16;
       });
@@ -14446,7 +14452,7 @@
       super.add(this.input);
       this.rightIconPlaceholder = new Container();
       super.add(this.rightIconPlaceholder);
-      const iconColor = g(() => {
+      const iconColor = O(() => {
         var _a5;
         return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "search" ? theme.component.search.icon.value : this.input.hasFocus ? theme.component.textInput.label.typing.value : theme.component.textInput.label.default.value;
       });
@@ -14498,7 +14504,7 @@
   // node_modules/@pmndrs/uikit-horizon/dist/input-field/index.js
   var InputField = class extends Container {
     constructor(InputFieldProperties, initialClasses, config) {
-      const hovered = g(() => this.hoveredList.value.length > 0);
+      const hovered = O(() => this.hoveredList.value.length > 0);
       super(InputFieldProperties, initialClasses, {
         ...config,
         defaultOverrides: {
@@ -14510,7 +14516,7 @@
           paddingY: 8,
           //exists to make sure the handlers are applied
           hover: {},
-          backgroundColor: g(() => {
+          backgroundColor: O(() => {
             if (this.input.input.hasFocus.value) {
               return theme.component.inputField.background.default.value;
             }
@@ -14567,7 +14573,7 @@
   };
 
   // node_modules/@pmndrs/uikit-horizon/dist/background-material.js
-  var panelMaterialClass = g(() => isDarkMode.value ? DarkBackgroundMaterial : LightBackgroundMaterial);
+  var panelMaterialClass = O(() => isDarkMode.value ? DarkBackgroundMaterial : LightBackgroundMaterial);
   var DarkBackgroundMaterial = class extends MeshBasicMaterial {
     constructor() {
       super();
@@ -15826,7 +15832,15 @@
       typeof getCamera === "function" ? getCamera : () => getCamera,
       scene,
       htmlEventToCoords.bind(null, fromElement),
-      fromElement.setPointerCapture.bind(fromElement),
+      (pointerId) => {
+        try {
+          fromElement.setPointerCapture(pointerId);
+        } catch (error2) {
+          if (!(error2 instanceof DOMException && error2.name === "NotFoundError")) {
+            throw error2;
+          }
+        }
+      },
       (pointerId) => {
         if (fromElement.hasPointerCapture(pointerId)) {
           fromElement.releasePointerCapture(pointerId);
@@ -16461,7 +16475,7 @@
     function px(value, fallback) {
       return Math.round(numberOrDefault(value, fallback || 0));
     }
-    function clamp2(value, min, max) {
+    function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
     }
     function clampTextToApproximateLines(value, maxLines, charsPerLine) {
@@ -16476,7 +16490,7 @@
     }
     function resolvePanelMetrics(config, width, height) {
       const configuredWidth = Number(config && (config.designWidthPx !== void 0 ? config.designWidthPx : config.pixelWidth !== void 0 ? config.pixelWidth : config.designWidth));
-      const designWidthPx = clamp2(
+      const designWidthPx = clamp(
         Math.round(Number.isFinite(configuredWidth) && configuredWidth > 0 ? configuredWidth : DEFAULT_PANEL_DESIGN_WIDTH_PX),
         MIN_PANEL_DESIGN_WIDTH_PX,
         MAX_PANEL_DESIGN_WIDTH_PX
@@ -17862,7 +17876,7 @@
       } else {
         towardCamera.normalize();
       }
-      let right = new THREE.Vector3(0, 1, 0).cross(towardCamera);
+      const right = new THREE.Vector3(0, 1, 0).cross(towardCamera);
       if (right.lengthSq() < 1e-6) {
         right.set(1, 0, 0);
       } else {
@@ -18113,7 +18127,7 @@
         if (!drag || drag.id !== event.pointerId) return;
         event.stopImmediatePropagation();
         const travel = metrics.height - metrics.thumbHeight;
-        const y2 = travel > 0 ? clamp2((pointerY(event) - drag.offset) / travel, 0, 1) * metrics.max : 0;
+        const y2 = travel > 0 ? clamp((pointerY(event) - drag.offset) / travel, 0, 1) * metrics.max : 0;
         scroll2.scrollVelocity.set(0, 0);
         scroll2.scrollPosition.value = [scroll2.scrollPosition.value[0], y2];
       };
@@ -18171,7 +18185,7 @@
           if (!show) stopDrag();
         }
         const thumbHeight = Math.min(height, Math.max(44, height * viewport / (viewport + max || 1)));
-        const top = max > 0 ? clamp2(scroll2.scrollPosition.value[1] / max, 0, 1) * (height - thumbHeight) : 0;
+        const top = max > 0 ? clamp(scroll2.scrollPosition.value[1] / max, 0, 1) * (height - thumbHeight) : 0;
         metrics = { max, height, thumbHeight, top };
         thumb.setProperties({ positionTop: top, height: thumbHeight });
       };
@@ -18213,8 +18227,15 @@
           flexGrow: opts.flexGrow,
           flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 0,
           paddingY: opts.paddingY,
+          paddingX: opts.paddingX,
+          borderRadius: opts.borderRadius,
+          borderWidth: opts.borderWidth,
+          borderColor: opts.borderColor,
           backgroundColor: opts.backgroundColor,
-          ...opts.hoverBackgroundColor ? { hover: { backgroundColor: opts.hoverBackgroundColor } } : {},
+          ...opts.hoverBackgroundColor || opts.hoverBorderColor ? { hover: {
+            backgroundColor: opts.hoverBackgroundColor,
+            borderColor: opts.hoverBorderColor
+          } } : {},
           ...opts.activeBackgroundColor ? { active: { backgroundColor: opts.activeBackgroundColor } } : {},
           pointerEvents: disabled ? "none" : "auto",
           zIndex: opts.zIndex || 30,
@@ -18300,8 +18321,9 @@
         },
         text: function(parent, options) {
           const opts = withPanelFontDefaults(options);
+          const value = opts.text !== void 0 ? opts.text : opts.value || "";
           const text = new Text(baseContainerProps(Object.assign({
-            text: normalizeSpatialText(opts.text !== void 0 ? opts.text : opts.value || ""),
+            text: normalizeSpatialText(opts.maxLines ? clampTextToApproximateLines(value, opts.maxLines, opts.maxCharsPerLine) : value),
             color: opts.color || "#272727",
             fontSize: px(opts.fontSize, opts.size || 34),
             lineHeight: opts.lineHeight || "120%",
@@ -18311,6 +18333,8 @@
             width: opts.width,
             height: opts.height,
             minHeight: opts.minHeight,
+            maxHeight: opts.maxHeight,
+            overflow: opts.overflow,
             maxWidth: opts.maxWidth,
             flexGrow: opts.flexGrow,
             flexShrink: opts.flexShrink !== void 0 ? opts.flexShrink : 1,
@@ -18390,7 +18414,9 @@
           button.userData = button.userData || {};
           button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
           button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
-          if (IconComponent) {
+          if (typeof opts.renderContent === "function") {
+            opts.renderContent(button);
+          } else if (IconComponent) {
             const iconHost = new ButtonIcon(baseContainerProps({
               justifyContent: "center",
               alignItems: "center",

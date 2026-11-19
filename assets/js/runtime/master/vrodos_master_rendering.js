@@ -1,4 +1,4 @@
-﻿/**
+/**
  * VRodos Master Rendering Utilities
  */
 
@@ -466,18 +466,18 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 } )();
 
-var VRODOS_NAVMESH_DEFAULTS = {
+const VRODOS_NAVMESH_DEFAULTS = {
     maxStepHeight: 0.6,
     maxDropHeight: 1.0,
     maxSlope: 45
 };
 
-var VRODOS_TERRAIN_MATTE_NORMAL_SCALE = 0.22;
-var VRODOS_TERRAIN_MATTE_ENV_MAP_CAP = 0.08;
-var VRODOS_TERRAIN_SOFT_SHADOW_LIFT_STRENGTH = 1.0;
-var VRODOS_TERRAIN_SOFT_SHADOW_TARGET = 1.0;
-var VRODOS_TERRAIN_SOFT_SHADOW_GAP_START = 0.00008;
-var VRODOS_TERRAIN_SOFT_SHADOW_GAP_END = 0.012;
+const VRODOS_TERRAIN_MATTE_NORMAL_SCALE = 0.22;
+const VRODOS_TERRAIN_MATTE_ENV_MAP_CAP = 0.08;
+const VRODOS_TERRAIN_SOFT_SHADOW_LIFT_STRENGTH = 1.0;
+const VRODOS_TERRAIN_SOFT_SHADOW_TARGET = 1.0;
+const VRODOS_TERRAIN_SOFT_SHADOW_GAP_START = 0.00008;
+const VRODOS_TERRAIN_SOFT_SHADOW_GAP_END = 0.012;
 
 function vrodosClamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
