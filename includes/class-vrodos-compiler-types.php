@@ -8,6 +8,7 @@ require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
 require_once __DIR__ . '/class-vrodos-compiler-build-state.php';
 require_once __DIR__ . '/class-vrodos-compiler-asset-policy.php';
+require_once __DIR__ . '/class-vrodos-project-type.php';
 
 final readonly class VRodos_Compile_Request {
 	public int $project_id;
@@ -177,7 +178,7 @@ final readonly class VRodos_Project_Compile_Plan {
 	}
 
 	public function is_vrexpo(): bool {
-		return 'vrexpo_games' === $this->project_type_slug;
+		return VRodos_Project_Type::uses_exhibition_runtime( $this->project_type_slug );
 	}
 
 	public function is_networked(): bool {

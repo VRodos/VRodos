@@ -86,6 +86,29 @@
       ],
       "generatedBy": "build:runtime"
     },
+    "spatial-diary": {
+      "id": "spatial-diary",
+      "label": "Excavation and find diaries",
+      "type": "script",
+      "file": "vrodos-runtime-spatial-diary.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-spatial-diary.bundle.js",
+      "order": 95,
+      "dependencies": [
+        "aframe-components",
+        "spatial-ui"
+      ],
+      "features": [
+        "spatial-diary"
+      ],
+      "activationCapabilities": [
+        "spatial-diary"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/diary/vrodos_diary_stage.js",
+        "assets/js/runtime/diary/vrodos_diary_view.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
     "networked-components": {
       "id": "networked-components",
       "label": "Networked scene components",

@@ -641,7 +641,7 @@ AFRAME.registerComponent('custom-movement', {
         return output;
     },
     requestJump: function (source) {
-        if (this.teleportPaused || this.teleportTravel) return false;
+        if (this.teleportPaused || this.teleportTravel || this.diaryTransition) return false;
         const settings = this.getSceneSettings();
         const movementDisabled = settings && (
             settings.movement_disabled === true ||
@@ -1534,7 +1534,7 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     handleNavmeshModelLoad: function (event) {
-        if (!event || !event.target || !event.target.classList) {
+        if (!event || !event.target || !event.target.classList || event.target.closest?.('[data-vrodos-diary-pending]')) {
             return;
         }
 
@@ -3213,7 +3213,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     canStartTeleport: function () {
         const loader = this.sceneEl?.components['vrodos-scene-loader'];
-        return !this.removed && !this.teleportPaused && !this.teleportTravel &&
+        return !this.removed && !this.teleportPaused && !this.teleportTravel && !this.diaryTransition &&
             Boolean(this.getSceneSettings()) && (!loader || loader.isReady) &&
             !window.VRODOSRuntimeOverlay?.interactionLocked;
     },
@@ -3295,6 +3295,85 @@ AFRAME.registerComponent('custom-movement', {
             })) return true;
         }
         return false;
+    },
+    inspectDiaryGround: function (incoming, outgoing, safePoint) {
+        if (this.teleportTravel || this.isAirborne()) return null;
+        this.refreshNavMeshRoots();
+        this.refreshCollisionWorld();
+        const currentNav = this.navMeshCollisionTargets;
+        const currentBlockers = this.blockerCollisionTargets;
+        const excluded = new Set(outgoing.map((entity) => entity.object3D));
+        const remains = (mesh) => {
+            for (let node = mesh; node; node = node.parent) {
+                if (excluded.has(node)) return false;
+            }
+            return true;
+        };
+        const nav = currentNav.filter(remains);
+        const blockers = currentBlockers.filter(remains);
+        for (const entity of incoming) {
+            const entities = [entity, ...entity.querySelectorAll(this.colliderEntitySelector)];
+            const root = entity.getObject3D('mesh');
+            if (root && entity.classList.contains('vrodos-navmesh')) {
+                this.applyWalkBehaviorToNavMeshRoot(root, entity.getAttribute('data-vrodos-walk-behavior'));
+                root.traverse((mesh) => { if (this.prepareCollisionMesh(mesh, 'navmesh')) nav.push(mesh); });
+            }
+            for (const collider of entities) {
+                if (!collider.classList.contains('vrodos-collider')) continue;
+                const role = collider.getAttribute('data-vrodos-collision-role') || 'solid';
+                this.getColliderRootObject(collider)?.traverse((mesh) => {
+                    if (this.prepareCollisionMesh(mesh, role)) blockers.push(mesh);
+                });
+            }
+        }
+        const immersive = this.isImmersiveXrPresenting();
+        const position = this.getNavigationWorldPosition().clone();
+        const viewer = immersive
+            ? this.renderedToAuthoredPosition(this.getImmersivePhysicalAnchorPosition(new THREE.Vector3()), new THREE.Vector3())
+            : position.clone();
+        const expectedEyeHeight = this.heightOffset || (immersive ? this.getDesiredImmersiveEyeToGroundOffset() : 1.8);
+        const floor = viewer.clone();
+        floor.y = this.hasLastGroundHit ? this.lastGroundHit.point.y : viewer.y - expectedEyeHeight;
+        const eyeHeight = Math.max(expectedEyeHeight, viewer.y - floor.y);
+        const trackedOffset = viewer.clone().sub(position);
+        this.navMeshCollisionTargets = nav;
+        this.blockerCollisionTargets = blockers;
+        try {
+            const same = this.resolveTeleportLanding(floor, eyeHeight, false);
+            if (same) return { landing: same, relocate: false, eyeHeight, trackedOffset };
+            const safe = safePoint && this.resolveTeleportLanding(safePoint, eyeHeight, false);
+            return safe ? { landing: safe, relocate: true, eyeHeight, trackedOffset } : null;
+        } finally {
+            this.navMeshCollisionTargets = currentNav;
+            this.blockerCollisionTargets = currentBlockers;
+        }
+    },
+    commitDiaryGround: function (result) {
+        this.markNavMeshDirty();
+        this.refreshNavMeshRoots();
+        this.refreshCollisionWorld();
+        if (!result) return;
+        const position = this.getNavigationWorldPosition().clone();
+        if (result.relocate) {
+            position.copy(result.landing.floor).sub(result.trackedOffset);
+            position.y += result.eyeHeight;
+            this.setNavigationWorldPosition(position);
+        }
+        this.clearImmersiveGroundCaches();
+        this.lastResolvedPosition.copy(position);
+        this.verticalVelocity = 0;
+        this.setVerticalState('grounded', 'diary-entry');
+        if (result.landing.ground) {
+            this.setResolvedGroundHit(result.landing.ground, position, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+            this.rememberGroundedPosition(position, this.lastGroundHit);
+        }
+    },
+    releaseDiaryCollision: function (mesh) {
+        this.bvhTargets.delete(mesh.uuid);
+        const tree = this.ownedBoundsTrees.get(mesh.geometry);
+        if (tree && mesh.geometry.boundsTree === tree) mesh.geometry.disposeBoundsTree?.();
+        this.ownedBoundsTrees.delete(mesh.geometry);
     },
     teleportToPoint: function (authoredFloorPosition, sourceElement) {
         if (!this.canStartTeleport() || !authoredFloorPosition ||
@@ -3451,6 +3530,7 @@ AFRAME.registerComponent('custom-movement', {
 
         const navMeshEntities = this.sceneEl.querySelectorAll(this.navMeshEntitySelector);
         for (let i = 0; i < navMeshEntities.length; i++) {
+            if (navMeshEntities[i].closest?.('[data-vrodos-diary-pending]')) continue;
             const meshRoot = navMeshEntities[i].getObject3D('mesh');
             if (meshRoot) {
                 this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute('data-vrodos-walk-behavior')));
@@ -3555,6 +3635,7 @@ AFRAME.registerComponent('custom-movement', {
         const colliderEntities = this.sceneEl.querySelectorAll(this.colliderEntitySelector);
         for (let i = 0; i < colliderEntities.length; i++) {
             const entity = colliderEntities[i];
+            if (entity.closest?.('[data-vrodos-diary-pending]')) continue;
             const root = this.getColliderRootObject(entity);
             if (!root) {
                 continue;
@@ -5160,7 +5241,7 @@ AFRAME.registerComponent('custom-movement', {
 
             if (this.tickTeleport(timeDelta)) return;
 
-            if (this.teleportPaused) {
+            if (this.teleportPaused || this.diaryTransition) {
                 this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', this.setNavigationWorldPosition, this.lastResolvedPosition);
                 return;
             }

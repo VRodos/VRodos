@@ -287,4 +287,5 @@ VRODOS.api.finalizeSceneLoad = function() {
     }
 
     VRODOS.editor.requestRender('scene-load-finalized');
+    document.dispatchEvent(new window.Event('vrodos:scene-loaded'));
 };

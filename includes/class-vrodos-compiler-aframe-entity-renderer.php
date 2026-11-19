@@ -435,6 +435,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( '' === $glb_url || '' === $asset_dom_id ) {
 			return [];
 		}
+		if ( ! empty( $obj->vrodosDiaryDeferred ) ) {
+			$entity->setAttribute( 'data-vrodos-diary-src', $glb_url );
+			foreach ( $profile_urls as $slot => $url ) {
+				$entity->setAttribute( 'data-vrodos-diary-src-' . $slot, $this->normalize_url( (string) $url ) );
+			}
+			return [];
+		}
 
 		$glb_size_bytes = $this->resolve_local_asset_size( $glb_url );
 		$load_plan      = $this->resolve_gltf_load_plan( $obj, $glb_url, $glb_size_bytes );
@@ -1063,6 +1070,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				'project_id' => $project_id,
 				'scene_id'   => $scene_id
 			] ) );
+		}
+	}
+
+	public function render_diary_templates( DOMDocument $dom, DOMElement $ascene, object $models ): void {
+		foreach ( get_object_vars( $models ) as $id => $model ) {
+			$template = $dom->createElement( 'template' );
+			$template->setAttribute( 'data-vrodos-diary-model', (string) $id );
+			$model->vrodosDiaryDeferred = true;
+			$this->render_gltf_entity( $dom, $template, null, $model, $this->current_scene_id );
+			if ( ! $template->firstChild ) {
+				throw new RuntimeException( 'A diary placement has no publishable GLB: ' . $id, 409 );
+			}
+			$ascene->parentNode->appendChild( $template );
 		}
 	}
 

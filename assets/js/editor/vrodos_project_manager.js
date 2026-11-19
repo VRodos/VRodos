@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Descriptions for each Project
     function loadProjectTypeDescription() {
         const checked = document.querySelector('input[name="projectTypeRadio"]:checked');
-        const val = checked ? checked.value : 'archaeology_games';
+        const val = checked ? checked.value : 'vrexpo_games';
         let content = '';
         if (val === 'vrexpo_games') {
             content = "Create a VR expo space";
+        } else if (val === 'archaeological_site_games') {
+            content = 'Explore excavation stages and document individual finds in 3D and VR.';
         } else if (val === 'virtualproduction_games'){
             content = "Create a Multiuser Virtual Production project";
         }
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (title_vrodos_project && title_vrodos_project.length > 2) {
             const checkedRadio = document.querySelector('input[name="projectTypeRadio"]:checked');
-            const project_type = checkedRadio ? checkedRadio.value : 'archaeology_games';
+            const project_type = checkedRadio ? checkedRadio.value : 'vrexpo_games';
 
             // CREATE THE PROJECT !
             VRODOS.api.createProject(title_vrodos_project, project_type, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);

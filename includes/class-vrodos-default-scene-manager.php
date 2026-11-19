@@ -12,7 +12,7 @@ class VRodos_Default_Scene_Manager {
 			$project_type_slug = $project_type->slug;
 
 			match ( $project_type_slug ) {
-				'vrexpo_games' => self::vrodos_create_vrexpo_default_scenes( $projectSlug ),
+				'vrexpo_games', VRodos_Project_Type::ARCHAEOLOGICAL_SITE => self::vrodos_create_vrexpo_default_scenes( $projectSlug ),
 				'virtualproduction_games' => self::vrodos_create_virtualproduction_default_scenes( $projectSlug ),
 				default => self::vrodos_create_vrexpo_default_scenes( $projectSlug ),
 			};

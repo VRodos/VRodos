@@ -120,6 +120,7 @@ class VRodos_Post_Type_Manager {
 		// 3. Ensure other project types are defined
 		$types = array(
 			array( 'name' => 'vrexpo', 'slug' => 'vrexpo_games', 'desc' => 'Exhibition Projects' ),
+			array( 'name' => 'Archaeological Site', 'slug' => VRodos_Project_Type::ARCHAEOLOGICAL_SITE, 'desc' => 'Excavation and find diaries in 3D and VR' ),
 			array( 'name' => 'virtualproduction', 'slug' => 'virtualproduction_games', 'desc' => 'Virtual Production Projects' )
 		);
 

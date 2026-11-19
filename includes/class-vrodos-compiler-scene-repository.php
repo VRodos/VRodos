@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-project-type.php';
+
 class VRodos_Compiler_Scene_Repository {
 	public function load_compile_context( int $project_id, array $scene_id_list, int $selected_scene_id = 0 ): array {
 		$project_post = get_post( $project_id );
@@ -62,7 +64,7 @@ class VRodos_Compiler_Scene_Repository {
 			'project_post'      => $project_post,
 			'project_title'     => $project_post->post_title,
 			'project_type_slug' => $project_type_slug,
-			'is_vrexpo'         => ( 'vrexpo_games' === $project_type_slug ),
+			'is_vrexpo'         => VRodos_Project_Type::uses_exhibition_runtime( $project_type_slug ),
 			'first_scene_id'    => (int) reset( $valid_scene_ids ),
 			'last_scene_id'     => (int) end( $valid_scene_ids ),
 			'first_scene_json'  => reset( $scene_json ),

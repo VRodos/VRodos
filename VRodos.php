@@ -43,6 +43,9 @@ new VRodos_Admin_Date_Formatter();
 new VRodos_Immerse_Access_Manager();
 
 // Asset Manager Class
+require_once __DIR__ . '/includes/class-vrodos-project-type.php';
+require_once __DIR__ . '/includes/class-vrodos-spatial-diary.php';
+VRodos_Spatial_Diary::register_hooks();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-manager.php');
 new VRodos_Asset_Manager();
 

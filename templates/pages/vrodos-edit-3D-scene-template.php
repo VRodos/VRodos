@@ -27,7 +27,9 @@ extract( $data );
 
 
 
-<?php } else { ?>
+<?php } else {
+	$can_edit_diary = VRodos_Spatial_Diary::can_edit( (int) $project_id, (int) $current_scene_id );
+	?>
 
 	<!-- PANELS -->
 	<div class="panels">
@@ -80,8 +82,16 @@ extract( $data );
 						<?php endif; ?>
 					</div>
 
-					<div class="tw-ml-auto tw-flex tw-items-center tw-gap-2">
+					<?php if ( $can_edit_diary ) : ?>
+						<button id="vrodos-diary-edit" type="button" hidden
+							class="tw-btn tw-btn-sm tw-flex-nowrap tw-gap-2 tw-whitespace-nowrap tw-border-white/10 tw-bg-slate-800 tw-text-white hover:tw-bg-slate-700"
+							aria-controls="vrodos-diary-workspace" aria-expanded="false">
+							<i data-lucide="book-open" class="tw-h-4 tw-w-4 tw-shrink-0" aria-hidden="true"></i>
+							<span>Edit diary</span>
+						</button>
+					<?php endif; ?>
 
+					<div class="tw-ml-auto tw-flex tw-items-center tw-gap-2">
                         <a id="toggleUIBtn" data-toggle='on' type="button"
                            class="tw-p-1.5 hover:tw-bg-white/10 tw-rounded tw-transition-colors tw-cursor-pointer tw-text-white"
                            title="Toggle interface">
@@ -107,6 +117,30 @@ extract( $data );
 					</div>
 
 				</div>
+				<?php if ( $can_edit_diary ) : ?>
+					<div id="vrodos-diary-timeline" role="group" aria-label="Excavation timeline preview" hidden></div>
+					<section id="vrodos-diary-workspace" class="tw-overflow-hidden tw-rounded-xl tw-border tw-border-white/10 tw-bg-slate-900 tw-text-slate-100 tw-shadow-2xl" aria-labelledby="vrodos-diary-title" hidden>
+							<header class="tw-flex tw-shrink-0 tw-flex-wrap tw-items-center tw-gap-3 tw-border-b tw-border-white/10 tw-bg-slate-800 tw-px-4 tw-py-2">
+								<i data-lucide="book-open" class="tw-h-4 tw-w-4 tw-shrink-0 tw-text-emerald-400" aria-hidden="true"></i>
+								<h2 id="vrodos-diary-title" class="tw-text-sm tw-font-bold tw-text-white">Spatial diary</h2>
+								<div id="vrodos-diary-tabs" class="tw-flex tw-flex-1 tw-flex-wrap tw-gap-2"></div>
+								<button type="button" id="vrodos-diary-save" class="tw-btn tw-btn-primary tw-btn-sm tw-whitespace-nowrap" hidden disabled>Save diary</button>
+								<button type="button" id="vrodos-diary-close" aria-label="Collapse spatial diary"
+									class="tw-rounded tw-p-1.5 tw-text-slate-400 tw-transition-colors hover:tw-bg-slate-700 hover:tw-text-white">
+									<i data-lucide="chevron-down" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
+								</button>
+							</header>
+							<div id="vrodos-diary-editor" class="tw-min-h-0 tw-flex-1 tw-overflow-y-auto tw-bg-slate-950 tw-p-6"
+								data-nonce="<?php echo esc_attr( wp_create_nonce( 'vrodos_spatial_diary' ) ); ?>"
+								data-stage-columns="<?php echo esc_attr( implode( ',', VRodos_Spatial_Diary::STAGE_COLUMNS ) ); ?>"
+								data-find-columns="<?php echo esc_attr( implode( ',', VRodos_Spatial_Diary::FIND_COLUMNS ) ); ?>"></div>
+							<p id="vrodos-diary-status" class="tw-shrink-0 tw-border-t tw-border-white/10 tw-bg-slate-800 tw-px-4 tw-py-2 tw-text-sm tw-text-slate-300" role="status"></p>
+					</section>
+					<div id="vrodos-diary-viewport" class="tw-rounded-lg tw-border tw-border-white/15 tw-bg-slate-800 tw-p-3 tw-text-white tw-shadow-xl" hidden>
+						<p id="vrodos-diary-viewport-message" class="tw-text-sm tw-text-white" role="status"></p>
+						<button type="button" id="vrodos-diary-viewport-return" class="tw-btn tw-btn-sm tw-btn-primary"></button>
+					</div>
+				<?php endif; ?>
 				<!--Compile Dialogue html-->
 				<?php require __DIR__ . '/vrodos-edit-3D-scene-CompileDialogue.php'; ?>
 
@@ -268,25 +302,33 @@ extract( $data );
 							<i data-lucide="plus" class="tw-w-4 tw-h-4"></i>
 							<span>Create</span>
 						</summary>
-						<div class="tw-absolute tw-left-0 tw-top-full tw-mt-1 tw-w-40 tw-rounded-lg tw-border tw-border-white/15 tw-bg-slate-800 tw-p-1 tw-shadow-xl tw-z-[1200]">
+						<div class="tw-absolute tw-left-0 tw-top-full tw-mt-1 tw-flex tw-w-max tw-min-w-[13rem] tw-flex-col tw-rounded-lg tw-border tw-border-white/15 tw-bg-slate-800 tw-p-1 tw-shadow-xl tw-z-[1200]">
 							<button id="create-plane-button" type="button"
-									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-justify-start tw-gap-2 tw-text-white"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-flex-nowrap tw-justify-start tw-gap-2 tw-whitespace-nowrap tw-text-left tw-text-white"
 									title="Create a procedural walkable plane">
-								<i data-lucide="grid-3x3" class="tw-w-4 tw-h-4"></i>
+								<i data-lucide="grid-3x3" class="tw-w-4 tw-h-4 tw-shrink-0" aria-hidden="true"></i>
 								<span>Plane</span>
 							</button>
 							<button id="create-teleport-point-button" type="button"
-									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-justify-start tw-gap-2 tw-text-white"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-flex-nowrap tw-justify-start tw-gap-2 tw-whitespace-nowrap tw-text-left tw-text-white"
 									title="Create a teleport destination at foot level">
-								<i data-lucide="circle-dot" class="tw-w-4 tw-h-4"></i>
+								<i data-lucide="circle-dot" class="tw-w-4 tw-h-4 tw-shrink-0" aria-hidden="true"></i>
 								<span>Teleport point</span>
 							</button>
+							<?php if ( $can_edit_diary ) : ?>
+								<button id="vrodos-diary-toggle" type="button"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-flex-nowrap tw-justify-start tw-gap-2 tw-whitespace-nowrap tw-text-left tw-text-white"
+									aria-expanded="false" aria-controls="vrodos-diary-workspace">
+									<i data-lucide="book-open" class="tw-w-4 tw-h-4 tw-shrink-0" aria-hidden="true"></i>
+									<span>Excavation diary</span>
+								</button>
+							<?php endif; ?>
 						</div>
 					</details>
 
 					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
 
-					<?php if ( ! isset( $project_type_slug ) || $project_type_slug !== 'vrexpo_games' ) : ?>
+					<?php if ( ! VRodos_Project_Type::uses_exhibition_runtime( (string) ( $project_type_slug ?? '' ) ) ) : ?>
 					<div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
 						<header draggable="false" class="notdraggable">Actor</header>
 						<img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"

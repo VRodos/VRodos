@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-project-type.php';
+
 /** Applies target-specific DOM fragments to the neutral runtime template. */
 final class VRodos_Compiler_Target_Renderer {
 	private const NETWORKED_ATTRIBUTES = [
@@ -27,7 +29,7 @@ final class VRodos_Compiler_Target_Renderer {
 		if ( ! $lean_headset ) {
 			$player->setAttribute( 'show-position', '' );
 		}
-		if ( 'vrexpo_games' === $project_type ) {
+		if ( VRodos_Project_Type::uses_exhibition_runtime( $project_type ) ) {
 			$this->apply_vrexpo_rig( $dom, $player, $camera_pose, $networked, $lean_headset );
 			return;
 		}

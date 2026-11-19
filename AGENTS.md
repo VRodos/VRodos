@@ -70,6 +70,8 @@ The connector's `vrodos_immerse_environments` capability grants Immerse Users ac
 
 ## Runtime And Rendering
 
+Archaeological Site projects own the Excavation and Find diaries. Drafts live in private scene post meta and managed placements enter a build through its published diary. Timeline steps keep one A-Frame scene and XR session. Pending diary geometry stays outside navigation until the committed swap. Keep the viewer on valid ground and use the authored stable viewpoint when the incoming state removes support or clearance. See `documentation/spatial-diaries.md` for authoring and the field-to-trench fixture.
+
 TXT, RTF and DOCX attachments render as generated `3d-text` slabs without a GLB. Detect text attachments by filename/URL or MIME type even when Immerse supplies no category; DOCX takes precedence over its ZIP container MIME type. `VRodos_Text_Asset_Helper` owns extraction and the shared 2,000-character limit. DOCX extraction reads only bounded `word/document.xml` content through PHP ZIP/DOM and rejects DTDs.
 
 The active compiled runtime targets:

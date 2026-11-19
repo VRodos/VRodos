@@ -168,8 +168,7 @@ VRODOS.ui.startAssetReadinessPolling = function() {
 
 window.addEventListener('pagehide', VRODOS.ui.stopAssetReadinessPolling);
 
-VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
-
+VRODOS.api.requestAvailableAssets = async function(gameProjectSlug, gameProjectID) {
     const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
 	const body = new URLSearchParams({
 		'action': 'vrodos_fetch_game_assets_action',
@@ -178,18 +177,17 @@ VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforA
         gameProjectID
     });
 
-    fetch(url, { method: 'POST', body })
-        .then((r) => r.text())
-        .then((text) => {
-            const trimmed = text.trim();
-            if (!trimmed || trimmed[0] === '<') {
-                throw new Error(`Asset list endpoint returned HTML from ${url}`);
-            }
+    const response = await fetch(url, { method: 'POST', body });
+    const records = await response.json();
+    if (!response.ok || !Array.isArray(records.items)) throw new Error('Could not load the asset library.');
+    return records.items;
+};
 
-            return JSON.parse(trimmed);
-        })
+VRODOS.api.fetchListAvailableAssets = function(_isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
+    VRODOS.api.requestAvailableAssets(gameProjectSlug, gameProjectID)
         .then((responseRecords) => {
-            VRODOS.ui.fileBrowsingByDb(responseRecords.items, gameProjectSlug, urlforAssetEdit);
+            VRODOS.ui.fileBrowsingByDb(responseRecords, gameProjectSlug, urlforAssetEdit);
+            document.dispatchEvent(new window.Event('vrodos:asset-library-loaded'));
         })
         .catch((err) => {
             console.log(`ERROR 51:${  err}`);

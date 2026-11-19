@@ -98,7 +98,14 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		);
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
-		$this->append_runtime_context_script( $dom, (array) ( $options['runtime_context'] ?? [] ) );
+		$context = (array) ( $options['runtime_context'] ?? [] );
+		if ( ! empty( $scene_json->spatial_diary ) ) {
+			$diary = $scene_json->spatial_diary;
+			$this->entity_renderer->render_diary_templates( $dom, $ascene, $diary->models );
+			$context['spatialDiary'] = [ 'stages' => $diary->stages, 'finds' => $diary->finds, 'safePoint' => $diary->safePoint ];
+			$ascene->setAttribute( 'vrodos-spatial-diary', '' );
+		}
+		$this->append_runtime_context_script( $dom, $context );
 		$compile_diagnostics = $this->entity_renderer->build_compile_diagnostics( $dom );
 		$plan_diagnostics    = array_merge(
 			$settings_diagnostics,

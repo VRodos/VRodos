@@ -179,6 +179,11 @@ else {
                                     <span class="tw-text-xs tw-font-medium tw-text-slate-600">3D Exposition</span>
                                 </label>
                                 <label class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-rounded-lg tw-border tw-border-base-300 hover:tw-border-primary/50 tw-cursor-pointer has-[:checked]:tw-border-primary has-[:checked]:tw-bg-primary/5 transition-all">
+                                    <input type="radio" name="projectTypeRadio" value="<?php echo esc_attr( VRodos_Project_Type::ARCHAEOLOGICAL_SITE ); ?>" class="tw-radio tw-radio-primary tw-radio-xs" />
+                                    <i data-lucide="landmark" class="tw-w-4 tw-h-4 tw-text-slate-400"></i>
+                                    <span class="tw-text-xs tw-font-medium tw-text-slate-600">Archaeological Site</span>
+                                </label>
+                                <label class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-rounded-lg tw-border tw-border-base-300 hover:tw-border-primary/50 tw-cursor-pointer has-[:checked]:tw-border-primary has-[:checked]:tw-bg-primary/5 transition-all">
                                     <input type="radio" name="projectTypeRadio" value="virtualproduction_games" class="tw-radio tw-radio-primary tw-radio-xs" />
                                     <i data-lucide="clapperboard" class="tw-w-4 tw-h-4 tw-text-slate-400"></i>
                                     <span class="tw-text-xs tw-font-medium tw-text-slate-600">Virtual Production</span>

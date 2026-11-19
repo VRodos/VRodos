@@ -334,6 +334,7 @@ VRODOS.utils = VRODOS.utils || {};
 			dialogState.showSavePendingMessage();
 			dialogState.showBuildProgress(build);
 			VRODOS.api.waitForLatestSceneSave()
+				.then(() => VRODOS.api.saveSpatialDiary?.())
 				.then(() => VRODOS.api.saveSceneSettings())
 				.then(() => {
 					if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;

@@ -1406,6 +1406,7 @@
           add(immersive ? "A / X" : "Space", "Jump", immersive ? "jump-buttons" : void 0);
         }
         if (immersive && movement) add("B / Y", "Reset height", "reset-buttons");
+        if (immersive && this.el.components["vrodos-spatial-diary"]) add("Left stick click", "Diary", "left-stick");
         return items;
       },
       syncPresentation: function() {

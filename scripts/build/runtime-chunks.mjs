@@ -64,6 +64,16 @@ export const runtimeBuildChunks = Object.freeze([
     sourceFiles: [runtimeSource('spatial-ui/vrodos_spatial_ui.js')]
   },
   {
+    id: 'spatial-diary',
+    label: 'Excavation and find diaries',
+    output: 'vrodos-runtime-spatial-diary.bundle.js',
+    order: 95,
+    dependencies: ['aframe-components', 'spatial-ui'],
+    features: ['spatial-diary'],
+    activationCapabilities: ['spatial-diary'],
+    sourceFiles: [runtimeSource('diary/vrodos_diary_stage.js'), runtimeSource('diary/vrodos_diary_view.js')]
+  },
+  {
     id: 'networked-components',
     label: 'Networked scene components',
     output: 'vrodos-runtime-networked-components.bundle.js',

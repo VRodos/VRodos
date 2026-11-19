@@ -10,6 +10,7 @@ require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 require_once __DIR__ . '/class-vrodos-desktop-performance-profiles.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-context.php';
+require_once __DIR__ . '/class-vrodos-spatial-diary.php';
 
 /**
  * Converts repository data plus one project target into an effective compile plan.
@@ -33,6 +34,7 @@ final class VRodos_Compiler_Plan_Resolver {
 		$scene_ids   = array_values( (array) ( $context['valid_scene_ids'] ?? [] ) );
 		$scene_json  = array_values( (array) ( $context['scene_json'] ?? [] ) );
 		$scene_title = array_values( (array) ( $context['scene_title'] ?? [] ) );
+		$project_type_slug = (string) ( $context['project_type_slug'] ?? '' );
 
 		foreach ( $scene_ids as $index => $scene_id ) {
 			$source = $scene_json[ $index ] ?? null;
@@ -41,7 +43,15 @@ final class VRodos_Compiler_Plan_Resolver {
 			}
 
 			$normalized_scene = $this->clone_scene( $source );
+			unset( $normalized_scene->spatial_diary );
 			$this->normalize_entities( $normalized_scene, (int) $scene_id );
+			if ( VRodos_Project_Type::supports_diaries( $project_type_slug ) ) {
+				try {
+					VRodos_Spatial_Diary::prepare_scene( $normalized_scene, $request->project_id, (int) $scene_id, $request->runtime_mode );
+				} catch ( InvalidArgumentException $error ) {
+					throw new RuntimeException( 'Scene #' . $scene_id . ': ' . $error->getMessage(), 409, $error );
+				}
+			}
 			$runtime_context = null;
 			foreach ( $request->runtime_profiles() as $runtime_profile ) {
 				$variant_scene = $this->clone_scene( $normalized_scene );
@@ -87,6 +97,9 @@ final class VRodos_Compiler_Plan_Resolver {
 				$settings['vrHeadsetAssetQuality'] = $request->vr_headset_asset_quality;
 				// Legacy composite metadata must not override the target policy either.
 				$settings = array_replace( $settings, $headset_baseline );
+				if ( ! empty( $variant_scene->spatial_diary->changesWalkableLayout ) && 'walkable' !== ( $settings['navigationMode'] ?? '' ) ) {
+					throw new RuntimeException( 'Scene #' . $scene_id . ': Use Walkable Surface navigation when diary entries change collision.', 409 );
+				}
 				$runtime_context ??= VRodos_Compiler_Runtime_Context::resolve(
 					$request->project_id, (int) $scene_id, (string) ( $scene_title[ $index ] ?? '' ), $variant_scene, $settings
 				);
@@ -136,7 +149,6 @@ final class VRodos_Compiler_Plan_Resolver {
 			}
 		}
 
-		$project_type_slug = (string) ( $context['project_type_slug'] ?? '' );
 		$targets           = $this->build_targets( $request, $project_type_slug, $scene_plans );
 
 		return new VRodos_Project_Compile_Plan(
@@ -169,7 +181,7 @@ final class VRodos_Compiler_Plan_Resolver {
 	private function build_targets( VRodos_Compile_Request $request, string $project_type_slug, array $scene_plans ): array {
 		$targets          = [];
 		$networked        = VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED === $request->runtime_mode;
-		$include_companions = $networked && 'vrexpo_games' !== $project_type_slug;
+		$include_companions = $networked && ! VRodos_Project_Type::uses_exhibition_runtime( $project_type_slug );
 
 		$entries = [];
 		foreach ( $scene_plans as $scene_plan ) {

@@ -510,7 +510,7 @@ VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
 /**
  * Handle regular GLB asset loading.
  */
-VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
+VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath, options = {}) {
     VRODOS.api.showSceneLoadingProgress("Loading", { immediate: true });
     const sceneRecord = getSceneObjectRecord(nameModel);
 
@@ -539,7 +539,7 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
 
             VRODOS.ui.finalizeSceneObjectAdd(insertedObject, {
                 alreadyRegistered: true,
-                selectOptions: { source: 'glb-added' }
+                selectOptions: { source: 'glb-added', autosave: options.autosave !== false }
             });
             insertedObject.userData.vrodosEditorAddFinalized = true;
             if (typeof VRODOS.editor.requestRender === 'function') {
@@ -550,7 +550,8 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     });
 
     const loaderMulti = new VRODOS.loader.LoaderMulti();
-    loaderMulti.load(manager, { [nameModel]: sceneRecord }, VRODOS.data.pluginPath);
+    return loaderMulti.load(manager, { [nameModel]: sceneRecord }, VRODOS.data.pluginPath)
+        .then(() => getSceneObjectByName(nameModel));
 }
 
 VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
@@ -699,7 +700,7 @@ VRODOS.api.addTeleportPoint = function () {
 /**
  * Main function to add objects to the canvas.
  */
-VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, translation, _pluginPath) {
+VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, translation, _pluginPath, options = {}) {
     if (!nameModel) {
         return null;
     }
@@ -756,6 +757,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
     const addCategory = VRODOS.utils.getSceneAssetSourceCategory(sceneRecord);
+    let glbPlacement;
 
     // Execute the specific handler or fallback to generic GLB asset loader
     try {
@@ -770,7 +772,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
                 VRODOS.utils.sceneDeleteObjectRecord(nameModel);
                 return null;
             }
-            VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath);
+            glbPlacement = VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath, options);
         }
     } catch (error) {
         clearSceneObjectAddPending(nameModel);
@@ -783,7 +785,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         VRODOS.editor.undoManager.add(new VRODOS.editor.AddObjectCommand(nameModel, sceneRecord));
     }
 
-    return getSceneObjectByName(nameModel);
+    return options.waitForPlacement && glbPlacement ? glbPlacement : getSceneObjectByName(nameModel);
 }
 
 

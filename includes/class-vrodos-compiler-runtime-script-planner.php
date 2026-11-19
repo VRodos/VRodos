@@ -63,6 +63,10 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		if ( $this->feature_flags->has_spatial_ui_content( $scene_json ) ) {
 			$capabilities[] = 'spatial-ui';
 		}
+		if ( ! empty( $scene_json->spatial_diary ) ) {
+			$capabilities[] = 'spatial-diary';
+			$capabilities[] = 'collision-bvh';
+		}
 
 		if ( $this->feature_flags->is_networked_runtime( $runtime_mode ) ) {
 			$capabilities[] = 'networking';

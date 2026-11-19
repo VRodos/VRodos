@@ -347,8 +347,6 @@ class VRodos_Project_AJAX {
 				if ( ! empty( $scene_data['id'] ) && has_post_thumbnail( $scene_data['id'] ) ) {
 					$scene_thumb_url = VRodos_Storage_Manager::authoring_url_for_attachment( get_post_thumbnail_id( $scene_data['id'] ) );
 				}
-				$is_expo = str_contains( strtolower( $game_type_obj->slug ?? '' ), 'vrexpo' ) || str_contains( strtolower( $game_type_obj->string ?? '' ), 'expo' );
-
 				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-lg tw-overflow-hidden hover:tw-border-primary/30 tw-transition-all tw-group ' . $stagger_classes . '">';
 				echo '<div class="tw-flex tw-items-stretch">';
 
@@ -358,7 +356,7 @@ class VRodos_Project_AJAX {
 					echo '<img src="' . esc_url( $scene_thumb_url ) . '" alt="" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-500" />';
 				} else {
 					echo '<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-bg-gradient-to-br tw-from-slate-50 tw-to-slate-100 tw-text-slate-300">';
-					echo '<i data-lucide="' . ( $is_expo ? 'globe' : 'clapperboard' ) . '" class="tw-w-14 tw-h-14" stroke-width="1.5"></i>';
+					echo '<i data-lucide="' . esc_attr( $game_type_obj->icon ) . '" class="tw-w-14 tw-h-14" stroke-width="1.5"></i>';
 					echo '</div>';
 				}
 				echo '</a>';

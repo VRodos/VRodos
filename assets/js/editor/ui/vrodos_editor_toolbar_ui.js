@@ -114,7 +114,9 @@ VRODOS.api = VRODOS.api || {};
             }
 
             if (typeof VRODOS.api.saveChanges === 'function') {
-                VRODOS.api.saveChanges({ force: true });
+                VRODOS.api.saveChanges({ force: true })
+                    .then(() => VRODOS.api.saveSpatialDiary?.({ sceneSaved: true }))
+                    .catch((error) => console.warn('VRodos: could not save the scene.', error));
             }
         });
     }
