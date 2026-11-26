@@ -168,9 +168,10 @@ VRODOS.utils.decodeDisplayText = function(value) {
         }
     }
 
-    return text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) =>
-        String.fromCodePoint(parseInt(hex, 16))
-    );
+    return text
+        .replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+        // WordPress supplies these typographic entities in formatted titles.
+        .replace(/&#(821[1267]|822[01]|8230);/g, (_, code) => String.fromCodePoint(Number(code)));
 };
 
 VRODOS.utils.encodeBase64Json = function(value) {

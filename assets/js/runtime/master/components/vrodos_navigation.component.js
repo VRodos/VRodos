@@ -9,7 +9,7 @@ const VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAV
     maxSlope: 45
 };
 const VRODOSVerticalMovementDefaults = {
-    jumpHeight: 0.8,
+    jumpHeight: 0.95,
     gravity: 12,
     terminalFallSpeed: 18,
     airControl: 0.65,
@@ -17,6 +17,8 @@ const VRODOSVerticalMovementDefaults = {
     collisionSkin: 0.05,
     maxFrameDeltaSeconds: 0.05
 };
+
+const VRODOSDesktopCrouch = { eyeHeight: 0.92, capsuleHeight: 1.02, capsuleRadius: 0.23 };
 
 function vrodosHiddenMeshHelper(useEntityRoot) { return {
     init: function () {
@@ -234,6 +236,7 @@ AFRAME.registerComponent('custom-movement', {
         };
         this.blockerCapsuleRadius = 0.32;
         this.blockerCapsuleHeight = 1.65;
+        this.desktopCrouchStandingHeight = null;
         this.blockerSkin = 0.05;
         this.verticalCapsuleOffsets = [
             new THREE.Vector2(0, 0),
@@ -242,6 +245,8 @@ AFRAME.registerComponent('custom-movement', {
             new THREE.Vector2(0, this.blockerCapsuleRadius),
             new THREE.Vector2(0, -this.blockerCapsuleRadius)
         ];
+        this.desktopCrouchCapsuleOffsets = this.verticalCapsuleOffsets.map(offset =>
+            offset.clone().multiplyScalar(VRODOSDesktopCrouch.capsuleRadius / this.blockerCapsuleRadius));
         this.desktopBlockerSweepHeights = [0.25, 0.9, 1.55];
         this.desktopBlockerSweepOffsets = [0, 1, -1];
         this.headsetBlockerSweepHeights = [0.35, 1.35];
@@ -660,7 +665,7 @@ AFRAME.registerComponent('custom-movement', {
             return false;
         }
 
-        const navigationPosition = this.getNavigationWorldPosition();
+        let navigationPosition = this.getNavigationWorldPosition();
         const footY = navigationPosition.y - this.heightOffset;
         const supportGround = this.findWalkableGroundBelowAt(
             navigationPosition,
@@ -675,6 +680,11 @@ AFRAME.registerComponent('custom-movement', {
             this.lastVerticalTransitionReason = 'jump-support-missing';
             this.lastVerticalTransitionAt = this.getRuntimeNow();
             return false;
+        }
+
+        if (this.isDesktopCrouching()) {
+            if (!this.toggleDesktopCrouch(supportGround)) return false;
+            navigationPosition = this.getNavigationWorldPosition();
         }
 
         // Walking and jump probes can resolve nearby floor layers differently.
@@ -1613,6 +1623,11 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
+        if (event.code === 'KeyC' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            if (!event.repeat && this.toggleDesktopCrouch()) event.preventDefault();
+            return;
+        }
+
         if (this.isJumpKeyEvent(event)) {
             const jumped = event.repeat ? false : this.requestJump('keyboard');
             if (jumped || this.getNavigationMode() === 'walkable') {
@@ -2197,11 +2212,45 @@ AFRAME.registerComponent('custom-movement', {
         return !this.isImmersiveXrPresenting() && this.areCollisionsEnabled() &&
             !this.isHeadsetRuntimeProfile(this.getSceneSettings());
     },
+    toggleDesktopCrouch: function (ground) {
+        const settings = this.getSceneSettings();
+        if (!this.canStartTeleport() || this.isImmersiveXrPresenting() || this.isAirborne() ||
+            !this.areCollisionsEnabled(settings) || ['true', '1'].includes(String(settings.movement_disabled))) return false;
+        this.ensureNavigationStatePrimed();
+        const current = this.getNavigationWorldPosition().clone();
+        ground = ground || this.sampleGroundAt(current, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.createGroundHit());
+        if (!ground) return false;
+        const standingHeight = this.desktopCrouchStandingHeight;
+        const eyeHeight = standingHeight ?? VRODOSDesktopCrouch.eyeHeight;
+        const floor = ground.point.clone().set(current.x, ground.point.y, current.z);
+        if (standingHeight !== null && this.isTeleportLandingBlocked(floor, eyeHeight, ground, false)) return false;
+        current.y = floor.y + eyeHeight;
+        if (!this.setNavigationWorldPosition(current)) return false;
+
+        this.desktopCrouchStandingHeight = standingHeight === null ? (this.heightOffset ?? this.desktopWalkingMinEyeToGroundOffset) : null;
+        this.heightOffset = eyeHeight;
+        this.lastResolvedPosition.copy(current);
+        this.setResolvedGroundHit(ground, current, this.lastGroundHit);
+        this.hasLastGroundHit = true;
+        this.rememberGroundedPosition(current, this.lastGroundHit);
+        this.captureDesktopFullscreenNavigationPose('desktop-crouch');
+        return true;
+    },
+    isDesktopCrouching: function () {
+        return Number.isFinite(this.desktopCrouchStandingHeight) && !this.isImmersiveXrPresenting();
+    },
+    getActiveBlockerCapsuleHeight: function () {
+        return this.isDesktopCrouching() ? VRODOSDesktopCrouch.capsuleHeight : this.blockerCapsuleHeight;
+    },
+    getActiveVerticalCapsuleOffsets: function () {
+        return this.isDesktopCrouching() ? this.desktopCrouchCapsuleOffsets : this.verticalCapsuleOffsets;
+    },
     resolveNavigationHeightOffset: function (rawHeightOffset) {
         if (this.isImmersiveXrPresenting()) {
             return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
         }
 
+        if (Number.isFinite(this.desktopCrouchStandingHeight)) return VRODOSDesktopCrouch.eyeHeight;
         const raiseDesktopHeight = this.shouldRaiseDesktopWalkingHeight();
         const desktopHeight = VRODOSMaster.clamp(
             rawHeightOffset,
@@ -3250,7 +3299,7 @@ AFRAME.registerComponent('custom-movement', {
         floor.y = ground.point.y;
         if (!collisionPolicy) return { floor, ground };
         // Require support across the same footprint used by normal navigation.
-        for (const offset of this.verticalCapsuleOffsets) {
+        for (const offset of this.getActiveVerticalCapsuleOffsets()) {
             const probe = floor.clone().add(new THREE.Vector3(offset.x, 0, offset.y));
             const support = this.sampleGroundAtSingle(probe, floor.y, this.createGroundHit(), limits);
             if (!support || Math.abs(support.point.y - floor.y) > this.groundSnapDistance) return null;
@@ -3258,10 +3307,10 @@ AFRAME.registerComponent('custom-movement', {
         if (this.isTeleportLandingBlocked(floor, eyeHeight, ground)) return null;
         return { floor, ground };
     },
-    isTeleportLandingBlocked: function (floor, eyeHeight, ground) {
+    isTeleportLandingBlocked: function (floor, eyeHeight, ground, crouching = this.isDesktopCrouching()) {
         this.refreshCollisionWorld();
-        const radius = this.blockerCapsuleRadius;
-        const height = Math.max(this.blockerCapsuleHeight, eyeHeight);
+        const radius = crouching ? VRODOSDesktopCrouch.capsuleRadius : this.blockerCapsuleRadius;
+        const height = Math.max(crouching ? VRODOSDesktopCrouch.capsuleHeight : this.blockerCapsuleHeight, eyeHeight);
         const bottom = floor.clone();
         const top = floor.clone();
         bottom.y += (radius + this.blockerSkin) / Math.max(0.5, ground.normal.y);
@@ -3411,7 +3460,7 @@ AFRAME.registerComponent('custom-movement', {
         let eyeHeight = Number.isFinite(this.heightOffset) ? this.heightOffset
             : immersive ? this.getDesiredImmersiveEyeToGroundOffset() : (this.getTrustedDesktopVisionHeightOffset() ?? 1.6);
         const referenceEyeHeight = this.getTrustedDesktopVisionHeightOffset() ?? eyeHeight;
-        if (this.shouldRaiseDesktopWalkingHeight()) {
+        if (this.shouldRaiseDesktopWalkingHeight() && !Number.isFinite(this.desktopCrouchStandingHeight)) {
             eyeHeight = VRODOSMaster.clamp(eyeHeight, this.desktopWalkingMinEyeToGroundOffset, this.desktopVisionMaxEyeToGroundOffset);
         }
         const roomOffset = new THREE.Vector3();
@@ -4506,7 +4555,7 @@ AFRAME.registerComponent('custom-movement', {
                 (Number(this.jumpHeight) || VRODOSVerticalMovementDefaults.jumpHeight) +
                 2
         );
-        const offsets = this.verticalCapsuleOffsets;
+        const offsets = this.getActiveVerticalCapsuleOffsets();
         const offsetCount = offsets && offsets.length > 0 ? offsets.length : 1;
         let bestWalkableY = -Infinity;
         let highestBlockedY = -Infinity;
@@ -4599,11 +4648,10 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         const immersivePresenting = this.isImmersiveXrPresenting();
-        const headY = footY + this.blockerCapsuleHeight;
+        const headY = footY + this.getActiveBlockerCapsuleHeight();
         let clearance = distance;
 
-        for (let i = 0; i < this.verticalCapsuleOffsets.length; i++) {
-            const offset = this.verticalCapsuleOffsets[i];
+        for (const offset of this.getActiveVerticalCapsuleOffsets()) {
             this.verticalRayOrigin.set(position.x + offset.x, headY, position.z + offset.y);
             const rayOrigin = immersivePresenting
                 ? this.authoredToRenderedPosition(this.verticalRayOrigin, this.verticalRenderedRayOrigin)
@@ -4810,10 +4858,12 @@ AFRAME.registerComponent('custom-movement', {
 
         const fromGroundY = this.getGroundYForBlockerSweep(fromPosition, fromGround);
         const toGroundY = this.getGroundYForBlockerSweep(toPosition, toGround);
-        const far = travelDistance + this.blockerCapsuleRadius + this.blockerSkin;
+        const radius = this.isDesktopCrouching() ? VRODOSDesktopCrouch.capsuleRadius : this.blockerCapsuleRadius;
+        const far = travelDistance + radius + this.blockerSkin;
 
+        const capsuleHeight = this.getActiveBlockerCapsuleHeight();
         for (let heightIndex = 0; heightIndex < this.blockerSweepHeights.length; heightIndex++) {
-            const height = Math.min(this.blockerSweepHeights[heightIndex], this.blockerCapsuleHeight);
+            const height = Math.min(this.blockerSweepHeights[heightIndex], capsuleHeight);
             const originY = THREE.MathUtils.lerp(fromGroundY, toGroundY, 0.5) + height;
             if (options) {
                 options.sweepHeight = height;
@@ -4821,7 +4871,7 @@ AFRAME.registerComponent('custom-movement', {
 
             for (let offsetIndex = 0; offsetIndex < this.blockerSweepOffsets.length; offsetIndex++) {
                 const offsetFactor = this.blockerSweepOffsets[offsetIndex];
-                this.blockerSideOffset.copy(this.rightVector).multiplyScalar(offsetFactor * this.blockerCapsuleRadius);
+                this.blockerSideOffset.copy(this.rightVector).multiplyScalar(offsetFactor * radius);
                 this.blockerRayOrigin.set(
                     fromPosition.x + this.blockerSideOffset.x,
                     originY,

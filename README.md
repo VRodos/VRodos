@@ -148,6 +148,24 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 10. Open the compile dialog and choose the rendering engine and quality settings.
 11. Build the project to generate compiled A-Frame output.
 
+## Desktop and VR headset controls
+
+Use these controls in a published VRodos scene. For headset controls, open the scene in a WebXR-capable browser and enter immersive VR.
+
+| Action | Desktop | VR headset |
+| --- | --- | --- |
+| Move | `W` `A` `S` `D` or arrow keys | Left thumbstick |
+| Look or turn | Hold the left mouse button and drag | Turn your head to look. Tilt the right thumbstick left or right to turn. |
+| Select or interact | Left-click | Point with the right controller and press its trigger (`RT`) |
+| Jump | `Space` | `A` on the right controller or `X` on the left |
+| Crouch or stand | Press `C` to toggle | |
+| Ascend or descend in Fly mode | `E` to rise, `Q` to descend | Look up or down and push the left thumbstick forward |
+| Reset viewing height | | `B` on the right controller or `Y` on the left |
+| Choose a teleport destination | Click a numbered button at the top of the scene | Click the right thumbstick to open **Destinations**, then select a destination with the right trigger |
+| Open the spatial diary | Use the on-screen diary controls | Click the left thumbstick |
+
+Jumping and desktop crouching require **Walkable** navigation with collisions enabled and the player on the ground. When crouched, press `C` to stand or `Space` to stand and jump once you have enough headroom. Teleport destinations and diary controls appear in scenes that include those features.
+
 ## Technology Stack
 
 - WordPress 6.x

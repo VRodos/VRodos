@@ -741,6 +741,8 @@
           }
         }
       }
+    } else if (typeof strategy === "function") {
+      ({ axis, pos } = strategy(nodeBoundingData, centroidBoundingData, primitiveBounds, offset, count, primitiveBounds.offset));
     } else {
       console.warn(`BVH: Invalid build strategy value ${strategy} used.`);
     }
@@ -1405,9 +1407,19 @@
     }
   }();
 
+  // node_modules/three-mesh-bvh/src/utils/Revision.generated.js
+  var REVISION2 = "0.10.0";
+
   // node_modules/three-mesh-bvh/src/core/BVH.js
   var _tempBox = /* @__PURE__ */ new Box3();
   var _tempBuffer = /* @__PURE__ */ new Float32Array(6);
+  if (typeof window !== "undefined") {
+    if (window.__THREE_MESH_BVH__) {
+      console.warn("three-mesh-bvh: Multiple instances of three-mesh-bvh being imported.");
+    } else {
+      window.__THREE_MESH_BVH__ = REVISION2;
+    }
+  }
   var BVH = class {
     constructor() {
       this._roots = null;
@@ -1419,13 +1431,6 @@
         ...DEFAULT_OPTIONS,
         ...options
       };
-      if ("maxLeafSize" in options) {
-        console.warn('BVH: "maxLeafSize" option has been deprecated. Use "targetLeafSize", instead.');
-        options = {
-          ...options,
-          targetLeafSize: options.maxLeafSize
-        };
-      }
       buildPackedTree(this, options);
     }
     getRootRanges() {
@@ -1490,8 +1495,14 @@
      * @param {number} offset
      */
     shiftPrimitiveOffsets(offset) {
-      const indirectBuffer = this._indirectBuffer;
+      let indirectBuffer = this._indirectBuffer;
       if (indirectBuffer) {
+        if (indirectBuffer.BYTES_PER_ELEMENT === 2 && indirectBuffer.some((value) => value + offset >= 2 ** 16)) {
+          const BufferConstructor = indirectBuffer.buffer.constructor;
+          indirectBuffer = new Uint32Array(new BufferConstructor(4 * indirectBuffer.length));
+          indirectBuffer.set(this._indirectBuffer);
+          this._indirectBuffer = indirectBuffer;
+        }
         for (let i = 0, l = indirectBuffer.length; i < l; i++) {
           indirectBuffer[i] += offset;
         }
@@ -2683,7 +2694,7 @@
         if (target1 || target2) {
           box.getCenter(point2);
           this.closestPointToPoint(point2, point1);
-          box.closestPointToPoint(point1, point2);
+          box.clampPoint(point1, point2);
           if (target1) target1.copy(point1);
           if (target2) target2.copy(point2);
         }
@@ -4043,16 +4054,6 @@
     get resolveTriangleIndex() {
       return this.resolvePrimitiveIndex;
     }
-    constructor(geometry, options = {}) {
-      if (options.maxLeafTris) {
-        console.warn('MeshBVH: "maxLeafTris" option has been deprecated. Use "targetLeafSize", instead.');
-        options = {
-          ...options,
-          targetLeafSize: options.maxLeafTris
-        };
-      }
-      super(geometry, options);
-    }
     /**
      * Adjusts all triangle offsets stored in the BVH by the given offset. This is useful when the
      * triangle data has been compacted or shifted in the geometry buffers (e.g. in `BatchedMesh`
@@ -4339,36 +4340,26 @@
       const triangle1 = ExtendedTrianglePool.getPrimitive();
       const indexAttr1 = this.geometry.index;
       const positionAttr1 = this.geometry.attributes.position;
-      const assignTriangle1 = this.indirect ? (i1) => {
-        const ti = this.resolveTriangleIndex(i1);
-        setTriangle(triangle1, ti * 3, indexAttr1, positionAttr1);
-      } : (i1) => {
-        setTriangle(triangle1, i1 * 3, indexAttr1, positionAttr1);
-      };
       const triangle23 = ExtendedTrianglePool.getPrimitive();
       const indexAttr2 = otherBvh.geometry.index;
       const positionAttr2 = otherBvh.geometry.attributes.position;
-      const assignTriangle2 = otherBvh.indirect ? (i2) => {
-        const ti2 = otherBvh.resolveTriangleIndex(i2);
-        setTriangle(triangle23, ti2 * 3, indexAttr2, positionAttr2);
-      } : (i2) => {
-        setTriangle(triangle23, i2 * 3, indexAttr2, positionAttr2);
-      };
       if (intersectsTriangles) {
         if (!(otherBvh instanceof _MeshBVH)) {
           throw new Error('MeshBVH: "intersectsTriangles" callback can only be used with another MeshBVH.');
         }
         const iterateOverDoubleTriangles = (offset1, count1, offset2, count2, depth1, nodeIndex1, depth2, nodeIndex2) => {
           for (let i2 = offset2, l2 = offset2 + count2; i2 < l2; i2++) {
-            assignTriangle2(i2);
+            const ti2 = otherBvh.resolveTriangleIndex(i2);
+            setTriangle(triangle23, ti2 * 3, indexAttr2, positionAttr2);
             triangle23.a.applyMatrix4(matrixToLocal);
             triangle23.b.applyMatrix4(matrixToLocal);
             triangle23.c.applyMatrix4(matrixToLocal);
             triangle23.needsUpdate = true;
             for (let i1 = offset1, l1 = offset1 + count1; i1 < l1; i1++) {
-              assignTriangle1(i1);
+              const ti1 = this.resolveTriangleIndex(i1);
+              setTriangle(triangle1, ti1 * 3, indexAttr1, positionAttr1);
               triangle1.needsUpdate = true;
-              if (intersectsTriangles(triangle1, triangle23, i1, i2, depth1, nodeIndex1, depth2, nodeIndex2)) {
+              if (intersectsTriangles(triangle1, triangle23, ti1, ti2, depth1, nodeIndex1, depth2, nodeIndex2)) {
                 return true;
               }
             }

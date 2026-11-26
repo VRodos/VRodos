@@ -59,6 +59,7 @@ vm.runInContext(
 
 const movementDefinition = registeredComponents["custom-movement"];
 assert(movementDefinition, "custom-movement component was not registered");
+const defaultJumpHeight = vm.runInContext("VRODOSVerticalMovementDefaults.jumpHeight", sandbox);
 
 {
     const nav = Object.create(movementDefinition);
@@ -98,6 +99,82 @@ function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
         slope: 0,
         behavior
     };
+}
+
+{
+    const nav = Object.create(movementDefinition);
+    const position = new THREE.Vector3(2, 1.8, -3);
+    const floor = createGroundHit(2, 0, -3);
+    const settings = { navigationMode: "walkable", movement_disabled: "0" };
+    nav.getSceneSettings = () => settings;
+    nav.areCollisionsEnabled = () => true;
+    nav.isImmersiveXrPresenting = () => false;
+    nav.canStartTeleport = () => true;
+    nav.ensureNavigationStatePrimed = () => {};
+    nav.sampleGroundAt = () => floor;
+    nav.findWalkableGroundBelowAt = () => floor;
+    nav.getNavigationWorldPosition = () => position;
+    nav.setNavigationWorldPosition = next => { position.copy(next); return true; };
+    nav.setResolvedGroundHit = () => {};
+    nav.rememberGroundedPosition = () => {};
+    nav.captureDesktopFullscreenNavigationPose = () => {};
+    nav.getRuntimeNow = () => 0;
+    nav.lastResolvedPosition = position.clone();
+    nav.lastGroundHit = floor;
+    nav.heightOffset = 1.8;
+    nav.blockerCapsuleHeight = 1.65;
+    nav.verticalCollisionSkin = 0.05;
+    nav.groundProbeStepTolerance = 0.05;
+    nav.gravity = 12;
+    nav.jumpHeight = defaultJumpHeight;
+    nav.verticalState = "grounded";
+    nav.desktopCrouchStandingHeight = null;
+
+    let lowCeiling = true;
+    nav.isTeleportLandingBlocked = (_floor, _height, _ground, crouching) => {
+        assert(crouching === false, "standing checks clearance for the full-size capsule");
+        return lowCeiling;
+    };
+    const pressC = () => nav.handleKeyDown({ code: "KeyC", preventDefault() {} });
+    const pressSpace = () => nav.handleKeyDown({ code: "Space", preventDefault() {} });
+
+    pressC();
+    assert(nav.isDesktopCrouching(), "C engages crouch without scene opt-in");
+    assertNear(position.y, 0.92, "crouch lowers the view above the same floor");
+    assertNear(nav.resolveNavigationHeightOffset(0.92), 0.92, "ground snaps keep crouched eye height");
+    assertNear(nav.getActiveBlockerCapsuleHeight(), 1.02, "crouch lowers collision clearance");
+    pressSpace();
+    assert(nav.isDesktopCrouching() && !nav.isAirborne(), "a low ceiling blocks the crouch-to-jump transition");
+
+    pressC();
+    assert(nav.isDesktopCrouching(), "a low ceiling prevents standing");
+    assertNear(position.y, 0.92, "a rejected stance change preserves the view");
+
+    lowCeiling = false;
+    pressC();
+    assert(!nav.isDesktopCrouching(), "C restores standing in a clear area");
+    assertNear(position.y, 1.8, "standing restores the previous eye height");
+    assertNear(nav.getActiveBlockerCapsuleHeight(), 1.65, "standing restores collision clearance");
+
+    pressC();
+    pressSpace();
+    assert(!nav.isDesktopCrouching() && nav.isAirborne(), "Space stands and jumps from a crouch when clear");
+    assertNear(position.y, 1.8, "crouch-to-jump launches from the standing eye height");
+    nav.setVerticalState("grounded");
+
+    settings.movement_disabled = "1";
+    pressC();
+    assert(!nav.isDesktopCrouching(), "disabled movement prevents crouching");
+
+    settings.movement_disabled = "0";
+    nav.isImmersiveXrPresenting = () => true;
+    pressC();
+    assertNear(position.y, 1.8, "C preserves viewing height in immersive VR");
+
+    nav.isImmersiveXrPresenting = () => false;
+    nav.areCollisionsEnabled = () => false;
+    pressC();
+    assert(!nav.isDesktopCrouching(), "crouching requires walkable collision");
 }
 
 function createMovementHarness(options = {}) {
@@ -336,7 +413,7 @@ function createVerticalMathHarness() {
     nav.terminalFallSpeed = 18;
     nav.maxVerticalFrameDeltaSeconds = 0.05;
     nav.verticalMotionStep = { deltaY: 0, velocity: 0 };
-    nav.verticalVelocity = Math.sqrt(2 * nav.gravity * 0.8);
+    nav.verticalVelocity = Math.sqrt(2 * nav.gravity * defaultJumpHeight);
     return nav;
 }
 
@@ -361,8 +438,8 @@ function simulateJump(frameMs) {
 {
     const jump30 = simulateJump(1000 / 30);
     const jump120 = simulateJump(1000 / 120);
-    assertNear(jump30.peak, 0.8, "30 Hz jump should reach the configured apex", 0.01);
-    assertNear(jump120.peak, 0.8, "120 Hz jump should reach the configured apex", 0.01);
+    assertNear(jump30.peak, 0.95, "30 Hz jump should reach the configured apex", 0.01);
+    assertNear(jump120.peak, 0.95, "120 Hz jump should reach the configured apex", 0.01);
     assertNear(jump30.peak, jump120.peak, "jump apex should be frame-rate independent", 0.01);
     assertNear(jump30.elapsed, jump120.elapsed, "jump duration should be frame-rate independent", 0.04);
 }
@@ -387,7 +464,7 @@ function createJumpRequestHarness(overrides = {}) {
     Object.assign(nav, {
         verticalState: "grounded",
         verticalVelocity: 0,
-        jumpHeight: 0.8,
+        jumpHeight: defaultJumpHeight,
         gravity: 12,
         jumpLaunchVelocity: 0,
         heightOffset: 1.6,
@@ -418,7 +495,7 @@ function createJumpRequestHarness(overrides = {}) {
     const nav = createJumpRequestHarness();
     assert(nav.requestJump("keyboard"), "grounded walkable movement should accept jump input");
     assert(nav.verticalState === "airborne", "accepted jump should enter the airborne state");
-    assertNear(nav.verticalVelocity, Math.sqrt(2 * 12 * 0.8), "accepted jump should apply the configured impulse");
+    assertNear(nav.verticalVelocity, Math.sqrt(2 * 12 * defaultJumpHeight), "accepted jump should apply the configured impulse");
     assert(!nav.requestJump("keyboard"), "airborne movement should reject a double jump");
 }
 
@@ -625,7 +702,7 @@ function createVerticalControllerHarness() {
         data: { maxSlope: 45 },
         verticalState: "grounded",
         verticalVelocity: 0,
-        jumpHeight: 0.8,
+        jumpHeight: defaultJumpHeight,
         gravity: 12,
         terminalFallSpeed: 18,
         airControl: 0.65,
@@ -633,7 +710,7 @@ function createVerticalControllerHarness() {
         verticalCollisionSkin: 0.05,
         groundProbeStepTolerance: 0.05,
         maxVerticalFrameDeltaSeconds: 0.05,
-        jumpLaunchVelocity: Math.sqrt(2 * 12 * 0.8),
+        jumpLaunchVelocity: 0,
         heightOffset: 1.6,
         lastResolvedPosition: position.clone(),
         targetWorldPosition: new THREE.Vector3(),
@@ -682,7 +759,7 @@ for (const eyeHeight of [1.6, 1.8]) {
         nav.updateVerticalMotion(1000 / 60, nav.getSceneSettings(), true);
         peakFootY = Math.max(peakFootY, position.y - nav.heightOffset);
     }
-    assertNear(peakFootY, 0.8, "integrated controller jump should reach the configured apex", 0.01);
+    assertNear(peakFootY, defaultJumpHeight, "integrated controller jump should reach the configured apex", 0.01);
     assert(nav.verticalState === "grounded", "descending jump should land and return to grounded state");
     assertNear(position.y, eyeHeight, "landing should restore eye height above walkable ground");
     assertNear(nav.lastLandingGroundY, 0, "landing diagnostics should record ground height");

@@ -20,6 +20,10 @@ for (const file of ['assets/js/editor/vrodos_namespace.js', 'assets/js/editor/ui
     vm.runInContext(readFileSync(resolve(root, file), 'utf8'), context, { filename: file });
 }
 const plain = (value) => JSON.parse(JSON.stringify(value));
+const decodeDisplayText = context.VRODOS.utils.decodeDisplayText;
+assert.equal(decodeDisplayText('UC1 &#8211; Tomb of kings'), 'UC1 – Tomb of kings');
+assert.equal(decodeDisplayText('UC1 &#8212; &#8220;Tomb of kings&#8221;&#8230;'), 'UC1 — “Tomb of kings”…');
+assert.equal(decodeDisplayText('UC1 &#60;stone&#62;'), 'UC1 &#60;stone&#62;');
 for (const fixture of JSON.parse(readFileSync(resolve(root, 'scripts/fixtures/cefr-levels.json'), 'utf8'))) {
     assert.deepEqual(plain(context.VRODOS.utils.normalizeCefrLevels(fixture.input)), fixture.tokens);
     assert.deepEqual(plain(context.VRODOS.ui.badges.resolveCefrLevels(fixture.input, false)), fixture.levels);
