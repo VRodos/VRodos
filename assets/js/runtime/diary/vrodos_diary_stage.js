@@ -150,12 +150,17 @@
             if (index === this.target && (this.processing || index === this.index)) return;
             this.target = index;
             this.generation++;
+            this.cancelRelocation?.();
             this.view.update();
             if (!this.processing) this.loadSelection();
         },
 
         async loadSelection() {
-            if (this.removed || this.target === this.index) return;
+            if (this.removed) return;
+            if (this.target === this.index) {
+                this.view.status('');
+                return;
+            }
             const index = this.target;
             const generation = this.generation;
             const stage = this.dataSet.stages[index];
@@ -195,24 +200,45 @@
 
         async transition(index, generation, incoming, outgoing) {
             let ground = this.inspect(incoming, outgoing);
-            const animate = this.index >= 0 && (incoming.length || outgoing.length) && !this.reducedMotion.matches;
             const movement = this.movement;
+            const animate = !this.reducedMotion.matches;
+            let travel;
+            const canContinue = () => {
+                if (this.removed || generation !== this.generation) return false;
+                if (travel && movement.teleportTravel !== travel) throw new Error('Movement was interrupted. Try this entry again.');
+                return true;
+            };
+            const relocate = async () => {
+                travel = movement.startDiaryTravel(ground);
+                if (!travel) return true;
+                this.cancelRelocation = () => {
+                    if (movement.teleportTravel === travel) movement.cancelTeleport();
+                };
+                this.view.status('Moving to the safe viewpoint…');
+                await travel.arrival;
+                return canContinue();
+            };
+            const reveal = () => {
+                this.view.status(`Revealing ${this.dataSet.stages[index].title}…`);
+                return this.sweep(incoming, outgoing, generation);
+            };
             if (movement) movement.diaryTransition = true;
             try {
-                if (animate && ground?.relocate) {
-                    await this.view.fade(true);
-                } else if (animate) {
-                    await this.sweep(incoming, outgoing, generation);
+                if (animate && ground?.relocate && !(await relocate())) return;
+                if (animate && (incoming.length || outgoing.length) && (this.index >= 0 || travel)) await reveal();
+                if (!canContinue()) return;
+                // Room-scale movement may change the tracked footprint during the reveal.
+                ground = this.inspect(incoming, outgoing);
+                if (animate && ground?.relocate && !travel) {
+                    if (!(await relocate())) return;
+                    if (travel) await reveal();
+                    if (!canContinue()) return;
+                    ground = this.inspect(incoming, outgoing);
                 }
-                if (this.removed || generation !== this.generation) return;
-                ground = this.inspect(incoming, outgoing);
-                if (ground?.relocate && !this.view.faded && !this.reducedMotion.matches) await this.view.fade(true);
-                if (this.removed || generation !== this.generation) return;
-                // Recheck the tracked footprint after the fade or reveal.
-                ground = this.inspect(incoming, outgoing);
                 this.commit(index, incoming, outgoing, ground);
             } finally {
-                if (this.view?.faded) await this.view.fade(false);
+                this.cancelRelocation?.();
+                this.cancelRelocation = null;
                 if (movement) movement.diaryTransition = false;
             }
         },
@@ -298,6 +324,7 @@
         remove() {
             this.removed = true;
             this.prefetch?.abort();
+            this.cancelRelocation?.();
             this.cancelSweep?.();
             this.view?.remove();
             for (const record of this.loading) this.discard(record);

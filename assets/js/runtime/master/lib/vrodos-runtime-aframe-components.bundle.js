@@ -7507,8 +7507,9 @@
       return false;
     },
     inspectDiaryGround: function(incoming, outgoing, safePoint) {
-      var _a;
-      if (this.teleportTravel || this.isAirborne()) return null;
+      var _a, _b, _c, _d;
+      const travelled = ((_a = this.teleportTravel) == null ? void 0 : _a.diaryArrived) ? this.teleportTravel : null;
+      if (this.teleportTravel && !travelled || this.isAirborne()) return null;
       this.refreshNavMeshRoots();
       this.refreshCollisionWorld();
       const currentNav = this.navMeshCollisionTargets;
@@ -7523,6 +7524,7 @@
       const nav = currentNav.filter(remains);
       const blockers = currentBlockers.filter(remains);
       for (const entity of incoming) {
+        entity.object3D.updateWorldMatrix(true, true);
         const entities = [entity, ...entity.querySelectorAll(this.colliderEntitySelector)];
         const root = entity.getObject3D("mesh");
         if (root && entity.classList.contains("vrodos-navmesh")) {
@@ -7534,7 +7536,7 @@
         for (const collider of entities) {
           if (!collider.classList.contains("vrodos-collider")) continue;
           const role = collider.getAttribute("data-vrodos-collision-role") || "solid";
-          (_a = this.getColliderRootObject(collider)) == null ? void 0 : _a.traverse((mesh) => {
+          (_b = this.getColliderRootObject(collider)) == null ? void 0 : _b.traverse((mesh) => {
             if (this.prepareCollisionMesh(mesh, role)) blockers.push(mesh);
           });
         }
@@ -7542,9 +7544,9 @@
       const immersive = this.isImmersiveXrPresenting();
       const position = this.getNavigationWorldPosition().clone();
       const viewer = immersive ? this.renderedToAuthoredPosition(this.getImmersivePhysicalAnchorPosition(new THREE.Vector3()), new THREE.Vector3()) : position.clone();
-      const expectedEyeHeight = this.heightOffset || (immersive ? this.getDesiredImmersiveEyeToGroundOffset() : 1.8);
+      const expectedEyeHeight = (_c = travelled == null ? void 0 : travelled.eyeHeight) != null ? _c : this.heightOffset || (immersive ? this.getDesiredImmersiveEyeToGroundOffset() : 1.8);
       const floor = viewer.clone();
-      floor.y = this.hasLastGroundHit ? this.lastGroundHit.point.y : viewer.y - expectedEyeHeight;
+      floor.y = (_d = travelled == null ? void 0 : travelled.landing.floor.y) != null ? _d : this.hasLastGroundHit ? this.lastGroundHit.point.y : viewer.y - expectedEyeHeight;
       const eyeHeight = Math.max(expectedEyeHeight, viewer.y - floor.y);
       const trackedOffset = viewer.clone().sub(position);
       this.navMeshCollisionTargets = nav;
@@ -7559,6 +7561,29 @@
         this.blockerCollisionTargets = currentBlockers;
       }
     },
+    getDiaryLandingPosition: function(result) {
+      const position = result.landing.floor.clone().sub(result.trackedOffset);
+      position.y += result.eyeHeight;
+      return position;
+    },
+    startDiaryTravel: function(result) {
+      const immersive = this.isImmersiveXrPresenting();
+      if (this.teleportPaused || this.removed || immersive && !this.ensureImmersiveSessionAnchor("diary-entry")) {
+        throw new Error("Movement is unavailable. Try this entry again.");
+      }
+      const start = this.getNavigationWorldPosition().clone();
+      const end = this.getDiaryLandingPosition(result);
+      if (start.distanceToSquared(end) < 1e-4) return null;
+      const travel = this.startTeleportTravel(start, end, {
+        immersive,
+        landing: result.landing,
+        eyeHeight: result.eyeHeight
+      });
+      travel.arrival = new Promise((resolve) => {
+        travel.resolveDiaryArrival = resolve;
+      });
+      return travel;
+    },
     commitDiaryGround: function(result) {
       this.markNavMeshDirty();
       this.refreshNavMeshRoots();
@@ -7566,9 +7591,13 @@
       if (!result) return;
       const position = this.getNavigationWorldPosition().clone();
       if (result.relocate) {
-        position.copy(result.landing.floor).sub(result.trackedOffset);
-        position.y += result.eyeHeight;
+        position.copy(this.getDiaryLandingPosition(result));
         this.setNavigationWorldPosition(position);
+      }
+      const travel = this.teleportTravel;
+      if (travel == null ? void 0 : travel.diaryArrived) {
+        this.teleportTravel = null;
+        this.restoreTeleportControls(travel);
       }
       this.clearImmersiveGroundCaches();
       this.lastResolvedPosition.copy(position);
@@ -7610,15 +7639,14 @@
       end.y += eyeHeight + roomOffset.y;
       end.sub(roomOffset);
       if (start.distanceToSquared(end) < 1e-4) return false;
+      this.startTeleportTravel(start, end, { source: sourceElement, immersive, landing, eyeHeight, referenceEyeHeight });
+      return true;
+    },
+    startTeleportTravel: function(start, end, options) {
       const travel = window.VRODOSTeleport.createTravel(start, end);
-      Object.assign(travel, {
-        source: sourceElement,
-        immersive,
+      Object.assign(travel, options, {
         start,
         end,
-        landing,
-        eyeHeight,
-        referenceEyeHeight,
         rigStart: this.cameraRig.object3D.position.clone(),
         startGround: this.hasLastGroundHit ? this.copyGroundHit(this.lastGroundHit, this.createGroundHit()) : null,
         startVerticalState: this.verticalState,
@@ -7635,7 +7663,7 @@
       this.verticalVelocity = 0;
       this.clearImmersiveEntryPoseSettle();
       this.clearImmersiveFirstMovementGroundLock();
-      return true;
+      return travel;
     },
     restoreTeleportControls: function(travel) {
       var _a;
@@ -7647,6 +7675,7 @@
       }
     },
     cancelTeleport: function() {
+      var _a;
       const travel = this.teleportTravel;
       if (!travel) return;
       this.teleportTravel = null;
@@ -7668,6 +7697,7 @@
       this.verticalVelocity = travel.startVerticalVelocity;
       this.restoreTeleportControls(travel);
       this.requestShadowMapRefresh("teleport-cancel");
+      (_a = travel.resolveDiaryArrival) == null ? void 0 : _a.call(travel, false);
     },
     tickTeleport: function(timeDelta) {
       var _a, _b;
@@ -7677,9 +7707,10 @@
         this.cancelTeleport();
         return true;
       }
+      if (travel.diaryArrived) return true;
       travel.elapsed += Math.max(0, Number(timeDelta) || 0);
       const progress = Math.min(1, travel.elapsed / travel.duration);
-      if (progress === 1) {
+      if (progress === 1 && !travel.resolveDiaryArrival) {
         const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight, false);
         if (!landing) {
           (_b = (_a = travel.source) == null ? void 0 : _a.components["vrodos-teleport-point"]) == null ? void 0 : _b.showRejection();
@@ -7693,6 +7724,11 @@
       this.setNavigationWorldPosition(window.VRODOSTeleport.sampleTravel(travel, progress));
       this.lastResolvedPosition.copy(travel.position);
       if (progress === 1) {
+        if (travel.resolveDiaryArrival) {
+          travel.diaryArrived = true;
+          travel.resolveDiaryArrival(true);
+          return true;
+        }
         this.teleportTravel = null;
         this.clearImmersiveGroundCaches();
         this.heightOffset = travel.eyeHeight;

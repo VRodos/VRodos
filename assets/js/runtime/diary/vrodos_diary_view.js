@@ -73,7 +73,6 @@
 .vrodos-diary-ui input[type=range] { flex: 1; accent-color: #7fdabb; min-width: 70px; }
 .vrodos-diary-ui .vrodos-find-inspector { position: fixed; height: max-content; right: 0; bottom: 0; max-height: 65vh; overflow: auto; width: min(290px,calc(100vw - 32px)); }
 .vrodos-diary-ui[hidden], .vrodos-diary-ui [hidden] { display: none; }
-.vrodos-diary-fade { position: fixed; inset: 0; z-index: 10004; pointer-events: none; background: #000; opacity: 0; }
 `);
             document.head.append(this.style);
             this.desktop = element('aside');
@@ -121,7 +120,6 @@
             const fullscreen = document.fullscreenElement;
             const host = fullscreen && !['CANVAS', 'IFRAME'].includes(fullscreen.tagName) ? fullscreen : document.body;
             if (this.desktop.parentNode !== host) host.append(this.desktop);
-            if (this.desktopFade && this.desktopFade.parentNode !== host) host.append(this.desktopFade);
         }
 
         presentationChanged() {
@@ -429,56 +427,8 @@
             this.desktopLocked = false;
         }
 
-        fade(dark) {
-            if (this.removed) return Promise.resolve();
-            this.faded = dark;
-            const inVr = this.inVr();
-            if (dark && inVr) {
-                this.vrFade = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({
-                    color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0, depthTest: false, depthWrite: false
-                }));
-                this.vrFade.renderOrder = 12000;
-                this.scene.object3D.add(this.vrFade);
-            } else if (dark) {
-                this.desktopFade = element('div');
-                this.desktopFade.className = 'vrodos-diary-fade';
-                this.mountDesktop();
-            }
-            const started = performance.now();
-            return new Promise((resolve) => {
-                this.finishFade = resolve;
-                const frame = () => {
-                    const progress = Math.min(1, (performance.now() - started) / 145);
-                    const opacity = dark ? progress : 1 - progress;
-                    if (this.vrFade) {
-                        this.component.movement?.getImmersivePhysicalAnchorPosition(this.vrFade.position);
-                        this.vrFade.material.opacity = opacity;
-                    }
-                    if (this.desktopFade) this.desktopFade.style.opacity = String(opacity);
-                    if (progress < 1 && !this.removed) this.resources.frame(frame);
-                    else {
-                        this.finishFade = null;
-                        if (!dark) this.clearFade();
-                        resolve();
-                    }
-                };
-                frame();
-            });
-        }
-
-        clearFade() {
-            this.vrFade?.removeFromParent();
-            this.vrFade?.geometry.dispose();
-            this.vrFade?.material.dispose();
-            this.desktopFade?.remove();
-            this.vrFade = null;
-            this.desktopFade = null;
-        }
-
         remove() {
             this.removed = true;
-            this.finishFade?.();
-            this.clearFade();
             this.closePanel();
             for (const marker of this.markers.values()) marker.remove();
             this.desktop.remove();

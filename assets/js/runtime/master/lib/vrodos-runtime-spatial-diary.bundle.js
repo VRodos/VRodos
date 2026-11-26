@@ -144,15 +144,21 @@
         disposeModel(record.mesh, this.movement);
       },
       select(index) {
+        var _a;
         if (this.removed || !Number.isInteger(index) || !this.dataSet.stages[index]) return;
         if (index === this.target && (this.processing || index === this.index)) return;
         this.target = index;
         this.generation++;
+        (_a = this.cancelRelocation) == null ? void 0 : _a.call(this);
         this.view.update();
         if (!this.processing) this.loadSelection();
       },
       async loadSelection() {
-        if (this.removed || this.target === this.index) return;
+        if (this.removed) return;
+        if (this.target === this.index) {
+          this.view.status("");
+          return;
+        }
         const index = this.target;
         const generation = this.generation;
         const stage = this.dataSet.stages[index];
@@ -192,23 +198,44 @@
       async transition(index, generation, incoming, outgoing) {
         var _a;
         let ground = this.inspect(incoming, outgoing);
-        const animate = this.index >= 0 && (incoming.length || outgoing.length) && !this.reducedMotion.matches;
         const movement = this.movement;
+        const animate = !this.reducedMotion.matches;
+        let travel;
+        const canContinue = () => {
+          if (this.removed || generation !== this.generation) return false;
+          if (travel && movement.teleportTravel !== travel) throw new Error("Movement was interrupted. Try this entry again.");
+          return true;
+        };
+        const relocate = async () => {
+          travel = movement.startDiaryTravel(ground);
+          if (!travel) return true;
+          this.cancelRelocation = () => {
+            if (movement.teleportTravel === travel) movement.cancelTeleport();
+          };
+          this.view.status("Moving to the safe viewpoint\u2026");
+          await travel.arrival;
+          return canContinue();
+        };
+        const reveal = () => {
+          this.view.status(`Revealing ${this.dataSet.stages[index].title}\u2026`);
+          return this.sweep(incoming, outgoing, generation);
+        };
         if (movement) movement.diaryTransition = true;
         try {
-          if (animate && (ground == null ? void 0 : ground.relocate)) {
-            await this.view.fade(true);
-          } else if (animate) {
-            await this.sweep(incoming, outgoing, generation);
+          if (animate && (ground == null ? void 0 : ground.relocate) && !await relocate()) return;
+          if (animate && (incoming.length || outgoing.length) && (this.index >= 0 || travel)) await reveal();
+          if (!canContinue()) return;
+          ground = this.inspect(incoming, outgoing);
+          if (animate && (ground == null ? void 0 : ground.relocate) && !travel) {
+            if (!await relocate()) return;
+            if (travel) await reveal();
+            if (!canContinue()) return;
+            ground = this.inspect(incoming, outgoing);
           }
-          if (this.removed || generation !== this.generation) return;
-          ground = this.inspect(incoming, outgoing);
-          if ((ground == null ? void 0 : ground.relocate) && !this.view.faded && !this.reducedMotion.matches) await this.view.fade(true);
-          if (this.removed || generation !== this.generation) return;
-          ground = this.inspect(incoming, outgoing);
           this.commit(index, incoming, outgoing, ground);
         } finally {
-          if ((_a = this.view) == null ? void 0 : _a.faded) await this.view.fade(false);
+          (_a = this.cancelRelocation) == null ? void 0 : _a.call(this);
+          this.cancelRelocation = null;
           if (movement) movement.diaryTransition = false;
         }
       },
@@ -291,11 +318,12 @@
         }, 500);
       },
       remove() {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         this.removed = true;
         (_a = this.prefetch) == null ? void 0 : _a.abort();
-        (_b = this.cancelSweep) == null ? void 0 : _b.call(this);
-        (_c = this.view) == null ? void 0 : _c.remove();
+        (_b = this.cancelRelocation) == null ? void 0 : _b.call(this);
+        (_c = this.cancelSweep) == null ? void 0 : _c.call(this);
+        (_d = this.view) == null ? void 0 : _d.remove();
         for (const record of this.loading) this.discard(record);
         for (const record of this.active.values()) this.discard(record);
         this.active.clear();
@@ -378,7 +406,6 @@
 .vrodos-diary-ui input[type=range] { flex: 1; accent-color: #7fdabb; min-width: 70px; }
 .vrodos-diary-ui .vrodos-find-inspector { position: fixed; height: max-content; right: 0; bottom: 0; max-height: 65vh; overflow: auto; width: min(290px,calc(100vw - 32px)); }
 .vrodos-diary-ui[hidden], .vrodos-diary-ui [hidden] { display: none; }
-.vrodos-diary-fade { position: fixed; inset: 0; z-index: 10004; pointer-events: none; background: #000; opacity: 0; }
 `);
         document.head.append(this.style);
         this.desktop = element("aside");
@@ -424,7 +451,6 @@
         const fullscreen = document.fullscreenElement;
         const host = fullscreen && !["CANVAS", "IFRAME"].includes(fullscreen.tagName) ? fullscreen : document.body;
         if (this.desktop.parentNode !== host) host.append(this.desktop);
-        if (this.desktopFade && this.desktopFade.parentNode !== host) host.append(this.desktopFade);
       }
       presentationChanged() {
         this.closePanel();
@@ -785,62 +811,8 @@
         if (this.desktopLocked) (_c = window.VRODOSRuntimeOverlay) == null ? void 0 : _c.lockSceneInteraction(false);
         this.desktopLocked = false;
       }
-      fade(dark) {
-        if (this.removed) return Promise.resolve();
-        this.faded = dark;
-        const inVr = this.inVr();
-        if (dark && inVr) {
-          this.vrFade = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({
-            color: 0,
-            side: THREE.BackSide,
-            transparent: true,
-            opacity: 0,
-            depthTest: false,
-            depthWrite: false
-          }));
-          this.vrFade.renderOrder = 12e3;
-          this.scene.object3D.add(this.vrFade);
-        } else if (dark) {
-          this.desktopFade = element("div");
-          this.desktopFade.className = "vrodos-diary-fade";
-          this.mountDesktop();
-        }
-        const started = performance.now();
-        return new Promise((resolve) => {
-          this.finishFade = resolve;
-          const frame = () => {
-            var _a;
-            const progress = Math.min(1, (performance.now() - started) / 145);
-            const opacity = dark ? progress : 1 - progress;
-            if (this.vrFade) {
-              (_a = this.component.movement) == null ? void 0 : _a.getImmersivePhysicalAnchorPosition(this.vrFade.position);
-              this.vrFade.material.opacity = opacity;
-            }
-            if (this.desktopFade) this.desktopFade.style.opacity = String(opacity);
-            if (progress < 1 && !this.removed) this.resources.frame(frame);
-            else {
-              this.finishFade = null;
-              if (!dark) this.clearFade();
-              resolve();
-            }
-          };
-          frame();
-        });
-      }
-      clearFade() {
-        var _a, _b, _c, _d;
-        (_a = this.vrFade) == null ? void 0 : _a.removeFromParent();
-        (_b = this.vrFade) == null ? void 0 : _b.geometry.dispose();
-        (_c = this.vrFade) == null ? void 0 : _c.material.dispose();
-        (_d = this.desktopFade) == null ? void 0 : _d.remove();
-        this.vrFade = null;
-        this.desktopFade = null;
-      }
       remove() {
-        var _a;
         this.removed = true;
-        (_a = this.finishFade) == null ? void 0 : _a.call(this);
-        this.clearFade();
         this.closePanel();
         for (const marker of this.markers.values()) marker.remove();
         this.desktop.remove();

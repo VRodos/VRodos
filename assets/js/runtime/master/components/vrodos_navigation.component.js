@@ -3297,7 +3297,8 @@ AFRAME.registerComponent('custom-movement', {
         return false;
     },
     inspectDiaryGround: function (incoming, outgoing, safePoint) {
-        if (this.teleportTravel || this.isAirborne()) return null;
+        const travelled = this.teleportTravel?.diaryArrived ? this.teleportTravel : null;
+        if ((this.teleportTravel && !travelled) || this.isAirborne()) return null;
         this.refreshNavMeshRoots();
         this.refreshCollisionWorld();
         const currentNav = this.navMeshCollisionTargets;
@@ -3312,6 +3313,8 @@ AFRAME.registerComponent('custom-movement', {
         const nav = currentNav.filter(remains);
         const blockers = currentBlockers.filter(remains);
         for (const entity of incoming) {
+            // Incoming diary models are hidden and may not have rendered with their authored transform yet.
+            entity.object3D.updateWorldMatrix(true, true);
             const entities = [entity, ...entity.querySelectorAll(this.colliderEntitySelector)];
             const root = entity.getObject3D('mesh');
             if (root && entity.classList.contains('vrodos-navmesh')) {
@@ -3331,9 +3334,9 @@ AFRAME.registerComponent('custom-movement', {
         const viewer = immersive
             ? this.renderedToAuthoredPosition(this.getImmersivePhysicalAnchorPosition(new THREE.Vector3()), new THREE.Vector3())
             : position.clone();
-        const expectedEyeHeight = this.heightOffset || (immersive ? this.getDesiredImmersiveEyeToGroundOffset() : 1.8);
+        const expectedEyeHeight = travelled?.eyeHeight ?? (this.heightOffset || (immersive ? this.getDesiredImmersiveEyeToGroundOffset() : 1.8));
         const floor = viewer.clone();
-        floor.y = this.hasLastGroundHit ? this.lastGroundHit.point.y : viewer.y - expectedEyeHeight;
+        floor.y = travelled?.landing.floor.y ?? (this.hasLastGroundHit ? this.lastGroundHit.point.y : viewer.y - expectedEyeHeight);
         const eyeHeight = Math.max(expectedEyeHeight, viewer.y - floor.y);
         const trackedOffset = viewer.clone().sub(position);
         this.navMeshCollisionTargets = nav;
@@ -3348,6 +3351,25 @@ AFRAME.registerComponent('custom-movement', {
             this.blockerCollisionTargets = currentBlockers;
         }
     },
+    getDiaryLandingPosition: function (result) {
+        const position = result.landing.floor.clone().sub(result.trackedOffset);
+        position.y += result.eyeHeight;
+        return position;
+    },
+    startDiaryTravel: function (result) {
+        const immersive = this.isImmersiveXrPresenting();
+        if (this.teleportPaused || this.removed || (immersive && !this.ensureImmersiveSessionAnchor('diary-entry'))) {
+            throw new Error('Movement is unavailable. Try this entry again.');
+        }
+        const start = this.getNavigationWorldPosition().clone();
+        const end = this.getDiaryLandingPosition(result);
+        if (start.distanceToSquared(end) < 0.0001) return null;
+        const travel = this.startTeleportTravel(start, end, {
+            immersive, landing: result.landing, eyeHeight: result.eyeHeight
+        });
+        travel.arrival = new Promise((resolve) => { travel.resolveDiaryArrival = resolve; });
+        return travel;
+    },
     commitDiaryGround: function (result) {
         this.markNavMeshDirty();
         this.refreshNavMeshRoots();
@@ -3355,9 +3377,13 @@ AFRAME.registerComponent('custom-movement', {
         if (!result) return;
         const position = this.getNavigationWorldPosition().clone();
         if (result.relocate) {
-            position.copy(result.landing.floor).sub(result.trackedOffset);
-            position.y += result.eyeHeight;
+            position.copy(this.getDiaryLandingPosition(result));
             this.setNavigationWorldPosition(position);
+        }
+        const travel = this.teleportTravel;
+        if (travel?.diaryArrived) {
+            this.teleportTravel = null;
+            this.restoreTeleportControls(travel);
         }
         this.clearImmersiveGroundCaches();
         this.lastResolvedPosition.copy(position);
@@ -3399,9 +3425,13 @@ AFRAME.registerComponent('custom-movement', {
         end.y += eyeHeight + roomOffset.y;
         end.sub(roomOffset);
         if (start.distanceToSquared(end) < 0.0001) return false;
+        this.startTeleportTravel(start, end, { source: sourceElement, immersive, landing, eyeHeight, referenceEyeHeight });
+        return true;
+    },
+    startTeleportTravel: function (start, end, options) {
         const travel = window.VRODOSTeleport.createTravel(start, end);
-        Object.assign(travel, {
-            source: sourceElement, immersive, start, end, landing, eyeHeight, referenceEyeHeight,
+        Object.assign(travel, options, {
+            start, end,
             rigStart: this.cameraRig.object3D.position.clone(),
             startGround: this.hasLastGroundHit ? this.copyGroundHit(this.lastGroundHit, this.createGroundHit()) : null,
             startVerticalState: this.verticalState, startVerticalVelocity: this.verticalVelocity,
@@ -3417,7 +3447,7 @@ AFRAME.registerComponent('custom-movement', {
         this.verticalVelocity = 0;
         this.clearImmersiveEntryPoseSettle();
         this.clearImmersiveFirstMovementGroundLock();
-        return true;
+        return travel;
     },
     restoreTeleportControls: function (travel) {
         if (window.VRODOSRuntimeOverlay?.interactionLocked) return;
@@ -3450,14 +3480,16 @@ AFRAME.registerComponent('custom-movement', {
         this.verticalVelocity = travel.startVerticalVelocity;
         this.restoreTeleportControls(travel);
         this.requestShadowMapRefresh('teleport-cancel');
+        travel.resolveDiaryArrival?.(false);
     },
     tickTeleport: function (timeDelta) {
         const travel = this.teleportTravel;
         if (!travel) return false;
         if (travel.source && !travel.source.isConnected) { this.cancelTeleport(); return true; }
+        if (travel.diaryArrived) return true;
         travel.elapsed += Math.max(0, Number(timeDelta) || 0);
         const progress = Math.min(1, travel.elapsed / travel.duration);
-        if (progress === 1) {
+        if (progress === 1 && !travel.resolveDiaryArrival) {
             const landing = this.resolveTeleportLanding(travel.landing.floor, travel.eyeHeight, false);
             if (!landing) {
                 travel.source?.components['vrodos-teleport-point']?.showRejection();
@@ -3471,6 +3503,12 @@ AFRAME.registerComponent('custom-movement', {
         this.setNavigationWorldPosition(window.VRODOSTeleport.sampleTravel(travel, progress));
         this.lastResolvedPosition.copy(travel.position);
         if (progress === 1) {
+            if (travel.resolveDiaryArrival) {
+                // The diary validates and commits the pending collision world after the reveal.
+                travel.diaryArrived = true;
+                travel.resolveDiaryArrival(true);
+                return true;
+            }
             this.teleportTravel = null;
             this.clearImmersiveGroundCaches();
             this.heightOffset = travel.eyeHeight;

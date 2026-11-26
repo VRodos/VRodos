@@ -19,7 +19,7 @@ const context = {
 };
 vm.createContext(context);
 for (const file of ['vrodos_runtime_resources.js', 'vrodos_teleport.js', 'components/vrodos_navigation.component.js',
-    'components/vrodos_teleport_point.component.js']) {
+    'components/vrodos_teleport_point.component.js', '../diary/vrodos_diary_stage.js']) {
     vm.runInContext(readFileSync(resolve(root, 'assets/js/runtime/master', file), 'utf8'), context, { filename: file });
 }
 const Teleport = context.window.VRODOSTeleport;
@@ -103,6 +103,77 @@ function fixture({ standard = false, mode = 'walk', collisions = false, disabled
     }
     return { nav, rig, cameraGroup, scene, settings, camera, world, player, controllers, addMesh, enterVr };
 }
+
+const excavation = fixture({ mode: 'walkable', collisions: true });
+const pendingSite = new THREE.Group();
+pendingSite.position.set(12, 1.75, 9);
+pendingSite.scale.setScalar(2);
+pendingSite.visible = false;
+pendingSite.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.25, 4), new THREE.MeshBasicMaterial()));
+excavation.world.object3D.add(pendingSite);
+const pendingEntity = {
+    object3D: pendingSite,
+    getObject3D: () => pendingSite.children[0],
+    getAttribute: () => null,
+    querySelectorAll: () => [],
+    matches: () => true,
+    classList: { contains: name => ['vrodos-navmesh', 'vrodos-collider'].includes(name) }
+};
+const safePoint = point(12, 2, 9);
+const firstLanding = excavation.nav.inspectDiaryGround([pendingEntity], [], safePoint);
+assert(firstLanding?.relocate, 'an unrendered diary model supports the authored safe viewpoint at its scene placement');
+near(firstLanding.landing.floor, safePoint, 'first diary landing uses the translated and scaled model');
+assert.equal(excavation.nav.navMeshCollisionTargets.length, 0, 'a pending model remains outside the active navigation mesh');
+assert.equal(excavation.nav.inspectDiaryGround([pendingEntity], [], point(50, 2, 50)), null, 'outside points still fail the safety check');
+
+const diaryEvents = [];
+const diary = Object.assign(Object.create(definitions['vrodos-spatial-diary']), {
+    movement: excavation.nav,
+    safePoint,
+    reducedMotion: { matches: false },
+    dataSet: { stages: [{ title: 'Before excavation' }, { title: 'Stairs added' }] },
+    index: -1, target: 0, generation: 1, processing: true,
+    view: { status: (message) => diaryEvents.push(message), update: noop },
+    sweep: () => { diaryEvents.push('reveal'); },
+    commit(index, _incoming, _outgoing, ground) {
+        diaryEvents.push('commit');
+        this.movement.commitDiaryGround(ground);
+        this.index = index;
+    }
+});
+const authoredStart = excavation.nav.getNavigationWorldPosition().clone();
+const terrain = [{ entity: pendingEntity }];
+const transition = diary.transition(0, 1, terrain, []);
+const travel = excavation.nav.teleportTravel;
+assert(travel?.arrival, 'diary relocation puts the shared teleport motion in progress');
+excavation.nav.tickTeleport(travel.duration / 2);
+near(excavation.nav.getNavigationWorldPosition(), Teleport.sampleTravel(travel, 0.5), 'the viewer follows the teleport curve');
+assert.deepEqual(diaryEvents, ['Moving to the safe viewpoint…'], 'the geometry is hidden during travel');
+excavation.nav.tickTeleport(travel.duration / 2);
+await transition;
+assert.deepEqual(diaryEvents, ['Moving to the safe viewpoint…', 'Revealing Before excavation…', 'reveal', 'commit']);
+near(excavation.nav.getNavigationWorldPosition(), point(12, 3.8, 9), 'the diary commits from the safe viewpoint');
+assert.equal(excavation.nav.teleportTravel, null, 'committing releases the teleport motion');
+
+excavation.nav.setNavigationWorldPosition(authoredStart);
+diaryEvents.length = 0;
+const interrupted = diary.transition(0, 1, terrain, []);
+excavation.nav.tickTeleport(excavation.nav.teleportTravel.duration / 2);
+diary.select(1);
+await interrupted;
+near(excavation.nav.getNavigationWorldPosition(), authoredStart, 'changing entries during travel restores the departure position');
+assert.deepEqual(diaryEvents, ['Moving to the safe viewpoint…'], 'an interrupted travel cannot reveal or commit the old request');
+assert.equal(excavation.nav.teleportTravel, null);
+
+diary.target = diary.index;
+await diary.loadSelection();
+assert.equal(diaryEvents.at(-1), '', 'returning to the committed entry clears the interrupted transition status');
+
+diary.reducedMotion.matches = true;
+diaryEvents.length = 0;
+await diary.transition(1, 2, terrain, []);
+assert.deepEqual(diaryEvents, ['commit'], 'reduced motion swaps directly at a validated landing');
+near(excavation.nav.getNavigationWorldPosition(), point(12, 3.8, 9), 'the reduced-motion swap lands at the safe viewpoint');
 
 for (const standard of [false, true]) {
     for (const mode of ['walk', 'walkable', 'fly']) {
