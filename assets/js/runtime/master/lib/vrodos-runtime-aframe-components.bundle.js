@@ -4585,7 +4585,7 @@
     collisionSkin: 0.05,
     maxFrameDeltaSeconds: 0.05
   };
-  const VRODOSDesktopCrouch = { eyeHeight: 0.92, capsuleHeight: 1.02, capsuleRadius: 0.23 };
+  const VRODOSDesktopCrouch = { eyeHeight: 0.92, capsuleHeight: 1.02, capsuleRadius: 0.23, durationMs: 220 };
   function vrodosHiddenMeshHelper(useEntityRoot) {
     return {
       init: function() {
@@ -4801,6 +4801,7 @@
       this.blockerCapsuleRadius = 0.32;
       this.blockerCapsuleHeight = 1.65;
       this.desktopCrouchStandingHeight = null;
+      this.desktopCrouchTransition = null;
       this.blockerSkin = 0.05;
       this.verticalCapsuleOffsets = [
         new THREE.Vector2(0, 0),
@@ -5143,6 +5144,7 @@
       return restored;
     },
     prepareVerticalMotionForEnterVr: function() {
+      this.desktopCrouchTransition = null;
       if (!this.isAirborne()) {
         return;
       }
@@ -6505,12 +6507,14 @@
       this.recordDesktopVisionHeightOffset(this.lastNonImmersiveNavigationPosition, groundHit, "desktop-sample", now);
     },
     recordDesktopVisionHeightOffset: function(navigationPosition, groundHit, source, now) {
+      var _a, _b;
       if (this.isImmersiveXrPresenting() || !navigationPosition || !groundHit || !groundHit.point) {
         return false;
       }
       const navigationY = Number(navigationPosition.y);
       const groundY = Number(groundHit.point.y);
-      const rawHeightOffset = navigationY - groundY - this.desktopWalkingHeightLift;
+      const standingHeight = (_b = this.desktopCrouchStandingHeight) != null ? _b : (_a = this.desktopCrouchTransition) == null ? void 0 : _a.to;
+      const rawHeightOffset = (standingHeight != null ? standingHeight : navigationY - groundY) - this.desktopWalkingHeightLift;
       if (!Number.isFinite(navigationY) || !Number.isFinite(groundY) || !Number.isFinite(rawHeightOffset)) {
         return false;
       }
@@ -6577,7 +6581,7 @@
       return !this.isImmersiveXrPresenting() && this.areCollisionsEnabled() && !this.isHeadsetRuntimeProfile(this.getSceneSettings());
     },
     toggleDesktopCrouch: function(ground) {
-      var _a;
+      var _a, _b, _c, _d;
       const settings = this.getSceneSettings();
       if (!this.canStartTeleport() || this.isImmersiveXrPresenting() || this.isAirborne() || !this.areCollisionsEnabled(settings) || ["true", "1"].includes(String(settings.movement_disabled))) return false;
       this.ensureNavigationStatePrimed();
@@ -6588,30 +6592,51 @@
       const eyeHeight = standingHeight != null ? standingHeight : VRODOSDesktopCrouch.eyeHeight;
       const floor = ground.point.clone().set(current.x, ground.point.y, current.z);
       if (standingHeight !== null && this.isTeleportLandingBlocked(floor, eyeHeight, ground, false)) return false;
-      current.y = floor.y + eyeHeight;
-      if (!this.setNavigationWorldPosition(current)) return false;
-      this.desktopCrouchStandingHeight = standingHeight === null ? (_a = this.heightOffset) != null ? _a : this.desktopWalkingMinEyeToGroundOffset : null;
-      this.heightOffset = eyeHeight;
-      this.lastResolvedPosition.copy(current);
+      const from = current.y - floor.y;
+      this.desktopCrouchStandingHeight = standingHeight === null ? (_c = (_b = (_a = this.desktopCrouchTransition) == null ? void 0 : _a.to) != null ? _b : this.heightOffset) != null ? _c : this.desktopWalkingMinEyeToGroundOffset : null;
+      this.desktopCrouchTransition = { from, to: eyeHeight, elapsedMs: 0 };
+      this.heightOffset = from;
       this.setResolvedGroundHit(ground, current, this.lastGroundHit);
       this.hasLastGroundHit = true;
       this.rememberGroundedPosition(current, this.lastGroundHit);
-      this.captureDesktopFullscreenNavigationPose("desktop-crouch");
+      if ((_d = window.matchMedia) == null ? void 0 : _d.call(window, "(prefers-reduced-motion: reduce)").matches) {
+        this.updateDesktopCrouchTransition(VRODOSDesktopCrouch.durationMs);
+      }
       return true;
+    },
+    updateDesktopCrouchTransition: function(timeDelta) {
+      const transition = this.desktopCrouchTransition;
+      if (!transition) return;
+      transition.elapsedMs += timeDelta;
+      const eased = THREE.MathUtils.smoothstep(transition.elapsedMs, 0, VRODOSDesktopCrouch.durationMs);
+      const eyeHeight = THREE.MathUtils.lerp(transition.from, transition.to, eased);
+      const heightDelta = eyeHeight - this.heightOffset;
+      const position = this.targetWorldPosition.copy(this.getNavigationWorldPosition());
+      position.y += heightDelta;
+      if (!this.setNavigationWorldPosition(position)) return;
+      this.heightOffset = eyeHeight;
+      this.lastResolvedPosition.copy(position);
+      if (this.hasLastGroundedPosition) this.lastGroundedPosition.y += heightDelta;
+      if (transition.elapsedMs >= VRODOSDesktopCrouch.durationMs) this.desktopCrouchTransition = null;
     },
     isDesktopCrouching: function() {
       return Number.isFinite(this.desktopCrouchStandingHeight) && !this.isImmersiveXrPresenting();
     },
+    usesDesktopCrouchCapsule: function() {
+      return this.isDesktopCrouching() && !this.desktopCrouchTransition;
+    },
     getActiveBlockerCapsuleHeight: function() {
-      return this.isDesktopCrouching() ? VRODOSDesktopCrouch.capsuleHeight : this.blockerCapsuleHeight;
+      return this.usesDesktopCrouchCapsule() ? VRODOSDesktopCrouch.capsuleHeight : this.blockerCapsuleHeight;
     },
     getActiveVerticalCapsuleOffsets: function() {
-      return this.isDesktopCrouching() ? this.desktopCrouchCapsuleOffsets : this.verticalCapsuleOffsets;
+      return this.usesDesktopCrouchCapsule() ? this.desktopCrouchCapsuleOffsets : this.verticalCapsuleOffsets;
     },
     resolveNavigationHeightOffset: function(rawHeightOffset) {
+      var _a;
       if (this.isImmersiveXrPresenting()) {
         return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
       }
+      if (this.desktopCrouchTransition) return (_a = this.heightOffset) != null ? _a : rawHeightOffset;
       if (Number.isFinite(this.desktopCrouchStandingHeight)) return VRODOSDesktopCrouch.eyeHeight;
       const raiseDesktopHeight = this.shouldRaiseDesktopWalkingHeight();
       const desktopHeight = VRODOSMaster.clamp(
@@ -7515,7 +7540,7 @@
       if (this.isTeleportLandingBlocked(floor, eyeHeight, ground)) return null;
       return { floor, ground };
     },
-    isTeleportLandingBlocked: function(floor, eyeHeight, ground, crouching = this.isDesktopCrouching()) {
+    isTeleportLandingBlocked: function(floor, eyeHeight, ground, crouching = this.usesDesktopCrouchCapsule()) {
       this.refreshCollisionWorld();
       const radius = crouching ? VRODOSDesktopCrouch.capsuleRadius : this.blockerCapsuleRadius;
       const height = Math.max(crouching ? VRODOSDesktopCrouch.capsuleHeight : this.blockerCapsuleHeight, eyeHeight);
@@ -8814,7 +8839,7 @@
       }
       const fromGroundY = this.getGroundYForBlockerSweep(fromPosition, fromGround);
       const toGroundY = this.getGroundYForBlockerSweep(toPosition, toGround);
-      const radius = this.isDesktopCrouching() ? VRODOSDesktopCrouch.capsuleRadius : this.blockerCapsuleRadius;
+      const radius = this.usesDesktopCrouchCapsule() ? VRODOSDesktopCrouch.capsuleRadius : this.blockerCapsuleRadius;
       const far = travelDistance + radius + this.blockerSkin;
       const capsuleHeight = this.getActiveBlockerCapsuleHeight();
       for (let heightIndex = 0; heightIndex < this.blockerSweepHeights.length; heightIndex++) {
@@ -9332,6 +9357,7 @@
           }
         }
         this.measureImmersiveSmoothness(smoothnessFrame, "verticalMovementMs", this.updateVerticalMotion, timeDelta, settings, collisionsEnabled);
+        if (!immersivePresenting && collisionsEnabled) this.updateDesktopCrouchTransition(Math.min(timeDelta, 50));
       } finally {
         this.finishImmersiveSmoothnessFrame(smoothnessFrame);
       }

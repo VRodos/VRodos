@@ -115,12 +115,12 @@ function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
     nav.findWalkableGroundBelowAt = () => floor;
     nav.getNavigationWorldPosition = () => position;
     nav.setNavigationWorldPosition = next => { position.copy(next); return true; };
-    nav.setResolvedGroundHit = () => {};
-    nav.rememberGroundedPosition = () => {};
-    nav.captureDesktopFullscreenNavigationPose = () => {};
     nav.getRuntimeNow = () => 0;
     nav.lastResolvedPosition = position.clone();
-    nav.lastGroundHit = floor;
+    nav.targetWorldPosition = new THREE.Vector3();
+    nav.lastGroundHit = createGroundHit();
+    nav.lastGroundedPosition = position.clone();
+    nav.lastGroundedGroundHit = createGroundHit();
     nav.heightOffset = 1.8;
     nav.blockerCapsuleHeight = 1.65;
     nav.verticalCollisionSkin = 0.05;
@@ -140,6 +140,12 @@ function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
 
     pressC();
     assert(nav.isDesktopCrouching(), "C engages crouch without scene opt-in");
+    assertNear(position.y, 1.8, "C starts without a camera snap");
+    nav.updateDesktopCrouchTransition(55);
+    assertNear(position.y, 1.6625, "the camera eases into the descent over the first quarter");
+    assertNear(nav.resolveNavigationHeightOffset(0.92), position.y, "ground snaps preserve the intermediate eye height");
+    assertNear(nav.getActiveBlockerCapsuleHeight(), 1.65, "the standing capsule stays active while the camera lowers");
+    nav.updateDesktopCrouchTransition(165);
     assertNear(position.y, 0.92, "crouch lowers the view above the same floor");
     assertNear(nav.resolveNavigationHeightOffset(0.92), 0.92, "ground snaps keep crouched eye height");
     assertNear(nav.getActiveBlockerCapsuleHeight(), 1.02, "crouch lowers collision clearance");
@@ -152,15 +158,39 @@ function createGroundHit(x = 0, y = 0, z = 0, behavior = "precise") {
 
     lowCeiling = false;
     pressC();
+    assertNear(position.y, 0.92, "standing starts without a camera snap");
+    nav.updateDesktopCrouchTransition(110);
+    assertNear(position.y, 1.36, "standing eases through the halfway height");
+    assertNear(nav.getActiveBlockerCapsuleHeight(), 1.65, "standing clearance starts as soon as the player rises");
+    pressC();
+    assertNear(position.y, 1.36, "reversing a stance change preserves the current view");
+    nav.updateDesktopCrouchTransition(220);
+    assertNear(position.y, 0.92, "the reversed transition reaches the crouched height");
+
+    pressC();
+    nav.updateDesktopCrouchTransition(220);
     assert(!nav.isDesktopCrouching(), "C restores standing in a clear area");
     assertNear(position.y, 1.8, "standing restores the previous eye height");
     assertNear(nav.getActiveBlockerCapsuleHeight(), 1.65, "standing restores collision clearance");
 
     pressC();
+    nav.updateDesktopCrouchTransition(220);
     pressSpace();
     assert(!nav.isDesktopCrouching() && nav.isAirborne(), "Space stands and jumps from a crouch when clear");
-    assertNear(position.y, 1.8, "crouch-to-jump launches from the standing eye height");
+    assertNear(position.y, 0.92, "jumping from a crouch starts without a camera snap");
+    position.y += 0.2;
+    nav.updateDesktopCrouchTransition(220);
+    assertNear(position.y - nav.heightOffset, 0.2, "the eye height transition preserves vertical jump motion");
+    assertNear(nav.lastGroundedPosition.y, 1.8, "ground recovery uses the restored standing height");
+    position.y = nav.heightOffset;
     nav.setVerticalState("grounded");
+
+    sandbox.window.matchMedia = () => ({ matches: true });
+    pressC();
+    assertNear(position.y, 0.92, "reduced motion applies the crouch immediately");
+    pressC();
+    assertNear(position.y, 1.8, "reduced motion applies standing immediately");
+    delete sandbox.window.matchMedia;
 
     settings.movement_disabled = "1";
     pressC();
