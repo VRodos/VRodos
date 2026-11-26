@@ -469,7 +469,7 @@
     "pmndrsBloomIntensity": {
       "metadataKey": "aframePmndrsBloomIntensity",
       "type": "number",
-      "default": 1,
+      "default": 0.3,
       "min": 0,
       "max": 3,
       "wireKey": "pmndrsBloomIntensity"
@@ -477,7 +477,7 @@
     "pmndrsBloomThreshold": {
       "metadataKey": "aframePmndrsBloomThreshold",
       "type": "number",
-      "default": 0.62,
+      "default": 0.3,
       "min": 0,
       "max": 1,
       "wireKey": "pmndrsBloomThreshold"

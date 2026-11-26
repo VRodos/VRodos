@@ -326,7 +326,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         syncLightArtifacts(target);
         transforms.syncProxyToObject(target);
         render.request(options.reason || 'transform-gui-change');
-        if (options.commit) VRODOS.api.triggerAutoSave();
+        if (options.commit) {
+            target.dispatchEvent({ type: 'vrodos-transform-commit' });
+            VRODOS.api.triggerAutoSave();
+        }
     };
 
     transforms.applyGuiChange = transforms.applyGuiChange || function(opCode, value, options) {
@@ -368,6 +371,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         const target = transforms.getRealObject(object);
         if (!target) return false;
         if (transforms.isLockedObject(target)) return false;
+        if (target.vrodosTranslationOnly) return mode === 'translate';
 
         const category = target.category_name || '';
         if (mode === 'rotate' && (
@@ -467,10 +471,11 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
 
         const newTRS = cloneTRS(target);
-        if (hasTRSChanged(target, oldTRS) &&
-            typeof VRODOS.editor.undoManager !== 'undefined' &&
-            !VRODOS.editor.undoManager.isExecuting) {
-            VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, oldTRS, newTRS));
+        if (hasTRSChanged(target, oldTRS)) {
+            if (VRODOS.editor.undoManager && !VRODOS.editor.undoManager.isExecuting) {
+                VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, oldTRS, newTRS));
+            }
+            target.dispatchEvent({ type: 'vrodos-transform-commit' });
         }
 
         dragState.oldTRS = null;

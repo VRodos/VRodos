@@ -11,6 +11,16 @@
  * To add a new category icon, add ONE entry here.
  */
 VRODOS.ui.icons = VRODOS.ui.icons || {};
+
+const diaryIcons = { excavation: 'shovel', find: 'amphora' };
+VRODOS.ui.createDiaryIcon = function(kind) {
+    const icon = document.createElement('i');
+    icon.className = 'diary-icon';
+    icon.setAttribute('data-lucide', diaryIcons[kind]);
+    icon.setAttribute('aria-hidden', 'true');
+    return icon;
+};
+
 VRODOS.ui.icons.categoryIcons = {
 
     // ── Asset taxonomy categories (slug) ──────────────────────

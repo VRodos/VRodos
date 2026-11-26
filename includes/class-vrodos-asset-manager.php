@@ -231,7 +231,7 @@ class VRodos_Asset_Manager {
 		if ( VRodos_Spatial_Diary::can_edit( (int) $template_data['project_id'], (int) $template_data['current_scene_id'] ) ) {
 			$diary_script = 'js/editor/ui/vrodos_diary_editor.js';
 			$diary_style = 'css/editor/vrodos_diary_editor.css';
-			wp_enqueue_script( 'vrodos-diary-editor', VRodos_Path_Manager::asset_url( $diary_script ), [ 'vrodos_namespace' ], (string) filemtime( VRodos_Path_Manager::asset_path( $diary_script ) ), true );
+			wp_enqueue_script( 'vrodos-diary-editor', VRodos_Path_Manager::asset_url( $diary_script ), [ 'vrodos_HierarchyViewer' ], (string) filemtime( VRodos_Path_Manager::asset_path( $diary_script ) ), true );
 			wp_enqueue_style( 'vrodos-diary-editor', VRodos_Path_Manager::asset_url( $diary_style ), [], (string) filemtime( VRodos_Path_Manager::asset_path( $diary_style ) ) );
 		}
 
@@ -360,12 +360,12 @@ class VRodos_Asset_Manager {
 
 		$scripts = [
       // Foundation
-      ['vrodos_namespace', VRodos_Path_Manager::editor_js_url( 'vrodos_namespace.js' )],
+      ['vrodos_namespace', VRodos_Path_Manager::editor_js_url( 'vrodos_namespace.js' ), [], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/vrodos_namespace.js' ) )],
       ['vrodos_surface_material', VRodos_Path_Manager::runtime_master_url( 'vrodos_surface_material.js' ), ['vrodos_three_vendor_bundle']],
       ['vrodos_scene_light_artifacts', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_light_artifacts.js' ), ['vrodos_namespace', 'vrodos_three_vendor_bundle'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/scene/vrodos_scene_light_artifacts.js' ) )],
       ['vrodos_editor_core_utils', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_core_utils.js' ), ['vrodos_namespace']],
       ['vrodos_editor_diagnostics', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_diagnostics.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_runtime_settings_contract', VRodos_Path_Manager::runtime_master_url( 'lib/vrodos-runtime-settings-contract.generated.js' ), ['vrodos_namespace']],
+      ['vrodos_runtime_settings_contract', VRodos_Path_Manager::runtime_master_url( 'lib/vrodos-runtime-settings-contract.generated.js' ), ['vrodos_namespace'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/runtime/master/lib/vrodos-runtime-settings-contract.generated.js' ) )],
       // General Scripts
       ['vrodos_asset_editor_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_asset_editor_scripts.js' ), ['vrodos_namespace']],
       ['vrodos_scripts', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_legacy_helpers.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
@@ -401,7 +401,7 @@ class VRodos_Asset_Manager {
       ['vrodos_3d_editor_environmentals', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_environmentals.js' ), ['vrodos_namespace', 'vrodos_editor_environment_bootstrap']],
       ['vrodos_scene_registry', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_registry.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_three_vendor_bundle']],
       ['vrodos_scene_transforms', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_transforms.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_three_vendor_bundle'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/scene/vrodos_scene_transforms.js' ) )],
-      ['vrodos_scene_selection', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_selection.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_three_vendor_bundle']],
+      ['vrodos_scene_selection', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_selection.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_three_vendor_bundle'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/scene/vrodos_scene_selection.js' ) )],
       ['vrodos_scene_object_factory', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_object_factory.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_selection']],
       ['vrodos_editor_services', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_editor_services_compat.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_scene_selection', 'vrodos_scene_object_factory', 'vrodos_three_vendor_bundle']],
       ['vrodos_editor_render_loop', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_render_loop.js' ), ['vrodos_namespace', 'vrodos_editor_services'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/render/vrodos_editor_render_loop.js' ) )],
@@ -439,9 +439,9 @@ class VRodos_Asset_Manager {
       ['vrodos_editor_shell_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_editor_shell_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_editor_services', 'vrodos_auxControlers', 'vrodos_scripts', 'ajax-script_uploadimage']],
       ['vrodos_editor_toolbar_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_editor_toolbar_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_editor_services', 'vrodos_3d_editor_environmentals', 'vrodos_BordersFinder', 'vrodos_movePointerLocker', 'vrodos_scripts', 'ajax-script_savescene', 'vrodos_addRemoveOne'], $editor_toolbar_version],
       ['vrodos_compile_dialog_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_compile_dialog_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_compile_dialogue', 'vrodos_CompileUI_Profiles', 'ajax-script_compile', 'ajax-script_savescene'], $compile_dialog_ui_version],
-      ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace']],
+      ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/vrodos_icons.js' ) )],
       ['vrodos_cefr_badges', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_cefr_badges.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_hierarchy_viewer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_cefr_badges'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/ui/vrodos_hierarchy_viewer.js' ) )],
+      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_hierarchy_viewer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_cefr_badges', 'vrodos_icons'], (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/ui/vrodos_hierarchy_viewer.js' ) )],
       ['vrodos_CompileUI_Shared', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_shared.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_runtime_settings_contract']],
       ['vrodos_CompileUI_General', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_general.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_CompileUI_PostFX', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_postfx.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared'], $compile_postfx_version],

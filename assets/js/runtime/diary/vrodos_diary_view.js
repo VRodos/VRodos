@@ -7,9 +7,17 @@
         return node;
     };
 
-    function button(text, action) {
+    function diaryIcon(name) {
+        const icon = element('i');
+        icon.setAttribute('data-lucide', name);
+        icon.setAttribute('aria-hidden', 'true');
+        return icon;
+    }
+
+    function button(text, action, iconName) {
         const node = element('button', text);
         node.type = 'button';
+        if (iconName) node.prepend(diaryIcon(iconName));
         node.addEventListener('click', action);
         return node;
     }
@@ -25,6 +33,8 @@
             this.resources = component.resources;
             this.stages = component.dataSet.stages;
             this.finds = component.dataSet.finds;
+            this.menuTitle = this.stages.length ? 'Excavation diary' : 'Find diaries';
+            this.menuIcon = this.stages.length ? 'shovel' : 'amphora';
             this.markers = new Map();
             this.stageIndexes = new Map(this.stages.map((stage, index) => [stage.stage_id, index]));
             this.buildDesktop();
@@ -33,7 +43,7 @@
                 if (!this.inVr()) return;
                 event.stopPropagation();
                 if (this.find || this.panel) this.closePanel();
-                else if (!window.VRODOSSpatialUI?.getActivePanel()) this.openTimeline();
+                else if (!window.VRODOSSpatialUI?.getActivePanel()) this.openDiaryMenu();
             });
             for (const type of ['enter-vr', 'exit-vr']) this.resources.listen(this.scene, type, () => this.presentationChanged());
             this.resources.listen(document, 'fullscreenchange', () => this.mountDesktop());
@@ -53,6 +63,7 @@
 .vrodos-diary-ui { color: #f8fafc; font: 14px/1.45 system-ui, sans-serif; position: fixed; bottom: max(18px,env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 10005; width: min(520px,calc(100vw - 32px)); }
 .vrodos-diary-ui section { padding: 12px 16px; border: 1px solid #cbd5e17a; border-radius: 14px; background: #102124ec; box-shadow: 0 8px 24px #0008; }
 .vrodos-diary-ui :is(h2,h3,p) { margin: 0 0 6px; }
+.vrodos-diary-ui [data-lucide] { display: inline-block; vertical-align: -.2em; width: 1em; height: 1em; margin-inline-end: .45em; }
 .vrodos-diary-ui p { white-space: pre-wrap; max-height: 8rem; overflow: auto; }
 .vrodos-diary-ui nav { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .vrodos-diary-ui button { background: #23474a; color: #fff; border: 1px solid #9fc0b5; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
@@ -67,9 +78,26 @@
             document.head.append(this.style);
             this.desktop = element('aside');
             this.desktop.className = 'vrodos-diary-ui';
-            this.desktop.setAttribute('aria-label', 'Excavation diary');
+            this.desktop.setAttribute('aria-label', this.menuTitle);
             this.timeline = element('section');
-            this.title = element('h2', 'Excavation Diary');
+            const heading = element('h2');
+            this.title = element('span', this.menuTitle);
+            heading.append(diaryIcon(this.menuIcon), this.title);
+            this.findList = element('nav');
+            this.findList.setAttribute('aria-label', 'Find diaries');
+            this.timeline.append(heading);
+            if (this.stages.length) this.buildDesktopTimeline();
+            this.timeline.append(this.findList);
+            this.desktop.append(this.timeline);
+            window.lucide?.createIcons({ root: heading });
+            for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend', 'wheel', 'keydown', 'keyup']) {
+                this.resources.listen(this.desktop, type, (event) => {
+                    if (event.key !== 'Escape') event.stopPropagation();
+                });
+            }
+        }
+
+        buildDesktopTimeline() {
             this.notes = element('p');
             this.source = element('small');
             this.statusLine = element('p');
@@ -86,14 +114,7 @@
             this.retry.hidden = true;
             const timelineButtons = element('nav');
             timelineButtons.append(this.previous, this.range, this.next, this.retry);
-            this.findList = element('nav');
-            this.timeline.append(this.title, this.notes, this.source, this.statusLine, timelineButtons, this.findList);
-            this.desktop.append(this.timeline);
-            for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend', 'wheel', 'keydown', 'keyup']) {
-                this.resources.listen(this.desktop, type, (event) => {
-                    if (event.key !== 'Escape') event.stopPropagation();
-                });
-            }
+            this.timeline.append(this.notes, this.source, this.statusLine, timelineButtons);
         }
 
         mountDesktop() {
@@ -115,21 +136,24 @@
 
         availableFinds() {
             const index = this.component.index;
-            return this.finds.filter((find) => (this.stageIndexes.get(find.discovery_stage_id) ?? Infinity) <= index);
+            return this.finds.filter((find) => find.discovery_stage_id === '' ||
+                (this.stageIndexes.get(find.discovery_stage_id) ?? Infinity) <= index);
         }
 
         update() {
-            const current = this.stages[this.component.index];
-            this.title.textContent = current ? dateAndTitle(current) : 'Excavation Diary';
-            this.notes.textContent = current?.notes || '';
-            this.source.textContent = [current?.context_id, current?.source_ref].filter(Boolean).join(' · ');
-            this.range.value = String(this.selection());
-            this.range.setAttribute('aria-valuetext', dateAndTitle(this.stages[this.selection()]));
-            this.previous.disabled = this.selection() === 0;
-            this.next.disabled = this.selection() >= this.stages.length - 1;
-            this.retry.hidden = !this.failed || this.component.processing;
+            if (this.stages.length) {
+                const current = this.stages[this.component.index];
+                this.title.textContent = current ? dateAndTitle(current) : this.menuTitle;
+                this.notes.textContent = current?.notes || '';
+                this.source.textContent = [current?.context_id, current?.source_ref].filter(Boolean).join(' · ');
+                this.range.value = String(this.selection());
+                this.range.setAttribute('aria-valuetext', dateAndTitle(this.stages[this.selection()]));
+                this.previous.disabled = this.selection() === 0;
+                this.next.disabled = this.selection() >= this.stages.length - 1;
+                this.retry.hidden = !this.failed || this.component.processing;
+            }
             this.syncMarkers();
-            if (this.panel && !this.find) this.renderTimeline(this.panel);
+            if (this.panel && !this.find) this.renderDiaryMenu(this.panel);
         }
 
         status(text, failed = false) {
@@ -138,7 +162,7 @@
             this.statusLine.textContent = text;
             this.statusLine.dataset.error = String(failed);
             this.retry.hidden = !failed;
-            if (this.panel && !this.find) this.renderTimeline(this.panel);
+            if (this.panel && !this.find) this.renderDiaryMenu(this.panel);
         }
 
         syncMarkers() {
@@ -165,21 +189,24 @@
                 this.markers.set(find.find_id, marker);
                 changed = true;
             }
-            if (changed) this.findList.replaceChildren(...available.map((find) => button(find.find_label, () => this.openFind(find))));
+            if (changed) {
+                this.findList.replaceChildren(...available.map((find) => button(find.find_label, () => this.openFind(find), 'amphora')));
+                window.lucide?.createIcons({ root: this.findList });
+            }
         }
 
-        openTimeline() {
+        openDiaryMenu() {
             this.panel = window.VRODOSSpatialUI?.openPanel({
-                id: 'excavation-diary', width: 1.25, height: 0.93, distance: 1.7,
+                id: 'spatial-diary', width: 1.25, height: 0.93, distance: 1.7,
                 centerAtEyeLevel: true, lockInteraction: false, blockSceneRaycasts: true,
                 trimControllerRays: true, showRayHitDot: true,
-                render: (api) => this.renderTimeline(api), cleanup: () => { this.panel = null; }
+                render: (api) => this.renderDiaryMenu(api), cleanup: () => { this.panel = null; }
             });
         }
 
-        renderTimeline(api) {
+        renderDiaryMenu(api) {
             const current = this.stages[this.component.index];
-            api.frame({ title: 'Excavation Diary', titleSize: 32, headerHeight: 78, footerHeight: 76 });
+            api.frame({ title: this.menuTitle, titleIcon: this.menuIcon, titleSize: 32, headerHeight: 78, footerHeight: 76 });
             if (current) api.text(api.content, { text: [dateAndTitle(current), current.notes, current.source_ref].filter(Boolean).join('\n'), fontSize: 22 });
             if (this.message) api.text(api.content, { text: this.message, fontSize: 22, color: this.failed ? '#991b1b' : '#14534a' });
             this.stages.forEach((stage, index) => api.button(api.content, {
@@ -191,10 +218,12 @@
                 label: `Inspect ${find.find_label}`, variant: 'secondary', width: '100%', height: 52, fontSize: 23,
                 onClick: () => this.resources.frame(() => this.openFind(find))
             });
-            api.button(api.footer, { label: 'Previous', disabled: this.selection() === 0, height: 48, fontSize: 23,
-                onClick: () => this.component.select(this.selection() - 1) });
-            api.button(api.footer, { label: 'Next', disabled: this.selection() === this.stages.length - 1, height: 48, fontSize: 23,
-                onClick: () => this.component.select(this.selection() + 1) });
+            if (this.stages.length) {
+                api.button(api.footer, { label: 'Previous', disabled: this.selection() === 0, height: 48, fontSize: 23,
+                    onClick: () => this.component.select(this.selection() - 1) });
+                api.button(api.footer, { label: 'Next', disabled: this.selection() === this.stages.length - 1, height: 48, fontSize: 23,
+                    onClick: () => this.component.select(this.selection() + 1) });
+            }
         }
 
         closePanel() {
@@ -359,14 +388,18 @@
                 button('Tilt up', () => this.rotate(0, -0.25)), button('Tilt down', () => this.rotate(0, 0.25)));
             const pins = element('nav');
             entry?.pins.forEach((pin, index) => pins.append(button(`Pin ${index + 1}`, () => this.selectPin(index))));
-            this.inspector.replaceChildren(element('h2', this.find.find_label), entries, element('p', entry?.notes || ''),
+            const title = element('h2', this.find.find_label);
+            title.prepend(diaryIcon('amphora'));
+            this.inspector.replaceChildren(title, entries, element('p', entry?.notes || ''),
                 element('small', entry?.source_ref || ''), element('p', this.findStatus || ''), actions, pins,
-                element('p', entry?.pins[this.pinIndex]?.text || ''), button('Back to excavation', () => this.closeFind()));
+                element('p', entry?.pins[this.pinIndex]?.text || ''),
+                button(this.stages.length ? 'Back to excavation' : 'Back to find diaries', () => this.closeFind()));
+            window.lucide?.createIcons({ root: title });
         }
 
         renderVrFind(api) {
             const entry = this.find.entries[this.findIndex];
-            api.frame({ title: this.find.find_label, titleSize: 32, headerHeight: 78, footerHeight: 80 });
+            api.frame({ title: this.find.find_label, titleIcon: 'amphora', titleSize: 32, headerHeight: 78, footerHeight: 80 });
             api.text(api.content, { text: [entry?.notes, entry?.source_ref, this.findStatus].filter(Boolean).join('\n'), fontSize: 23 });
             this.find.entries.forEach((record, index) => api.button(api.content, {
                 label: dateAndTitle(record), width: '100%', height: 52, fontSize: 23,

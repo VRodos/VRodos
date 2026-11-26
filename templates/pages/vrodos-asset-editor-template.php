@@ -115,9 +115,9 @@ extract($data);
                 </div>
                 <?php endif; ?>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
-                <a href="<?php echo $goBackToLink; ?>" class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-black tw-text-slate-400 hover:tw-text-primary tw-uppercase tw-tracking-wider tw-transition-all">
-                    <i data-lucide="arrow-left" class="tw-w-4 tw-h-4"></i>
-                    Back to List
+                <a href="<?php echo esc_url( $goBackToLink ); ?>" class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-black tw-text-slate-400 hover:tw-text-primary tw-uppercase tw-tracking-wider tw-transition-all">
+                    <i data-lucide="<?php echo isset( $diary_upload['vrodos_diary_point'] ) ? 'shovel' : ( $diary_upload ? 'amphora' : 'arrow-left' ); ?>" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
+                    <?php echo isset( $diary_upload['vrodos_diary_point'] ) ? 'Back to timeline point' : ( $diary_upload ? 'Back to find diary' : 'Back to List' ); ?>
                 </a>
             </div>
         </div>
@@ -520,6 +520,7 @@ else { ?>
                         $selected_slug = !empty($saved_term) ? $saved_term[0]->slug : '';
                         $selected_name = !empty($saved_term) ? $saved_term[0]->name : '';
                         $selected_icon = $cat_icon_map[$selected_slug] ?? 'package';
+                        $category_locked = ! empty( $is_assessment_asset ) || $diary_walkable_upload;
                         ?>
                         <!-- Hidden real input for form submission -->
                         <input type="hidden" id="category-select-native" name="term_id_native" value="<?php echo esc_attr($selected_slug); ?>" />
@@ -557,7 +558,7 @@ else { ?>
                             .vrodos-cat-option.selected i { color: #059669; }
                         </style>
                         <div class="vrodos-cat-dropdown" id="vrodos-cat-dropdown">
-                            <div class="vrodos-cat-trigger<?php echo ! empty( $is_assessment_asset ) ? ' vrodos-cat-trigger-locked' : ''; ?>" id="vrodos-cat-trigger" tabindex="0">
+                            <div class="vrodos-cat-trigger<?php echo $category_locked ? ' vrodos-cat-trigger-locked' : ''; ?>" id="vrodos-cat-trigger" tabindex="0">
                                 <i data-lucide="<?php echo esc_attr($selected_icon); ?>" class="trigger-icon tw-w-4 tw-h-4"></i>
                                 <span class="trigger-label"><?php echo $selected_name ? esc_html($selected_name) : 'Select a category'; ?></span>
                                 <i data-lucide="chevron-down" class="trigger-chevron tw-w-4 tw-h-4"></i>
@@ -589,11 +590,11 @@ else { ?>
                             const menu     = document.getElementById('vrodos-cat-menu');
                             const hidden   = document.getElementById('category-select-native');
                             const descEl   = document.getElementById('categoryDescription');
-                            const isCategoryLocked = <?php echo ! empty( $is_assessment_asset ) ? 'true' : 'false'; ?>;
+                            const isCategoryLocked = <?php echo $category_locked ? 'true' : 'false'; ?>;
 
                             if (isCategoryLocked) {
                                 if (descEl) {
-                                    descEl.textContent = 'Assessment assets are created by the assessment import flow. You can edit the name and GLB, but not this category.';
+                                    descEl.textContent = <?php echo wp_json_encode( $diary_walkable_upload ? 'Excavation timeline points use walkable site models.' : 'Assessment assets are created by the assessment import flow. You can edit the name and GLB, but not this category.' ); ?>;
                                 }
                                 return;
                             }

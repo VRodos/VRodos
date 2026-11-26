@@ -14,16 +14,13 @@
     function isHorizonBackground(self) {
       return Boolean(self && self.data && self.data.selChoice === "0");
     }
-    function bloomOptionsForLegacyValue(self, legacyValue, intensityMultiplier, threshold) {
-      const mult = typeof intensityMultiplier === "number" && !isNaN(intensityMultiplier) ? intensityMultiplier : 1;
-      const thr = typeof threshold === "number" && !isNaN(threshold) ? threshold : 0.62;
-      const options = {
-        intensity: Math.max(0, legacyValue) * 1.4 * mult,
-        luminanceThreshold: thr,
+    function bloomOptionsForLegacyValue(legacyValue, intensityMultiplier, threshold) {
+      return {
+        intensity: Math.max(0, legacyValue) * 1.4 * intensityMultiplier,
+        luminanceThreshold: threshold,
         luminanceSmoothing: 0.18,
         mipmapBlur: true
       };
-      return options;
     }
     function readPmndrsNumber(self, key, min, max, fallback) {
       if (RuntimeSettings.readNumber) {
@@ -4079,11 +4076,11 @@ ${selectedSummaries.join("\n")}`);
         }
       }
       const bloomVal = typeof this.getBloomStrengthValue === "function" ? this.getBloomStrengthValue() : 0;
-      const pmndrsBloomMult = readPmndrsNumber(this, "pmndrsBloomIntensity", 0, 3, 1);
-      const pmndrsBloomThr = readPmndrsNumber(this, "pmndrsBloomThreshold", 0, 1, 0.62);
+      const pmndrsBloomMult = readPmndrsNumber(this, "pmndrsBloomIntensity", 0, 3, 0.3);
+      const pmndrsBloomThr = readPmndrsNumber(this, "pmndrsBloomThreshold", 0, 1, 0.3);
       if (!xrStereoMode && bloomVal > 0 && pmndrsBloomMult > 0) {
         try {
-          this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
+          this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(bloomVal, pmndrsBloomMult, pmndrsBloomThr));
           effects.push(this.pmndrsBloomEffect);
         } catch (err) {
           console.warn("[VRodos] pmndrs BloomEffect construction failed, skipping:", err);

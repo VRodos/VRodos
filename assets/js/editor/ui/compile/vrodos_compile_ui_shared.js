@@ -20,8 +20,8 @@ VRodosCompileUI.Shared = (function () {
     const PMNDRS_TWEAK_DEFAULTS = {
         aaMode: contractDefault('pmndrsAAMode', 'none'),
         aaPreset: contractDefault('pmndrsAAPreset', 'medium'),
-        bloomIntensity: contractDefault('pmndrsBloomIntensity', 1.0),
-        bloomThreshold: contractDefault('pmndrsBloomThreshold', 0.62),
+        bloomIntensity: contractDefault('pmndrsBloomIntensity', 0.3),
+        bloomThreshold: contractDefault('pmndrsBloomThreshold', 0.3),
         toneMappingExposure: contractDefault('pmndrsToneMappingExposure', 1.0),
         toneMappingMode: contractDefault('pmndrsToneMappingMode', 'agx'),
         lensFlareEnabled: contractDefault('pmndrsLensFlareEnabled', false),

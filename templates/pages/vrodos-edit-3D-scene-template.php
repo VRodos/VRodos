@@ -86,7 +86,7 @@ extract( $data );
 						<button id="vrodos-diary-edit" type="button" hidden
 							class="tw-btn tw-btn-sm tw-flex-nowrap tw-gap-2 tw-whitespace-nowrap tw-border-white/10 tw-bg-slate-800 tw-text-white hover:tw-bg-slate-700"
 							aria-controls="vrodos-diary-workspace" aria-expanded="false">
-							<i data-lucide="book-open" class="tw-h-4 tw-w-4 tw-shrink-0" aria-hidden="true"></i>
+							<i data-lucide="shovel" class="diary-icon" aria-hidden="true"></i>
 							<span>Edit diary</span>
 						</button>
 					<?php endif; ?>
@@ -119,18 +119,31 @@ extract( $data );
 				</div>
 				<?php if ( $can_edit_diary ) : ?>
 					<div id="vrodos-diary-timeline" role="group" aria-label="Excavation timeline preview" hidden></div>
-					<section id="vrodos-diary-workspace" class="tw-overflow-hidden tw-rounded-xl tw-border tw-border-white/10 tw-bg-slate-900 tw-text-slate-100 tw-shadow-2xl" aria-labelledby="vrodos-diary-title" hidden>
+					<section id="vrodos-diary-workspace" class="tw-overflow-hidden tw-rounded-xl tw-border tw-border-white/10 tw-bg-slate-900 tw-text-slate-100 tw-shadow-2xl" aria-label="Diary editor" hidden>
 							<header class="tw-flex tw-shrink-0 tw-flex-wrap tw-items-center tw-gap-3 tw-border-b tw-border-white/10 tw-bg-slate-800 tw-px-4 tw-py-2">
-								<i data-lucide="book-open" class="tw-h-4 tw-w-4 tw-shrink-0 tw-text-emerald-400" aria-hidden="true"></i>
-								<h2 id="vrodos-diary-title" class="tw-text-sm tw-font-bold tw-text-white">Spatial diary</h2>
 								<div id="vrodos-diary-tabs" class="tw-flex tw-flex-1 tw-flex-wrap tw-gap-2"></div>
-								<button type="button" id="vrodos-diary-save" class="tw-btn tw-btn-primary tw-btn-sm tw-whitespace-nowrap" hidden disabled>Save diary</button>
+								<div class="tw-flex tw-items-center tw-gap-1">
+									<input type="file" id="vrodos-diary-csv-file" accept=".csv,text/csv" hidden>
+									<button type="button" id="vrodos-diary-csv-import" class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square" aria-label="Import CSV" title="Import CSV" disabled>
+										<i data-lucide="file-up" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
+									</button>
+									<button type="button" id="vrodos-diary-csv-export" class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square" aria-label="Export CSV" title="Export CSV" disabled>
+										<i data-lucide="file-down" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
+									</button>
+									<button type="button" id="vrodos-diary-save" class="tw-btn tw-btn-primary tw-btn-sm tw-whitespace-nowrap" hidden disabled>Save diary</button>
+								</div>
 								<button type="button" id="vrodos-diary-close" aria-label="Collapse spatial diary"
 									class="tw-rounded tw-p-1.5 tw-text-slate-400 tw-transition-colors hover:tw-bg-slate-700 hover:tw-text-white">
 									<i data-lucide="chevron-down" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
 								</button>
 							</header>
-							<div id="vrodos-diary-editor" class="tw-min-h-0 tw-flex-1 tw-overflow-y-auto tw-bg-slate-950 tw-p-6"
+							<div id="vrodos-diary-point-strip" hidden>
+								<div id="vrodos-diary-point-tabs" role="tablist" aria-label="Excavation points"></div>
+								<button type="button" id="vrodos-diary-add-point" class="tw-btn tw-btn-sm tw-btn-square" aria-label="Add timeline point" title="Add timeline point" disabled>
+									<i data-lucide="plus" class="tw-w-4 tw-h-4" aria-hidden="true"></i>
+								</button>
+							</div>
+							<div id="vrodos-diary-editor" class="tw-min-h-0 tw-flex-1 tw-overflow-y-auto tw-bg-slate-950"
 								data-nonce="<?php echo esc_attr( wp_create_nonce( 'vrodos_spatial_diary' ) ); ?>"
 								data-stage-columns="<?php echo esc_attr( implode( ',', VRodos_Spatial_Diary::STAGE_COLUMNS ) ); ?>"
 								data-find-columns="<?php echo esc_attr( implode( ',', VRodos_Spatial_Diary::FIND_COLUMNS ) ); ?>"></div>
@@ -319,8 +332,14 @@ extract( $data );
 								<button id="vrodos-diary-toggle" type="button"
 									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-flex-nowrap tw-justify-start tw-gap-2 tw-whitespace-nowrap tw-text-left tw-text-white"
 									aria-expanded="false" aria-controls="vrodos-diary-workspace">
-									<i data-lucide="book-open" class="tw-w-4 tw-h-4 tw-shrink-0" aria-hidden="true"></i>
+									<i data-lucide="shovel" class="diary-icon" aria-hidden="true"></i>
 									<span>Excavation diary</span>
+								</button>
+								<button id="vrodos-diary-add-find" type="button"
+									class="tw-btn tw-btn-ghost tw-btn-sm tw-w-full tw-flex-nowrap tw-justify-start tw-gap-2 tw-whitespace-nowrap tw-text-left tw-text-white"
+									aria-controls="vrodos-diary-workspace">
+									<i data-lucide="amphora" class="diary-icon" aria-hidden="true"></i>
+									<span>Find diary</span>
 								</button>
 							<?php endif; ?>
 						</div>

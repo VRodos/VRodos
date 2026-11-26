@@ -686,10 +686,10 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         if (controls.pmndrsBloomIntensity) {
-            controls.pmndrsBloomIntensity.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsBloomIntensity : 1.0, 0, 3, 1.0);
+            controls.pmndrsBloomIntensity.value = Shared.clampNumber(VRODOS.editor.envir?.scene?.aframePmndrsBloomIntensity, 0, 3, Shared.PMNDRS_TWEAK_DEFAULTS.bloomIntensity);
         }
         if (controls.pmndrsBloomThreshold) {
-            controls.pmndrsBloomThreshold.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsBloomThreshold : 0.62, 0, 1, 0.62);
+            controls.pmndrsBloomThreshold.value = Shared.clampNumber(VRODOS.editor.envir?.scene?.aframePmndrsBloomThreshold, 0, 1, Shared.PMNDRS_TWEAK_DEFAULTS.bloomThreshold);
         }
         if (controls.pmndrsExposure) {
             controls.pmndrsExposure.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.1, 5, 1.0, 0.1);

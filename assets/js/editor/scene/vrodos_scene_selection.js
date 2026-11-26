@@ -218,7 +218,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         if (scaleSwitch) scaleSwitch.disabled = false;
         if (scaleLabel) scaleLabel.style = 'inherit';
 
-        if (object && object.name === 'avatarCamera') {
+        if (object && (object.name === 'avatarCamera' || object.vrodosTranslationOnly)) {
             if (rotateSwitch) rotateSwitch.disabled = true;
             if (rotateLabel) rotateLabel.style.color = 'grey';
             if (scaleSwitch) scaleSwitch.disabled = true;
@@ -319,9 +319,11 @@ VRODOS.editorScene = VRODOS.editorScene || {};
 
             this.selected = target;
             VRODOS.editor.selected_object_name = target.name;
-            sceneRegistry.add(target, { addToScene: false, selectable: true, reason: `selection-${opts.source}` });
+            sceneRegistry.add(target, { addToScene: false, selectable: !target.vrodos_internal_helper, reason: `selection-${opts.source}` });
 
-            if (opts.openPanel && typeof VRODOS.ui.showObjectControlsPanel === 'function') {
+            if (target.vrodos_internal_helper) {
+                VRODOS.ui.hideObjectControlsPanel?.();
+            } else if (opts.openPanel && typeof VRODOS.ui.showObjectControlsPanel === 'function') {
                 VRODOS.ui.showObjectControlsPanel(getObjectTitle(target));
                 setObjectControlsActionsVisible(true);
             }
@@ -366,7 +368,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                 transforms.syncGui(target);
             }
 
-            if (opts.showProperties && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+            if (!target.vrodos_internal_helper && opts.showProperties && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
                 VRODOS.ui.showPropertiesInPanel(target);
             }
 

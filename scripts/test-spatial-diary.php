@@ -41,11 +41,13 @@ $draft['stages'][0]['site_model'] = 'cover';
 $draft['stages'][0]['layers'] = [ 'cover' ];
 $draft['stages'][1]['site_model'] = 'trench';
 $draft['stages'][1]['layers'] = [ 'trench', 'find' ];
-$draft['safePoint'] = [ -3.5, 0, 3.6 ];
+$draft['safePoint'] = [ -3.5, 0.0, 3.6 ];
+$draft['safePointLocked'] = true;
 
 $reimport = VRodos_Spatial_Diary::import_csv( $draft, 'stages', str_replace( 'Stairs visible', 'Stairs excavated', $stages ) );
 $entry = $reimport['diary']['stages'][1];
 verify( 1 === $reimport['counts']['updated'] && 'trench' === $entry['site_model'] && [ 'trench', 'find' ] === $entry['layers'], 'Re-import must preserve the site model and additional layers.' );
+verify( true === $reimport['diary']['safePointLocked'] && $draft['safePoint'] === $reimport['diary']['safePoint'], 'CSV re-import must preserve the safe viewpoint and its lock.' );
 
 $finds = implode( ',', VRodos_Spatial_Diary::FIND_COLUMNS ) . "\n"
 	. "vessel,Ceramic, trench,recovered,1,2025-05,Recovered,Found beside stairs,Example\nvessel,Ceramic,trench,assessment,2,,Assessment,Condition unchanged,Example\n";
@@ -59,6 +61,15 @@ $draft['finds'][0]['entries'][0]['pins'] = [ [ 'point' => [ 0, 0.25, 0 ], 'text'
 $reimport = VRodos_Spatial_Diary::import_csv( $draft, 'finds', str_replace( 'Found beside stairs', 'Revised observation', $finds ) );
 $result = $reimport['diary']['finds'][0];
 verify( 1 === $reimport['counts']['updated'] && $result['point'] === [ 0.0, -1.44, -1.0 ] && 'find' === $result['entries'][0]['model'] && 'Rim' === $result['entries'][0]['pins'][0]['text'], 'Re-import must preserve placed marks, model assignments, and annotation pins.' );
+$standalone_csv = str_replace( [ ', trench,', ',trench,' ], ',,', $finds );
+$unlink = VRodos_Spatial_Diary::import_csv( $draft, 'finds', $standalone_csv );
+verify( ! $unlink['errors'] && 2 === $unlink['counts']['updated'] && '' === $unlink['changes'][0]['discovery_stage_id'], 'Making a find standalone must be reported in CSV preview.' );
+$standalone_find = $unlink['diary']['finds'][0];
+verify( '' === $standalone_find['discovery_stage_id'] && $standalone_find['point'] === [ 0.0, -1.44, -1.0 ] && 'find' === $standalone_find['entries'][0]['model'] && 'Rim' === $standalone_find['entries'][0]['pins'][0]['text'], 'Removing a discovery link must preserve model versions, the marker, and annotation pins.' );
+$relink = VRodos_Spatial_Diary::import_csv( $unlink['diary'], 'finds', $finds );
+verify( ! $relink['errors'] && 'trench' === $relink['changes'][0]['discovery_stage_id'] && 'trench' === $relink['diary']['finds'][0]['discovery_stage_id'], 'A standalone find can be relinked by CSV.' );
+$import_without_stages = VRodos_Spatial_Diary::import_csv( VRodos_Spatial_Diary::read( 200 ), 'finds', $standalone_csv );
+verify( ! $import_without_stages['errors'] && 2 === $import_without_stages['counts']['added'] && [] === $import_without_stages['diary']['stages'], 'Standalone finds can be imported into an empty scene.' );
 $bad = VRodos_Spatial_Diary::import_csv( $draft, 'finds', str_replace( 'trench,assessment', 'missing,assessment', $finds ) );
 verify( null === $bad['diary'] && str_contains( $bad['errors'][0], 'Row 3' ), 'An unknown discovery entry must prevent partial changes.' );
 $bad = VRodos_Spatial_Diary::import_csv( $draft, 'stages', str_replace( '2025-05-01', '2025-02-30', $stages ) );
@@ -86,6 +97,33 @@ $published = $clone();
 VRodos_Spatial_Diary::prepare_scene( $published, 100, 200, 'single-player' );
 verify( 3 === count( get_object_vars( $published->spatial_diary->models ) ) && [ 'common' ] === array_keys( get_object_vars( $published->objects ) ), 'A build must include the saved diary and make its placements available only to the diary runtime.' );
 verify( [ 'trench', 'find' ] === $published->spatial_diary->stages[1]['layers'], 'Playback must receive the site model and additional layers together.' );
+verify( ! property_exists( $published->spatial_diary, 'safePointLocked' ), 'The safe viewpoint lock belongs to the editor.' );
+
+$standalone_draft = $import_without_stages['diary'];
+$standalone_draft['models'] = [ 'find' ];
+$standalone_draft['finds'] = [ $standalone_find ];
+$GLOBALS['diary_meta'][200]['_vrodos_spatial_diary'] = VRodos_Spatial_Diary::normalize( $standalone_draft );
+$find_only_build = $clone();
+VRodos_Spatial_Diary::prepare_scene( $find_only_build, 100, 200, 'single-player' );
+verify( [] === $find_only_build->spatial_diary->stages
+	&& '' === $find_only_build->spatial_diary->finds[0]['discovery_stage_id']
+	&& ! $find_only_build->spatial_diary->changesWalkableLayout, 'Find-only builds must include the diary with zero excavation entries and no changing walkable layout.' );
+verify( isset( $find_only_build->spatial_diary->models->find ) && ! isset( $find_only_build->objects->find ) && isset( $find_only_build->objects->cover ), 'Find inspection models must be emitted as diary templates and ordinary scene models must remain in the scene.' );
+$incomplete_find = $standalone_draft;
+$incomplete_find['finds'][0]['point'] = null;
+$GLOBALS['diary_meta'][200]['_vrodos_spatial_diary'] = $incomplete_find;
+$failure = '';
+try { VRodos_Spatial_Diary::prepare_scene( $clone(), 100, 200, 'single-player' ); } catch ( InvalidArgumentException $error ) { $failure = $error->getMessage(); }
+verify( str_contains( $failure, 'assign its first model' ), 'Find-only publication must still require a marker and first model.' );
+
+$mixed_draft = $draft;
+$standalone_find['find_id'] = 'surface-find';
+$mixed_draft['finds'][] = $standalone_find;
+$GLOBALS['diary_meta'][200]['_vrodos_spatial_diary'] = VRodos_Spatial_Diary::normalize( $mixed_draft );
+$mixed_build = $clone();
+VRodos_Spatial_Diary::prepare_scene( $mixed_build, 100, 200, 'single-player' );
+verify( [ 'trench', '' ] === array_column( $mixed_build->spatial_diary->finds, 'discovery_stage_id' )
+	&& 3 === count( get_object_vars( $mixed_build->spatial_diary->models ) ), 'Mixed publication must retain each discovery link and emit shared models once.' );
 
 $renderer = new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn( string $url ): string => $url );
 $renderer->configure( '/assets/', false, true );

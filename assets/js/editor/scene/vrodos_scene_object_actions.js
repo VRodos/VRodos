@@ -791,6 +791,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
 
 VRODOS.ui.deleteFomScene = function(uuid, name) {
     const targetObject = getSceneObjectByUuid(uuid);
+    if (targetObject?.vrodos_internal_helper) return;
     if (isSceneObjectLocked(targetObject)) {
         if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
             VRODOS.ui.updateHierarchyLockIcon(targetObject);
@@ -838,9 +839,10 @@ VRODOS.ui.lockOnScene = function(uuid, _name) {
 
     if (!nextLocked) {
         VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
-        VRODOS.ui.showObjectControlsPanel();
-    } else {
+        if (!selectedObject.vrodos_internal_helper) VRODOS.ui.showObjectControlsPanel();
+    } else if (!selectedObject.vrodos_internal_helper || VRODOS.editor.selection.get() === selectedObject) {
         VRODOS.editor.selection.clear({ source: 'lock-toggle' });
+        if (selectedObject.vrodos_internal_helper) VRODOS.ui.setBackgroundColorHierarchyViewer();
         if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.detach === 'function') {
             VRODOS.editor.transforms.detach();
         }
@@ -851,9 +853,10 @@ VRODOS.ui.lockOnScene = function(uuid, _name) {
         VRODOS.ui.updateHierarchyLockIcon(selectedObject);
     }
 
-    VRODOS.ui.setBackgroundColorHierarchyViewer(uuid);
-
-    VRODOS.api.saveChanges();
+    if (!selectedObject.vrodos_internal_helper) {
+        VRODOS.ui.setBackgroundColorHierarchyViewer(uuid);
+        VRODOS.api.saveChanges();
+    }
 
 }
 

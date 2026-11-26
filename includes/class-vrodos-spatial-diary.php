@@ -26,7 +26,7 @@ final class VRodos_Spatial_Diary {
 	public static function read( int $scene ): array {
 		$saved = get_post_meta( $scene, self::META, true );
 		return is_array( $saved ) ? $saved : [
-			'version' => 1, 'revision' => 0, 'safePoint' => null,
+			'version' => 1, 'revision' => 0, 'safePoint' => null, 'safePointLocked' => false,
 			'models' => [], 'stages' => [], 'finds' => [],
 		];
 	}
@@ -130,6 +130,18 @@ final class VRodos_Spatial_Diary {
 		return $records;
 	}
 
+	private static function discovery_stage( $value, array $stages ): string {
+		$id = trim( (string) $value );
+		if ( '' === $id ) {
+			return '';
+		}
+		$id = self::identifier( $id );
+		if ( ! isset( $stages[ $id ] ) ) {
+			throw new InvalidArgumentException( 'Choose an existing discovery entry or leave it blank for a standalone find.' );
+		}
+		return $id;
+	}
+
 	public static function normalize( array $document ): array {
 		$models = [];
 		foreach ( (array) ( $document['models'] ?? [] ) as $id ) {
@@ -157,10 +169,10 @@ final class VRodos_Spatial_Diary {
 		foreach ( (array) ( $document['finds'] ?? [] ) as $find ) {
 			if ( ! is_array( $find ) ) throw new InvalidArgumentException( 'Each find must be a record.' );
 			$id = self::identifier( $find['find_id'] ?? '' );
-			$stage = self::identifier( $find['discovery_stage_id'] ?? '' );
+			$stage = self::discovery_stage( $find['discovery_stage_id'] ?? '', $stages );
 			$label = sanitize_text_field( $find['find_label'] ?? '' );
-			if ( isset( $finds[ $id ] ) || ! isset( $stages[ $stage ] ) || '' === $label ) {
-				throw new InvalidArgumentException( 'Find ' . $id . ' needs a unique ID, label and existing discovery entry.' );
+			if ( isset( $finds[ $id ] ) || '' === $label ) {
+				throw new InvalidArgumentException( 'Find ' . $id . ' needs a unique ID and label.' );
 			}
 			$entries = [];
 			foreach ( (array) ( $find['entries'] ?? [] ) as $entry ) {
@@ -196,6 +208,7 @@ final class VRodos_Spatial_Diary {
 		}
 		return [ 'version' => 1, 'revision' => absint( $document['revision'] ?? 0 ),
 			'safePoint' => self::point( $document['safePoint'] ?? null ),
+			'safePointLocked' => ! empty( $stages ) && true === ( $document['safePointLocked'] ?? false ),
 			'models' => array_values( array_unique( $models ) ), 'stages' => self::ordered( $stages ), 'finds' => array_values( $finds ) ];
 	}
 
@@ -213,6 +226,7 @@ final class VRodos_Spatial_Diary {
 		rewind( $stream );
 		$stages = array_column( $draft['stages'], null, 'stage_id' );
 		$finds = array_column( $draft['finds'], null, 'find_id' );
+		$original_finds = $finds;
 		$seen = $parents = $errors = $changes = [];
 		$counts = [ 'added' => 0, 'updated' => 0, 'unchanged' => 0 ];
 		try {
@@ -234,6 +248,8 @@ final class VRodos_Spatial_Diary {
 					}
 					$row = array_combine( $columns, $cells );
 					$record = self::record( $row );
+				$parent_changed = false;
+				$discovery_changed = false;
 					if ( 'stages' === $kind ) {
 						$id = self::identifier( $row['stage_id'] );
 						$key = $id;
@@ -244,15 +260,18 @@ final class VRodos_Spatial_Diary {
 						$id = self::identifier( $row['find_id'] );
 						$entry = self::identifier( $row['entry_id'] );
 						$key = $id . ':' . $entry;
-						$stage = self::identifier( $row['discovery_stage_id'] );
+					$stage = self::discovery_stage( $row['discovery_stage_id'], $stages );
 						$label = sanitize_text_field( $row['find_label'] );
-						if ( ! isset( $stages[ $stage ] ) || '' === $label ) {
-							throw new InvalidArgumentException( 'Enter a find label and an existing discovery entry.' );
+					if ( '' === $label ) {
+						throw new InvalidArgumentException( 'Enter a find label.' );
 						}
 						if ( isset( $parents[ $id ] ) && $parents[ $id ] !== [ $stage, $label ] ) {
 							throw new InvalidArgumentException( 'Rows for the same find must agree on its label and discovery entry.' );
 						}
-						$entries = array_column( $finds[ $id ]['entries'] ?? [], null, 'entry_id' );
+					$previous_find = $original_finds[ $id ] ?? null;
+					$discovery_changed = $stage !== ( $previous_find['discovery_stage_id'] ?? '' );
+					$parent_changed = $discovery_changed || $label !== ( $previous_find['find_label'] ?? '' );
+					$entries = array_column( $finds[ $id ]['entries'] ?? [], null, 'entry_id' );
 						$old = $entries[ $entry ] ?? null;
 						$new = $record + [ 'entry_id' => $entry, 'model' => $old['model'] ?? '', 'pins' => $old['pins'] ?? [] ];
 					}
@@ -268,10 +287,14 @@ final class VRodos_Spatial_Diary {
 						$finds[ $id ] = [ 'find_id' => $id, 'find_label' => $label, 'discovery_stage_id' => $stage,
 							'point' => $finds[ $id ]['point'] ?? null, 'entries' => array_values( $entries ) ];
 					}
-					$change = null === $old ? 'added' : ( $old === $new ? 'unchanged' : 'updated' );
+				$change = null === $old ? 'added' : ( $old === $new && ! $parent_changed ? 'unchanged' : 'updated' );
 					++$counts[ $change ];
 					if ( 'unchanged' !== $change ) {
-						$changes[] = [ 'key' => $key, 'title' => $record['title'], 'change' => $change ];
+					$detail = [ 'key' => $key, 'title' => $record['title'], 'change' => $change ];
+					if ( $discovery_changed ) {
+						$detail['discovery_stage_id'] = $stage;
+					}
+					$changes[] = $detail;
 					}
 				} catch ( InvalidArgumentException $error ) {
 					$errors[] = 'Row ' . $number . ': ' . $error->getMessage();
@@ -316,7 +339,7 @@ final class VRodos_Spatial_Diary {
 
 	public static function prepare_scene( object $scene, int $project, int $scene_id, string $mode ): void {
 		$draft = self::read( $scene_id );
-		if ( ! $draft['stages'] ) {
+		if ( ! $draft['stages'] && ! $draft['finds'] ) {
 			return;
 		}
 		if ( 'single-player' !== $mode ) {

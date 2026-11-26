@@ -345,7 +345,11 @@ VRODOS.utils.setEditorObjectLocked = function(object, locked) {
         return false;
     }
 
+    const wasLocked = VRODOS.utils.isEditorObjectLocked(object);
     object.locked = VRODOS.utils.isEditorObjectLocked(locked);
+    if (object.locked !== wasLocked) {
+        object.dispatchEvent?.({ type: 'vrodos-lock-change', locked: object.locked });
+    }
     return object.locked;
 };
 

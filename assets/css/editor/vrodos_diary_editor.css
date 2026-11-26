@@ -24,18 +24,12 @@
     width: min(32rem, calc(100% - 1.5rem));
 }
 
-#vrodos-diary-timeline .diary-timeline {
-    background-color: rgb(15 23 42 / .74);
-    border-color: rgb(255 255 255 / .2);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 .5rem 1.5rem rgb(15 23 42 / .18);
-}
-
 #vr_editor_main_div:has(#toggleUIBtn[data-toggle="off"]) :is(#vrodos-diary-timeline, #vrodos-diary-workspace, #vrodos-diary-edit) {
     display: none;
 }
 
 #vrodos-diary-workspace {
+    --diary-tab-surface: #0f172a;
     position: absolute;
     z-index: 1051;
     inset: auto min(21vw, 20rem) .75rem;
@@ -55,6 +49,7 @@
 
 #vrodos-diary-editor {
     overscroll-behavior: contain;
+    padding: clamp(.625rem, 2vw, 1rem);
 }
 
 #vrodos-diary-editor,
@@ -69,11 +64,136 @@
     align-items: start;
 }
 
+#vrodos-diary-point-strip:not([hidden]) {
+    display: flex;
+    flex: none;
+    align-items: flex-start;
+    gap: .25rem;
+    padding: .5rem 1rem 0;
+    background: linear-gradient(to bottom, #020617 calc(100% - 1px), #475569 0);
+}
+
+#vrodos-diary-point-tabs {
+    display: flex;
+    min-width: 0;
+    gap: .25rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #475569 transparent;
+}
+
+#vrodos-diary-point-strip:not([hidden]) + #vrodos-diary-editor {
+    background: var(--diary-tab-surface);
+    padding: 1rem;
+}
+
+#vrodos-diary-point-tabs > button,
+#vrodos-diary-add-point {
+    position: relative;
+    flex: 0 0 auto;
+    max-width: min(18rem, 90%);
+    justify-content: flex-start;
+    min-height: 2.25rem;
+    border: 1px solid #475569;
+    border-radius: .5rem .5rem 0 0;
+    background: #1e293b;
+    color: #cbd5e1;
+}
+
+#vrodos-diary-add-point {
+    justify-content: center;
+}
+
+#vrodos-diary-point-tabs > button:not([aria-selected="true"]):enabled:hover,
+#vrodos-diary-add-point:enabled:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+#vrodos-diary-point-tabs > button[aria-selected="true"] {
+    border-bottom-color: var(--diary-tab-surface);
+    background: var(--diary-tab-surface);
+    box-shadow: inset 0 2px #34d399;
+    color: #f8fafc;
+}
+
+#vrodos-diary-point-tabs > button[draggable="true"] {
+    cursor: grab;
+}
+
+#vrodos-diary-point-tabs > button[data-dragging] {
+    opacity: .6;
+}
+
+#vrodos-diary-point-tabs > button[data-drop-side]::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    width: 3px;
+    background: #34d399;
+}
+
+#vrodos-diary-point-tabs > button[data-drop-side="before"]::after {
+    left: 0;
+}
+
+#vrodos-diary-point-tabs > button[data-drop-side="after"]::after {
+    right: 0;
+}
+
+#vrodos-diary-point-tabs > button > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#vrodos-diary-point-tabs time {
+    flex-shrink: 0;
+    font-size: .6875rem;
+    opacity: .8;
+}
+
+#vrodos-diary-workspace #vrodos-diary-point-tabs > button:focus-visible {
+    outline-offset: -2px;
+}
+
 .diary-timeline {
     display: grid;
-    grid-template-columns: auto minmax(3rem, 1fr) auto;
-    align-items: center;
-    gap: .5rem;
+    gap: .125rem;
+    padding: .375rem .625rem;
+    border: 1px solid rgb(255 255 255 / .14);
+    border-radius: .625rem;
+    background: rgb(15 23 42 / .52);
+    backdrop-filter: blur(14px);
+}
+
+.diary-timeline-ticks {
+    display: flex;
+    justify-content: space-between;
+    gap: 1px;
+    padding-inline: .375rem;
+    height: .25rem;
+    pointer-events: none;
+}
+
+.diary-timeline-ticks > span {
+    width: 1px;
+    height: .1875rem;
+    border-radius: 1px;
+    background: rgb(226 232 240 / .54);
+}
+
+.diary-timeline-ticks > [data-active] {
+    height: .25rem;
+    background: #34d399;
+}
+
+.diary-icon {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    vertical-align: -.2em;
 }
 
 #vrodos-diary-editor .diary-timeline {
@@ -82,39 +202,132 @@
     z-index: 1;
 }
 
-.diary-date-fields {
+#vrodos-diary-editor .diary-form-row {
+    align-items: flex-end;
+}
+
+.diary-form-row > :is(label, .diary-model-field) {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.diary-stage-details {
     display: flex;
     flex-wrap: wrap;
+    gap: .75rem;
+}
+
+.diary-stage-details > * {
+    flex: 1 1 17rem;
+    min-width: 0;
+}
+
+.diary-stage-model {
+    display: grid;
+    align-content: start;
     gap: .5rem;
 }
 
-.diary-date-fields > label {
-    min-width: 7rem;
-    flex: 1;
+.diary-stage-details > label {
+    grid-template-rows: auto 1fr;
 }
 
-.diary-timeline > p {
+.diary-date-picker,
+.diary-date-fields:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .5rem;
+    max-width: 100%;
+}
+
+.diary-date-modes {
+    border-radius: .5rem;
+    background: #020617;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / .15);
+}
+
+#vrodos-diary-editor .diary-date-modes > button {
+    padding-inline: .625rem;
+}
+
+.diary-date-fields > label {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.diary-date-exact { width: 10.5rem; }
+.diary-date-month { width: 9.5rem; }
+.diary-date-year { width: 5.75rem; }
+
+.diary-history-heading {
+    border-top: 1px solid rgb(255 255 255 / .12);
+    padding-top: .75rem;
+    color: #f1f5f9;
+    font-size: .875rem;
+    font-weight: 700;
+}
+
+.diary-timeline-heading,
+.diary-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.diary-timeline-heading {
     grid-column: 1 / -1;
     overflow-wrap: anywhere;
 }
 
-#vrodos-diary-editor:has(.diary-model-picker[open]) .diary-timeline {
-    position: static;
+.diary-timeline-heading > p {
+    flex: 1;
 }
 
 .diary-timeline input[type="range"] {
     width: 100%;
+    height: 1rem;
     accent-color: #34d399;
 }
 
+.diary-timeline input[type="range"]:enabled {
+    cursor: pointer;
+}
+
+.diary-timeline input[type="range"]:enabled::-webkit-slider-thumb {
+    cursor: pointer;
+}
+
+.diary-timeline input[type="range"]:enabled::-moz-range-thumb {
+    cursor: pointer;
+}
+
 @media (min-width: 1000px) {
-    #vrodos-diary-editor .diary-layout {
+    #vrodos-diary-editor .diary-layout:has([data-import-preview]) {
         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+
+    #vrodos-diary-editor [data-import-preview] {
+        grid-area: 1 / 2;
+    }
+}
+
+@media (max-width: 1120px) {
+    #vrodos-diary-timeline {
+        left: clamp(.75rem, calc(50% - 16rem), calc(100% - 300px - 32.75rem));
+        width: min(32rem, calc(100% - 300px - 1.5rem));
+        transform: none;
     }
 }
 
 @media (max-width: 999px) {
     #vrodos-diary-workspace { inset-inline: .75rem; }
+
+    #vr_editor_main_div:has(#vrodos-diary-workspace:not([hidden])) #hierarchy-viewer {
+        max-height: max(7rem, calc(47dvh - 7rem)) !important;
+    }
 }
 
 #vrodos-diary-status {
@@ -128,7 +341,7 @@
     display: none;
 }
 
-.diary-model-picker > summary,
+.diary-model-picker,
 .diary-model-option {
     display: flex;
     align-items: center;
@@ -141,23 +354,18 @@
     overflow-wrap: anywhere;
 }
 
-.diary-model-picker > summary {
+.diary-model-picker {
     cursor: pointer;
-    list-style: none;
     border: 1px solid rgb(255 255 255 / .15);
     background: #020617;
 }
 
-.diary-model-picker > summary::-webkit-details-marker {
-    display: none;
-}
-
-.diary-model-picker > summary[aria-disabled="true"] {
+.diary-model-picker:disabled {
     cursor: wait;
     opacity: .6;
 }
 
-.diary-model-picker > summary::after {
+.diary-model-picker::after {
     content: '';
     width: .5rem;
     height: .5rem;
@@ -168,18 +376,23 @@
     transform: rotate(45deg);
 }
 
-.diary-model-picker[open] > summary::after {
+.diary-model-picker:has(+ .diary-model-list:popover-open)::after {
     transform: rotate(225deg);
 }
 
 .diary-model-list {
-    max-height: min(15rem, 26dvh);
-    margin-top: .375rem;
+    position: fixed;
+    inset: auto;
+    max-height: min(15rem, 26dvh, var(--diary-model-list-room));
+    margin: 0;
     padding: .25rem;
     overflow-y: auto;
+    overscroll-behavior: contain;
     border: 1px solid rgb(255 255 255 / .12);
     border-radius: .5rem;
     background: #020617;
+    color: inherit;
+    box-shadow: 0 .5rem 1.5rem rgb(0 0 0 / .45);
 }
 
 .diary-model-option:hover,
@@ -218,7 +431,7 @@
     object-fit: contain;
 }
 
-#hierarchy-viewer [data-diary-hierarchy-group] summary {
+#hierarchy-viewer [data-diary-hierarchy-group] > details > summary {
     padding: .375rem .5rem;
     cursor: pointer;
     background: rgb(15 23 42 / .5);
@@ -228,7 +441,63 @@
     overflow-wrap: anywhere;
 }
 
-#hierarchy-viewer [data-diary-hierarchy-point] summary[aria-current="step"] {
+#hierarchy-viewer summary > .diary-icon {
+    margin-inline: .1875rem .375rem;
+}
+
+#hierarchy-viewer .diary-hierarchy-stage-heading {
+    display: flex;
+    align-items: stretch;
+}
+
+#hierarchy-viewer :is(.diary-hierarchy-entry, [data-diary-stage-toggle]) {
+    min-height: 1.875rem;
+    border-radius: .25rem;
+    color: #e2e8f0;
+    font-size: .75rem;
+}
+
+#hierarchy-viewer .diary-hierarchy-entry {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: .25rem .5rem;
+    text-align: start;
+    overflow-wrap: anywhere;
+}
+
+#hierarchy-viewer [data-diary-stage-toggle] {
+    display: grid;
+    flex: 0 0 1.75rem;
+    place-items: center;
+}
+
+#hierarchy-viewer [data-diary-stage-toggle]::before {
+    content: '';
+    width: .375rem;
+    height: .375rem;
+    border: solid currentColor;
+    border-width: 0 1px 1px 0;
+    transform: rotate(-45deg);
+}
+
+#hierarchy-viewer [data-diary-stage-toggle][aria-expanded="true"]::before {
+    transform: rotate(45deg);
+}
+
+#hierarchy-viewer :is(.diary-hierarchy-entry, [data-diary-stage-toggle]):hover {
+    background: rgb(51 65 85 / .8);
+}
+
+#hierarchy-viewer :is(.diary-hierarchy-entry, [data-diary-stage-toggle], summary):focus-visible {
+    outline: 2px solid #34d399;
+    outline-offset: -2px;
+}
+
+#hierarchy-viewer .diary-hierarchy-entry[aria-current] {
     box-shadow: inset 2px 0 #34d399;
     background: rgb(6 78 59 / .7);
     color: #d1fae5;
@@ -245,8 +514,7 @@
     line-height: 1rem;
 }
 
-#hierarchy-viewer p.diary-hierarchy-note {
-    margin: 0;
+#hierarchy-viewer .diary-hierarchy-message {
     padding: .25rem .75rem;
 }
 

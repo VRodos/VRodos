@@ -10898,9 +10898,9 @@
   var svgCache = /* @__PURE__ */ new Map();
   var loader = new SVGLoader();
   var isRevision185OrNewer = Number.parseInt(REVISION, 10) >= 185;
-  async function loadSvg({ src, content: content5 }) {
+  async function loadSvg({ src, content: content7 }) {
     var _a4;
-    if (src == null && content5 == null) {
+    if (src == null && content7 == null) {
       return void 0;
     }
     let result;
@@ -10911,7 +10911,7 @@
       }
       result = await promise;
     } else {
-      result = loader.parse(content5);
+      result = loader.parse(content7);
     }
     const meshes = [];
     for (const path of result.paths) {
@@ -14245,9 +14245,9 @@
     }
   };
 
-  // node_modules/@pmndrs/uikit-lucide/dist/Check.js
-  var content = `<svg class="lucide lucide-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.640 5.068 C 19.483 5.121,18.793 5.795,14.230 10.354 L 9.001 15.578 6.770 13.353 C 4.622 11.209,4.532 11.125,4.323 11.064 C 4.057 10.986,3.945 10.984,3.710 11.055 C 3.467 11.128,3.260 11.293,3.128 11.516 C 3.037 11.672,3.020 11.746,3.020 12.000 C 3.020 12.254,3.036 12.328,3.127 12.480 C 3.262 12.706,8.368 17.805,8.560 17.905 C 8.659 17.957,8.788 17.979,9.000 17.979 C 9.255 17.980,9.327 17.964,9.480 17.873 C 9.708 17.737,20.805 6.633,20.905 6.440 C 20.957 6.341,20.979 6.212,20.979 6.000 C 20.980 5.745,20.964 5.672,20.872 5.516 C 20.617 5.083,20.122 4.903,19.640 5.068 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
-  var CheckIcon = class extends Svg {
+  // node_modules/@pmndrs/uikit-lucide/dist/Amphora.js
+  var content = `<svg class="lucide lucide-amphora" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.695 1.057 C 8.466 1.129,8.256 1.299,8.128 1.516 C 8.036 1.672,8.020 1.746,8.020 2.003 C 8.020 2.271,8.034 2.329,8.141 2.503 C 8.288 2.742,8.578 2.946,8.821 2.982 L 9.000 3.009 9.000 3.500 L 9.000 3.991 8.230 4.010 C 7.567 4.027,7.416 4.043,7.139 4.126 C 6.181 4.415,5.419 5.180,5.114 6.160 C 4.979 6.594,4.979 7.407,5.114 7.839 C 5.326 8.514,5.685 9.012,6.280 9.454 C 6.401 9.543,6.505 9.620,6.512 9.623 C 6.518 9.627,6.415 9.781,6.282 9.965 C 5.794 10.641,5.314 11.737,5.145 12.562 C 4.889 13.806,4.987 15.311,5.414 16.700 C 5.839 18.084,6.687 19.533,7.742 20.680 L 8.018 20.980 6.879 21.001 C 6.108 21.015,5.704 21.038,5.627 21.071 C 5.430 21.157,5.239 21.327,5.128 21.516 C 5.037 21.672,5.020 21.746,5.020 22.000 C 5.020 22.256,5.036 22.328,5.131 22.489 C 5.256 22.702,5.449 22.864,5.670 22.943 C 5.892 23.022,18.108 23.022,18.330 22.943 C 18.551 22.864,18.744 22.702,18.869 22.489 C 18.964 22.328,18.980 22.256,18.980 22.000 C 18.980 21.746,18.963 21.672,18.872 21.516 C 18.761 21.327,18.570 21.157,18.373 21.071 C 18.296 21.038,17.892 21.015,17.124 21.001 L 15.987 20.980 16.244 20.700 C 16.948 19.932,17.540 19.075,18.008 18.143 C 18.893 16.382,19.211 14.291,18.855 12.562 C 18.686 11.737,18.206 10.641,17.718 9.965 C 17.585 9.781,17.482 9.627,17.488 9.623 C 17.495 9.620,17.599 9.543,17.720 9.454 C 18.315 9.012,18.674 8.514,18.886 7.839 C 19.021 7.407,19.021 6.594,18.886 6.160 C 18.581 5.180,17.819 4.415,16.861 4.126 C 16.584 4.043,16.433 4.027,15.770 4.010 L 15.000 3.991 15.000 3.500 L 15.000 3.009 15.179 2.982 C 15.422 2.946,15.712 2.742,15.859 2.503 C 15.966 2.329,15.980 2.271,15.980 2.003 C 15.980 1.746,15.964 1.672,15.872 1.516 C 15.740 1.293,15.533 1.128,15.290 1.055 C 15.030 0.977,8.945 0.979,8.695 1.057 M13.000 5.432 C 13.000 8.077,13.000 8.077,13.230 8.553 C 13.388 8.878,13.825 9.305,14.220 9.520 C 14.999 9.943,15.562 10.416,16.010 11.020 C 16.321 11.439,16.692 12.202,16.819 12.680 C 17.035 13.495,17.042 14.477,16.840 15.460 C 16.431 17.448,14.986 19.526,13.174 20.732 L 12.772 21.000 12.000 21.000 L 11.228 21.000 10.826 20.732 C 9.016 19.528,7.569 17.446,7.160 15.460 C 7.116 15.245,7.059 14.811,7.033 14.497 C 6.951 13.484,7.096 12.680,7.517 11.818 C 8.016 10.798,8.697 10.106,9.780 9.519 C 10.176 9.304,10.612 8.878,10.770 8.553 C 11.000 8.077,11.000 8.077,11.000 5.432 L 11.000 3.000 12.000 3.000 L 13.000 3.000 13.000 5.432 M9.000 6.814 C 9.000 7.741,9.030 7.660,8.611 7.879 C 8.375 8.003,8.344 8.009,8.027 7.993 C 7.758 7.978,7.657 7.954,7.513 7.869 C 6.932 7.529,6.833 6.773,7.307 6.299 C 7.554 6.053,7.730 6.006,8.430 6.003 L 9.000 6.000 9.000 6.814 M16.310 6.061 C 16.688 6.173,17.000 6.598,17.000 7.001 C 17.000 7.176,16.897 7.462,16.779 7.618 C 16.591 7.865,16.359 7.972,15.973 7.993 C 15.656 8.009,15.625 8.003,15.389 7.879 C 14.970 7.660,15.000 7.741,15.000 6.814 L 15.000 6.000 15.553 6.000 C 15.931 6.000,16.170 6.019,16.310 6.061 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var AmphoraIcon = class extends Svg {
     constructor(inputProperties, initialClasses, config) {
       super(inputProperties, initialClasses, {
         ...config,
@@ -14260,11 +14260,11 @@
       });
     }
   };
-  var Check = CheckIcon;
+  var Amphora = AmphoraIcon;
 
-  // node_modules/@pmndrs/uikit-lucide/dist/ChevronLeft.js
-  var content2 = `<svg class="lucide lucide-chevron-left" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.640 5.068 C 14.485 5.121,14.036 5.553,11.347 8.235 C 9.570 10.008,8.188 11.417,8.127 11.520 C 8.036 11.672,8.020 11.746,8.020 12.000 C 8.020 12.254,8.036 12.328,8.127 12.480 C 8.263 12.707,14.370 18.807,14.555 18.899 C 15.010 19.128,15.601 18.944,15.867 18.492 C 15.964 18.327,15.980 18.258,15.979 18.000 C 15.979 17.788,15.957 17.659,15.905 17.560 C 15.865 17.483,14.614 16.200,13.126 14.710 L 10.421 12.000 13.126 9.290 C 14.614 7.800,15.865 6.517,15.905 6.440 C 15.957 6.341,15.979 6.212,15.979 6.000 C 15.980 5.745,15.964 5.672,15.872 5.516 C 15.617 5.083,15.122 4.903,14.640 5.068 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
-  var ChevronLeftIcon = class extends Svg {
+  // node_modules/@pmndrs/uikit-lucide/dist/Check.js
+  var content2 = `<svg class="lucide lucide-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.640 5.068 C 19.483 5.121,18.793 5.795,14.230 10.354 L 9.001 15.578 6.770 13.353 C 4.622 11.209,4.532 11.125,4.323 11.064 C 4.057 10.986,3.945 10.984,3.710 11.055 C 3.467 11.128,3.260 11.293,3.128 11.516 C 3.037 11.672,3.020 11.746,3.020 12.000 C 3.020 12.254,3.036 12.328,3.127 12.480 C 3.262 12.706,8.368 17.805,8.560 17.905 C 8.659 17.957,8.788 17.979,9.000 17.979 C 9.255 17.980,9.327 17.964,9.480 17.873 C 9.708 17.737,20.805 6.633,20.905 6.440 C 20.957 6.341,20.979 6.212,20.979 6.000 C 20.980 5.745,20.964 5.672,20.872 5.516 C 20.617 5.083,20.122 4.903,19.640 5.068 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var CheckIcon = class extends Svg {
     constructor(inputProperties, initialClasses, config) {
       super(inputProperties, initialClasses, {
         ...config,
@@ -14277,11 +14277,11 @@
       });
     }
   };
-  var ChevronLeft = ChevronLeftIcon;
+  var Check = CheckIcon;
 
-  // node_modules/@pmndrs/uikit-lucide/dist/ChevronRight.js
-  var content3 = `<svg class="lucide lucide-chevron-right" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.670 5.061 C 8.448 5.142,8.250 5.309,8.128 5.516 C 8.036 5.672,8.020 5.745,8.021 6.000 C 8.021 6.212,8.043 6.341,8.095 6.440 C 8.135 6.517,9.386 7.800,10.874 9.290 L 13.579 12.000 10.874 14.710 C 9.386 16.200,8.135 17.483,8.095 17.560 C 8.043 17.659,8.021 17.788,8.021 18.000 C 8.020 18.258,8.036 18.327,8.133 18.492 C 8.263 18.714,8.502 18.901,8.736 18.965 C 8.938 19.019,9.266 18.989,9.445 18.899 C 9.630 18.807,15.737 12.707,15.873 12.480 C 15.964 12.328,15.980 12.254,15.980 12.000 C 15.980 11.746,15.964 11.672,15.873 11.520 C 15.812 11.417,14.431 10.008,12.653 8.235 C 9.817 5.407,9.522 5.125,9.343 5.065 C 9.107 4.987,8.874 4.986,8.670 5.061 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
-  var ChevronRightIcon = class extends Svg {
+  // node_modules/@pmndrs/uikit-lucide/dist/ChevronLeft.js
+  var content3 = `<svg class="lucide lucide-chevron-left" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.640 5.068 C 14.485 5.121,14.036 5.553,11.347 8.235 C 9.570 10.008,8.188 11.417,8.127 11.520 C 8.036 11.672,8.020 11.746,8.020 12.000 C 8.020 12.254,8.036 12.328,8.127 12.480 C 8.263 12.707,14.370 18.807,14.555 18.899 C 15.010 19.128,15.601 18.944,15.867 18.492 C 15.964 18.327,15.980 18.258,15.979 18.000 C 15.979 17.788,15.957 17.659,15.905 17.560 C 15.865 17.483,14.614 16.200,13.126 14.710 L 10.421 12.000 13.126 9.290 C 14.614 7.800,15.865 6.517,15.905 6.440 C 15.957 6.341,15.979 6.212,15.979 6.000 C 15.980 5.745,15.964 5.672,15.872 5.516 C 15.617 5.083,15.122 4.903,14.640 5.068 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var ChevronLeftIcon = class extends Svg {
     constructor(inputProperties, initialClasses, config) {
       super(inputProperties, initialClasses, {
         ...config,
@@ -14294,16 +14294,50 @@
       });
     }
   };
-  var ChevronRight = ChevronRightIcon;
+  var ChevronLeft = ChevronLeftIcon;
 
-  // node_modules/@pmndrs/uikit-lucide/dist/X.js
-  var content4 = `<svg class="lucide lucide-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.670 5.061 C 5.448 5.142,5.250 5.309,5.128 5.516 C 5.036 5.672,5.020 5.745,5.021 6.000 C 5.021 6.212,5.043 6.341,5.095 6.440 C 5.135 6.517,6.386 7.800,7.874 9.290 L 10.579 12.000 7.874 14.710 C 6.386 16.200,5.135 17.483,5.095 17.560 C 5.043 17.659,5.021 17.788,5.021 18.000 C 5.020 18.258,5.036 18.327,5.133 18.492 C 5.263 18.714,5.502 18.901,5.736 18.965 C 5.938 19.019,6.266 18.989,6.445 18.899 C 6.519 18.862,7.800 17.614,9.290 16.126 L 12.000 13.421 14.710 16.126 C 16.200 17.614,17.483 18.865,17.560 18.905 C 17.659 18.957,17.788 18.979,18.000 18.979 C 18.258 18.980,18.327 18.964,18.492 18.867 C 18.714 18.737,18.901 18.498,18.965 18.264 C 19.019 18.062,18.989 17.734,18.899 17.555 C 18.862 17.481,17.614 16.200,16.126 14.710 L 13.421 12.000 16.126 9.290 C 17.614 7.800,18.865 6.517,18.905 6.440 C 18.957 6.341,18.979 6.212,18.979 6.000 C 18.980 5.745,18.964 5.672,18.872 5.516 C 18.618 5.084,18.138 4.906,17.657 5.065 C 17.478 5.125,17.210 5.380,14.730 7.854 L 12.000 10.578 9.270 7.854 C 6.790 5.380,6.522 5.125,6.343 5.065 C 6.107 4.987,5.874 4.986,5.670 5.061 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
-  var XIcon = class extends Svg {
+  // node_modules/@pmndrs/uikit-lucide/dist/ChevronRight.js
+  var content4 = `<svg class="lucide lucide-chevron-right" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.670 5.061 C 8.448 5.142,8.250 5.309,8.128 5.516 C 8.036 5.672,8.020 5.745,8.021 6.000 C 8.021 6.212,8.043 6.341,8.095 6.440 C 8.135 6.517,9.386 7.800,10.874 9.290 L 13.579 12.000 10.874 14.710 C 9.386 16.200,8.135 17.483,8.095 17.560 C 8.043 17.659,8.021 17.788,8.021 18.000 C 8.020 18.258,8.036 18.327,8.133 18.492 C 8.263 18.714,8.502 18.901,8.736 18.965 C 8.938 19.019,9.266 18.989,9.445 18.899 C 9.630 18.807,15.737 12.707,15.873 12.480 C 15.964 12.328,15.980 12.254,15.980 12.000 C 15.980 11.746,15.964 11.672,15.873 11.520 C 15.812 11.417,14.431 10.008,12.653 8.235 C 9.817 5.407,9.522 5.125,9.343 5.065 C 9.107 4.987,8.874 4.986,8.670 5.061 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var ChevronRightIcon = class extends Svg {
     constructor(inputProperties, initialClasses, config) {
       super(inputProperties, initialClasses, {
         ...config,
         defaultOverrides: {
           content: content4,
+          width: 24,
+          height: 24,
+          ...config == null ? void 0 : config.defaultOverrides
+        }
+      });
+    }
+  };
+  var ChevronRight = ChevronRightIcon;
+
+  // node_modules/@pmndrs/uikit-lucide/dist/Shovel.js
+  var content5 = `<svg class="lucide lucide-shovel" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.652 1.066 C 16.341 1.176,15.485 2.057,15.148 2.615 C 14.376 3.889,14.259 5.415,14.830 6.760 C 14.909 6.947,15.018 7.170,15.071 7.256 L 15.168 7.412 12.335 10.245 L 9.502 13.078 8.521 12.103 C 7.607 11.196,7.524 11.124,7.322 11.064 C 7.052 10.984,6.950 10.984,6.677 11.063 C 6.467 11.125,6.377 11.209,3.795 13.793 C 1.370 16.219,1.124 16.478,1.065 16.657 C 1.008 16.831,1.000 17.165,1.002 19.517 C 1.003 21.637,1.014 22.211,1.057 22.330 C 1.136 22.551,1.298 22.744,1.511 22.869 L 1.700 22.980 4.416 22.991 C 6.851 23.001,7.154 22.995,7.336 22.936 C 7.525 22.875,7.737 22.674,10.153 20.265 C 11.632 18.791,12.812 17.582,12.873 17.480 C 12.964 17.327,12.980 17.255,12.979 17.000 C 12.979 16.787,12.957 16.659,12.905 16.560 C 12.864 16.483,12.401 15.988,11.876 15.459 L 10.921 14.499 13.755 11.665 L 16.588 8.832 16.744 8.929 C 16.830 8.982,17.053 9.091,17.240 9.170 C 18.718 9.798,20.389 9.595,21.713 8.628 C 22.042 8.388,22.754 7.685,22.873 7.482 C 22.963 7.328,22.980 7.253,22.980 7.000 C 22.980 6.746,22.964 6.672,22.873 6.520 C 22.812 6.418,21.632 5.210,20.153 3.735 C 17.783 1.372,17.522 1.124,17.343 1.065 C 17.104 0.986,16.876 0.986,16.652 1.066 M20.489 7.052 C 20.399 7.152,19.830 7.419,19.582 7.478 C 19.327 7.539,18.673 7.539,18.418 7.478 C 18.309 7.452,18.068 7.359,17.882 7.271 C 17.409 7.046,16.966 6.603,16.732 6.120 C 16.641 5.933,16.547 5.685,16.523 5.568 C 16.467 5.295,16.468 4.703,16.524 4.432 C 16.573 4.194,16.788 3.717,16.923 3.545 L 17.012 3.432 18.785 5.205 C 20.484 6.904,20.554 6.980,20.489 7.052 M8.800 15.220 L 10.580 17.000 8.580 19.000 L 6.580 21.000 4.790 21.000 L 3.000 21.000 3.000 19.210 L 3.000 17.420 4.990 15.430 C 6.084 14.336,6.989 13.440,7.000 13.440 C 7.011 13.440,7.821 14.241,8.800 15.220 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var ShovelIcon = class extends Svg {
+    constructor(inputProperties, initialClasses, config) {
+      super(inputProperties, initialClasses, {
+        ...config,
+        defaultOverrides: {
+          content: content5,
+          width: 24,
+          height: 24,
+          ...config == null ? void 0 : config.defaultOverrides
+        }
+      });
+    }
+  };
+  var Shovel = ShovelIcon;
+
+  // node_modules/@pmndrs/uikit-lucide/dist/X.js
+  var content6 = `<svg class="lucide lucide-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.670 5.061 C 5.448 5.142,5.250 5.309,5.128 5.516 C 5.036 5.672,5.020 5.745,5.021 6.000 C 5.021 6.212,5.043 6.341,5.095 6.440 C 5.135 6.517,6.386 7.800,7.874 9.290 L 10.579 12.000 7.874 14.710 C 6.386 16.200,5.135 17.483,5.095 17.560 C 5.043 17.659,5.021 17.788,5.021 18.000 C 5.020 18.258,5.036 18.327,5.133 18.492 C 5.263 18.714,5.502 18.901,5.736 18.965 C 5.938 19.019,6.266 18.989,6.445 18.899 C 6.519 18.862,7.800 17.614,9.290 16.126 L 12.000 13.421 14.710 16.126 C 16.200 17.614,17.483 18.865,17.560 18.905 C 17.659 18.957,17.788 18.979,18.000 18.979 C 18.258 18.980,18.327 18.964,18.492 18.867 C 18.714 18.737,18.901 18.498,18.965 18.264 C 19.019 18.062,18.989 17.734,18.899 17.555 C 18.862 17.481,17.614 16.200,16.126 14.710 L 13.421 12.000 16.126 9.290 C 17.614 7.800,18.865 6.517,18.905 6.440 C 18.957 6.341,18.979 6.212,18.979 6.000 C 18.980 5.745,18.964 5.672,18.872 5.516 C 18.618 5.084,18.138 4.906,17.657 5.065 C 17.478 5.125,17.210 5.380,14.730 7.854 L 12.000 10.578 9.270 7.854 C 6.790 5.380,6.522 5.125,6.343 5.065 C 6.107 4.987,5.874 4.986,5.670 5.061 " stroke="none" fill-rule="evenodd" fill="black"></path></svg>`;
+  var XIcon = class extends Svg {
+    constructor(inputProperties, initialClasses, config) {
+      super(inputProperties, initialClasses, {
+        ...config,
+        defaultOverrides: {
+          content: content6,
           width: 24,
           height: 24,
           ...config == null ? void 0 : config.defaultOverrides
@@ -18196,6 +18230,7 @@
       }, { once: true });
       return scroll2;
     }
+    const titleIcons = { amphora: Amphora, shovel: Shovel };
     function createPanelApi(panelState) {
       function withPanelFontDefaults(options) {
         const opts = options || {};
@@ -18616,6 +18651,16 @@
             whiteSpace: opts.titleWhiteSpace || "normal",
             pointerEvents: "none"
           }, fontProps(opts)))));
+          const TitleIcon = titleIcons[opts.titleIcon];
+          if (TitleIcon) {
+            header.add(new TitleIcon(baseContainerProps({
+              width: 32,
+              height: 32,
+              flexShrink: 0,
+              color: "#ffffff",
+              pointerEvents: "none"
+            })));
+          }
           header.add(titleColumn);
           if (opts.showClose !== false) {
             this.iconButton(header, {
@@ -18631,7 +18676,7 @@
               onClick: opts.onClose || this.close.bind(this)
             });
           }
-          const content5 = new Container(baseContainerProps({
+          const content7 = new Container(baseContainerProps({
             flexDirection: "column",
             alignItems: "stretch",
             justifyContent: "flex-start",
@@ -18646,7 +18691,7 @@
             pointerEvents: "none",
             zIndex: 5
           }));
-          const contentHost = opts.showContent !== false && opts.scrollContent !== false ? this.scroll(content5, {
+          const contentHost = opts.showContent !== false && opts.scrollContent !== false ? this.scroll(content7, {
             flexDirection: "column",
             alignItems: "stretch",
             justifyContent: "flex-start",
@@ -18655,7 +18700,7 @@
             overflow: "scroll",
             gapRow: opts.scrollGapY !== void 0 ? opts.scrollGapY : opts.gapY !== void 0 ? opts.gapY : DIALOG_CONTENT_GAP_Y,
             zIndex: 8
-          }) : content5;
+          }) : content7;
           const footer = new Container(baseContainerProps({
             flexDirection: "row",
             alignItems: "center",
@@ -18669,7 +18714,7 @@
             zIndex: 5
           }));
           if (opts.showHeader !== false) this.appendRoot(header);
-          if (opts.showContent !== false) this.appendRoot(content5);
+          if (opts.showContent !== false) this.appendRoot(content7);
           if (opts.showFooter !== false) this.appendRoot(footer);
           this.content = contentHost;
           this.footer = footer;
@@ -18710,7 +18755,7 @@
             root: this.root,
             header,
             content: contentHost,
-            contentOuter: content5,
+            contentOuter: content7,
             footer,
             statusText: footer.userData && footer.userData.vrodosSpatialStatusText || null,
             primaryButton

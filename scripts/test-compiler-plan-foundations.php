@@ -737,6 +737,10 @@ vrodos_foundation_assert( str_contains( $simple_player->getAttribute( 'vrodos-ca
 vrodos_foundation_assert( 'fly:true' === $simple_player->getAttribute( 'wasd-controls' ) && $simple_player->hasAttribute( 'networked' ), 'Simple camera pose preserves its movement and networking flow' );
 $plan_planner    = new VRodos_Compiler_Runtime_Script_Planner( $plan_manifest, $plan_flags );
 $plan_resolver   = new VRodos_Compiler_Plan_Resolver( $plan_settings, $plan_planner );
+$bloom_defaults = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( (object) [ 'aframePostFXBloomEnabled' => true ] );
+vrodos_foundation_assert( 0.3 === $bloom_defaults['pmndrsBloomIntensity'] && 0.3 === $bloom_defaults['pmndrsBloomThreshold'], 'bloom multiplier and threshold default to 0.30' );
+$authored_bloom = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( (object) [ 'aframePmndrsBloomIntensity' => 0.8, 'aframePmndrsBloomThreshold' => 0.5 ] );
+vrodos_foundation_assert( 0.8 === $authored_bloom['pmndrsBloomIntensity'] && 0.5 === $authored_bloom['pmndrsBloomThreshold'], 'compiler preserves authored bloom settings' );
 $light_shaft_defaults = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( (object) [] );
 vrodos_foundation_assert( 'true' === $light_shaft_defaults['pmndrsCloudsLightShaftsEnabled'], 'cloud light shafts default to enabled' );
 $light_shaft_disabled = $plan_settings->build_settings(

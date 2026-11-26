@@ -59,6 +59,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			$asset_cat_term = get_term_by( 'slug', sanitize_text_field( (string) $_POST['term_id_native'] ), 'vrodos_asset3d_cat' );
 			$assetCatID     = $asset_cat_term ? (int) $asset_cat_term->term_id : 0;
 		}
+		if ( ! $editing_asset_id && isset( self::diary_upload_context( $project_id, absint( $_GET['vrodos_scene'] ?? 0 ) )['vrodos_diary_point'] ) ) {
+			$walkable_term = get_term_by( 'slug', 'walkable-surface', 'vrodos_asset3d_cat' );
+			$assetCatID    = $walkable_term ? (int) $walkable_term->term_id : 0;
+		}
 		$assetCatTerm = get_term_by( 'id', $assetCatID, 'vrodos_asset3d_cat' );
 
 		$assetback3dcolor = isset( $_POST['assetback3dcolor'] ) ? esc_attr( strip_tags( (string) $_POST['assetback3dcolor'] ) ) : '';
@@ -495,6 +499,15 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['goBackToLink'] = $scene_id && $edit_scene_page_id
 			? get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $return_project_id . '&scene_type=' . ( $_GET['scene_type'] ?? '' )
 			: home_url( '/vrodos-assets-list-page/?' ) . ( ! isset( $_GET['singleproject'] ) ? 'vrodos_game=' : 'vrodos_project_id=' ) . $data['project_id'];
+		$data['diary_upload'] = $scene_id && $edit_scene_page_id ? self::diary_upload_context( (int) $data['project_id'], (int) $scene_id ) : [];
+		$data['diary_walkable_upload'] = ! $data['asset_id'] && isset( $data['diary_upload']['vrodos_diary_point'] );
+		if ( $data['diary_upload'] ) {
+			$return_diary = $data['diary_upload'];
+			if ( $data['asset_id'] ) {
+				$return_diary['vrodos_diary_model'] = (int) $data['asset_id'];
+			}
+			$data['goBackToLink'] = add_query_arg( $return_diary, $data['goBackToLink'] );
+		}
 
 		$data['door_image_id'] = VRodos_Image_Door::is_image_door( (int) $data['asset_id'] )
 			? (int) get_post_meta( (int) $data['asset_id'], VRodos_Image_Door::IMAGE_META, true ) : 0;
@@ -503,6 +516,12 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// Prepare taxonomy and meta data for the template
 		self::prepare_taxonomy_data( $data );
+		if ( $data['diary_walkable_upload'] ) {
+			$walkable_term = get_term_by( 'slug', 'walkable-surface', 'vrodos_asset3d_cat' );
+			if ( $walkable_term ) {
+				$data['saved_term'] = [ $walkable_term ];
+			}
+		}
 		self::prepare_meta_data( $data );
 
 		// Set default values for new assets

@@ -16,7 +16,7 @@ import {
     theme as HorizonTheme
 } from "@pmndrs/uikit-horizon";
 import { inter as InterFontFamily } from "@pmndrs/msdfonts/inter";
-import { Check, ChevronLeft, ChevronRight, X } from "@pmndrs/uikit-lucide";
+import { Amphora, Check, ChevronLeft, ChevronRight, Shovel, X } from "@pmndrs/uikit-lucide";
 import { createRayPointer, forwardHtmlEvents } from "@pmndrs/pointer-events";
 import { MSDF } from "@zappar/msdf-generator";
 
@@ -2417,6 +2417,8 @@ import { MSDF } from "@zappar/msdf-generator";
         return scroll;
     }
 
+    const titleIcons = { amphora: Amphora, shovel: Shovel };
+
     function createPanelApi(panelState) {
         function withPanelFontDefaults(options) {
             const opts = options || {};
@@ -2854,6 +2856,16 @@ import { MSDF } from "@zappar/msdf-generator";
                     whiteSpace: opts.titleWhiteSpace || "normal",
                     pointerEvents: "none"
                 }, fontProps(opts)))));
+                const TitleIcon = titleIcons[opts.titleIcon];
+                if (TitleIcon) {
+                    header.add(new TitleIcon(baseContainerProps({
+                        width: 32,
+                        height: 32,
+                        flexShrink: 0,
+                        color: "#ffffff",
+                        pointerEvents: "none"
+                    })));
+                }
                 header.add(titleColumn);
                 if (opts.showClose !== false) {
                     this.iconButton(header, {

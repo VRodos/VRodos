@@ -73,7 +73,7 @@
             if (this.ready || this.removed) return;
             this.dataSet = window.VRODOS_RUNTIME_CONTEXT?.spatialDiary;
             this.world = this.el.querySelector('#vrodos-authored-world');
-            if (!this.dataSet?.stages.length || !this.world) return;
+            if (!this.dataSet || (!this.dataSet.stages.length && !this.dataSet.finds.length) || !this.world) return;
             this.templates = new Map([...document.querySelectorAll('template[data-vrodos-diary-model]')]
                 .map((template) => [template.dataset.vrodosDiaryModel, template.content.firstElementChild]));
             this.movement = this.el.querySelector('[custom-movement]')?.components['custom-movement'];
@@ -81,7 +81,8 @@
             this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
             this.view = new window.VRODOSDiaryView(this);
             this.ready = true;
-            this.select(0);
+            if (this.dataSet.stages.length) this.select(0);
+            else this.view.update();
         },
 
         url(source) {

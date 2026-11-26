@@ -80,6 +80,7 @@ function vrodosUndoReconcileLockState(object) {
     if ((selectedObject === object || transformObject === object) &&
         VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
         VRODOS.editor.selection.clear({ source: 'undo-lock-reconcile' });
+        if (object.vrodos_internal_helper) VRODOS.ui.setBackgroundColorHierarchyViewer?.();
     } else if (transformObject === object && transforms && typeof transforms.detach === 'function') {
         transforms.detach();
     }
@@ -87,7 +88,7 @@ function vrodosUndoReconcileLockState(object) {
     if (typeof VRODOS.ui.removeCelOutline === 'function') {
         VRODOS.ui.removeCelOutline(object);
     }
-    if (typeof VRODOS.ui.hideObjectControlsPanel === 'function') {
+    if (!object.vrodos_internal_helper && typeof VRODOS.ui.hideObjectControlsPanel === 'function') {
         VRODOS.ui.hideObjectControlsPanel();
     }
 
@@ -259,6 +260,7 @@ VRODOS.editor.TransformCommand = class {
         }
         VRODOS.editor.sceneRegistry.invalidateBounds(obj);
         VRODOS.editor.transforms.syncProxyToObject(obj);
+        obj.dispatchEvent({ type: 'vrodos-transform-commit' });
 
         if (obj.category_name && obj.category_name.includes("light")) {
             VRODOS.utils.updateEditorLightHelper(obj, VRODOS.editor.envir.scene);
@@ -485,7 +487,7 @@ VRODOS.editor.LockCommand = class {
         }
 
         if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
-        if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+        if (!obj.vrodos_internal_helper && typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
     }
 
     undo() {

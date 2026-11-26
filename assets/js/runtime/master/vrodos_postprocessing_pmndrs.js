@@ -59,18 +59,14 @@
         return Boolean(self && self.data && self.data.selChoice === '0');
     }
 
-    function bloomOptionsForLegacyValue(self, legacyValue, intensityMultiplier, threshold) {
+    function bloomOptionsForLegacyValue(legacyValue, intensityMultiplier, threshold) {
         // legacy values are roughly 0..2; pmndrs intensity is roughly 0..3
-        const mult = (typeof intensityMultiplier === 'number' && !isNaN(intensityMultiplier)) ? intensityMultiplier : 1.0;
-        const thr = (typeof threshold === 'number' && !isNaN(threshold)) ? threshold : 0.62;
-        const options = {
-            intensity: Math.max(0, legacyValue) * 1.4 * mult,
-            luminanceThreshold: thr,
+        return {
+            intensity: Math.max(0, legacyValue) * 1.4 * intensityMultiplier,
+            luminanceThreshold: threshold,
             luminanceSmoothing: 0.18,
             mipmapBlur: true
         };
-
-        return options;
     }
 
     /**
@@ -4813,11 +4809,11 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
 
         // Bloom (intensity & threshold come from per-scene Pmndrs tweaks)
         const bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
-        const pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
-        const pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
+        const pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 0.3);
+        const pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.3);
         if (!xrStereoMode && bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
-                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
+                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(bloomVal, pmndrsBloomMult, pmndrsBloomThr));
                 effects.push(this.pmndrsBloomEffect);
             } catch (err) {
                 console.warn('[VRodos] pmndrs BloomEffect construction failed, skipping:', err);

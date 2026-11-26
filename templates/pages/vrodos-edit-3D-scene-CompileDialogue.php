@@ -632,20 +632,24 @@
 								</div>
 
 								<div id="compilePmndrsBloomWrapper" class="tw-space-y-4">
+									<?php
+									$bloom_multiplier_default = number_format( VRodos_Runtime_Settings_Contract::default( 'pmndrsBloomIntensity' ), 2, '.', '' );
+									$bloom_threshold_default  = number_format( VRodos_Runtime_Settings_Contract::default( 'pmndrsBloomThreshold' ), 2, '.', '' );
+									?>
 									<div>
 										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the shared Bloom preset when the Pmndrs engine is active.">Bloom Multiplier</span>
-											<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]"><?php echo esc_html( $bloom_multiplier_default ); ?></span>
 										</div>
-										<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="<?php echo esc_attr( $bloom_multiplier_default ); ?>" class="tw-range tw-range-primary tw-range-xs">
 									</div>
 
 									<div>
 										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for the Pmndrs bloom pass.">Bloom Threshold</span>
-											<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.62</span>
+											<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]"><?php echo esc_html( $bloom_threshold_default ); ?></span>
 										</div>
-										<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">
+										<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="<?php echo esc_attr( $bloom_threshold_default ); ?>" class="tw-range tw-range-primary tw-range-xs">
 									</div>
 								</div>
 

@@ -134,6 +134,21 @@ trait VRodos_Asset_CPT_Shared {
 		return remove_query_arg( 'vrodos_notice', $redirect_url );
 	}
 
+	private static function diary_upload_context( int $project_id, int $scene_id ): array {
+		$context = [];
+		foreach ( [ 'vrodos_diary_point', 'vrodos_diary_find', 'vrodos_diary_entry' ] as $key ) {
+			$value = $_GET[ $key ] ?? '';
+			if ( is_string( $value ) && preg_match( '/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,95}$/D', $value ) ) {
+				$context[ $key ] = $value;
+			}
+		}
+		if ( ! ( isset( $context['vrodos_diary_point'] ) || isset( $context['vrodos_diary_find'], $context['vrodos_diary_entry'] ) )
+			|| ! VRodos_Spatial_Diary::can_edit( $project_id, $scene_id ) ) {
+			return [];
+		}
+		return $context;
+	}
+
 	private static function asset_save_operation_id_from_request(): string {
 		$operation_id = isset( $_REQUEST['assetSaveOperationId'] )
 			? sanitize_key( wp_unslash( (string) $_REQUEST['assetSaveOperationId'] ) )

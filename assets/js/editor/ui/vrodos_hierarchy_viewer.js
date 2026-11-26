@@ -370,11 +370,20 @@ function hierarchyHoverSelect(uuid) {
 }
 
 /**
- * Click on hierarchy item: full select with floating panel and properties.
+ * Click on a hierarchy item: preview its excavation point before selecting the object.
  */
-function hierarchyClickSelect(event, uuid) {
+function hierarchyClickSelect(item, uuid) {
     const obj = _hierarchyGetObjectByUuid(uuid);
-    if (!obj || _hierarchyIsLockedObject(obj)) return;
+    if (!obj) return;
+
+    const stages = _diaryHierarchy?.stages;
+    const current = stages?.find((stage) => stage.id === _activeDiaryPoint);
+    if (!current?.layers.includes(uuid)) {
+        const stage = stages?.find((entry) => entry.layers.includes(uuid));
+        if (stage) _dispatchDiaryHierarchySelection(item, { stageId: stage.id });
+    }
+
+    if (_hierarchyIsLockedObject(obj)) return;
     // Simulate left-click event for VRODOS.ui.selectorMajor
     const fakeEvent = { button: 0 };
     VRODOS.ui.selectorMajor(fakeEvent, obj, "1");
@@ -405,6 +414,11 @@ function handleHierarchyActionClick(event, actionAnchor) {
 
     event.preventDefault();
     event.stopPropagation();
+
+    if (action === 'diary-release') {
+        actionAnchor.dispatchEvent(new CustomEvent('vrodos:diary-release-model', { bubbles: true, detail: uuid }));
+        return;
+    }
 
     if (action === 'delete' && typeof VRODOS.ui.deleteFomScene === 'function') {
         const targetObject = _hierarchyGetObjectByUuid(uuid) || _hierarchyGetObjectByName(name);
@@ -817,47 +831,102 @@ function _hierarchyGetRenderableObjects() {
 let _diaryHierarchy = null;
 let _diaryHierarchySignature = '';
 let _activeDiaryPoint = '';
+let _activeDiaryFind = '';
 
-VRODOS.ui.setDiaryHierarchy = function(diary, activePoint) {
+VRODOS.ui.setDiaryHierarchy = function(diary, activePoint, activeFind, safePointUuid = '') {
     const stages = (diary?.stages || []).map(({ stage_id, title, recorded_on, sequence, layers }) => ({
         id: stage_id, title, date: recorded_on, order: sequence, layers
     })).sort((a, b) => a.order - b.order);
-    const findModels = (diary?.finds || []).flatMap((find) => find.entries.map((entry) => entry.model).filter(Boolean));
-    const state = stages.length ? { stages, models: diary.models, findModels } : null;
+    const finds = (diary?.finds || []).map(({ find_id, find_label, discovery_stage_id, entries }) => ({
+        id: find_id, title: find_label, stageId: discovery_stage_id, models: entries.map((entry) => entry.model).filter(Boolean)
+    }));
+    const state = stages.length || finds.length ? { stages, models: diary.models, finds, safePointUuid } : null;
     const signature = JSON.stringify(state);
-    const pointChanged = _activeDiaryPoint !== activePoint;
+    const activeFindMoved = activeFind && finds.find((find) => find.id === activeFind)?.stageId !==
+        _diaryHierarchy?.finds.find((find) => find.id === activeFind)?.stageId;
+    const selectionChanged = _activeDiaryPoint !== activePoint || _activeDiaryFind !== activeFind || activeFindMoved;
     _activeDiaryPoint = activePoint;
+    _activeDiaryFind = activeFind;
     if (signature !== _diaryHierarchySignature) {
         _diaryHierarchy = state;
         _diaryHierarchySignature = signature;
         _layoutDiaryHierarchy();
     }
-    if (pointChanged) _highlightDiaryHierarchyPoint(true);
+    if (selectionChanged) _highlightDiaryHierarchySelection(true);
 };
 
-function _highlightDiaryHierarchyPoint(expand) {
-    for (const group of document.querySelectorAll('#hierarchy-viewer [data-diary-hierarchy-point]')) {
-        const current = group.dataset.diaryHierarchyPoint === _activeDiaryPoint;
-        const details = group.firstElementChild;
-        const summary = details.firstElementChild;
+function _setDiaryStageExpanded(stage, expanded) {
+    stage.lastElementChild.hidden = !expanded;
+    stage.querySelector('[data-diary-stage-toggle]').setAttribute('aria-expanded', String(expanded));
+}
+
+function _openDiaryHierarchyAncestors(node) {
+    const groupSelector = '[data-diary-hierarchy-group] > details';
+    for (let group = node.closest(groupSelector); group; group = group.parentElement.closest(groupSelector)) {
+        group.open = true;
+    }
+    const stage = node.closest('[data-diary-hierarchy-stage]');
+    if (stage) _setDiaryStageExpanded(stage, true);
+}
+
+function _highlightDiaryHierarchySelection(expand) {
+    for (const control of document.querySelectorAll('#hierarchy-viewer [data-diary-stage-id], #hierarchy-viewer [data-diary-find-id]')) {
+        const stageId = control.dataset.diaryStageId;
+        const current = stageId ? stageId === _activeDiaryPoint : control.dataset.diaryFindId === _activeDiaryFind;
         if (current) {
-            summary.setAttribute('aria-current', 'step');
-            if (expand) details.open = true;
+            control.setAttribute('aria-current', stageId ? 'step' : 'true');
+            if (expand) _openDiaryHierarchyAncestors(control);
         } else {
-            summary.removeAttribute('aria-current');
+            control.removeAttribute('aria-current');
         }
     }
+}
+
+function _diaryHierarchyButton(title, id, kind) {
+    const control = document.createElement('button');
+    control.type = 'button';
+    control.className = 'diary-hierarchy-entry';
+    control.dataset[kind === 'stage' ? 'diaryStageId' : 'diaryFindId'] = id;
+    control.textContent = title;
+    if (kind === 'find') control.prepend(VRODOS.ui.createDiaryIcon('find'));
+    return control;
+}
+
+function _dispatchDiaryHierarchySelection(node, detail) {
+    node.dispatchEvent(new CustomEvent('vrodos:diary-hierarchy-select', { bubbles: true, detail }));
+}
+
+function _diaryReleaseButton(uuid) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = HIERARCHY_RESET_BUTTON_CLASS;
+    button.title = 'Remove from diary';
+    button.dataset.hierarchyAction = 'diary-release';
+    button.dataset.uuid = uuid;
+    button.setAttribute('aria-label', 'Remove from diary');
+    const icon = document.createElement('i');
+    icon.className = 'tw-w-4 tw-h-4';
+    icon.setAttribute('data-lucide', 'unlink');
+    icon.setAttribute('aria-hidden', 'true');
+    button.append(icon);
+    return button;
 }
 
 function _layoutDiaryHierarchy() {
     const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
-    const oldGroups = [...viewer.querySelectorAll('[data-diary-hierarchy-group]')];
+    const oldGroups = [...viewer.querySelectorAll(':scope > [data-diary-hierarchy-group]')];
     if (!_diaryHierarchy && !oldGroups.length) return;
-    const opened = new Map(oldGroups.map((group) => [group.dataset.diaryHierarchyGroup, group.firstElementChild.open]));
+    const opened = new Map([...viewer.querySelectorAll('[data-diary-hierarchy-group] > details')]
+        .map((details) => [details.parentElement.dataset.diaryHierarchyGroup, details.open]));
+    const expanded = new Map([...viewer.querySelectorAll('[data-diary-hierarchy-stage]')]
+        .map((stage) => [stage.dataset.diaryHierarchyStage, !stage.lastElementChild.hidden]));
     const rows = new Map([...viewer.querySelectorAll('.hierarchyItem')].map((row) => [row.id, row]));
     const sortedRows = _hierarchyGetRenderableObjects().map((object) => rows.get(object.uuid)).filter(Boolean);
-    for (const row of sortedRows) row.querySelector('[data-diary-hierarchy-membership]')?.remove();
+    for (const row of sortedRows) {
+        row.querySelector('[data-diary-hierarchy-membership]')?.remove();
+        row.querySelector('[data-hierarchy-action="diary-release"]')?.remove();
+    }
 
     if (!_diaryHierarchy) {
         viewer.append(...sortedRows);
@@ -865,65 +934,135 @@ function _layoutDiaryHierarchy() {
         return;
     }
 
-    const { stages, models, findModels } = _diaryHierarchy;
+    const { stages, models, finds, safePointUuid } = _diaryHierarchy;
     const memberships = new Map();
     const points = stages.map((stage, index) => {
         for (const id of stage.layers) {
             if (!memberships.has(id)) memberships.set(id, []);
             memberships.get(id).push(index);
         }
-        const title = [stage.title || 'Untitled point', stage.date].filter(Boolean).join(' · ');
-        return { key: `point:${stage.id}`, title, point: stage, rows: [] };
+        return { stage, rows: [] };
     });
     const always = { key: 'scene', title: 'Always in scene', rows: [] };
-    const shared = { key: 'shared', title: 'Shared across points', rows: [] };
-    const finds = { key: 'finds', title: 'Find diary', rows: [] };
+    const shared = { key: 'shared', title: 'Shared across entries', rows: [] };
+    const findModels = { key: 'find-models', title: 'Find models', rows: [] };
     const unassigned = { key: 'unassigned', title: 'Unassigned diary assets', rows: [] };
     const managed = new Set(models);
-    const inspection = new Set(findModels);
+    const inspection = new Set(finds.flatMap((find) => find.models));
+    const linkedFinds = new Map();
+    const standalone = { key: 'finds', title: 'Find diaries', kind: 'find', rows: [] };
+    for (const find of finds) {
+        const row = document.createElement('li');
+        row.append(_diaryHierarchyButton(find.title || 'Untitled find', find.id, 'find'));
+        if (find.stageId) {
+            if (!linkedFinds.has(find.stageId)) linkedFinds.set(find.stageId, []);
+            linkedFinds.get(find.stageId).push(row);
+        } else standalone.rows.push(row);
+    }
 
     for (const row of sortedRows) {
         const membershipsForAsset = memberships.get(row.id) || [];
-        if (!managed.has(row.id)) always.rows.push(row);
-        else if (membershipsForAsset.length > 1) {
+        if (!managed.has(row.id)) {
+            always.rows.push(row);
+            continue;
+        }
+        row.lastElementChild.prepend(_diaryReleaseButton(row.id));
+        if (membershipsForAsset.length > 1) {
             shared.rows.push(row);
             const label = document.createElement('span');
             label.dataset.diaryHierarchyMembership = '';
             label.className = 'diary-hierarchy-note';
-            label.textContent = `Points ${membershipsForAsset.map((index) => index + 1).join(', ')}`;
+            label.textContent = `Entries ${membershipsForAsset.map((index) => index + 1).join(', ')}`;
             row.querySelector('[data-hierarchy-object-label]').after(label);
         } else if (membershipsForAsset.length === 1) points[membershipsForAsset[0]].rows.push(row);
-        else if (inspection.has(row.id)) finds.rows.push(row);
+        else if (inspection.has(row.id)) findModels.rows.push(row);
         else unassigned.rows.push(row);
     }
+    if (!VRODOS.editor.envir?.isSceneLoading) {
+        const placedIds = new Set(sortedRows.map((row) => row.id));
+        for (const id of managed) {
+            if (placedIds.has(id)) continue;
+            const row = document.createElement('li');
+            row.className = 'diary-hierarchy-note diary-hierarchy-message';
+            row.append('Unavailable scene placement', _diaryReleaseButton(id));
+            unassigned.rows.push(row);
+        }
+    }
 
-    const groups = [always, ...points, shared, finds, unassigned];
-    for (const { key, title, point, rows: groupRows } of groups) {
-        if (!point && !groupRows.length) continue;
+    function groupRow({ key, title, kind, rows: groupRows }) {
         const group = document.createElement('li');
         group.dataset.diaryHierarchyGroup = key;
-        if (point) group.dataset.diaryHierarchyPoint = point.id;
         const details = document.createElement('details');
         const summary = document.createElement('summary');
         summary.textContent = title;
-        details.open = opened.get(key) ?? (!point || point.id === _activeDiaryPoint);
+        if (kind) summary.prepend(VRODOS.ui.createDiaryIcon(kind));
+        details.open = opened.get(key) ?? true;
         const list = document.createElement('ul');
         list.append(...groupRows);
         details.append(summary, list);
-        if (point) {
-            const sharedCount = point.layers.filter((id) => (memberships.get(id)?.length || 0) > 1).length;
-            if (sharedCount || !point.layers.length) {
-                const note = document.createElement('p');
-                note.className = 'diary-hierarchy-note';
-                note.textContent = sharedCount ? `${sharedCount} in Shared across points` : 'No models assigned';
-                details.append(note);
-            }
-        }
         group.append(details);
-        viewer.append(group);
+        return group;
+    }
+
+    const excavation = { key: 'excavation', title: 'Excavation diary', kind: 'excavation', rows: [] };
+    for (const { stage, rows: stageRows } of points) {
+        const title = [stage.title || 'Untitled entry', stage.date].filter(Boolean).join(' · ');
+        const point = document.createElement('li');
+        point.dataset.diaryHierarchyStage = stage.id;
+        const heading = document.createElement('div');
+        heading.className = 'diary-hierarchy-stage-heading';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.dataset.diaryStageToggle = '';
+        toggle.setAttribute('aria-label', `Contents of ${title}`);
+        heading.append(toggle, _diaryHierarchyButton(title, stage.id, 'stage'));
+        const children = document.createElement('ul');
+        children.id = `vrodos-diary-entry-contents-${stage.id}`;
+        toggle.setAttribute('aria-controls', children.id);
+        children.append(...(linkedFinds.get(stage.id) || []), ...stageRows);
+        const sharedCount = stage.layers.filter((id) => (memberships.get(id)?.length || 0) > 1).length;
+        if (sharedCount || !stage.layers.length) {
+            const note = document.createElement('li');
+            note.className = 'diary-hierarchy-note diary-hierarchy-message';
+            note.textContent = sharedCount ? `${sharedCount} in Shared across entries` : 'No models assigned';
+            children.append(note);
+        }
+        point.append(heading, children);
+        _setDiaryStageExpanded(point, expanded.get(stage.id) ?? stage.id === _activeDiaryPoint);
+        excavation.rows.push(point);
+    }
+    if (shared.rows.length) excavation.rows.push(groupRow(shared));
+    if (stages.length) {
+        const row = document.createElement('li');
+        row.className = 'diary-hierarchy-stage-heading';
+        const safePoint = _hierarchyGetObjectByUuid(safePointUuid);
+        if (safePoint) row.id = safePointUuid;
+        const control = document.createElement('button');
+        control.type = 'button';
+        control.className = 'diary-hierarchy-entry';
+        control.dataset.diarySafePoint = '';
+        control.disabled = !safePoint;
+        const icon = document.createElement('i');
+        icon.className = 'diary-icon';
+        icon.setAttribute('data-lucide', 'map-pin');
+        icon.setAttribute('aria-hidden', 'true');
+        control.append(icon, 'Safe viewpoint');
+        row.append(control);
+        if (safePoint) row.insertAdjacentHTML('beforeend', CreateLockButton(safePoint));
+        excavation.rows.unshift(row);
+    }
+    for (const group of [excavation, standalone, always, findModels, unassigned]) {
+        if (!group.rows.length) continue;
+        const node = groupRow(group);
+        viewer.append(node);
+        if (group.kind) VRODOS.ui.refreshLucideIcons({ root: node });
     }
     oldGroups.forEach((group) => group.remove());
-    _highlightDiaryHierarchyPoint(false);
+    _highlightDiaryHierarchySelection(false);
+    if (safePointUuid && _hierarchyGetSelectedObject()?.uuid === safePointUuid) {
+        VRODOS.ui.setBackgroundColorHierarchyViewer(safePointUuid, { scroll: false });
+    }
+    VRODOS.ui.refreshLucideIcons({ root: viewer });
 }
 
 // Highlight item in Hierarchy viewer; tracks previous selection to avoid full DOM scan
@@ -956,8 +1095,7 @@ VRODOS.ui.setBackgroundColorHierarchyViewer = function(id, options) {
     if (el) {
         el.style.background = 'rgba(59, 130, 246, 0.3)';
         if (opts.scroll) {
-            const group = el.closest('[data-diary-hierarchy-group] > details');
-            if (group) group.open = true;
+            _openDiaryHierarchyAncestors(el);
             _hierarchyScrollItemIntoView(el);
         }
     }
@@ -1041,6 +1179,20 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
     }, true); // use capture so mouseenter fires for child elements
 
     viewer.addEventListener('click', (e) => {
+        const diaryToggle = e.target.closest('[data-diary-stage-toggle]');
+        if (diaryToggle) {
+            const stage = diaryToggle.closest('[data-diary-hierarchy-stage]');
+            _setDiaryStageExpanded(stage, stage.lastElementChild.hidden);
+            return;
+        }
+        const diaryEntry = e.target.closest('[data-diary-stage-id], [data-diary-find-id], [data-diary-safe-point]');
+        if (diaryEntry) {
+            const { diaryStageId: stageId, diaryFindId: findId } = diaryEntry.dataset;
+            _openDiaryHierarchyAncestors(diaryEntry);
+            const safePoint = diaryEntry.hasAttribute('data-diary-safe-point');
+            _dispatchDiaryHierarchySelection(diaryEntry, { stageId, findId, safePoint });
+            return;
+        }
         const actionAnchor = e.target.closest('[data-hierarchy-action]');
         if (actionAnchor) {
             handleHierarchyActionClick(e, actionAnchor);
@@ -1050,6 +1202,6 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
         const item = e.target.closest('.hierarchyItem');
         if (!item) return;
         const uuid = item.dataset.uuid;
-        if (uuid) hierarchyClickSelect(e, uuid);
+        if (uuid) hierarchyClickSelect(item, uuid);
     });
 }
